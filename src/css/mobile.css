@@ -866,29 +866,65 @@
 
 @media (max-width: 768px) {
 
-  /* Semua panel: full width */
+  /* Panels container: scrollable column, beri padding horizontal */
+  .panels {
+    padding: 12px 16px !important;
+    gap: 12px !important;
+    padding-bottom: calc(80px + env(safe-area-inset-bottom)) !important;
+    align-items: stretch;
+  }
+
+  /* Semua panel Dapur: card-look kembali */
   #panel-upload,
   #panel-map-desktop,
   #panel-caption {
-    width: 100%;
-    min-width: unset;
-    max-width: unset;
-    height: auto;
-    border-radius: 0;
+    width: 100% !important;
+    min-width: unset !important;
+    max-width: unset !important;
+    border-radius: 16px !important;
+    flex-shrink: 0 !important;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04);
+    border: 1px solid var(--border);
   }
 
-  /* Map panel: JS yang control via inline style (chip Audiens) */
+  /* Kritis: panel-body jangan stretch — ini yang bikin whitespace besar */
+  #panel-upload .panel-body,
+  #panel-caption .panel-body {
+    flex: 0 0 auto !important;
+    overflow-y: visible !important;
+    height: auto !important;
+  }
+
+  /* Map panel: JS yang control (chip Audiens) — min-height untuk map render */
   #panel-map-desktop {
     display: none;
-    min-height: 320px;
+    min-height: 340px;
   }
 
-  /* Caption panel: JS yang control via inline style (chip AI/Preview) */
+  /* Caption panel: JS yang control (chip AI/Preview) */
   #panel-caption {
     display: none;
   }
 
-  /* Bottom bar: selalu tampil di Dapur (view-command auto sembunyikan di tab lain) */
+  /* Caption panel: p3-body jadi kolom di mobile */
+  #panel-caption .p3-body {
+    flex-direction: column !important;
+    overflow: visible !important;
+  }
+  #panel-caption .p3-left {
+    border-right: none !important;
+    border-bottom: 1px solid var(--border);
+    overflow: visible !important;
+    flex: 0 0 auto !important;
+  }
+  #panel-caption .p3-right {
+    overflow: visible !important;
+    flex: 0 0 auto !important;
+    padding: 14px 18px;
+  }
+
+  /* Bottom bar: selalu tampil di Dapur */
   .bottom-bar {
     display: flex;
     flex-wrap: wrap;
@@ -899,6 +935,8 @@
     border-top: 1px solid var(--border);
     background: var(--white);
     flex-shrink: 0;
+    border-radius: 0 !important;
+    box-shadow: 0 -2px 12px rgba(0,0,0,0.06);
   }
 
   /* Elemen Screen A/B lama — tidak dipakai lagi */
@@ -932,6 +970,40 @@
   /* Campaign cards: full width, touch-friendly */
   .panels-monitor > .panel:first-child {
     overflow-y: visible;
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   DAPUR PAGE HEADER (mobile only)
+   ═══════════════════════════════════════════════════ */
+
+#mobile-dapur-header {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  #mobile-dapur-header {
+    display: block;
+    padding: 4px 16px 2px;
+    flex-shrink: 0;
+  }
+  .mobile-dapur-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--near-black);
+    letter-spacing: -0.4px;
+    line-height: 1.2;
+  }
+  .mobile-dapur-sub {
+    font-size: 13px;
+    color: var(--secondary);
+    margin-top: 3px;
+    line-height: 1.4;
+  }
+  /* Sembunyikan desktop header text, tampilkan ikon saja */
+  .header-title,
+  .header-sub {
+    display: none !important;
   }
 }
 
