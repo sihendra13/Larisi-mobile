@@ -861,6 +861,102 @@
 }
 
 /* ═══════════════════════════════════════════════════
+   PANEL ID TARGETING — override class-based rules
+   ═══════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+
+  /* Semua panel: full width */
+  #panel-upload,
+  #panel-map-desktop,
+  #panel-caption {
+    width: 100%;
+    min-width: unset;
+    max-width: unset;
+    height: auto;
+    border-radius: 0;
+  }
+
+  /* Map panel: SELALU hidden di mobile (ganti modal) */
+  #panel-map-desktop {
+    display: none !important;
+  }
+
+  /* Caption panel: hidden di Screen A, visible di Screen B */
+  #panel-caption {
+    display: none;
+  }
+  #panel-caption.mobile-visible {
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Bottom bar: hidden di Screen A, visible di Screen B */
+  .bottom-bar {
+    display: none;
+  }
+  .bottom-bar.mobile-screen-b {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px 16px;
+    padding-bottom: calc(68px + env(safe-area-inset-bottom));
+    height: auto;
+    border-top: 1px solid var(--border);
+    background: var(--white);
+  }
+
+  /* Tombol Lihat Peta (dalam bottom bar, Screen B) */
+  .mobile-lihat-peta-btn {
+    width: 100%;
+    padding: 10px 16px;
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    background: var(--white);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--near-black);
+    cursor: pointer;
+    text-align: left;
+    min-height: 44px;
+  }
+
+  /* Lanjut bar (Screen A sticky CTA) */
+  .mobile-lanjut-bar {
+    padding: 10px 16px;
+    background: var(--white);
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  /* Kelola: panels-monitor stack vertikal */
+  .panels-monitor {
+    flex-direction: column !important;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 12px;
+    gap: 12px;
+    padding-bottom: calc(80px + env(safe-area-inset-bottom));
+  }
+
+  .panels-monitor > .panel:last-child {
+    width: 100% !important;
+    flex-shrink: unset;
+  }
+
+  /* Sembunyikan SiLaris chat panel desktop di Kelola
+     (diganti FAB + fullscreen chat) */
+  .panels-monitor > .panel:last-child {
+    display: none;
+  }
+
+  /* Campaign cards: full width, touch-friendly */
+  .panels-monitor > .panel:first-child {
+    overflow-y: visible;
+  }
+}
+
+/* ═══════════════════════════════════════════════════
    SAFE AREA (iPhone notch & home indicator)
    ═══════════════════════════════════════════════════ */
 

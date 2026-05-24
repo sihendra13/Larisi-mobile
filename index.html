@@ -232,7 +232,7 @@
     <div class="panels">
 
       <!-- LEFT: Creative Assets -->
-      <div class="panel">
+      <div class="panel" id="panel-upload">
         <div class="panel-header">
           <div class="panel-icon">
             <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
@@ -338,7 +338,7 @@
       </div>
 
       <!-- MIDDLE: Map -->
-      <div class="panel" style="padding:0;position:relative;overflow:visible;">
+      <div class="panel" id="panel-map-desktop" style="padding:0;position:relative;overflow:visible;">
         <div class="map-search">
           <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           <input id="mapSearchInput" placeholder="Tentukan titik target iklanmu" oninput="onSearchInput(this.value)" autocomplete="off">
@@ -361,7 +361,7 @@
       </div>
 
       <!-- RIGHT: AI Editor -->
-      <div class="panel" style="display:flex;flex-direction:column;">
+      <div class="panel" id="panel-caption" style="display:flex;flex-direction:column;">
         <div class="panel-header" style="justify-content:space-between;">
           <div style="display:flex;align-items:center;gap:10px;">
             <div class="panel-icon">
@@ -511,6 +511,13 @@
 
     </div><!-- /panels -->
 
+    <!-- Mobile: Lanjut CTA (Screen A) -->
+    <div id="mobile-lanjut-bar" class="mobile-lanjut-bar" style="display:none;">
+      <button class="btn btn-primary" style="width:100%;height:48px;font-size:15px;font-weight:600;border-radius:12px;" onclick="mobileShowScreenB()">
+        Lanjut →
+      </button>
+    </div>
+
     <!-- Bottom Bar -->
     <div class="bottom-bar">
       <div>
@@ -534,6 +541,10 @@
         </div>
         <div style="font-size:11px;color:var(--secondary);">Segera hadir: SiLaris akan merekomendasikan platform terbaik untuk budget iklanmu berdasarkan performa iklan aktifmu.</div>
       </div>
+      <!-- Mobile: Lihat Peta button (ganti map inline) -->
+      <button id="mobile-lihat-peta-btn" class="mobile-lihat-peta-btn" onclick="mobileOpenMapModal()" style="display:none;">
+        🗺️ Lihat &amp; ubah peta
+      </button>
       <button class="launch-btn" onclick="launchRadar()">
         <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
         Tayangkan Sekarang

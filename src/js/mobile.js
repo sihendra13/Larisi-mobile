@@ -82,22 +82,31 @@
   window.mobileShowScreenB = function() {
     if (!isMobile()) return;
 
-    // Sembunyikan panel kiri (Screen A)
-    var panelLeft = document.querySelector('.panel-left');
-    if (panelLeft) panelLeft.style.display = 'none';
+    // Sembunyikan panel upload (Screen A)
+    var panelUpload = document.getElementById('panel-upload');
+    if (panelUpload) panelUpload.style.display = 'none';
 
-    // Tampilkan panel kanan (Screen B)
-    var panelRight = document.querySelector('.panel-right');
-    if (panelRight) {
-      panelRight.classList.add('mobile-visible');
-      panelRight.style.display = 'flex';
+    // Sembunyikan tombol Lanjut
+    var lanjutBar = document.getElementById('mobile-lanjut-bar');
+    if (lanjutBar) lanjutBar.style.display = 'none';
+
+    // Tampilkan panel caption (Screen B)
+    var panelCaption = document.getElementById('panel-caption');
+    if (panelCaption) {
+      panelCaption.classList.add('mobile-visible');
     }
 
-    // Tampilkan header Screen B
+    // Tampilkan bottom bar (reach + Tayangkan)
+    var bottomBar = document.querySelector('.bottom-bar');
+    if (bottomBar) bottomBar.classList.add('mobile-screen-b');
+
+    // Tampilkan tombol Lihat Peta
+    var lihatPeta = document.getElementById('mobile-lihat-peta-btn');
+    if (lihatPeta) lihatPeta.style.display = 'block';
+
+    // Tampilkan header Screen B, sembunyikan header desktop
     var screenBHeader = document.getElementById('mobile-screen-b-header');
     if (screenBHeader) screenBHeader.style.display = 'flex';
-
-    // Sembunyikan header desktop
     var desktopHeader = document.querySelector('.header');
     if (desktopHeader) desktopHeader.style.display = 'none';
 
@@ -109,22 +118,29 @@
   window.mobileShowScreenA = function() {
     if (!isMobile()) return;
 
-    // Tampilkan panel kiri
-    var panelLeft = document.querySelector('.panel-left');
-    if (panelLeft) panelLeft.style.display = '';
+    // Tampilkan panel upload
+    var panelUpload = document.getElementById('panel-upload');
+    if (panelUpload) panelUpload.style.display = '';
 
-    // Sembunyikan panel kanan
-    var panelRight = document.querySelector('.panel-right');
-    if (panelRight) {
-      panelRight.classList.remove('mobile-visible');
-      panelRight.style.display = 'none';
-    }
+    // Tampilkan tombol Lanjut
+    var lanjutBar = document.getElementById('mobile-lanjut-bar');
+    if (lanjutBar) lanjutBar.style.display = '';
 
-    // Sembunyikan header Screen B
+    // Sembunyikan panel caption
+    var panelCaption = document.getElementById('panel-caption');
+    if (panelCaption) panelCaption.classList.remove('mobile-visible');
+
+    // Sembunyikan bottom bar
+    var bottomBar = document.querySelector('.bottom-bar');
+    if (bottomBar) bottomBar.classList.remove('mobile-screen-b');
+
+    // Sembunyikan tombol Lihat Peta
+    var lihatPeta = document.getElementById('mobile-lihat-peta-btn');
+    if (lihatPeta) lihatPeta.style.display = 'none';
+
+    // Sembunyikan header Screen B, tampilkan header desktop
     var screenBHeader = document.getElementById('mobile-screen-b-header');
     if (screenBHeader) screenBHeader.style.display = 'none';
-
-    // Tampilkan header desktop
     var desktopHeader = document.querySelector('.header');
     if (desktopHeader) desktopHeader.style.display = '';
   };
@@ -437,10 +453,12 @@
   window.addEventListener('resize', function() {
     if (!isMobile()) {
       // Kembali ke desktop: reset semua mobile state
-      var panelLeft = document.querySelector('.panel-left');
-      var panelRight = document.querySelector('.panel-right');
-      if (panelLeft) panelLeft.style.display = '';
-      if (panelRight) { panelRight.style.display = ''; panelRight.classList.remove('mobile-visible'); }
+      var panelUpload = document.getElementById('panel-upload');
+      var panelCaption = document.getElementById('panel-caption');
+      var bottomBar = document.querySelector('.bottom-bar');
+      if (panelUpload) panelUpload.style.display = '';
+      if (panelCaption) { panelCaption.style.display = ''; panelCaption.classList.remove('mobile-visible'); }
+      if (bottomBar) bottomBar.classList.remove('mobile-screen-b');
     }
   });
 
