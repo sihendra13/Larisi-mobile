@@ -10,6 +10,11 @@
     return window.innerWidth <= 768;
   }
 
+  function _el(id, display) {
+    var el = document.getElementById(id);
+    if (el) el.style.display = display;
+  }
+
   /* ─────────────────────────────────────────────────
      INSTALL BANNER (PWA)
   ───────────────────────────────────────────────── */
@@ -82,33 +87,22 @@
   window.mobileShowScreenB = function() {
     if (!isMobile()) return;
 
-    // Sembunyikan panel upload (Screen A)
-    var panelUpload = document.getElementById('panel-upload');
-    if (panelUpload) panelUpload.style.display = 'none';
+    // Sembunyikan Screen A elements
+    _el('panel-upload',          'none');
+    _el('mobile-lanjut-bar',     'none');
 
-    // Sembunyikan tombol Lanjut
-    var lanjutBar = document.getElementById('mobile-lanjut-bar');
-    if (lanjutBar) lanjutBar.style.display = 'none';
+    // Tampilkan Screen B elements — pakai inline style untuk beat HTML inline style
+    _el('panel-caption',         'flex');
+    _el('mobile-lihat-peta-btn', 'block');
 
-    // Tampilkan panel caption (Screen B)
-    var panelCaption = document.getElementById('panel-caption');
-    if (panelCaption) {
-      panelCaption.classList.add('mobile-visible');
-    }
-
-    // Tampilkan bottom bar (reach + Tayangkan)
-    var bottomBar = document.querySelector('.bottom-bar');
-    if (bottomBar) bottomBar.classList.add('mobile-screen-b');
-
-    // Tampilkan tombol Lihat Peta
-    var lihatPeta = document.getElementById('mobile-lihat-peta-btn');
-    if (lihatPeta) lihatPeta.style.display = 'block';
-
-    // Tampilkan header Screen B, sembunyikan header desktop
-    var screenBHeader = document.getElementById('mobile-screen-b-header');
-    if (screenBHeader) screenBHeader.style.display = 'flex';
+    // Header: Screen B header on, desktop header off
+    _el('mobile-screen-b-header', 'flex');
     var desktopHeader = document.querySelector('.header');
     if (desktopHeader) desktopHeader.style.display = 'none';
+
+    // Bottom bar: tampilkan (reach + Tayangkan)
+    var bottomBar = document.querySelector('.bottom-bar');
+    if (bottomBar) bottomBar.style.display = 'flex';
 
     // Scroll ke atas
     var panels = document.querySelector('.panels');
@@ -118,31 +112,23 @@
   window.mobileShowScreenA = function() {
     if (!isMobile()) return;
 
-    // Tampilkan panel upload
-    var panelUpload = document.getElementById('panel-upload');
-    if (panelUpload) panelUpload.style.display = '';
+    // Tampilkan Screen A elements
+    _el('panel-upload',      'block');
+    _el('mobile-lanjut-bar', 'flex');
 
-    // Tampilkan tombol Lanjut
-    var lanjutBar = document.getElementById('mobile-lanjut-bar');
-    if (lanjutBar) lanjutBar.style.display = '';
+    // Sembunyikan Screen B elements
+    _el('panel-caption',          'none');
+    _el('mobile-lihat-peta-btn',  'none');
 
-    // Sembunyikan panel caption
-    var panelCaption = document.getElementById('panel-caption');
-    if (panelCaption) panelCaption.classList.remove('mobile-visible');
-
-    // Sembunyikan bottom bar
-    var bottomBar = document.querySelector('.bottom-bar');
-    if (bottomBar) bottomBar.classList.remove('mobile-screen-b');
-
-    // Sembunyikan tombol Lihat Peta
-    var lihatPeta = document.getElementById('mobile-lihat-peta-btn');
-    if (lihatPeta) lihatPeta.style.display = 'none';
-
-    // Sembunyikan header Screen B, tampilkan header desktop
-    var screenBHeader = document.getElementById('mobile-screen-b-header');
-    if (screenBHeader) screenBHeader.style.display = 'none';
+    // Header: desktop header on, Screen B header off
+    _el('mobile-screen-b-header', 'none');
     var desktopHeader = document.querySelector('.header');
     if (desktopHeader) desktopHeader.style.display = '';
+
+    // Bottom bar: sembunyikan
+    var bottomBar = document.querySelector('.bottom-bar');
+    if (bottomBar) bottomBar.style.display = 'none';
+
   };
 
   /* ─────────────────────────────────────────────────
@@ -412,6 +398,10 @@
   ───────────────────────────────────────────────── */
   function initMobile() {
     if (!isMobile()) return;
+
+    // Force hide panel-caption via inline style (beats HTML inline style)
+    var panelCaption = document.getElementById('panel-caption');
+    if (panelCaption) panelCaption.style.display = 'none';
 
     // Pastikan Screen A tampil default di Dapur tab
     mobileShowScreenA();
