@@ -79,61 +79,84 @@
       switchMenu(menuKey);
     }
 
-    // Reset ke Screen A saat pindah tab
+    // Reset ke chip Aset saat pindah ke Dapur
     if (tab === 'dapur') {
-      mobileShowScreenA();
+      mobileDapurChip('aset');
     }
   };
 
   /* ─────────────────────────────────────────────────
-     SCREEN A → SCREEN B NAVIGATION
+     DAPUR CHIP NAVIGATION (Aset → Audiens → AI → Preview)
   ───────────────────────────────────────────────── */
-  window.mobileShowScreenB = function() {
+  var _CHIPS = ['aset', 'audiens', 'ai', 'preview'];
+
+  window.mobileDapurChip = function(chip) {
     if (!isMobile()) return;
 
-    // Sembunyikan Screen A elements
-    _el('panel-upload',          'none');
-    _el('mobile-lanjut-bar',     'none');
+    // Update chip visuals
+    document.querySelectorAll('.mobile-dapur-chip').forEach(function(el) {
+      var c = el.dataset.chip;
+      var stepEl = el.querySelector('.chip-step');
+      var idx = _CHIPS.indexOf(c);
+      var activeIdx = _CHIPS.indexOf(chip);
+      el.classList.remove('active', 'done');
+      if (c === chip) {
+        el.classList.add('active');
+        if (stepEl) stepEl.textContent = idx + 1;
+      } else if (idx < activeIdx) {
+        el.classList.add('done');
+        if (stepEl) stepEl.textContent = '✓';
+      } else {
+        if (stepEl) stepEl.textContent = idx + 1;
+      }
+    });
 
-    // Tampilkan Screen B elements — pakai inline style untuk beat HTML inline style
-    _el('panel-caption',         'flex');
-    _el('mobile-lihat-peta-btn', 'block');
+    var panelUpload  = document.getElementById('panel-upload');
+    var panelMap     = document.getElementById('panel-map-desktop');
+    var panelCaption = document.getElementById('panel-caption');
+    var secAset      = document.getElementById('mobile-section-aset');
+    var secAudiens   = document.getElementById('mobile-section-audiens');
+    var panels       = document.querySelector('.panels');
 
-    // Header: Screen B header on, desktop header off
-    _el('mobile-screen-b-header', 'flex');
-    var desktopHeader = document.querySelector('.header');
-    if (desktopHeader) desktopHeader.style.display = 'none';
+    if (chip === 'aset') {
+      if (panelUpload)  panelUpload.style.display  = 'block';
+      if (secAset)      secAset.style.display      = '';
+      if (secAudiens)   secAudiens.style.display   = 'none';
+      if (panelMap)     panelMap.style.display     = 'none';
+      if (panelCaption) panelCaption.style.display = 'none';
 
-    // Bottom bar: tampilkan (reach + Tayangkan)
-    var bottomBar = document.querySelector('.bottom-bar');
-    if (bottomBar) bottomBar.style.display = 'flex';
+    } else if (chip === 'audiens') {
+      if (panelUpload)  panelUpload.style.display  = 'block';
+      if (secAset)      secAset.style.display      = 'none';
+      if (secAudiens)   secAudiens.style.display   = '';
+      if (panelMap)     panelMap.style.display     = 'block';
+      if (panelCaption) panelCaption.style.display = 'none';
+      // Map perlu invalidate size karena sempat hidden
+      setTimeout(function() {
+        if (window.State && window.State.map) window.State.map.invalidateSize();
+      }, 150);
 
-    // Scroll ke atas
-    var panels = document.querySelector('.panels');
-    if (panels) panels.scrollTop = 0;
+    } else if (chip === 'ai') {
+      if (panelUpload)  panelUpload.style.display  = 'none';
+      if (panelMap)     panelMap.style.display     = 'none';
+      if (panelCaption) panelCaption.style.display = 'flex';
+
+    } else if (chip === 'preview') {
+      if (panelUpload)  panelUpload.style.display  = 'none';
+      if (panelMap)     panelMap.style.display     = 'none';
+      if (panelCaption) panelCaption.style.display = 'flex';
+      setTimeout(function() {
+        var phone = document.getElementById('phoneShell');
+        if (phone) phone.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+    }
+
+    if (panels && chip !== 'preview') panels.scrollTop = 0;
   };
 
-  window.mobileShowScreenA = function() {
-    if (!isMobile()) return;
-
-    // Tampilkan Screen A elements
-    _el('panel-upload',      'block');
-    _el('mobile-lanjut-bar', 'flex');
-
-    // Sembunyikan Screen B elements
-    _el('panel-caption',          'none');
-    _el('mobile-lihat-peta-btn',  'none');
-
-    // Header: desktop header on, Screen B header off
-    _el('mobile-screen-b-header', 'none');
-    var desktopHeader = document.querySelector('.header');
-    if (desktopHeader) desktopHeader.style.display = '';
-
-    // Bottom bar: sembunyikan
-    var bottomBar = document.querySelector('.bottom-bar');
-    if (bottomBar) bottomBar.style.display = 'none';
-
-  };
+  // Alias untuk backward compat
+  window.mobileShowScreenA = function() { mobileDapurChip('aset'); };
+  window.mobileShowScreenB = function() { mobileDapurChip('ai'); };
 
   /* ─────────────────────────────────────────────────
      MAP MODAL
@@ -411,8 +434,8 @@
     var fab = document.querySelector('.mobile-silaris-fab');
     if (fab) fab.style.display = 'none';
 
-    // Pastikan Screen A tampil default di Dapur tab
-    mobileShowScreenA();
+    // Default Dapur: chip Aset
+    mobileDapurChip('aset');
 
     // Init platform selector dengan Instagram aktif
     mobileSelectPlatform('instagram');

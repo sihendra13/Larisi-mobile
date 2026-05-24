@@ -229,6 +229,21 @@
 
   <div class="content">
     <div id="view-command" style="display:flex;flex-direction:column;gap:12px;flex:1;min-height:0;">
+    <!-- Mobile: step chips Dapur Konten (hidden on desktop) -->
+    <div id="mobile-dapur-chips" class="mobile-dapur-chips">
+      <button class="mobile-dapur-chip active" data-chip="aset" onclick="mobileDapurChip('aset')">
+        <span class="chip-step">1</span> Aset
+      </button>
+      <button class="mobile-dapur-chip" data-chip="audiens" onclick="mobileDapurChip('audiens')">
+        <span class="chip-step">2</span> Audiens
+      </button>
+      <button class="mobile-dapur-chip" data-chip="ai" onclick="mobileDapurChip('ai')">
+        <span class="chip-step">3</span> AI
+      </button>
+      <button class="mobile-dapur-chip" data-chip="preview" onclick="mobileDapurChip('preview')">
+        <span class="chip-step">4</span> Preview
+      </button>
+    </div>
     <div class="panels">
 
       <!-- LEFT: Creative Assets -->
@@ -244,6 +259,7 @@
         </div>
         <div class="panel-body">
 
+          <div id="mobile-section-aset">
           <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
             <div class="plus-icon">
               <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -298,7 +314,9 @@
               <button class="vc-btn vc-btn-ai"  onclick="_changePhotoConflict()">Ganti foto</button>
             </div>
           </div>
+          </div><!-- /mobile-section-aset -->
 
+          <div id="mobile-section-audiens">
           <div class="persona-card" id="personaCard">
             <div class="persona-top">
               <div class="persona-check">
@@ -333,6 +351,7 @@
             </div>
             <div class="toggle" id="toggleTraveler" onclick="toggleTravelerFn()" style="cursor:pointer"><div class="toggle-knob"></div></div>
           </div>
+          </div><!-- /mobile-section-audiens -->
 
         </div>
       </div>

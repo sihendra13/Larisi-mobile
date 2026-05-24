@@ -877,25 +877,19 @@
     border-radius: 0;
   }
 
-  /* Map panel: SELALU hidden di mobile (ganti modal) */
+  /* Map panel: JS yang control via inline style (chip Audiens) */
   #panel-map-desktop {
-    display: none !important;
+    display: none;
+    min-height: 320px;
   }
 
-  /* Caption panel: hidden di Screen A, visible di Screen B */
+  /* Caption panel: JS yang control via inline style (chip AI/Preview) */
   #panel-caption {
     display: none;
   }
-  #panel-caption.mobile-visible {
-    display: flex;
-    flex-direction: column;
-  }
 
-  /* Bottom bar: hidden di Screen A, visible di Screen B */
+  /* Bottom bar: selalu tampil di Dapur (view-command auto sembunyikan di tab lain) */
   .bottom-bar {
-    display: none;
-  }
-  .bottom-bar.mobile-screen-b {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
@@ -904,29 +898,14 @@
     height: auto;
     border-top: 1px solid var(--border);
     background: var(--white);
-  }
-
-  /* Tombol Lihat Peta (dalam bottom bar, Screen B) */
-  .mobile-lihat-peta-btn {
-    width: 100%;
-    padding: 10px 16px;
-    border: 1.5px solid var(--border);
-    border-radius: 12px;
-    background: var(--white);
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--near-black);
-    cursor: pointer;
-    text-align: left;
-    min-height: 44px;
-  }
-
-  /* Lanjut bar (Screen A sticky CTA) */
-  .mobile-lanjut-bar {
-    padding: 10px 16px;
-    background: var(--white);
-    border-top: 1px solid var(--border);
     flex-shrink: 0;
+  }
+
+  /* Elemen Screen A/B lama — tidak dipakai lagi */
+  #mobile-lanjut-bar,
+  #mobile-screen-b-header,
+  #mobile-lihat-peta-btn {
+    display: none !important;
   }
 
   /* Kelola: panels-monitor stack vertikal */
@@ -953,6 +932,87 @@
   /* Campaign cards: full width, touch-friendly */
   .panels-monitor > .panel:first-child {
     overflow-y: visible;
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   DAPUR CHIP NAVIGATION
+   ═══════════════════════════════════════════════════ */
+
+#mobile-dapur-chips {
+  display: none; /* hidden on desktop */
+}
+
+@media (max-width: 768px) {
+  #mobile-dapur-chips {
+    display: flex;
+    gap: 8px;
+    padding: 0 16px 8px;
+    flex-shrink: 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  #mobile-dapur-chips::-webkit-scrollbar { display: none; }
+
+  .mobile-dapur-chip {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1.5px solid var(--border);
+    background: var(--white);
+    color: var(--secondary);
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+    -webkit-tap-highlight-color: transparent;
+    flex-shrink: 0;
+  }
+
+  .mobile-dapur-chip.active {
+    background: #6d28d9;
+    border-color: #6d28d9;
+    color: #fff;
+    font-weight: 600;
+  }
+
+  .mobile-dapur-chip.done {
+    border-color: #6d28d9;
+    color: #6d28d9;
+    background: #f5f3ff;
+  }
+
+  .chip-step {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    font-size: 10px;
+    font-weight: 700;
+    background: rgba(0,0,0,0.08);
+    flex-shrink: 0;
+  }
+
+  .mobile-dapur-chip.active .chip-step {
+    background: rgba(255,255,255,0.25);
+    color: #fff;
+  }
+
+  .mobile-dapur-chip.done .chip-step {
+    background: #6d28d9;
+    color: #fff;
+  }
+
+  /* Section wrappers dalam panel-upload */
+  #mobile-section-aset,
+  #mobile-section-audiens {
+    width: 100%;
   }
 }
 
