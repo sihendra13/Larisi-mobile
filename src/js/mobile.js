@@ -63,6 +63,10 @@
       el.classList.toggle('active', el.dataset.tab === tab);
     });
 
+    // FAB hanya tampil di Kelola
+    var fab = document.querySelector('.mobile-silaris-fab');
+    if (fab) fab.style.display = (tab === 'kelola') ? 'flex' : 'none';
+
     // Delegate ke switchMenu yang sudah ada
     var menuMap = {
       'dapur':    'command',
@@ -402,6 +406,10 @@
     // Force hide panel-caption via inline style (beats HTML inline style)
     var panelCaption = document.getElementById('panel-caption');
     if (panelCaption) panelCaption.style.display = 'none';
+
+    // FAB default tersembunyi — hanya muncul saat Kelola tab aktif
+    var fab = document.querySelector('.mobile-silaris-fab');
+    if (fab) fab.style.display = 'none';
 
     // Pastikan Screen A tampil default di Dapur tab
     mobileShowScreenA();
