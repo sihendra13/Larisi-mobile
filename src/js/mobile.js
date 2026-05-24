@@ -399,7 +399,22 @@
     facebook:  { Story: 'meta-story', Feed: 'meta', Reel: 'meta-reel' }
   };
 
+  /* SVG icons untuk previewLabel badge */
+  var _PLATFORM_ICONS = {
+    instagram: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="flex-shrink:0"><defs><radialGradient id="ig1" r="150%" cx="30%" cy="107%"><stop offset="0%" stop-color="#fdf497"/><stop offset="5%" stop-color="#fdf497"/><stop offset="45%" stop-color="#fd5949"/><stop offset="60%" stop-color="#d6249f"/><stop offset="90%" stop-color="#285AEB"/></radialGradient></defs><rect width="24" height="24" rx="6" fill="url(#ig1)"/><circle cx="12" cy="12" r="4.5" stroke="white" stroke-width="2" fill="none"/><circle cx="17.5" cy="6.5" r="1.3" fill="white"/></svg>',
+    facebook:  '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="flex-shrink:0"><rect width="24" height="24" rx="6" fill="#1877F2"/><path d="M13.5 8h2V5.5h-2C11.57 5.5 10 7.07 10 9v1.5H8V13h2v7h3v-7h2l.5-2.5H13V9c0-.28.22-.5.5-.5z" fill="white"/></svg>',
+    tiktok:    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="flex-shrink:0"><rect width="24" height="24" rx="6" fill="#000"/><path d="M16 8c.55.73 1.4 1.2 2.35 1.25v2.1a4.55 4.55 0 01-2.35-.65v5.8a4.1 4.1 0 11-4.1-4.1h.27v2.1H12a2 2 0 102 2V8z" fill="white"/></svg>'
+  };
+
   window.mobileSelectPlatform = function(platform) {
+    // Update previewLabel badge dengan icon
+    var badge = document.getElementById('previewLabel');
+    if (badge) {
+      var icon = _PLATFORM_ICONS[platform] || '';
+      var label = platform.charAt(0).toUpperCase() + platform.slice(1);
+      badge.innerHTML = icon + label;
+    }
+
     // Update tab visual
     document.querySelectorAll('.mobile-platform-tab').forEach(function(el) {
       el.classList.toggle('active', el.dataset.platform === platform);

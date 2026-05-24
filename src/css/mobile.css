@@ -1337,13 +1337,19 @@
     background: rgba(0,0,0,0.08) !important;
     color: var(--m-ink-sub) !important;
   }
+  /* Active chip badge → UNGU bulat */
   .mobile-dapur-chip.active .chip-step {
-    background: rgba(255,255,255,0.25) !important;
+    background: var(--m-brand) !important;
     color: #fff !important;
   }
+  /* Done chip ✓ → TIDAK ada circle, plain hijau */
   .mobile-dapur-chip.done .chip-step {
-    background: var(--m-green) !important;
-    color: #fff !important;
+    background: transparent !important;
+    color: var(--m-green) !important;
+    width: auto !important;
+    height: auto !important;
+    font-size: 12px !important;
+    border-radius: 0 !important;
   }
 
   /* ── Panels container ── */
@@ -1703,25 +1709,28 @@
     text-transform: none !important;
   }
 
-  /* Platform pill (Instagram dropdown) */
+  /* Platform pill (Instagram dropdown) — white card, shadow */
   .preview-label-badge {
     display: inline-flex !important;
     align-items: center !important;
-    gap: 5px !important;
-    padding: 6px 10px 6px 8px !important;
+    gap: 6px !important;
+    padding: 7px 12px 7px 10px !important;
     border-radius: var(--r-circle) !important;
-    border: var(--border-line) !important;
-    background: var(--m-card) !important;
+    border: none !important;
+    background: #fff !important;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.12) !important;
     font-family: var(--m-font) !important;
-    font-size: 12px !important;
+    font-size: 13px !important;
     font-weight: 600 !important;
     color: var(--m-ink) !important;
     cursor: pointer !important;
+    white-space: nowrap !important;
   }
-  /* Chevron via CSS after */
+  /* Chevron ∨ */
   .preview-label-badge::after {
-    content: '▾';
-    font-size: 10px;
+    content: '∨';
+    font-size: 11px;
+    font-weight: 500;
     color: var(--m-ink-sub);
     margin-left: 2px;
   }
@@ -1754,8 +1763,8 @@
     grid-area: label !important;
     font-family: var(--m-font) !important;
     font-size: 13px !important;
-    font-weight: 500 !important;
-    color: var(--m-ink) !important;
+    font-weight: 400 !important;
+    color: var(--m-ink-sub) !important;
     width: auto !important;
   }
   .filter-val {
@@ -1821,22 +1830,23 @@
     border-top: var(--border-line) !important;
     padding: 10px 12px !important;
   }
-  /* Generate ulang → full-width CTA button */
+  /* Generate ulang → full-width, sangat rounded (identik reference) */
   .gen-btn {
     width: 100% !important;
-    height: 44px !important;
-    border-radius: var(--r-small) !important;
+    height: 50px !important;
+    border-radius: var(--r-large) !important;
     background: var(--m-ink) !important;
     color: #fff !important;
     font-family: var(--m-font) !important;
-    font-size: 13px !important;
+    font-size: 14px !important;
     font-weight: 700 !important;
     border: none !important;
     cursor: pointer !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    gap: 6px !important;
+    gap: 8px !important;
+    letter-spacing: -0.01em !important;
   }
   .gen-btn:active { background: var(--m-brand) !important; }
 

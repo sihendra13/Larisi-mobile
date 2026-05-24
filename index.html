@@ -436,7 +436,7 @@
             <!-- 1. Publish ke Channel Selector -->
             <div class="opt-mode-row">
               <div class="section-label">Posting ke</div>
-              <div class="preview-label-badge" id="previewLabel" onclick="cycleChannel()" style="cursor:pointer;user-select:none;" title="Klik untuk ganti platform">Instagram</div>
+              <div class="preview-label-badge" id="previewLabel" onclick="cycleChannel()" style="cursor:pointer;user-select:none;" title="Klik untuk ganti platform"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="flex-shrink:0"><defs><radialGradient id="ig0" r="150%" cx="30%" cy="107%"><stop offset="0%" stop-color="#fdf497"/><stop offset="5%" stop-color="#fdf497"/><stop offset="45%" stop-color="#fd5949"/><stop offset="60%" stop-color="#d6249f"/><stop offset="90%" stop-color="#285AEB"/></radialGradient></defs><rect width="24" height="24" rx="6" fill="url(#ig0)"/><circle cx="12" cy="12" r="4.5" stroke="white" stroke-width="2" fill="none"/><circle cx="17.5" cy="6.5" r="1.3" fill="white"/></svg>Instagram</div>
             </div>
 
             <!-- 2. Visual Filters -->
@@ -445,12 +445,12 @@
               <div style="display:flex;flex-direction:column;gap:10px;">
                 <div class="filter-row">
                   <div class="filter-label">Terang-Gelap</div>
-                  <input type="range" min="0" max="200" value="100" oninput="brightnessVal=parseInt(this.value);document.getElementById('bVal').textContent=this.value+'%';applyFilters()">
+                  <input type="range" min="0" max="100" value="100" oninput="brightnessVal=parseInt(this.value)*2;document.getElementById('bVal').textContent=this.value+'%';applyFilters()">
                   <div class="filter-val" id="bVal">100%</div>
                 </div>
                 <div class="filter-row">
                   <div class="filter-label">Ketajaman Warna</div>
-                  <input type="range" min="0" max="200" value="100" oninput="contrastVal=parseInt(this.value);document.getElementById('cVal').textContent=this.value+'%';applyFilters()">
+                  <input type="range" min="0" max="100" value="100" oninput="contrastVal=parseInt(this.value)*2;document.getElementById('cVal').textContent=this.value+'%';applyFilters()">
                   <div class="filter-val" id="cVal">100%</div>
                 </div>
               </div>
@@ -465,7 +465,7 @@
               <div class="caption-box">
                 <textarea id="captionArea" placeholder="Tunggu sebentar, AI akan menuliskan pesan untukmu. Kamu bebas mengeditnya kembali agar lebih sesuai." rows="5"></textarea>
                 <div class="caption-actions">
-                  <button class="gen-btn" id="genBtn" onclick="generateCaptionAI()">Generate ulang</button>
+                  <button class="gen-btn" id="genBtn" onclick="generateCaptionAI()"><i data-lucide="loader-2" style="width:16px;height:16px;stroke-width:2.2;"></i>Generate ulang</button>
                 </div>
               </div>
             </div>
