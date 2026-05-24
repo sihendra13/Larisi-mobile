@@ -6,6 +6,14 @@
 
 @media (max-width: 768px) {
 
+  /* ─── Font: aktifkan Inter (mobile design system) ─── */
+  body {
+    font-family: var(--m-font) !important;
+    -webkit-font-smoothing: antialiased;
+    background: var(--m-bg);
+    color: var(--m-ink);
+  }
+
   /* ─── Reset body layout ─── */
   body {
     flex-direction: column;

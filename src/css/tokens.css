@@ -1,19 +1,109 @@
-/* ─── Airbnb Design Tokens ─── */
+/* ═══════════════════════════════════════════════════
+   LEGACY TOKENS — desktop, jangan diubah
+   Semua file CSS desktop masih pakai token ini.
+   ═══════════════════════════════════════════════════ */
 :root {
-  --font: 'Circular Std', -apple-system, system-ui, Roboto, 'Helvetica Neue', sans-serif;
-  --white: #ffffff;
-  --bg: #f7f7f7;
-  --near-black: #222222;
-  --secondary: #6a6a6a;
-  --disabled: rgba(0,0,0,0.24);
-  --border: #e0e0e0;
-  --surface: #f2f2f2;
-  --rausch: #791ADB;
-  --rausch-deep: #6315b8;
-  --shadow-card: rgba(0,0,0,0.02) 0px 0px 0px 1px, rgba(0,0,0,0.04) 0px 2px 6px, rgba(0,0,0,0.08) 0px 4px 8px;
+  --font:         'Circular Std', -apple-system, system-ui, Roboto, 'Helvetica Neue', sans-serif;
+  --white:        #ffffff;
+  --bg:           #f7f7f7;
+  --near-black:   #222222;
+  --secondary:    #6a6a6a;
+  --disabled:     rgba(0,0,0,0.24);
+  --border:       #e0e0e0;
+  --surface:      #f2f2f2;
+  --rausch:       #791ADB;
+  --rausch-deep:  #6315b8;
+  --shadow-card:  rgba(0,0,0,0.02) 0px 0px 0px 1px,
+                  rgba(0,0,0,0.04) 0px 2px 6px,
+                  rgba(0,0,0,0.08) 0px 4px 8px;
   --shadow-hover: rgba(0,0,0,0.08) 0px 4px 12px;
-  --radius-btn: 8px;
+  --radius-btn:   8px;
   --radius-badge: 14px;
-  --radius-card: 20px;
+  --radius-card:  20px;
   --radius-large: 32px;
+
+  /* ═══════════════════════════════════════════════════
+     MOBILE DESIGN SYSTEM — Larisi Handoff Spec
+     Prefix --m- agar tidak bentrok dengan token desktop.
+     Dipakai eksklusif oleh mobile.css (@media ≤768px).
+     ═══════════════════════════════════════════════════ */
+
+  /* ── Font ── */
+  --m-font: 'Inter', -apple-system, system-ui, sans-serif;
+
+  /* ── Brand ── */
+  --m-brand:      #6B5BFF;
+  --m-brand-soft: #EFECFF;
+  --m-brand-grad: linear-gradient(135deg, #6B5BFF 0%, #8C7BFF 100%);
+  --m-brand-deep: linear-gradient(135deg, #6B5BFF 0%, #4A3FCC 100%);
+
+  /* ── Ink (text & primary CTAs) ── */
+  --m-ink:     #0E0E12;
+  --m-ink-sub: #6B6B73;
+
+  /* ── Surface ── */
+  --m-bg:   #F5F5F7;
+  --m-card: #FFFFFF;
+  --m-line: #ECECF1;
+
+  /* ── Semantic ── */
+  --m-green:         #1A8F4F;
+  --m-green-soft:    #E3FCEC;
+  --m-orange:        #E89B3C;
+  --m-blue:          #3B82F6;
+  --m-warn-bg:       #FFF9EC;
+  --m-warn-border:   #FCE9B8;
+  --m-warn-text:     #A8761A;
+  --m-danger-bg:     #FEEFEF;
+  --m-danger-border: #F6CFCF;
+  --m-danger-text:   #A8341A;
+
+  /* ── Platform brand (pills only) ── */
+  --m-ig: linear-gradient(135deg, #E1306C, #F77737);
+  --m-fb: #1877F2;
+  --m-tt: #0E0E12;
+
+  /* ── Radii ── */
+  --r-circle: 9999px;
+  --r-large:  20px;
+  --r-medium: 16px;
+  --r-small:  12px;
+  --r-xs:     8px;
+
+  /* ── Shadows ── */
+  --shadow-elevated: 0 4px 14px -6px rgba(107,91,255,.25);
+  --shadow-float:    0 14px 30px -8px rgba(107,91,255,.55);
+  --shadow-sticky:   0 10px 30px -10px rgba(15,15,30,.15);
+  --shadow-logo:     0 6px 18px -8px rgba(107,91,255,.6);
+
+  /* ── Borders ── */
+  --border-line:     1px solid #ECECF1;
+  --border-selected: 2px solid #6B5BFF;
+  --border-dashed:   1.5px dashed #D7D7DE;
+
+  /* ── Type scale ── */
+  --text-display-xl: 32px;   /* page hero     700 / -0.025em */
+  --text-display-l:  28px;   /* page title    700 / -0.02em  */
+  --text-h1:         26px;   /* page header   700 / -0.02em  */
+  --text-h2:         18px;   /* section title 700             */
+  --text-h3:         15px;   /* card title    700             */
+  --text-body-l:     14px;   /* body large    500             */
+  --text-body-m:     13px;   /* body default  500             */
+  --text-body-s:     12px;   /* body small    500             */
+  --text-caption:    11px;   /* subtext       500             */
+  --text-micro:      10px;   /* metadata      600             */
+
+  /* ── Spacing (8-point base) ── */
+  --sp-4:  4px;
+  --sp-6:  6px;
+  --sp-8:  8px;
+  --sp-10: 10px;
+  --sp-12: 12px;
+  --sp-14: 14px;
+  --sp-16: 16px;
+  --sp-18: 18px;
+  --sp-20: 20px;
+  --sp-22: 22px;
+  --sp-28: 28px;
+  --sp-32: 32px;
 }
