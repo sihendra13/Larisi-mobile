@@ -32,7 +32,7 @@
   --m-font: 'Inter', -apple-system, system-ui, sans-serif;
 
   /* ── Brand ── */
-  --m-brand:      #6B5BFF;
+  --m-brand:      #791ADB;
   --m-brand-soft: #EFECFF;
   --m-brand-grad: linear-gradient(135deg, #6B5BFF 0%, #8C7BFF 100%);
   --m-brand-deep: linear-gradient(135deg, #6B5BFF 0%, #4A3FCC 100%);
