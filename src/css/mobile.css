@@ -1652,6 +1652,293 @@
 }
 
 /* ═══════════════════════════════════════════════════
+   SCREEN 03 — AI + PREVIEW (panel-caption)
+   ═══════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+
+  /* ── p3-body: stack vertically ── */
+  #panel-caption .p3-body {
+    flex-direction: column !important;
+    overflow: visible !important;
+    height: auto !important;
+  }
+  #panel-caption .p3-left {
+    border-right: none !important;
+    border-bottom: var(--border-line) !important;
+    overflow: visible !important;
+    flex: 0 0 auto !important;
+    gap: 18px !important;
+    padding: 14px 16px 18px !important;
+  }
+  #panel-caption .p3-right {
+    overflow: visible !important;
+    flex: 0 0 auto !important;
+    padding: 14px 16px 18px !important;
+  }
+
+  /* ── "Posting ke" row ── */
+  .opt-mode-row {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 10px !important;
+  }
+  .opt-mode-row .section-label {
+    font-family: var(--m-font) !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    color: var(--m-ink) !important;
+    letter-spacing: 0 !important;
+    text-transform: none !important;
+  }
+
+  /* Platform pill (Instagram dropdown) */
+  .preview-label-badge {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    padding: 6px 10px 6px 8px !important;
+    border-radius: var(--r-circle) !important;
+    border: var(--border-line) !important;
+    background: var(--m-card) !important;
+    font-family: var(--m-font) !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    color: var(--m-ink) !important;
+    cursor: pointer !important;
+  }
+  /* Chevron via CSS after */
+  .preview-label-badge::after {
+    content: '▾';
+    font-size: 10px;
+    color: var(--m-ink-sub);
+    margin-left: 2px;
+  }
+
+  /* Section labels dalam p3-left */
+  #panel-caption .p3-left .section-label {
+    font-family: var(--m-font) !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    color: var(--m-ink-sub) !important;
+    letter-spacing: 0.05em !important;
+    text-transform: uppercase !important;
+  }
+
+  /* ── Filter rows: label+val atas, slider bawah ── */
+  .filter-row {
+    display: grid !important;
+    grid-template:
+      "label val"
+      "slider slider"
+      / 1fr auto !important;
+    gap: 5px 0 !important;
+    align-items: center !important;
+  }
+  .filter-label {
+    grid-area: label !important;
+    font-family: var(--m-font) !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    color: var(--m-ink) !important;
+    width: auto !important;
+  }
+  .filter-val {
+    grid-area: val !important;
+    font-family: var(--m-font) !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    color: var(--m-ink) !important;
+    width: auto !important;
+    text-align: right !important;
+  }
+  .filter-row input[type="range"] {
+    grid-area: slider !important;
+    width: 100% !important;
+    accent-color: var(--m-ink) !important;
+    height: 4px !important;
+    cursor: pointer !important;
+  }
+
+  /* ── AI Caption section ── */
+  #panel-caption .caption-box {
+    border-radius: var(--r-small) !important;
+    border: var(--border-line) !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+  }
+  #panel-caption .caption-box textarea {
+    font-family: var(--m-font) !important;
+    font-size: 13px !important;
+    color: var(--m-ink) !important;
+    background: var(--m-bg) !important;
+    border-radius: var(--r-small) var(--r-small) 0 0 !important;
+    padding: 12px 14px !important;
+    line-height: 1.5 !important;
+    min-height: 90px !important;
+  }
+  #panel-caption .caption-actions {
+    background: transparent !important;
+    border-top: var(--border-line) !important;
+    padding: 10px 12px !important;
+  }
+  /* Generate ulang → full-width CTA button */
+  .gen-btn {
+    width: 100% !important;
+    height: 44px !important;
+    border-radius: var(--r-small) !important;
+    background: var(--m-ink) !important;
+    color: #fff !important;
+    font-family: var(--m-font) !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    border: none !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+  }
+  .gen-btn:active { background: var(--m-brand) !important; }
+
+  /* Caption platform label (INSTAGRAM text) */
+  #captionPlatformLabel {
+    font-size: 10px !important;
+    font-weight: 700 !important;
+    color: var(--m-brand) !important;
+    letter-spacing: 0.05em !important;
+  }
+
+  /* ── Social accounts section ── */
+  #panel-caption .p3-left > div:last-child > div:first-child .section-label {
+    font-size: 14px !important;
+    font-weight: 700 !important;
+    color: var(--m-ink) !important;
+    letter-spacing: 0 !important;
+    text-transform: none !important;
+  }
+  /* Settings gear button — always visible on mobile */
+  #connectSettingsBtn {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 8px !important;
+    background: var(--m-bg) !important;
+    border: var(--border-line) !important;
+    cursor: pointer !important;
+    color: var(--m-ink-sub) !important;
+  }
+  /* Add channel button */
+  .add-channel-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    padding: 10px 16px !important;
+    border-radius: var(--r-medium) !important;
+    border: 1.5px dashed var(--m-line) !important;
+    background: var(--m-bg) !important;
+    font-family: var(--m-font) !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    color: var(--m-ink-sub) !important;
+    cursor: pointer !important;
+    width: 100% !important;
+    justify-content: center !important;
+  }
+  .add-icon {
+    font-size: 18px !important;
+    color: var(--m-brand) !important;
+    font-weight: 700 !important;
+  }
+
+  /* ── Preview section (p3-right): phone mockup ── */
+  #panel-caption .p3-right {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 14px !important;
+  }
+
+  /* Format selector: Post/Reel/Story segmented */
+  #formatSelector {
+    display: flex !important;
+    background: var(--m-bg) !important;
+    border-radius: var(--r-circle) !important;
+    padding: 3px !important;
+    gap: 0 !important;
+    width: 100% !important;
+  }
+  .fmt-selector-row {
+    display: flex !important;
+    gap: 0 !important;
+    background: var(--m-bg) !important;
+    border-radius: var(--r-circle) !important;
+    padding: 3px !important;
+  }
+  .fmt-radio-label {
+    flex: 1 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 8px 4px !important;
+    border-radius: var(--r-circle) !important;
+    font-family: var(--m-font) !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    color: var(--m-ink-sub) !important;
+    cursor: pointer !important;
+  }
+  .fmt-radio-label input[type="radio"] {
+    display: none !important;
+  }
+  /* Active radio via CSS: tidak bisa natively — JS akan tambahkan class */
+  .fmt-radio-label:has(input:checked) {
+    background: var(--m-ink) !important;
+    color: #fff !important;
+    font-weight: 700 !important;
+  }
+
+  /* Phone mockup: centered & larger */
+  .preview-wrap {
+    background: var(--m-bg) !important;
+    border-radius: var(--r-medium) !important;
+    padding: 16px !important;
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 12px !important;
+  }
+  .phone-shell {
+    width: 200px !important;
+  }
+
+  /* Hide elements not in design */
+  #livePreviewPlatformLabel { display: none !important; }
+
+  /* Geo-stitching card */
+  .stitch-card {
+    border-radius: var(--r-medium) !important;
+    background: var(--m-card) !important;
+    border: var(--border-line) !important;
+    padding: 14px !important;
+    width: 100% !important;
+  }
+
+  /* Free badge: hide on mobile (moved to header) */
+  #freeBadgeContainer { display: none !important; }
+
+  /* Section title dalam panel caption header: hide style override on desktop */
+  #panel-caption .panel-header {
+    align-items: center !important;
+    padding: 14px 16px 12px !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════
    SAFE AREA (iPhone notch & home indicator)
    ═══════════════════════════════════════════════════ */
 
