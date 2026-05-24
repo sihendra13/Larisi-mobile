@@ -494,6 +494,19 @@
       thumbObserver.observe(thumbsEl, { childList: true });
     }
 
+    // Slider fill: update background gradient sesuai nilai
+    function updateSliderFill(input) {
+      var min = parseFloat(input.min) || 0;
+      var max = parseFloat(input.max) || 100;
+      var val = parseFloat(input.value) || 0;
+      var pct = ((val - min) / (max - min)) * 100;
+      input.style.background = 'linear-gradient(to right, var(--m-ink) ' + pct + '%, var(--m-line) ' + pct + '%)';
+    }
+    document.querySelectorAll('.filter-row input[type="range"]').forEach(function(inp) {
+      updateSliderFill(inp);
+      inp.addEventListener('input', function() { updateSliderFill(inp); });
+    });
+
     // Default Dapur: chip Aset
     mobileDapurChip('aset');
 
