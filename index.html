@@ -62,6 +62,14 @@
             document.documentElement.style.visibility = 'visible';
         })();
     </script>
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#6d28d9">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Larisi">
+  <link rel="apple-touch-icon" href="Assets/icon-192.png">
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Circular+Std:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
@@ -79,6 +87,8 @@
   <link rel="stylesheet" href="src/css/bottom-bar.css">
   <link rel="stylesheet" href="src/css/monitor.css">
   <link rel="stylesheet" href="src/css/analytics.css">
+  <!-- Mobile PWA styles — harus setelah semua CSS lain agar override benar -->
+  <link rel="stylesheet" href="src/css/mobile.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
     /* Warning Banner Styles */
@@ -1138,5 +1148,122 @@
       }
     }
   </script>
+
+<!-- ═══════════════════════════════════════════════
+     MOBILE PWA ELEMENTS
+     Semua elemen ini hidden di desktop via CSS
+     ═══════════════════════════════════════════════ -->
+
+<!-- Install Banner -->
+<div id="mobile-install-banner" class="mobile-install-banner hidden">
+  <img src="Assets/logo-dashboard.png" class="mobile-install-banner-icon" alt="Larisi">
+  <div class="mobile-install-banner-text">
+    <strong>Install Larisi ke HP kamu</strong>
+    Buka seperti app, lebih cepat
+  </div>
+  <button class="mobile-install-banner-btn" onclick="mobileInstall()">Install</button>
+  <button class="mobile-install-banner-close" onclick="dismissInstallBanner()">✕</button>
+</div>
+
+<!-- Screen B Header (back button) -->
+<div id="mobile-screen-b-header" class="mobile-screen-b-header" style="display:none;">
+  <button class="mobile-back-btn" onclick="mobileShowScreenA()">
+    <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+  </button>
+  <span class="mobile-screen-b-title">Preview & Publish</span>
+</div>
+
+<!-- Bottom Tab Bar -->
+<nav class="mobile-tab-bar">
+  <div class="mobile-tab-item active" data-tab="dapur" onclick="mobileTabSwitch('dapur')">
+    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    Dapur
+  </div>
+  <div class="mobile-tab-item" data-tab="kelola" onclick="mobileTabSwitch('kelola')">
+    <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+    Kelola
+  </div>
+  <div class="mobile-tab-item" data-tab="performa" onclick="mobileTabSwitch('performa')">
+    <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+    Performa
+  </div>
+  <div class="mobile-tab-item" data-tab="profil" onclick="mobileTabSwitch('profil')">
+    <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    Profil
+  </div>
+</nav>
+
+<!-- SiLaris FAB -->
+<button class="mobile-silaris-fab" onclick="mobileOpenSiLaris(null)" title="Tanya SiLaris">🤖</button>
+
+<!-- Map Modal -->
+<div id="mobile-map-modal" class="mobile-map-modal-overlay">
+  <div class="mobile-map-modal-header">
+    <button class="mobile-map-close-btn" onclick="mobileCloseMapModal()">✕</button>
+    <span class="mobile-map-modal-title">Pilih Area Target</span>
+    <div style="width:36px"></div>
+  </div>
+  <div class="mobile-map-container" id="mobile-map-container">
+    <!-- Leaflet map dipindahkan ke sini saat modal buka via JS -->
+  </div>
+  <div class="mobile-map-footer">
+    <div class="mobile-map-reach-text" id="mobile-reach-text">Pilih area untuk lihat estimasi jangkauan</div>
+    <button class="mobile-map-apply-btn" onclick="mobileCloseMapModal()">Terapkan</button>
+  </div>
+</div>
+
+<!-- Caption Bottom Sheet -->
+<div id="mobile-caption-sheet-overlay" class="mobile-caption-sheet-overlay" onclick="mobileCloseCaptionSheet()" style="display:none;"></div>
+<div id="mobile-caption-sheet" class="mobile-caption-sheet">
+  <div class="mobile-caption-sheet-handle"></div>
+  <div class="mobile-caption-sheet-header">
+    <span class="mobile-caption-sheet-title">Edit Caption</span>
+    <button onclick="mobileCloseCaptionSheet()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--secondary);">✕</button>
+  </div>
+  <div class="mobile-caption-sheet-body">
+    <textarea
+      id="mobile-caption-textarea"
+      class="mobile-caption-textarea"
+      placeholder="Tulis caption kamu di sini..."
+      oninput="mobileCaptionUpdateCount()"
+    ></textarea>
+    <div id="mobile-caption-char-count" class="mobile-caption-char-count">0 / 2.200</div>
+  </div>
+  <div class="mobile-caption-sheet-footer">
+    <button class="mobile-caption-regen-btn" onclick="generateCaptionAI && generateCaptionAI()">🔄 Generate ulang</button>
+    <button class="mobile-caption-save-btn" onclick="mobileSaveCaption()">Simpan Caption</button>
+  </div>
+</div>
+
+<!-- SiLaris Chat Screen -->
+<div id="mobile-silaris-screen" class="mobile-silaris-screen">
+  <div class="mobile-silaris-header">
+    <button class="mobile-back-btn" onclick="mobileCloseSiLaris()">
+      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <div class="mobile-silaris-avatar">🤖</div>
+    <span class="mobile-silaris-name">SiLaris AI</span>
+  </div>
+  <div id="mobile-silaris-messages" class="mobile-silaris-messages">
+    <div class="mobile-silaris-bubble ai">
+      Halo! Saya SiLaris. Tap kampanye mana yang ingin kamu analisis, atau tanya apa saja soal iklan kamu. 💡
+    </div>
+  </div>
+  <div class="mobile-silaris-input-row">
+    <input
+      id="mobile-silaris-input"
+      class="mobile-silaris-input"
+      type="text"
+      placeholder="Tanya SiLaris..."
+      onkeydown="mobileHandleSiLarisKeydown(event)"
+    >
+    <button class="mobile-silaris-send-btn" onclick="mobileSendSiLarisMessage()">
+      <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- Mobile JS — load terakhir -->
+<script src="src/js/mobile.js"></script>
 </body>
 </html>
