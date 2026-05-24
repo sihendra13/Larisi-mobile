@@ -185,6 +185,23 @@
     </div>
   </div>
 
+  <!-- ═══ MOBILE APP HEADER (hidden on desktop) ═══ -->
+  <header id="mobile-app-header" class="mobile-app-header" aria-label="Header aplikasi">
+    <div class="m-logo" aria-hidden="true">L</div>
+    <div class="mobile-app-header__right">
+      <button class="m-icon-btn m-icon-btn--ghost" aria-label="Cari">
+        <i data-lucide="search"></i>
+      </button>
+      <button class="m-icon-btn m-icon-btn--ghost" aria-label="Notifikasi" id="mobile-bell-btn">
+        <i data-lucide="bell"></i>
+      </button>
+      <div class="m-avatar" id="mobile-avatar" style="cursor:pointer">
+        <div class="m-avatar__inner" id="mobile-user-initials">--</div>
+        <div class="m-avatar__badge"></div>
+      </div>
+    </div>
+  </header>
+
   <!-- Header -->
   <div class="header">
     <div style="min-width: 0; overflow: hidden; flex-shrink: 1;">
@@ -1211,25 +1228,39 @@
   <span class="mobile-screen-b-title">Preview & Publish</span>
 </div>
 
-<!-- Bottom Tab Bar -->
-<nav class="mobile-tab-bar">
-  <div class="mobile-tab-item active" data-tab="dapur" onclick="mobileTabSwitch('dapur')">
-    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-    Dapur
-  </div>
-  <div class="mobile-tab-item" data-tab="kelola" onclick="mobileTabSwitch('kelola')">
-    <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
-    Kelola
-  </div>
-  <div class="mobile-tab-item" data-tab="performa" onclick="mobileTabSwitch('performa')">
-    <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-    Performa
-  </div>
-  <div class="mobile-tab-item" data-tab="profil" onclick="mobileTabSwitch('profil')">
-    <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-    Profil
-  </div>
+<!-- ═══ MOBILE BOTTOM NAV — 3 tab (hidden on desktop) ═══ -->
+<nav id="mobile-bottom-nav" class="mobile-bottom-nav" role="navigation" aria-label="Navigasi utama">
+  <button class="mobile-nav-tab active" data-view="command" onclick="mobileNavSwitch('command')" aria-label="Dapur">
+    <i data-lucide="layout-grid"></i>
+    <span>Dapur</span>
+  </button>
+  <button class="mobile-nav-tab" data-view="monitor" onclick="mobileNavSwitch('monitor')" aria-label="Kelola">
+    <i data-lucide="list"></i>
+    <span>Kelola</span>
+  </button>
+  <button class="mobile-nav-tab" data-view="analytics" onclick="mobileNavSwitch('analytics')" aria-label="Performa">
+    <i data-lucide="bar-chart-3"></i>
+    <span>Performa</span>
+  </button>
 </nav>
+
+<!-- ═══ MOBILE STICKY CTA BAR (above bottom nav, Dapur only) ═══ -->
+<div id="mobile-cta-bar" class="mobile-cta-bar" aria-live="polite">
+  <div class="m-cta-fade" aria-hidden="true"></div>
+  <div class="m-cta-card">
+    <div class="m-cta-reach">
+      <div class="m-cta-label">Estimasi Jangkauan</div>
+      <div class="m-cta-value">
+        <span id="mobile-cta-reach-num">0</span> warga ·
+        <span id="mobile-cta-reach-loc">Sumbersari</span>
+      </div>
+    </div>
+    <button class="m-cta-btn" onclick="launchRadar()" aria-label="Tayangkan iklan sekarang">
+      <i data-lucide="play"></i>
+      Tayangkan
+    </button>
+  </div>
+</div>
 
 <!-- SiLaris FAB -->
 <button class="mobile-silaris-fab" onclick="mobileOpenSiLaris(null)" title="Tanya SiLaris">🤖</button>

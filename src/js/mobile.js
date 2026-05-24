@@ -53,36 +53,63 @@
   };
 
   /* ─────────────────────────────────────────────────
-     BOTTOM TAB BAR — navigasi
+     BOTTOM NAV — 3-tab (Dapur/Kelola/Performa)
+     mobileNavSwitch(view) terima 'command'|'monitor'|'analytics'
   ───────────────────────────────────────────────── */
-  window.mobileTabSwitch = function(tab) {
+  window.mobileNavSwitch = function(view) {
     if (!isMobile()) return;
 
-    // Update active tab
-    document.querySelectorAll('.mobile-tab-item').forEach(function(el) {
-      el.classList.toggle('active', el.dataset.tab === tab);
+    // Update active tab visual
+    document.querySelectorAll('.mobile-nav-tab').forEach(function(tab) {
+      tab.classList.toggle('active', tab.dataset.view === view);
     });
 
-    // FAB hanya tampil di Kelola
+    // CTA bar: hanya Dapur
+    var ctaBar = document.getElementById('mobile-cta-bar');
+    if (ctaBar) ctaBar.style.display = (view === 'command') ? 'block' : 'none';
+
+    // FAB SiLaris: hanya Kelola
     var fab = document.querySelector('.mobile-silaris-fab');
-    if (fab) fab.style.display = (tab === 'kelola') ? 'flex' : 'none';
+    if (fab) fab.style.display = (view === 'monitor') ? 'flex' : 'none';
 
-    // Delegate ke switchMenu yang sudah ada
-    var menuMap = {
-      'dapur':    'command',
-      'kelola':   'monitor',
-      'performa': 'analytics',
-      'profil':   'profil'
-    };
-    var menuKey = menuMap[tab];
-    if (menuKey && typeof switchMenu === 'function') {
-      switchMenu(menuKey);
-    }
+    // Dapur header & chips: hanya Dapur
+    var dapurHeader = document.getElementById('mobile-dapur-header');
+    var dapurChips  = document.getElementById('mobile-dapur-chips');
+    if (dapurHeader) dapurHeader.style.display = (view === 'command') ? 'block' : 'none';
+    if (dapurChips)  dapurChips.style.display  = (view === 'command') ? 'flex'  : 'none';
 
-    // Reset ke chip Aset saat pindah ke Dapur
-    if (tab === 'dapur') {
-      mobileDapurChip('aset');
+    // Delegate ke router yang sudah ada
+    if (typeof switchMenu === 'function') switchMenu(view);
+
+    // Reset ke chip Aset saat kembali ke Dapur
+    if (view === 'command') mobileDapurChip('aset');
+  };
+
+  /* Sync reach dari desktop bottom-bar → mobile CTA bar */
+  window.syncMobileCtaBar = function() {
+    var srcNum = document.getElementById('reachNum');
+    var srcLoc = document.getElementById('reachLocLabel');
+    var dstNum = document.getElementById('mobile-cta-reach-num');
+    var dstLoc = document.getElementById('mobile-cta-reach-loc');
+    if (srcNum && dstNum) dstNum.textContent = srcNum.textContent || '0';
+    if (srcLoc && dstLoc && srcLoc.textContent.trim()) {
+      dstLoc.textContent = srcLoc.textContent.trim();
     }
+  };
+
+  /* Sync avatar initials dari desktop → mobile header */
+  function _syncMobileAvatar() {
+    var src = document.getElementById('user-initials');
+    var dst = document.getElementById('mobile-user-initials');
+    if (src && dst && src.textContent.trim() !== '--') {
+      dst.textContent = src.textContent.trim();
+    }
+  }
+
+  /* Legacy — backward compat untuk kode lama yang panggil mobileTabSwitch */
+  window.mobileTabSwitch = function(tab) {
+    var map = { 'dapur': 'command', 'kelola': 'monitor', 'performa': 'analytics' };
+    if (map[tab]) mobileNavSwitch(map[tab]);
   };
 
   /* ─────────────────────────────────────────────────
@@ -433,6 +460,27 @@
     // FAB default tersembunyi — hanya muncul saat Kelola tab aktif
     var fab = document.querySelector('.mobile-silaris-fab');
     if (fab) fab.style.display = 'none';
+
+    // Default state: Dapur tab active
+    // (tidak memanggil mobileNavSwitch karena switchMenu belum tentu siap)
+    var ctaBar = document.getElementById('mobile-cta-bar');
+    if (ctaBar) ctaBar.style.display = 'block';
+
+    // Sync avatar dari desktop initials
+    _syncMobileAvatar();
+
+    // Observasi perubahan reach → sync ke CTA bar
+    var reachEl = document.getElementById('reachNum');
+    if (reachEl) {
+      var reachObserver = new MutationObserver(function() { syncMobileCtaBar(); });
+      reachObserver.observe(reachEl, { childList: true, subtree: true, characterData: true });
+    }
+    // Observasi user-initials → sync avatar
+    var initialsEl = document.getElementById('user-initials');
+    if (initialsEl) {
+      var avatarObserver = new MutationObserver(_syncMobileAvatar);
+      avatarObserver.observe(initialsEl, { childList: true, characterData: true });
+    }
 
     // Default Dapur: chip Aset
     mobileDapurChip('aset');

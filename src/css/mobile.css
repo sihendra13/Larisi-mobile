@@ -4,6 +4,197 @@
    Desktop tidak terpengaruh sama sekali
    ═══════════════════════════════════════════════════ */
 
+/* ─────────────────────────────────────────────────
+   LAYOUT SHELL 1 — APP HEADER
+   Default: hidden (desktop pakai .header)
+   Mobile: tampil, desktop .header disembunyikan
+───────────────────────────────────────────────── */
+#mobile-app-header {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  /* Sembunyikan desktop header, tampilkan mobile header */
+  .header { display: none !important; }
+
+  #mobile-app-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px var(--sp-20);
+    background: var(--m-card);
+    border-bottom: var(--border-line);
+    flex-shrink: 0;
+    height: 56px;
+    position: sticky;
+    top: 0;
+    z-index: 200;
+  }
+
+  .mobile-app-header__right {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-8);
+  }
+}
+
+/* ─────────────────────────────────────────────────
+   LAYOUT SHELL 2 — BOTTOM NAV (3 tab)
+   Default: hidden (desktop pakai sidebar)
+   78px tall, 22px bottom safe-area padding
+───────────────────────────────────────────────── */
+.mobile-bottom-nav {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .mobile-bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 78px;
+    background: var(--m-card);
+    border-top: var(--border-line);
+    z-index: 900;
+    padding-bottom: 22px; /* home indicator safe area */
+  }
+
+  .mobile-nav-tab {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding-top: 10px;
+    gap: 3px;
+    background: none;
+    border: none;
+    color: var(--m-ink-sub);
+    font-family: var(--m-font);
+    font-size: var(--text-micro);
+    font-weight: 500;
+    cursor: pointer;
+    transition: color 150ms ease;
+    /* 44px min hit area */
+    min-height: 44px;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .mobile-nav-tab svg {
+    width: 22px;
+    height: 22px;
+    stroke-width: 1.6;
+  }
+
+  .mobile-nav-tab.active {
+    color: var(--m-brand);
+    font-weight: 600;
+  }
+
+  .mobile-nav-tab.active svg {
+    stroke-width: 2;
+  }
+}
+
+/* ─────────────────────────────────────────────────
+   LAYOUT SHELL 3 — STICKY CTA BAR
+   Floats at bottom: 78px (above bottom nav)
+   Hanya tampil di Dapur (view-command)
+   pointer-events: none pada wrapper agar tidak
+   block scroll; .m-cta-card punya pointer-events: auto
+───────────────────────────────────────────────── */
+.mobile-cta-bar {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .mobile-cta-bar {
+    display: block;
+    position: fixed;
+    bottom: 78px;
+    left: 0;
+    right: 0;
+    z-index: 500;
+    pointer-events: none;
+  }
+
+  /* Gradient fade above the bar */
+  .m-cta-fade {
+    height: 40px;
+    background: linear-gradient(to bottom, transparent, var(--m-bg));
+    pointer-events: none;
+  }
+
+  /* White card strip */
+  .m-cta-card {
+    background: var(--m-card);
+    border-top: var(--border-line);
+    box-shadow: var(--shadow-sticky);
+    padding: 10px var(--sp-20);
+    display: flex;
+    align-items: center;
+    gap: var(--sp-12);
+    pointer-events: auto;
+  }
+
+  .m-cta-reach {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .m-cta-label {
+    font-size: var(--text-micro);
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--m-ink-sub);
+    margin-bottom: 2px;
+  }
+
+  .m-cta-value {
+    font-size: var(--text-body-m);
+    font-weight: 600;
+    color: var(--m-ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Tayangkan button */
+  .m-cta-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--m-ink);
+    color: #fff;
+    border: none;
+    border-radius: var(--r-small);
+    padding: 12px 18px;
+    font-family: var(--m-font);
+    font-size: var(--text-body-m);
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+    min-height: 44px;
+    transition: background 150ms;
+    letter-spacing: -0.01em;
+  }
+  .m-cta-btn:active { background: var(--m-brand); }
+  .m-cta-btn svg {
+    width: 13px; height: 13px;
+    fill: currentColor;
+    stroke: none;
+  }
+
+  /* Scroll area bawah: 200px padding bersihkan CTA + BottomNav */
+  .panels {
+    padding-bottom: 200px !important;
+  }
+}
+
 @media (max-width: 768px) {
 
   /* ─── Font: aktifkan Inter (mobile design system) ─── */
@@ -932,19 +1123,10 @@
     padding: 14px 18px;
   }
 
-  /* Bottom bar: selalu tampil di Dapur */
+  /* Desktop bottom-bar: disembunyikan di mobile
+     Digantikan oleh #mobile-cta-bar (fixed floating) */
   .bottom-bar {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    padding: 10px 16px;
-    padding-bottom: calc(68px + env(safe-area-inset-bottom));
-    height: auto;
-    border-top: 1px solid var(--border);
-    background: var(--white);
-    flex-shrink: 0;
-    border-radius: 0 !important;
-    box-shadow: 0 -2px 12px rgba(0,0,0,0.06);
+    display: none !important;
   }
 
   /* Elemen Screen A/B lama — tidak dipakai lagi */
