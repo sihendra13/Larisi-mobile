@@ -88,6 +88,8 @@
   <link rel="stylesheet" href="src/css/bottom-bar.css">
   <link rel="stylesheet" href="src/css/monitor.css">
   <link rel="stylesheet" href="src/css/analytics.css">
+  <!-- Atom components (mobile design system) -->
+  <link rel="stylesheet" href="src/css/components.css">
   <!-- Mobile PWA styles — harus setelah semua CSS lain agar override benar -->
   <link rel="stylesheet" href="src/css/mobile.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -1301,5 +1303,8 @@
 
 <!-- Mobile JS — load terakhir -->
 <script src="src/js/mobile.js"></script>
+<!-- Lucide icons (vanilla) — replace <i data-lucide="name"> dengan SVG -->
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<script>document.addEventListener('DOMContentLoaded', function() { lucide.createIcons(); });</script>
 </body>
 </html>

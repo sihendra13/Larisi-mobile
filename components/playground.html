@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Larisi Mobile — Component Playground</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../src/css/tokens.css">
+  <link rel="stylesheet" href="../src/css/components.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--m-font);
+      background: var(--m-bg);
+      color: var(--m-ink);
+      -webkit-font-smoothing: antialiased;
+      padding: 24px 20px 60px;
+    }
+    h1 {
+      font-size: 22px; font-weight: 700; margin-bottom: 4px;
+      letter-spacing: -0.02em;
+    }
+    .build-info {
+      font-size: 11px; color: var(--m-ink-sub);
+      margin-bottom: 32px;
+    }
+    /* Section */
+    .section { margin-bottom: 40px; }
+    .section-title {
+      font-size: 10px; font-weight: 700; letter-spacing: 0.07em;
+      text-transform: uppercase; color: var(--m-ink-sub);
+      margin-bottom: 14px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--m-line);
+    }
+    .row {
+      display: flex; flex-wrap: wrap; align-items: center;
+      gap: 10px; margin-bottom: 10px;
+    }
+    .col { display: flex; flex-direction: column; gap: 10px; }
+    label {
+      font-size: 11px; color: var(--m-ink-sub); font-weight: 500;
+      display: block; margin-bottom: 4px;
+    }
+    /* Stat grid */
+    .stat-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    /* Toggle row demo */
+    .toggle-row {
+      display: flex; align-items: flex-start; gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--m-line);
+    }
+    .toggle-row:last-child { border-bottom: none; }
+    .toggle-row__text { flex: 1; }
+    .toggle-row__title {
+      font-size: 13px; font-weight: 600; color: var(--m-ink);
+      margin-bottom: 2px;
+    }
+    .toggle-row__sub {
+      font-size: 11px; color: var(--m-ink-sub); line-height: 1.4;
+    }
+    .toggle-row__icon {
+      width: 32px; height: 32px; border-radius: 10px;
+      background: var(--m-bg); border: var(--border-line);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    /* Card demo content */
+    .card-demo-inner {
+      font-size: 13px; color: var(--m-ink-sub); line-height: 1.5;
+    }
+    .card-demo-inner strong { color: var(--m-ink); font-weight: 600; }
+  </style>
+</head>
+<body>
+
+  <h1>Component Playground</h1>
+  <p class="build-info">Larisi Mobile Design System · atom components</p>
+
+  <!-- ─── LOGO TILE ─── -->
+  <div class="section">
+    <div class="section-title">Logo Tile</div>
+    <div class="row">
+      <div>
+        <label>sm (28px)</label>
+        <div class="m-logo m-logo--sm">L</div>
+      </div>
+      <div>
+        <label>default (34px)</label>
+        <div class="m-logo">L</div>
+      </div>
+      <div>
+        <label>lg (42px)</label>
+        <div class="m-logo m-logo--lg">L</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── CARD ─── -->
+  <div class="section">
+    <div class="section-title">Card</div>
+    <div class="col">
+      <div>
+        <label>Default (border only)</label>
+        <div class="m-card">
+          <div class="card-demo-inner">
+            <strong>Aset Kreatif</strong><br>
+            Maksimal 5 Foto atau 1 Video
+          </div>
+        </div>
+      </div>
+      <div>
+        <label>Elevated (shadow)</label>
+        <div class="m-card m-card--elevated">
+          <div class="card-demo-inner">
+            <strong>CTABar</strong><br>
+            0 warga · Sumbersari
+          </div>
+        </div>
+      </div>
+      <div>
+        <label>Medium radius</label>
+        <div class="m-card m-card--medium">
+          <div class="card-demo-inner">border-radius 16px</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── ICON BUTTON ─── -->
+  <div class="section">
+    <div class="section-title">Icon Button</div>
+    <div class="row">
+      <div>
+        <label>Default</label>
+        <button class="m-icon-btn" aria-label="Notifikasi">
+          <i data-lucide="bell"></i>
+        </button>
+      </div>
+      <div>
+        <label>Search</label>
+        <button class="m-icon-btn" aria-label="Cari">
+          <i data-lucide="search"></i>
+        </button>
+      </div>
+      <div>
+        <label>Settings</label>
+        <button class="m-icon-btn" aria-label="Pengaturan">
+          <i data-lucide="settings"></i>
+        </button>
+      </div>
+      <div>
+        <label>Ghost</label>
+        <button class="m-icon-btn m-icon-btn--ghost" aria-label="More">
+          <i data-lucide="more-horizontal"></i>
+        </button>
+      </div>
+      <div>
+        <label>Brand fill</label>
+        <button class="m-icon-btn m-icon-btn--brand" aria-label="SiLaris">
+          <i data-lucide="sparkles"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── TOGGLE ─── -->
+  <div class="section">
+    <div class="section-title">Toggle</div>
+    <div class="m-card">
+      <div class="toggle-row">
+        <div class="toggle-row__icon">
+          <i data-lucide="user" style="width:16px;height:16px;stroke-width:1.6;color:var(--m-ink-sub)"></i>
+        </div>
+        <div class="toggle-row__text">
+          <div class="toggle-row__title">Warga Sekitar</div>
+          <div class="toggle-row__sub">Penduduk lokal di sekitar lokasi yang kamu pilih.</div>
+        </div>
+        <button class="m-toggle on" onclick="this.classList.toggle('on')" aria-label="Toggle warga">
+          <span class="m-toggle__knob"></span>
+        </button>
+      </div>
+      <div class="toggle-row">
+        <div class="toggle-row__icon">
+          <i data-lucide="map-pin" style="width:16px;height:16px;stroke-width:1.6;color:var(--m-ink-sub)"></i>
+        </div>
+        <div class="toggle-row__text">
+          <div class="toggle-row__title">Pengunjung</div>
+          <div class="toggle-row__sub">Orang yang baru saja melewati lokasi ini.</div>
+        </div>
+        <button class="m-toggle" onclick="this.classList.toggle('on')" aria-label="Toggle pengunjung">
+          <span class="m-toggle__knob"></span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── PILL ─── -->
+  <div class="section">
+    <div class="section-title">Pill</div>
+    <div class="col">
+      <div>
+        <label>Step pills (Dapur Konten flow)</label>
+        <div class="row">
+          <span class="m-pill m-pill--done">
+            <span class="m-pill__num">✓</span> Aset
+          </span>
+          <span class="m-pill m-pill--done">
+            <span class="m-pill__num">✓</span> Audiens
+          </span>
+          <span class="m-pill m-pill--brand">
+            <span class="m-pill__num">3</span> AI
+          </span>
+          <span class="m-pill">
+            <span class="m-pill__num">4</span> Preview
+          </span>
+        </div>
+      </div>
+      <div>
+        <label>Status pills</label>
+        <div class="row">
+          <span class="m-pill m-pill--green">● Berjalan</span>
+          <span class="m-pill">Diarsipkan</span>
+          <span class="m-pill m-pill--warn">Terjadwal</span>
+        </div>
+      </div>
+      <div>
+        <label>Filter pills</label>
+        <div class="row">
+          <span class="m-pill m-pill--active">Semua</span>
+          <span class="m-pill">Berjalan</span>
+          <span class="m-pill">Diarsipkan</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── STAT CARD ─── -->
+  <div class="section">
+    <div class="section-title">Stat Card (2×2 grid)</div>
+    <div class="stat-grid">
+      <div class="m-stat-card m-stat-card--brand">
+        <div class="m-stat-card__eyebrow">Total Reach</div>
+        <div class="m-stat-card__value">110</div>
+        <div class="m-stat-card__caption">Dari 2 iklan bulan ini</div>
+      </div>
+      <div class="m-stat-card m-stat-card--green">
+        <div class="m-stat-card__eyebrow">Iklan Berjalan</div>
+        <div class="m-stat-card__value">2</div>
+        <div class="m-stat-card__caption">Bulan pertama, terus semangat!</div>
+      </div>
+      <div class="m-stat-card m-stat-card--orange">
+        <div class="m-stat-card__eyebrow">Performa Konten</div>
+        <div class="m-stat-card__value">0%</div>
+        <div class="m-stat-card__caption">Belum ada data ER</div>
+      </div>
+      <div class="m-stat-card m-stat-card--blue">
+        <div class="m-stat-card__eyebrow">Iklan Berbayar</div>
+        <div class="m-stat-card__value">0</div>
+        <div class="m-stat-card__caption">Semua reach dari konten organik</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── AVATAR TILE ─── -->
+  <div class="section">
+    <div class="section-title">Avatar Tile</div>
+    <div class="row">
+      <div>
+        <label>sm (28px)</label>
+        <div class="m-avatar m-avatar--sm">
+          <div class="m-avatar__inner">N</div>
+        </div>
+      </div>
+      <div>
+        <label>default (36px)</label>
+        <div class="m-avatar">
+          <div class="m-avatar__inner">N</div>
+          <div class="m-avatar__badge"></div>
+        </div>
+      </div>
+      <div>
+        <label>md (44px)</label>
+        <div class="m-avatar m-avatar--md">
+          <div class="m-avatar__inner">N</div>
+          <div class="m-avatar__badge"></div>
+        </div>
+      </div>
+      <div>
+        <label>lg (52px)</label>
+        <div class="m-avatar m-avatar--lg">
+          <div class="m-avatar__inner">N</div>
+          <div class="m-avatar__badge"></div>
+        </div>
+      </div>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <div>
+        <label>Dalam AppHeader context</label>
+        <div class="m-card" style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;">
+          <div class="m-logo">L</div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <button class="m-icon-btn m-icon-btn--ghost" aria-label="Cari">
+              <i data-lucide="search"></i>
+            </button>
+            <button class="m-icon-btn m-icon-btn--ghost" aria-label="Notifikasi">
+              <i data-lucide="bell"></i>
+            </button>
+            <div class="m-avatar">
+              <div class="m-avatar__inner">N</div>
+              <div class="m-avatar__badge"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── COMBINED: Dapur Konten preview ─── -->
+  <div class="section">
+    <div class="section-title">Combined — Dapur Konten Step Row</div>
+    <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;">
+      <span class="m-pill m-pill--done">
+        <span class="m-pill__num">✓</span> Aset
+      </span>
+      <span class="m-pill m-pill--done">
+        <span class="m-pill__num">✓</span> Audiens
+      </span>
+      <span class="m-pill m-pill--brand">
+        <span class="m-pill__num">3</span> AI
+      </span>
+      <span class="m-pill">
+        <span class="m-pill__num">4</span> Preview
+      </span>
+    </div>
+  </div>
+
+  <!-- Lucide icons -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <script>lucide.createIcons();</script>
+</body>
+</html>

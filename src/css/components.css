@@ -1,0 +1,330 @@
+/* ═══════════════════════════════════════════════════
+   LARISI MOBILE — Atom Components
+   Semua class .m-* pakai token --m- dari tokens.css.
+   Desktop tidak terpengaruh.
+   ═══════════════════════════════════════════════════ */
+
+/* ─────────────────────────────────────────────────
+   CARD
+   Usage: <div class="m-card"> … </div>
+   Variants: m-card--elevated (shadow), m-card--flush (no padding)
+───────────────────────────────────────────────── */
+.m-card {
+  background: var(--m-card);
+  border: var(--border-line);
+  border-radius: var(--r-large);
+  padding: var(--sp-16);
+}
+.m-card--elevated {
+  box-shadow: var(--shadow-elevated);
+  border-color: transparent;
+}
+.m-card--flush {
+  padding: 0;
+  overflow: hidden;
+}
+.m-card--medium {
+  border-radius: var(--r-medium);
+}
+
+/* ─────────────────────────────────────────────────
+   ICON BUTTON
+   Usage: <button class="m-icon-btn" aria-label="…">
+            <i data-lucide="bell"></i>
+          </button>
+   36px visual / 44px hit-area
+───────────────────────────────────────────────── */
+.m-icon-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--r-circle);
+  border: var(--border-line);
+  background: var(--m-card);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--m-ink);
+  flex-shrink: 0;
+  position: relative;
+  transition: background 150ms ease;
+  padding: 0;
+}
+/* 44px invisible hit area */
+.m-icon-btn::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: var(--r-circle);
+}
+.m-icon-btn:active  { background: var(--m-bg); }
+.m-icon-btn svg     { width: 18px; height: 18px; stroke-width: 1.6; }
+
+.m-icon-btn--ghost  { border-color: transparent; background: transparent; }
+.m-icon-btn--brand  { background: var(--m-brand); border-color: var(--m-brand); color: #fff; }
+.m-icon-btn--brand:active { filter: brightness(0.9); }
+
+/* ─────────────────────────────────────────────────
+   TOGGLE (iOS-style switch)
+   Usage: <button class="m-toggle [on]" onclick="this.classList.toggle('on')">
+            <span class="m-toggle__knob"></span>
+          </button>
+   200ms ease transition
+───────────────────────────────────────────────── */
+.m-toggle {
+  width: 44px;
+  height: 26px;
+  border-radius: var(--r-circle);
+  background: #E2E2E8;
+  position: relative;
+  cursor: pointer;
+  border: none;
+  padding: 0;
+  flex-shrink: 0;
+  transition: background 200ms ease;
+}
+.m-toggle.on {
+  background: var(--m-brand);
+}
+.m-toggle__knob {
+  width: 22px;
+  height: 22px;
+  border-radius: var(--r-circle);
+  background: #fff;
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  transition: left 200ms ease;
+  box-shadow: 0 1px 4px rgba(0,0,0,.2);
+  pointer-events: none;
+}
+.m-toggle.on .m-toggle__knob {
+  left: 20px;
+}
+
+/* ─────────────────────────────────────────────────
+   PILL (rounded chip)
+   Usage: <span class="m-pill [m-pill--active|brand|done|green]">
+            <span class="m-pill__num">1</span> Label
+          </span>
+   Variants: default · active (ink fill) · brand (purple) · done (checkmark) · green · warn
+───────────────────────────────────────────────── */
+.m-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-6);
+  padding: 5px 12px;
+  border-radius: var(--r-circle);
+  border: 1.5px solid var(--m-line);
+  background: var(--m-card);
+  color: var(--m-ink-sub);
+  font-family: var(--m-font);
+  font-size: var(--text-body-s);
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+  transition: background 150ms, border-color 150ms, color 150ms;
+  line-height: 1;
+}
+/* Step number badge */
+.m-pill__num {
+  width: 18px;
+  height: 18px;
+  border-radius: var(--r-circle);
+  background: var(--m-bg);
+  color: var(--m-ink-sub);
+  font-size: 10px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+/* Active — ink (black) fill */
+.m-pill--active {
+  background: var(--m-ink);
+  border-color: var(--m-ink);
+  color: #fff;
+}
+.m-pill--active .m-pill__num {
+  background: rgba(255,255,255,0.2);
+  color: #fff;
+}
+/* Brand — purple fill */
+.m-pill--brand {
+  background: var(--m-brand);
+  border-color: var(--m-brand);
+  color: #fff;
+}
+.m-pill--brand .m-pill__num {
+  background: rgba(255,255,255,0.2);
+  color: #fff;
+}
+/* Done — brand-soft bg + brand border */
+.m-pill--done {
+  background: var(--m-brand-soft);
+  border-color: var(--m-brand);
+  color: var(--m-brand);
+}
+.m-pill--done .m-pill__num {
+  background: var(--m-brand);
+  color: #fff;
+}
+/* Green — positive status */
+.m-pill--green {
+  background: var(--m-green-soft);
+  border-color: var(--m-green);
+  color: var(--m-green);
+}
+/* Warn */
+.m-pill--warn {
+  background: var(--m-warn-bg);
+  border-color: var(--m-warn-border);
+  color: var(--m-warn-text);
+}
+
+/* ─────────────────────────────────────────────────
+   STAT CARD
+   Usage: <div class="m-stat-card m-stat-card--brand">
+            <div class="m-stat-card__eyebrow">TOTAL REACH</div>
+            <div class="m-stat-card__value">12.4k</div>
+            <div class="m-stat-card__caption">…</div>
+          </div>
+   Accent color via modifier class
+───────────────────────────────────────────────── */
+.m-stat-card {
+  background: var(--m-card);
+  border: var(--border-line);
+  border-radius: var(--r-medium);
+  padding: var(--sp-14) var(--sp-16);
+  position: relative;
+  overflow: hidden;
+}
+/* 3px top accent bar */
+.m-stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--m-stat-accent, var(--m-brand));
+  border-radius: var(--r-xs) var(--r-xs) 0 0;
+}
+.m-stat-card__eyebrow {
+  font-size: var(--text-micro);
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--m-ink-sub);
+  margin-bottom: var(--sp-6);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+}
+.m-stat-card__value {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--m-ink);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  margin-bottom: var(--sp-4);
+}
+.m-stat-card__caption {
+  font-size: var(--text-caption);
+  color: var(--m-ink-sub);
+  line-height: 1.4;
+}
+/* Accent variants */
+.m-stat-card--brand  { --m-stat-accent: var(--m-brand);  }
+.m-stat-card--green  { --m-stat-accent: var(--m-green);  }
+.m-stat-card--orange { --m-stat-accent: var(--m-orange); }
+.m-stat-card--blue   { --m-stat-accent: var(--m-blue);   }
+
+/* ─────────────────────────────────────────────────
+   AVATAR TILE
+   Usage: <div class="m-avatar [m-avatar--sm|lg]">
+            <div class="m-avatar__inner">N</div>
+            <div class="m-avatar__badge">…</div>  <!-- optional -->
+          </div>
+   IG gradient ring, letter initial inside, optional platform badge
+───────────────────────────────────────────────── */
+.m-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--r-circle);
+  background: var(--m-ig);
+  padding: 2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+}
+.m-avatar__inner {
+  width: 100%;
+  height: 100%;
+  border-radius: var(--r-circle);
+  background: var(--m-brand-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--m-font);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--m-brand);
+  border: 2px solid #fff;
+}
+/* Size variants */
+.m-avatar--sm { width: 28px; height: 28px; }
+.m-avatar--sm .m-avatar__inner { font-size: 10px; }
+
+.m-avatar--md { width: 44px; height: 44px; }
+.m-avatar--md .m-avatar__inner { font-size: 16px; }
+
+.m-avatar--lg { width: 52px; height: 52px; }
+.m-avatar--lg .m-avatar__inner { font-size: 18px; }
+
+/* Platform badge (small icon bottom-right) */
+.m-avatar__badge {
+  position: absolute;
+  bottom: -1px;
+  right: -1px;
+  width: 14px;
+  height: 14px;
+  border-radius: var(--r-circle);
+  border: 2px solid #fff;
+  background: var(--m-ig);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.m-avatar--md .m-avatar__badge,
+.m-avatar--lg .m-avatar__badge {
+  width: 18px;
+  height: 18px;
+}
+
+/* ─────────────────────────────────────────────────
+   LOGO TILE — "L" brand mark
+   Usage: <div class="m-logo [m-logo--sm|lg]">L</div>
+───────────────────────────────────────────────── */
+.m-logo {
+  width: 34px;
+  height: 34px;
+  border-radius: 28%;
+  background: var(--m-brand-grad);
+  box-shadow: var(--shadow-logo);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--m-font);
+  font-size: 17px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.04em;
+  flex-shrink: 0;
+  user-select: none;
+}
+.m-logo--sm { width: 28px; height: 28px; font-size: 14px; }
+.m-logo--lg { width: 42px; height: 42px; font-size: 21px; }
