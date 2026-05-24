@@ -1,0 +1,70 @@
+/* ─── AI Editor right panel body ─── */
+.p3-body { display: flex; flex-direction: row; gap: 0; overflow: hidden; flex: 1; min-height: 0; }
+.p3-left { padding: 14px 18px; display: flex; flex-direction: column; gap: 32px; overflow-y: auto; flex: 1; border-right: 1px solid var(--border); min-width: 0; }
+.p3-right { padding: 14px 18px; display: flex; flex-direction: column; gap: 14px; overflow-y: auto; flex: 1; min-width: 0; }
+.p3-left::-webkit-scrollbar, .p3-right::-webkit-scrollbar { width: 4px; }
+.p3-left::-webkit-scrollbar-thumb, .p3-right::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+.p3-body::-webkit-scrollbar { width: 4px; }
+.p3-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* Filter row */
+.filter-row { display: flex; align-items: center; gap: 10px; }
+.filter-label { font-size: 12px; color: var(--secondary); width: 72px; flex-shrink: 0; font-weight: 500; }
+.filter-val { font-size: 12px; font-weight: 700; color: var(--near-black); width: 38px; text-align: right; flex-shrink: 0; }
+
+/* Caption box */
+.caption-box {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-btn);
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+}
+.caption-box textarea {
+  width: 100%; border: none; outline: none; resize: none;
+  font-family: var(--font); font-size: 13px;
+  color: var(--near-black); padding: 12px 14px;
+  background: var(--white); line-height: 1.6; min-height: 80px;
+}
+.caption-box textarea::placeholder { color: var(--disabled); }
+.caption-actions {
+  border-top: 1px solid var(--border);
+  padding: 8px 12px;
+  display: flex; gap: 6px; align-items: center;
+  justify-content: flex-start;
+  background: var(--surface);
+}
+.tone-btn {
+  font-size: 11px; padding: 4px 10px;
+  border-radius: var(--radius-badge);
+  border: 1px solid var(--border);
+  background: var(--white);
+  cursor: pointer; color: var(--secondary);
+  font-family: var(--font); font-weight: 500;
+  transition: .15s;
+  box-shadow: var(--shadow-card);
+}
+.tone-btn:hover { border-color: var(--near-black); color: var(--near-black); }
+.tone-btn.active {
+  background: var(--near-black);
+  border-color: var(--near-black);
+  color: var(--white);
+  font-weight: 700;
+}
+.gen-btn {
+  font-size: 11px; padding: 7px 16px;
+  border-radius: 8px;
+  border: none;
+  background: var(--near-black);
+  color: var(--white); cursor: pointer;
+  font-family: var(--font); font-weight: 700;
+  transition: background .15s;
+  letter-spacing: -0.1px;
+  white-space: nowrap;
+}
+.gen-btn:hover { background: #791ADB; }
+
+/* Cap platform label */
+#captionPlatformLabel { font-size: 10px; font-weight: 700; color: #791ADB; letter-spacing: .5px; display: flex; align-items: center; gap: 4px; }
+
+/* Tone row */
+.tone-row { display: flex; gap: 6px; flex-wrap: wrap; }

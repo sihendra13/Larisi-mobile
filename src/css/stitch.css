@@ -1,0 +1,19 @@
+/* ─── Stitch Card ─── */
+.stitch-card {
+  background: #fff0f3;
+  border: 1px solid #ffc1cc;
+  border-radius: var(--radius-card);
+  padding: 12px 14px;
+}
+.stitch-top { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+.stitch-icon {
+  width: 20px; height: 20px;
+  border-radius: 6px;
+  background: var(--rausch);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.stitch-icon svg { width: 11px; height: 11px; stroke: #fff; fill: none; stroke-width: 2; }
+.stitch-title { font-size: 11px; font-weight: 700; color: var(--rausch); letter-spacing: .5px; }
+.stitch-desc { font-size: 11px; color: var(--near-black); line-height: 1.5; }
+.stitch-highlight { color: var(--rausch); font-weight: 700; }

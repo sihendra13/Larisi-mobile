@@ -1,0 +1,42 @@
+/* ─── Upload Zone ─── */
+.upload-zone {
+  border: 1.5px dashed var(--border);
+  border-radius: var(--radius-card);
+  padding: 24px 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color .2s, background .2s;
+  background: #fafafa;
+}
+.upload-zone:hover { border-color: #791ADB; background: #faf5ff; }
+
+.plus-icon {
+  width: 40px; height: 40px;
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 10px;
+  box-shadow: var(--shadow-card);
+}
+.plus-icon svg { width: 18px; height: 18px; stroke: var(--near-black); fill: none; stroke-width: 1.5; }
+
+.upload-label { font-size: 13px; font-weight: 700; color: var(--near-black); }
+.upload-caption { font-size: 12px; color: var(--secondary); margin-top: 3px; }
+
+.uploaded-thumbs { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-start; }
+.thumb-item { position: relative; width: 80px; height: 80px; flex-shrink: 0; }
+.thumb-item img, .thumb-item video { width: 100%; height: 100%; object-fit: cover; border-radius: 12px; display: block; }
+.thumb-badge { position: absolute; bottom: 6px; left: 6px; background: #791ADB; color: #fff; font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 20px; letter-spacing: 0.3px; }
+.thumb-x { position: absolute; top: 5px; right: 5px; width: 18px; height: 18px; background: rgba(0,0,0,0.55); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; border: none; }
+.thumb-x svg { width: 10px; height: 10px; stroke: #fff; stroke-width: 2.5; }
+.thumb-add { width: 80px; height: 80px; border-radius: 12px; border: 2px dashed #c1c1c1; background: #fafafa; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: border-color .15s; }
+.thumb-add:hover { border-color: #791ADB; }
+.thumb-add svg { width: 22px; height: 22px; stroke: #c1c1c1; stroke-width: 2; }
+
+/* ─── Section Label ─── */
+.section-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--secondary);
+  letter-spacing: 0.6px;
+}

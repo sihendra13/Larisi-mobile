@@ -1,0 +1,129 @@
+/* ─── Platform Chips ─── */
+.chip-area { padding: 12px 18px; border-bottom: 1px solid var(--border); flex-shrink: 0; display: flex; flex-direction: column; gap: 10px; }
+.chip-row { display: flex; flex-direction: column; gap: 5px; }
+.chip-row-label {
+  font-size: 10px; font-weight: 700;
+  color: var(--secondary); text-transform: uppercase; letter-spacing: .5px;
+}
+.chips { display: flex; gap: 6px; flex-wrap: wrap; }
+
+/* Preview chip — single select, near-black border */
+.chip-preview {
+  display: flex; align-items: center; gap: 5px;
+  padding: 5px 12px;
+  border-radius: var(--radius-badge);
+  border: 1px solid var(--border);
+  font-size: 12px; font-weight: 500;
+  cursor: pointer;
+  color: var(--secondary);
+  background: var(--white);
+  user-select: none;
+  transition: .15s;
+  box-shadow: var(--shadow-card);
+}
+.chip-preview:hover { border-color: #aaa; color: var(--near-black); }
+.chip-preview.active {
+  background: var(--near-black);
+  border-color: var(--near-black);
+  color: var(--white);
+}
+
+/* Channel chip — multi select, rausch accent */
+.chip-channel {
+  display: flex; align-items: center; gap: 4px;
+  padding: 3px 9px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  font-size: 11px; font-weight: 500;
+  cursor: pointer;
+  color: var(--secondary);
+  background: var(--white);
+  user-select: none;
+  transition: .15s;
+  white-space: nowrap;
+}
+.chip-channel:hover { border-color: var(--rausch); color: var(--rausch); }
+.chip-channel.active {
+  background: #f3ebff;
+  border-color: #791ADB;
+  color: #791ADB;
+}
+.ch-label { flex-shrink: 0; }
+.ch-badge { font-size: 9px; font-weight: 700; color: #791ADB; background: #f3ebff; padding: 1px 5px; border-radius: 10px; margin-left: 2px; min-width: 0; }
+.chip-channel.active .ch-badge { color: #fff; background: rgba(255,255,255,0.25); }
+
+.chip-divider { height: 1px; background: var(--border); margin: 2px 0; }
+
+.plat-icon { display: inline-block; vertical-align: middle; margin-right: 3px; }
+
+/* ─── Connect Channels — Add button ────────────────────────── */
+.add-channel-btn {
+  display: flex; align-items: center; gap: 0;
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  border: 1.5px dashed #ccc;
+  background: var(--white);
+  cursor: pointer;
+  font-size: 18px; font-weight: 300; color: #aaa;
+  justify-content: center;
+  transition: all .2s;
+  overflow: hidden;
+  white-space: nowrap;
+  padding: 0;
+}
+.add-channel-btn .add-label {
+  display: none;
+  font-size: 11px; font-weight: 600;
+  margin-left: 6px;
+  color: #fff;
+}
+.add-channel-btn .add-icon {
+  font-size: 18px; font-weight: 300;
+  line-height: 1;
+  transition: color .2s;
+}
+.add-channel-btn:hover {
+  background: #fff !important;
+  border-color: #791ADB !important;
+  border-style: solid !important;
+  color: #791ADB !important;
+  width: auto;
+  padding: 0 12px;
+  border-radius: 20px;
+  gap: 0;
+  box-shadow: 0 2px 10px rgba(121,26,219,0.18) !important;
+}
+.add-channel-btn:hover .add-icon { color: #791ADB; }
+.add-channel-btn:hover .add-label { display: inline; color: #791ADB; }
+
+/* ─── Connect Channels — Connected account avatar ──────────── */
+.connected-avatar-wrap {
+  position: relative;
+  width: 36px; height: 36px;
+  flex-shrink: 0;
+  cursor: default;
+}
+.connected-avatar {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700; color: #fff;
+  overflow: hidden;
+  border: 2px solid var(--white);
+  box-shadow: 0 0 0 1.5px #e5e7eb;
+}
+.connected-avatar img {
+  width: 100%; height: 100%; object-fit: cover; border-radius: 50%;
+}
+/* Platform badge di pojok bawah-kanan */
+.connected-avatar-badge {
+  position: absolute;
+  bottom: -1px; right: -1px;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  border: 1.5px solid var(--white);
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.connected-avatar-badge svg { width: 9px; height: 9px; display: block; flex-shrink: 0; }

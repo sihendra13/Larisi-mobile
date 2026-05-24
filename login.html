@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Masuk - Larisi</title>
+    <link rel="stylesheet" href="src/css/auth.css">
+    <!-- Load FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <div class="split-layout">
+        <div class="split-left">
+            <div class="auth-header">
+                <img src="Assets/logo larisi.svg" alt="Larisi" onerror="this.outerHTML='<h2 style=\'color: var(--rausch); margin: 0;\'>Larisi <span style=\'font-size: 16px;\'>✦</span></h2>'">
+            </div>
+
+            <div class="auth-container">
+        <h1>Selamat Datang Kembali</h1>
+
+        <form id="loginForm" action="index.html" method="GET">
+            <div class="form-group">
+                <label for="email">Alamat Email</label>
+                <input type="email" id="email" name="email" placeholder="budi@contoh.com" required>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <div class="password-wrapper">
+                    <input type="password" id="password" name="password" placeholder="Masukkan password Anda" required>
+                    <i class="fas fa-eye-slash toggle-password" onclick="togglePassword()" id="togglePasswordIcon"></i>
+                </div>
+            </div>
+
+            <!-- Inline error message -->
+            <div id="login-error" style="display:none; font-size:13px; color:#dc2626; background:#fef2f2; border:1px solid #fecaca; border-radius:8px; padding:10px 14px; margin-bottom:12px; line-height:1.4;"></div>
+
+            <div class="form-group" style="margin-top: 8px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center;">
+                <label style="font-weight: 400; display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--near-black); cursor: pointer; margin-bottom: 0;">
+                    <input type="checkbox" id="rememberMe" style="width: auto; margin: 0; cursor: pointer;" checked>
+                    Ingat saya
+                </label>
+                <a href="#" class="terms-link" style="font-size: 14px;" onclick="showForgotModal(event)">Lupa password?</a>
+            </div>
+
+            <button type="submit" id="submitBtn" class="btn btn-primary">Masuk</button>
+
+            <div class="login-link">
+                Belum punya akun? <a href="register.html">Daftar di sini</a>
+            </div>
+
+        </form>
+            </div>
+        </div>
+
+        <div class="split-right"></div>
+    </div>
+
+    <!-- ── Lupa Password Modal ── -->
+    <div id="forgotOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px); z-index:9999; align-items:center; justify-content:center;">
+        <div style="background:#fff; border-radius:20px; padding:32px 28px; max-width:380px; width:calc(100% - 40px); box-shadow:0 24px 64px rgba(0,0,0,0.18); animation:fpSlide 0.25s ease;">
+            <style>@keyframes fpSlide { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }</style>
+
+            <!-- State 1: Form kirim email -->
+            <div id="fp-form-state">
+                <div style="width:48px; height:48px; border-radius:14px; background:#f3ebff; display:flex; align-items:center; justify-content:center; margin-bottom:16px;">
+                    <i class="fas fa-key" style="color:#791ADB; font-size:18px;"></i>
+                </div>
+                <h2 style="font-size:18px; font-weight:700; color:#1a1a1a; margin-bottom:6px;">Lupa Password?</h2>
+                <p style="font-size:13px; color:#6b7280; margin-bottom:20px; line-height:1.5;">Masukkan email yang kamu gunakan saat daftar. Kami akan kirim link untuk membuat password baru.</p>
+
+                <div class="form-group">
+                    <label for="fp-email">Alamat Email</label>
+                    <input type="email" id="fp-email" placeholder="budi@contoh.com">
+                </div>
+
+                <div id="fp-error" style="display:none; font-size:13px; color:#dc2626; background:#fef2f2; border:1px solid #fecaca; border-radius:8px; padding:10px 14px; margin-bottom:12px;"></div>
+
+                <button id="fp-send-btn" class="btn btn-primary" onclick="handleForgotSubmit()" style="margin-bottom:12px;">Kirim Link Reset</button>
+                <button class="btn btn-outline" onclick="hideForgotModal()" style="background:none;">Batal</button>
+            </div>
+
+            <!-- State 2: Sukses -->
+            <div id="fp-success-state" style="display:none; text-align:center;">
+                <div style="width:56px; height:56px; border-radius:50%; background:#dcfce7; display:flex; align-items:center; justify-content:center; margin:0 auto 16px;">
+                    <i class="fas fa-check" style="color:#16a34a; font-size:22px;"></i>
+                </div>
+                <h2 style="font-size:18px; font-weight:700; color:#1a1a1a; margin-bottom:8px;">Email Terkirim!</h2>
+                <p style="font-size:13px; color:#6b7280; line-height:1.5; margin-bottom:24px;">Kami sudah mengirim link reset password ke <strong id="fp-sent-email"></strong>. Cek inbox (atau folder spam) kamu.</p>
+                <button class="btn btn-primary" onclick="hideForgotModal()">Oke, Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function togglePassword() {
+            const passwordInput = document.getElementById('password');
+            const icon = document.getElementById('togglePasswordIcon');
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            } else {
+                passwordInput.type = 'password';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            }
+        }
+
+        // ── Peta error Supabase → pesan ramah dalam Bahasa Indonesia ──
+        function friendlyLoginError(msg) {
+            if (!msg) return 'Terjadi kesalahan. Coba lagi.';
+            const m = msg.toLowerCase();
+            if (m.includes('invalid login credentials') || m.includes('invalid credentials'))
+                return 'Email atau password salah. Periksa kembali dan coba lagi.';
+            if (m.includes('email not confirmed'))
+                return 'Email belum diverifikasi. Cek inbox kamu dan klik link konfirmasi.';
+            if (m.includes('too many requests') || m.includes('rate limit'))
+                return 'Terlalu banyak percobaan. Tunggu beberapa menit lalu coba lagi.';
+            if (m.includes('user not found') || m.includes('no user found'))
+                return 'Akun dengan email ini tidak ditemukan. Sudah daftar?';
+            if (m.includes('network') || m.includes('fetch'))
+                return 'Koneksi bermasalah. Periksa internet kamu lalu coba lagi.';
+            return 'Gagal masuk. Silakan coba beberapa saat lagi.';
+        }
+
+        function showLoginError(msg) {
+            const el = document.getElementById('login-error');
+            el.textContent = msg;
+            el.style.display = 'block';
+        }
+
+        function hideLoginError() {
+            document.getElementById('login-error').style.display = 'none';
+        }
+
+        // ── Lupa Password Modal ──
+        function showForgotModal(e) {
+            e && e.preventDefault();
+            // Reset ke form state
+            document.getElementById('fp-form-state').style.display = 'block';
+            document.getElementById('fp-success-state').style.display = 'none';
+            document.getElementById('fp-error').style.display = 'none';
+            // Pre-fill email kalau sudah diisi di form login
+            const loginEmail = document.getElementById('email').value;
+            if (loginEmail) document.getElementById('fp-email').value = loginEmail;
+            // Tampilkan overlay
+            const overlay = document.getElementById('forgotOverlay');
+            overlay.style.display = 'flex';
+            document.getElementById('fp-email').focus();
+        }
+
+        function hideForgotModal() {
+            document.getElementById('forgotOverlay').style.display = 'none';
+        }
+
+        // Tutup modal kalau klik di luar
+        document.getElementById('forgotOverlay').addEventListener('click', function(e) {
+            if (e.target === this) hideForgotModal();
+        });
+
+        async function handleForgotSubmit() {
+            const email = document.getElementById('fp-email').value.trim();
+            const errEl = document.getElementById('fp-error');
+            const btn   = document.getElementById('fp-send-btn');
+
+            errEl.style.display = 'none';
+
+            if (!email || !email.includes('@')) {
+                errEl.textContent = 'Masukkan alamat email yang valid.';
+                errEl.style.display = 'block';
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Mengirim...';
+
+            const { error } = await window.sendPasswordReset(email);
+
+            if (error) {
+                const m = error.message.toLowerCase();
+                let msg = 'Gagal mengirim email. Coba beberapa saat lagi.';
+                if (m.includes('rate limit') || m.includes('too many'))
+                    msg = 'Terlalu banyak permintaan. Tunggu beberapa menit.';
+                errEl.textContent = msg;
+                errEl.style.display = 'block';
+                btn.disabled = false;
+                btn.textContent = 'Kirim Link Reset';
+            } else {
+                document.getElementById('fp-sent-email').textContent = email;
+                document.getElementById('fp-form-state').style.display = 'none';
+                document.getElementById('fp-success-state').style.display = 'block';
+            }
+        }
+    </script>
+
+    <!-- Supabase SDK & Auth Logic -->
+    <script src="src/js/config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script src="src/js/supabase.js"></script>
+    <script>
+        const form = document.getElementById('loginForm');
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const submitBtn = document.getElementById('submitBtn');
+            const email    = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            hideLoginError();
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Memasuki Dashboard...';
+
+            const { data, error } = await window.signIn(email, password);
+
+            if (error) {
+                showLoginError(friendlyLoginError(error.message));
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Masuk';
+            } else {
+                await window.getUserProfile(data.user.id);
+                window.location.href = 'index.html';
+            }
+        });
+
+        // Hilangkan error saat user mulai mengetik ulang
+        ['email', 'password'].forEach(id => {
+            document.getElementById(id).addEventListener('input', hideLoginError);
+        });
+    </script>
+</body>
+</html>

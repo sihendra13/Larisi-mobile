@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup Akun - Larisi</title>
+    <link rel="stylesheet" href="src/css/auth.css">
+    <!-- Load FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="centered-layout">
+
+    <!-- Background Dashboard Blur Mockup -->
+    <div class="dashboard-mockup">
+        <!-- Optional: A faint background image of the dashboard could go here -->
+    </div>
+
+    <!-- Onboarding Modal Container -->
+    <div class="modal-container">
+        
+        <!-- STEP 1: VERIFY EMAIL -->
+        <div id="step-1" class="step-container active">
+            <h2>Verifikasi Alamat Email Anda</h2>
+            <p class="subtitle" style="text-align: left; margin-bottom: 24px;">
+                Kami baru saja mengirim kode verifikasi ke email Anda.
+            </p>
+
+            <div class="form-group">
+                <input type="text" id="otp" placeholder="––––––––" maxlength="8" inputmode="numeric" style="text-align: center; font-size: 24px; letter-spacing: 8px; font-weight: 700;">
+            </div>
+            <div id="otp-status" style="font-size: 13px; margin: -8px 0 12px; min-height: 20px; text-align: center;"></div>
+            <button class="btn btn-primary" onclick="nextStep(2)">Verifikasi Kode</button>
+            <p style="margin-top: 20px; font-size: 13px; color: var(--secondary);">
+                Tidak menerima kode? <a href="#" onclick="handleResend(event)" id="resend-link" style="color: var(--rausch); font-weight: 600;">Kirim ulang</a>
+            </p>
+        </div>
+
+        <!-- STEP 2: BUSINESS INFO -->
+        <div id="step-2" class="step-container">
+            <div class="stepper">
+                <div class="step active"></div>
+                <div class="step"></div>
+                <div class="step"></div>
+            </div>
+
+            <h2>Informasi Bisnis</h2>
+            <p class="subtitle" style="text-align: left; margin-bottom: 24px;">
+                Bantu kami menyesuaikan pengalaman Larisi khusus untuk Anda.
+            </p>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="ownerName">Nama Pemilik <span class="req">*</span></label>
+                    <input type="text" id="ownerName" placeholder="Budi Santoso">
+                </div>
+                <div class="form-group">
+                    <label for="whatsapp">Nomor WhatsApp <span class="req">*</span></label>
+                    <input type="tel" id="whatsapp" placeholder="+62 812 3456 7890">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="businessName">Nama Bisnis <span class="req">*</span></label>
+                <input type="text" id="businessName" placeholder="Warung Makan Berkah">
+            </div>
+
+            <div class="form-row" style="align-items:flex-start;">
+                <div class="form-group" style="margin-bottom:0;">
+                    <label for="category">Kategori Bisnis <span class="req">*</span></label>
+                    <select id="category">
+                        <option value="">Pilih Kategori...</option>
+                        <option value="fnb">Kuliner (F&B)</option>
+                        <option value="kafe">Kafe & Coffee Shop</option>
+                        <option value="fashion_wanita">Fashion Wanita</option>
+                        <option value="fashion_pria">Fashion Pria</option>
+                        <option value="fashion_muslim">Fashion Muslim (Hijab & Gamis Wanita)</option>
+                        <option value="fashion_muslim_pria">Busana Muslim Pria (Koko & Gamis)</option>
+                        <option value="jasa">Layanan / Jasa</option>
+                        <option value="retail">Retail / Toko Kelontong</option>
+                        <option value="kesehatan">Skincare & Produk Kecantikan</option>
+                        <option value="salon">Salon & Perawatan Wajah</option>
+                        <option value="barber">Barber Shop & Grooming</option>
+                        <option value="elektronik">Elektronik & Gadget</option>
+                        <option value="otomotif">Otomotif & Bengkel</option>
+                        <option value="properti">Properti & Konstruksi</option>
+                        <option value="pendidikan">Pendidikan & Kursus</option>
+                        <option value="wisata">Pariwisata & Travel</option>
+                        <option value="kerajinan">Kerajinan & Handmade</option>
+                        <option value="olahraga">Olahraga & Fitness</option>
+                        <option value="laundry">Laundry & Kebersihan</option>
+                        <option value="fotografi">Studio Foto & Fotografi</option>
+                        <option value="catering">Katering & Event</option>
+                        <option value="jasa_profesional">Jasa Profesional (Dokter, Notaris, dll.)</option>
+                        <option value="pet">Toko & Perawatan Hewan Peliharaan</option>
+                        <option value="lainnya">Lainnya...</option>
+                    </select>
+                </div>
+                <div class="form-group" style="position:relative;margin-bottom:0;">
+                    <label for="kecamatanInput">Kecamatan Lokasi Bisnis <span class="req">*</span></label>
+                    <input type="text" id="kecamatanInput" placeholder="Ketik nama kecamatan..." autocomplete="off"
+                           oninput="_kecOnInput(this.value)" onblur="_kecOnBlur()">
+                    <div id="kecDropdown" style="display:none;position:absolute;left:0;right:0;background:#fff;border:1px solid #d1d5db;border-top:none;border-radius:0 0 10px 10px;z-index:300;max-height:220px;overflow-y:auto;box-shadow:0 8px 20px rgba(0,0,0,0.1);"></div>
+                </div>
+            </div>
+
+            <!-- Kabupaten full-width — di bawah kedua kolom -->
+            <div class="form-group" style="margin-top:8px;">
+                <input type="text" id="kabupatenDisplay" placeholder="Kabupaten/Kota (terisi otomatis setelah pilih kecamatan)" readonly
+                       style="background:#f9fafb;color:#6b7280;font-size:13px;cursor:default;">
+                <input type="hidden" id="kecamatanHidden">
+                <input type="hidden" id="kabupatenHidden">
+                <input type="hidden" id="provinsiHidden">
+            </div>
+
+            <div class="form-group" style="margin-top: 16px;">
+                <label>Apakah bisnis Anda melayani pengiriman barang/pesanan?</label>
+                <div style="display: flex; gap: 24px;">
+                    <label style="font-weight: 400; font-size: 14px; display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                        <input type="radio" name="delivery" value="yes" style="width: auto; margin: 0; cursor: pointer;"> Ya, melayani pengiriman
+                    </label>
+                    <label style="font-weight: 400; font-size: 14px; display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                        <input type="radio" name="delivery" value="no" style="width: auto; margin: 0; cursor: pointer;"> Tidak (Hanya di tempat)
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-top: 16px;">
+              <label for="usp">Apa yang bikin bisnis kamu spesial?</label>
+              <input type="text" id="usp" placeholder="Contoh: Bakso jumbo kuah kaldu sapi asli, buka sampai tengah malam" maxlength="80" style="font-size: 14px;">
+              <div id="usp-warning" style="display:none; margin-top:10px; background:#fffbeb; border:1px solid #fcd34d; border-radius:10px; padding:12px 14px;">
+                <p style="margin:0 0 10px; font-size:13px; color:#92400e;">Bisnis yang punya pembeda jelas terbukti dapat lebih banyak pelanggan. Yakin skip?</p>
+                <div style="display:flex; gap:8px;">
+                  <button type="button" onclick="document.getElementById('usp-warning').style.display='none'; document.getElementById('usp').focus();" style="flex:1; padding:8px; border-radius:8px; border:1.5px solid #92400e; background:white; color:#92400e; font-size:13px; font-weight:600; cursor:pointer;">Tambahkan</button>
+                  <button type="button" onclick="document.getElementById('usp-warning').style.display='none'; _doSaveProfile();" style="flex:1; padding:8px; border-radius:8px; border:1.5px solid #d1d5db; background:white; color:#6b7280; font-size:13px; cursor:pointer;">Lewati</button>
+                </div>
+              </div>
+            </div>
+
+            <button class="btn btn-primary" onclick="nextStep(3)">Simpan Profil</button>
+        </div>
+
+        <!-- STEP 3: CONNECT PROFILES -->
+        <div id="step-3" class="step-container">
+            <div class="stepper">
+                <div class="step active"></div>
+                <div class="step active"></div>
+                <div class="step active"></div>
+            </div>
+
+            <h2>Hubungkan Akun</h2>
+            <p class="subtitle" style="text-align: left; margin-bottom: 24px;">
+                Hubungkan minimal 1 akun sosial media bisnis Anda untuk mulai membuat konten.
+            </p>
+
+            <div class="social-buttons">
+                <button id="ob-btn-facebook" class="btn-social" style="border-color: #1877F2; color: #1877F2;" onclick="onboardConnectSocial(this, 'facebook')">
+                    <i class="fab fa-facebook" style="font-size: 18px;"></i> <span>Facebook Page</span>
+                </button>
+                <button id="ob-btn-instagram" class="btn-social" style="border-color: #E1306C; color: #E1306C;" onclick="onboardConnectSocial(this, 'instagram')">
+                    <i class="fab fa-instagram" style="font-size: 18px;"></i> <span>Instagram</span>
+                </button>
+                <button id="ob-btn-tiktok" class="btn-social" style="border-color: #000000; color: #000000;" onclick="onboardConnectSocial(this, 'tiktok')">
+                    <i class="fab fa-tiktok" style="font-size: 18px;"></i> <span>TikTok</span>
+                </button>
+                <button id="ob-btn-youtube" class="btn-social" style="border-color: #FF0000; color: #FF0000;" onclick="onboardConnectSocial(this, 'youtube')">
+                    <i class="fab fa-youtube" style="font-size: 18px;"></i> <span>YouTube</span>
+                </button>
+            </div>
+
+            <!-- Error box: muncul hanya saat OAuth gagal -->
+            <div id="ob-oauth-error" style="display:none; background:#fffbeb; border:1px solid #fcd34d; border-radius:12px; padding:14px 16px; margin-bottom:20px;">
+                <p style="margin:0 0 12px; font-size:13px; color:#92400e; display:flex; align-items:flex-start; gap:8px;">
+                    <span>⚠️</span>
+                    <span>Koneksi gagal. Coba lagi atau lewati untuk sementara.</span>
+                </p>
+                <div style="display:flex; gap:8px;">
+                    <button type="button" onclick="_obRetry()" style="flex:1; padding:9px; border-radius:8px; border:1.5px solid #92400e; background:white; color:#92400e; font-size:13px; font-weight:600; cursor:pointer;">Coba Lagi</button>
+                    <button type="button" onclick="finishOnboarding()" style="flex:1; padding:9px; border-radius:8px; border:1.5px solid #d1d5db; background:white; color:#6b7280; font-size:13px; cursor:pointer;">Lewati Dulu</button>
+                </div>
+            </div>
+
+            <button id="ob-finish-btn" class="btn btn-primary" onclick="finishOnboarding()" disabled>Mulai Buat Konten</button>
+            <a href="#" class="skip-link" onclick="finishOnboarding()" style="font-size: 11px; color: var(--secondary); opacity: 0.6;">Lewati — tambah akun kapan saja</a>
+        </div>
+
+    </div>
+
+    <!-- Supabase SDK & Auth Logic -->
+    <script src="src/js/config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script src="src/js/supabase.js"></script>
+    <script>
+        // Ambil data dari URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const userEmail = urlParams.get('email');
+        const startStep = urlParams.get('step');
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            // Jika ada email param di URL → user baru saja register, WAJIB lewat OTP dulu
+            // Jangan skip ke step 2 meski ada session aktif
+            if (userEmail) {
+                // Tetap di step 1 (OTP) — tidak cek session
+                return;
+            }
+
+            // Jika dipaksa ke step tertentu via URL param (tidak dari flow register normal)
+            if (startStep === '2') {
+                document.querySelectorAll('.step-container').forEach(el => el.classList.remove('active'));
+                document.getElementById('step-2').classList.add('active');
+                return;
+            }
+
+            // Jika navigasi langsung ke onboarding.html tanpa params:
+            // cek apakah user sudah login & email sudah dikonfirmasi → skip ke step 2
+            const user = await window.getCurrentUser();
+            if (user && user.email_confirmed_at) {
+                document.querySelectorAll('.step-container').forEach(el => el.classList.remove('active'));
+                document.getElementById('step-2').classList.add('active');
+            }
+
+            // Munculkan background setelah logic inisial selesai (agar instan)
+            const mockup = document.querySelector('.dashboard-mockup');
+            if (mockup) mockup.style.opacity = '1';
+
+            // Dynamic USP placeholder per kategori bisnis
+            const USP_PLACEHOLDERS = {
+              'fnb':                'Contoh: Ayam geprek level 1–10, open 24 jam, langganan ojol terbanyak',
+              'kafe':               'Contoh: Kopi single origin Flores, diseduh manual, WiFi kenceng buka sampai malam',
+              'fashion_wanita':     'Contoh: 200+ model, update tiap minggu, bisa custom ukuran',
+              'fashion_pria':       'Contoh: Outfit kasual-formal, brand lokal premium, size XS–5XL tersedia',
+              'fashion_muslim':     'Contoh: Gamis syar\'i tapi modis, bahan adem, jahitan rapi bergaransi',
+              'fashion_muslim_pria':'Contoh: Koko premium bahan toyobo, size M–4XL, bisa seragam pesantren',
+              'jasa':               'Contoh: Servis AC on-site, garansi 30 hari, teknisi bersertifikat',
+              'retail':             'Contoh: 5000+ produk, pengiriman same day, harga grosir untuk pelanggan tetap',
+              'kesehatan':          'Contoh: Skincare herbal lokal, dermatologi tested, cocok untuk kulit sensitif',
+              'salon':              'Contoh: Spesialis smoothing rambut rusak, hasil tahan 6 bulan, tanpa antrian lama',
+              'barber':             'Contoh: Spesialis fade & undercut, hasil rapi dijamin, teknisi bersertifikat',
+              'elektronik':         'Contoh: Gadget garansi resmi 1 tahun, harga termurah sekota, konsultasi gratis',
+              'otomotif':           'Contoh: Teknisi bersertifikat AHM, spare part original, garansi pengerjaan 30 hari',
+              'properti':           'Contoh: Lokasi 5 menit dari tol, KPR dibantu, siap huni tanpa DP besar',
+              'pendidikan':         'Contoh: Kelas maks 8 siswa, pengajar lulusan UI, hasil dijamin atau uang kembali',
+              'wisata':             'Contoh: Paket all-inclusive, pemandu lokal bersertifikat, itinerary fleksibel',
+              'kerajinan':          'Contoh: Handmade 100%, motif eksklusif, bisa custom nama & ukuran',
+              'olahraga':           'Contoh: Spesialis beladiri & fitness, peralatan lengkap, instruktur bersertifikat',
+              'laundry':            'Contoh: Cuci bersih dalam 6 jam, antar-jemput gratis radius 3 km',
+              'fotografi':          'Contoh: Foto produk hasil studio, background & lighting profesional, revisi bebas',
+              'catering':           'Contoh: Masakan rumahan otentik, min. 50 porsi, tersedia menu halal & vegan',
+              'jasa_profesional':   'Contoh: Konsultasi gratis, berpengalaman 10+ tahun, respons dalam 2 jam',
+              'pet':                'Contoh: Grooming lengkap, dokter hewan on-call, antar-jemput tersedia',
+              'lainnya':            'Contoh: Apa yang paling sering dipuji pelanggan kamu?'
+            };
+            const catEl = document.getElementById('category');
+            const uspEl = document.getElementById('usp');
+            if (catEl && uspEl) {
+              catEl.addEventListener('change', function() {
+                uspEl.placeholder = USP_PLACEHOLDERS[this.value] || 'Contoh: Bakso jumbo kuah kaldu sapi asli, buka sampai tengah malam';
+              });
+            }
+        });
+
+        function showOtpStatus(msg, isError) {
+            const el = document.getElementById('otp-status');
+            if (!el) return;
+            el.textContent = msg;
+            el.style.color = isError ? '#dc2626' : '#16a34a';
+        }
+
+        async function nextStep(stepNumber) {
+            // STEP 1 -> 2: Verifikasi OTP
+            if (stepNumber === 2) {
+                const otp = document.getElementById('otp').value.trim();
+                if (!otp || otp.length < 6) {
+                    showOtpStatus('Masukkan kode verifikasi dari email kamu.', true);
+                    return;
+                }
+                const btn = document.querySelector('#step-1 .btn-primary');
+                btn.disabled = true;
+                btn.textContent = 'Memverifikasi...';
+                showOtpStatus('', false);
+                const { data, error } = await window.verifyOtp(userEmail, otp, 'signup');
+                if (error) {
+                    showOtpStatus('Kode salah atau sudah kedaluwarsa. Minta kode baru.', true);
+                    btn.disabled = false;
+                    btn.textContent = 'Verifikasi Kode';
+                    return;
+                }
+                document.querySelectorAll('.step-container').forEach(el => el.classList.remove('active'));
+                document.getElementById('step-2').classList.add('active');
+                return;
+            }
+
+            // STEP 2 -> 3: Simpan Profil Bisnis
+            if (stepNumber === 3) {
+                const ownerName = document.getElementById('ownerName').value;
+                const businessName = document.getElementById('businessName').value;
+                const category = document.getElementById('category').value;
+                const kecamatan = document.getElementById('kecamatanHidden').value.trim();
+                const usp = document.getElementById('usp')?.value?.trim() || '';
+
+                if (!ownerName || !businessName || !category || !kecamatan) {
+                    if (!kecamatan) {
+                        document.getElementById('kecamatanInput').focus();
+                        document.getElementById('kecamatanInput').placeholder = 'Pilih kecamatan dari dropdown ⬆';
+                    }
+                    alert('Mohon lengkapi semua data bertanda *\n\nPastikan kecamatan dipilih dari dropdown.');
+                    return;
+                }
+
+                // Warning semi-wajib jika USP kosong
+                if (!usp) {
+                    document.getElementById('usp-warning').style.display = 'block';
+                    document.getElementById('usp-warning').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    return;
+                }
+
+                await _doSaveProfile();
+            }
+        }
+
+        async function _doSaveProfile() {
+            const submitBtn = document.querySelector('#step-2 .btn-primary');
+            const ownerName = document.getElementById('ownerName').value;
+            const businessName = document.getElementById('businessName').value;
+            const whatsapp = document.getElementById('whatsapp').value;
+            const category = document.getElementById('category').value;
+            const kecamatan = document.getElementById('kecamatanHidden').value.trim();
+            const kabupaten = document.getElementById('kabupatenHidden').value.trim();
+            const provinsi  = document.getElementById('provinsiHidden').value.trim();
+            const delivery = document.querySelector('input[name="delivery"]:checked')?.value === 'yes';
+            const usp = document.getElementById('usp')?.value?.trim() || '';
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Menyimpan...';
+
+            /* Tentukan quota awal berdasarkan plan yang dipilih dari landing page */
+            const selectedPlan = localStorage.getItem('larisi_selected_plan') || 'freemium';
+            const initQuota = selectedPlan === 'pro' ? 999
+                            : selectedPlan === 'starter' ? 50
+                            : 10; /* freemium */
+
+            const { error } = await window.updateUserProfile({
+                full_name: ownerName,
+                business_name: businessName,
+                whatsapp: whatsapp,
+                category: category,
+                kecamatan: kecamatan,
+                kabupaten: kabupaten,
+                provinsi:  provinsi,
+                city: kabupaten || kecamatan, /* backward compat untuk user lama */
+                delivery_service: delivery,
+                usp: usp,
+                ai_launch_count: initQuota,
+                selected_plan: selectedPlan
+            });
+
+            if (error) {
+                alert('Gagal menyimpan profil: ' + error.message);
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Simpan Profil';
+                return;
+            }
+
+            document.querySelectorAll('.step-container').forEach(el => el.classList.remove('active'));
+            document.getElementById('step-3').classList.add('active');
+        }
+
+        /* ── Kecamatan Autocomplete (Nominatim OpenStreetMap) ── */
+        var _kecTimer = null;
+
+        function _kecOnInput(val) {
+            /* Reset pilihan sebelumnya */
+            document.getElementById('kabupatenDisplay').value = '';
+            document.getElementById('kecamatanHidden').value  = '';
+            document.getElementById('kabupatenHidden').value  = '';
+            document.getElementById('provinsiHidden').value   = '';
+
+            var dd = document.getElementById('kecDropdown');
+            if (!val || val.length < 2) { dd.style.display = 'none'; return; }
+
+            if (_kecTimer) clearTimeout(_kecTimer);
+            _kecTimer = setTimeout(function() {
+                dd.innerHTML = '<div style="padding:10px 14px;font-size:12px;color:#6b7280;">Mencari...</div>';
+                dd.style.display = 'block';
+
+                fetch(
+                    'https://nominatim.openstreetmap.org/search?q=' +
+                    encodeURIComponent(val + ' Indonesia') +
+                    '&format=json&addressdetails=1&limit=7&accept-language=id&countrycodes=ID',
+                    { headers: { 'Accept': 'application/json', 'User-Agent': 'Larisi-App/1.0' } }
+                )
+                .then(function(r) { return r.json(); })
+                .then(function(results) {
+                    dd.innerHTML = '';
+                    if (!results || !results.length) {
+                        dd.innerHTML = '<div style="padding:10px 14px;font-size:12px;color:#6b7280;">Kecamatan tidak ditemukan, coba kata lain</div>';
+                        return;
+                    }
+                    /* Filter & deduplicate berdasarkan kecamatan+kabupaten */
+                    var seen = {};
+                    results.forEach(function(r) {
+                        var addr = r.address || {};
+                        /* Ambil kecamatan: prioritas suburb/village/quarter/town */
+                        var kec = addr.suburb || addr.village || addr.quarter || addr.town || addr.hamlet
+                                  || r.display_name.split(',')[0].trim();
+                        /* Ambil kabupaten: prioritas county, lalu city/state_district/municipality */
+                        var kab = addr.county || addr.city || addr.state_district || addr.municipality || '';
+                        /* Bersihkan prefix "Kabupaten" — tapi pertahankan "Kota" */
+                        var kabDisplay = kab.replace(/^Kabupaten\s+/i, '').replace(/^Regency\s+/i, '');
+                        var prov = addr.state || '';
+
+                        var key = (kec + '|' + kabDisplay).toLowerCase();
+                        if (seen[key]) return;
+                        seen[key] = true;
+
+                        var label = kec;
+                        if (kabDisplay) label += ', ' + kabDisplay;
+                        if (prov)       label += ' — ' + prov;
+
+                        var item = document.createElement('div');
+                        item.textContent = label;
+                        item.style.cssText = 'padding:10px 14px;cursor:pointer;font-size:13px;color:#1a1a1a;border-bottom:1px solid #f3f4f6;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
+                        item.onmouseover = function() { this.style.background = '#f3ebff'; };
+                        item.onmouseout  = function() { this.style.background = ''; };
+                        item.onmousedown = function(e) { e.preventDefault(); }; /* prevent blur */
+                        (function(k, kd, kb, p) {
+                            item.onclick = function() {
+                                document.getElementById('kecamatanInput').value  = k;
+                                document.getElementById('kabupatenDisplay').value = kd || k;
+                                document.getElementById('kecamatanHidden').value  = k;
+                                document.getElementById('kabupatenHidden').value  = kb || kd || k;
+                                document.getElementById('provinsiHidden').value   = p;
+                                document.getElementById('kecDropdown').style.display = 'none';
+                            };
+                        })(kec, kabDisplay, kab, prov);
+                        dd.appendChild(item);
+                    });
+                    if (!dd.childElementCount) {
+                        dd.innerHTML = '<div style="padding:10px 14px;font-size:12px;color:#6b7280;">Tidak ada hasil, coba kata lain</div>';
+                    }
+                })
+                .catch(function() {
+                    dd.innerHTML = '<div style="padding:10px 14px;font-size:12px;color:#dc2626;">Gagal memuat. Periksa koneksi internet.</div>';
+                });
+            }, 450);
+        }
+
+        function _kecOnBlur() {
+            setTimeout(function() {
+                var dd = document.getElementById('kecDropdown');
+                if (dd) dd.style.display = 'none';
+            }, 200);
+        }
+        /* ─────────────────────────────────────────────────── */
+
+        async function handleResend(e) {
+            e.preventDefault();
+            const link = document.getElementById('resend-link');
+            if (link.dataset.busy === '1') return;
+
+            link.dataset.busy = '1';
+            link.textContent = 'Mengirim...';
+            link.style.pointerEvents = 'none';
+            showOtpStatus('', false);
+
+            const { error } = await window.resendOtp(userEmail);
+
+            if (error) {
+                // Cek apakah error mengandung info "wait X seconds"
+                const match = error.message.match(/(\d+)\s*second/i);
+                const waitSec = match ? parseInt(match[1]) : 60;
+
+                if (waitSec > 0) {
+                    let s = waitSec;
+                    showOtpStatus('Tunggu ' + s + 's sebelum minta kode baru.', true);
+                    const t = setInterval(() => {
+                        s--;
+                        if (s <= 0) {
+                            clearInterval(t);
+                            link.textContent = 'Kirim ulang';
+                            link.dataset.busy = '0';
+                            link.style.pointerEvents = '';
+                            showOtpStatus('', false);
+                        } else {
+                            showOtpStatus('Tunggu ' + s + 's sebelum minta kode baru.', true);
+                            link.textContent = 'Kirim ulang (' + s + 's)';
+                        }
+                    }, 1000);
+                } else {
+                    showOtpStatus('Gagal mengirim: ' + error.message, true);
+                    link.textContent = 'Kirim ulang';
+                    link.dataset.busy = '0';
+                    link.style.pointerEvents = '';
+                }
+            } else {
+                showOtpStatus('✓ Kode baru dikirim ke email kamu.', false);
+                let s = 60;
+                link.textContent = 'Kirim ulang (' + s + 's)';
+                const t = setInterval(() => {
+                    s--;
+                    if (s <= 0) {
+                        clearInterval(t);
+                        link.textContent = 'Kirim ulang';
+                        link.dataset.busy = '0';
+                        link.style.pointerEvents = '';
+                        showOtpStatus('', false);
+                    } else {
+                        link.textContent = 'Kirim ulang (' + s + 's)';
+                    }
+                }, 1000);
+            }
+        }
+
+        /* ── OAuth error state helpers ── */
+        var _OB_PLAT_COLOR  = { facebook: '#1877F2', instagram: '#E1306C', tiktok: '#000000', youtube: '#FF0000' };
+        var _OB_PLAT_LABEL  = { facebook: 'Facebook Page', instagram: 'Instagram', tiktok: 'TikTok', youtube: 'YouTube' };
+        var _obFailedBtn     = null;
+        var _obFailedPlatform = null;
+
+        function _showOauthError(btn, platform) {
+            _obFailedBtn      = btn;
+            _obFailedPlatform = platform;
+            /* Tombol → error state (oranye) */
+            var span = btn.querySelector('span');
+            btn.style.borderColor = '#f59e0b';
+            btn.style.color       = '#92400e';
+            btn.style.background  = '#fffbeb';
+            if (span) span.textContent = '⚠️ Coba lagi';
+            btn.disabled = false;
+            /* Tampilkan error box */
+            var box = document.getElementById('ob-oauth-error');
+            if (box) box.style.display = 'block';
+        }
+
+        function _clearOauthError() {
+            var box = document.getElementById('ob-oauth-error');
+            if (box) box.style.display = 'none';
+            if (_obFailedBtn) {
+                var span = _obFailedBtn.querySelector('span');
+                var col  = _OB_PLAT_COLOR[_obFailedPlatform] || '#888';
+                _obFailedBtn.style.borderColor = col;
+                _obFailedBtn.style.color       = col;
+                _obFailedBtn.style.background  = '';
+                if (span) span.textContent = _OB_PLAT_LABEL[_obFailedPlatform] || _obFailedPlatform;
+                _obFailedBtn = null;
+                _obFailedPlatform = null;
+            }
+        }
+
+        function _obRetry() {
+            if (!_obFailedBtn || !_obFailedPlatform) return;
+            var btn = _obFailedBtn;
+            var platform = _obFailedPlatform;
+            _clearOauthError();
+            onboardConnectSocial(btn, platform);
+        }
+        /* ─────────────────────────────── */
+
+        async function onboardConnectSocial(btn, platform) {
+            /* Bersihkan error state platform lain jika ada */
+            if (_obFailedBtn && _obFailedBtn !== btn) _clearOauthError();
+
+            var span = btn.querySelector('span');
+            btn.disabled = true;
+            if (span) span.textContent = 'Memproses...';
+
+            try {
+                var supabaseUrl = RADAR_CONFIG.SUPABASE_URL;
+                var supabaseKey = RADAR_CONFIG.SUPABASE_ANON_KEY;
+                var redirectUri = window.location.origin + '/postforme-callback';
+
+                // Ambil atau buat external_id
+                var externalId = localStorage.getItem('radar_session_id');
+                if (!externalId) {
+                    var profile = JSON.parse(localStorage.getItem('radar_user_profile') || '{}');
+                    externalId = profile.postforme_external_id || ('radar_user_' + Math.random().toString(36).slice(2, 10));
+                    localStorage.setItem('radar_session_id', externalId);
+                }
+
+                // Buka popup SEBELUM await — browser hanya izinkan dari user gesture langsung
+                var popup = window.open('about:blank', 'postforme_oauth', 'width=600,height=700,left=200,top=80');
+
+                var resp = await fetch(supabaseUrl + '/functions/v1/postforme-auth', {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + supabaseKey, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        platform: platform,
+                        redirect_uri: redirectUri,
+                        external_id: externalId,
+                        scopes: platform === 'instagram'
+                            ? ['instagram_basic','instagram_content_publish','instagram_manage_insights','instagram_manage_comments','pages_read_engagement']
+                            : undefined
+                    })
+                });
+
+                if (!resp.ok) {
+                    if (popup) popup.close();
+                    throw new Error('Server error ' + resp.status);
+                }
+
+                var data   = await resp.json();
+                var authUrl = data.url || data.auth_url || data.redirect_url || data.authorization_url;
+                if (!authUrl) { if (popup) popup.close(); throw new Error('URL OAuth tidak tersedia'); }
+
+                if (popup) popup.location.href = authUrl;
+                else window.open(authUrl, 'postforme_oauth', 'width=600,height=700,left=200,top=80');
+
+                // Dengarkan callback dari postforme-callback.html
+                var msgHandler = async function(event) {
+                    if (event.origin !== window.location.origin) return;
+                    if (!event.data) return;
+                    var type = event.data.type;
+                    if (type !== 'postforme_oauth_success' && type !== 'postforme_oauth_resync') return;
+
+                    window.removeEventListener('message', msgHandler);
+                    clearInterval(poll);
+
+                    var d = event.data;
+                    // ID awal dari pesan callback (mungkin tersedia di oauth_success)
+                    var accountId = (d.accountIds && d.accountIds[0]) || d.accountId || d.account_id || '';
+                    var username  = null;
+                    var avatarUrl = null;
+
+                    // Ambil detail akun nyata dari PostForMe API
+                    // Ini menggantikan fake ID dan mengisi username + avatar_url
+                    try {
+                        var pfResp = await fetch(supabaseUrl + '/functions/v1/postforme-proxy', {
+                            method: 'POST',
+                            headers: { 'Authorization': 'Bearer ' + supabaseKey, 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                endpoint: '/v1/social-accounts?external_id=' + encodeURIComponent(externalId),
+                                method: 'GET'
+                            })
+                        });
+                        if (pfResp.ok) {
+                            var pfData = await pfResp.json();
+                            var list = pfData.data || pfData.accounts || (Array.isArray(pfData) ? pfData : []);
+                            for (var i = 0; i < list.length; i++) {
+                                var apiPlatform = (list[i].platform || list[i].provider || '').toLowerCase();
+                                if (apiPlatform === platform || apiPlatform.startsWith(platform)) {
+                                    if (list[i].id) accountId = list[i].id;
+                                    username  = list[i].username || list[i].handle || list[i].name || null;
+                                    avatarUrl = list[i].profile_photo_url || list[i].profile_picture_url
+                                              || list[i].picture || list[i].avatar || list[i].image_url || null;
+                                    break;
+                                }
+                            }
+                        }
+                    } catch(pfErr) {
+                        console.warn('[onboarding] fetch account details error:', pfErr.message);
+                    }
+
+                    // Fallback: jika masih tidak ada ID nyata, buat placeholder sementara
+                    if (!accountId) accountId = 'pfm_' + platform + '_' + Date.now();
+
+                    // Simpan ke localStorage (format sama dengan buffer.js)
+                    var accounts = JSON.parse(localStorage.getItem('radar_social_accounts') || '[]');
+                    accounts = accounts.filter(function(a) { return a.platform !== platform; });
+                    accounts.push({ id: accountId, platform: platform, username: username, avatar_url: avatarUrl });
+                    localStorage.setItem('radar_social_accounts', JSON.stringify(accounts));
+
+                    // SINKRONISASI KE DATABASE (PENTING!)
+                    if (typeof window.syncSocialAccounts === 'function') {
+                        window.syncSocialAccounts();
+                    }
+
+                    // Update tampilan tombol → hijau ✓
+                    btn.style.borderColor = '#16a34a';
+                    btn.style.color = '#16a34a';
+                    btn.style.background = '#f0fdf4';
+                    if (span) span.textContent = username ? ('✓ @' + username) : '✓ Terhubung';
+                    btn.disabled = false;
+
+                    // Enable finish button setelah minimal 1 akun terhubung
+                    var _conns = JSON.parse(localStorage.getItem('radar_social_accounts') || '[]');
+                    var _finBtn = document.getElementById('ob-finish-btn');
+                    if (_conns.length > 0 && _finBtn) { _finBtn.disabled = false; }
+                };
+                window.addEventListener('message', msgHandler);
+
+                // Fallback: popup ditutup manual
+                var poll = setInterval(function() {
+                    if (!popup || popup.closed) {
+                        clearInterval(poll);
+                        window.removeEventListener('message', msgHandler);
+                        if (span && span.textContent === 'Memproses...') {
+                            if (span) span.textContent = btn.id.replace('ob-btn-', '').charAt(0).toUpperCase() + btn.id.replace('ob-btn-', '').slice(1);
+                            btn.disabled = false;
+                        }
+                    }
+                }, 800);
+                setTimeout(function() { clearInterval(poll); window.removeEventListener('message', msgHandler); }, 300000);
+
+            } catch(e) {
+                console.error('[onboarding] connect error:', e.message);
+                _showOauthError(btn, platform);
+            }
+        }
+
+        async function finishOnboarding() {
+            const savedPlan  = localStorage.getItem('larisi_selected_plan') || 'freemium';
+            const trialDays  = parseInt(localStorage.getItem('larisi_trial_days') || '0');
+            const now        = new Date().toISOString();
+
+            const profileData = {
+                onboarding_completed: true,
+                selected_plan: savedPlan
+            };
+
+            // Simpan trial_start hanya untuk paket berbayar
+            if (trialDays > 0 && savedPlan !== 'freemium') {
+                localStorage.setItem('larisi_trial_start', now);
+                profileData.trial_start = now;
+                profileData.trial_days  = trialDays;
+            }
+
+            await window.updateUserProfile(profileData);
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+</html>

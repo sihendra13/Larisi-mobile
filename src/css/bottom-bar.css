@@ -1,0 +1,52 @@
+/* ─── Free Badge ─── */
+.free-badge {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--surface);
+  border-radius: var(--radius-badge);
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+}
+.free-text { font-size: 12px; font-weight: 700; color: var(--near-black); }
+
+/* ─── Bottom Bar ─── */
+.bottom-bar {
+  background: var(--white);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  padding: 14px 22px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-shrink: 0;
+}
+.reach-label { font-size: 10px; font-weight: 700; color: var(--secondary); letter-spacing: .6px; margin-bottom: 3px; }
+.bar-divider { width: 1px; height: 36px; background: var(--border); }
+
+.placement-pill {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-badge);
+  padding: 5px 12px;
+  box-shadow: var(--shadow-card);
+}
+.placement-dot { width: 7px; height: 7px; border-radius: 50%; background: #22c55e; flex-shrink: 0; }
+.placement-text { font-size: 12px; font-weight: 700; color: var(--near-black); }
+
+/* ─── Launch Button ─── */
+.launch-btn {
+  margin-left: auto;
+  display: flex; align-items: center; gap: 8px;
+  background: var(--near-black);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-btn);
+  padding: 12px 28px;
+  font-size: 14px; font-weight: 700;
+  cursor: pointer; font-family: var(--font);
+  transition: background .15s, box-shadow .15s;
+  letter-spacing: -0.18px;
+  white-space: nowrap;
+}
+.launch-btn:hover { background: var(--rausch); box-shadow: var(--shadow-hover); }
+.launch-btn svg { width: 16px; height: 16px; stroke: #fff; fill: none; stroke-width: 2; }

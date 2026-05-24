@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Larisi | Semua Bisa Laris</title>
+    <link rel="icon" type="image/png" href="Assets/logo-dashboard.png">
+    
+    <!-- Auth Guard: Cek session sebelum render halaman -->
+    <!-- html disembunyikan dulu — cegah flash of content sebelum auth confirmed -->
+    <!-- Pakai html bukan body karena body belum di-parse saat script di head ini jalan -->
+    <style>
+      html { visibility: hidden; }
+      button:hover {
+        background: #5b17b7 !important;
+        color: #fff !important;
+      }
+      .modal-fade-out {
+        opacity: 0 !important;
+        transition: opacity 0.3s ease !important;
+      }
+    </style>
+    <script src="src/js/config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script src="src/js/supabase.js"></script>
+    <script>
+        (async function() {
+            try {
+                var client = getSupabaseClient();
+                // getSession() baca dari localStorage — tidak butuh network, sangat cepat
+                var sessionResult = await client.auth.getSession();
+                var session = sessionResult.data && sessionResult.data.session;
+
+                if (!session || !session.user) {
+                    window.location.replace('login.html');
+                    return;
+                }
+
+                // Fast path: set profil dari localStorage (synchronous, no network)
+                var _cached = localStorage.getItem('radar_user_profile');
+                if (_cached) {
+                    try { window.userBizProfile = JSON.parse(_cached); } catch(e) {}
+                }
+
+                // Background: refresh profil dari Supabase (tidak block render)
+                window.getUserProfile(session.user.id).then(function(result) {
+                    if (result.data) {
+                        window.userBizProfile = result.data;
+                        // Cek trial HANYA dari data DB yang fresh — bukan localStorage
+                        if (typeof window._checkTrialFromDB === 'function') {
+                            window._checkTrialFromDB(result.data);
+                        }
+                    }
+                }).catch(function() {});
+
+            } catch(e) {
+                // Jika client belum siap atau error — tetap tampilkan halaman
+                console.warn('[auth] session check error:', e.message);
+            }
+            // Tampilkan halaman setelah auth confirmed
+            // Pakai documentElement (html) karena body bisa belum ada saat microtask ini jalan
+            document.documentElement.style.visibility = 'visible';
+        })();
+    </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Circular+Std:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <!-- CSS modules -->
+  <link rel="stylesheet" href="src/css/tokens.css">
+  <link rel="stylesheet" href="src/css/layout.css">
+  <link rel="stylesheet" href="src/css/panel.css">
+  <link rel="stylesheet" href="src/css/upload.css">
+  <link rel="stylesheet" href="src/css/persona.css">
+  <link rel="stylesheet" href="src/css/map.css">
+  <link rel="stylesheet" href="src/css/chips.css">
+  <link rel="stylesheet" href="src/css/phone.css">
+  <link rel="stylesheet" href="src/css/caption.css">
+  <link rel="stylesheet" href="src/css/stitch.css">
+  <link rel="stylesheet" href="src/css/bottom-bar.css">
+  <link rel="stylesheet" href="src/css/monitor.css">
+  <link rel="stylesheet" href="src/css/analytics.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    /* Warning Banner Styles */
+    #quota-banner {
+      display: none;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: #fffbeb;
+      border-bottom: 1px solid #fcd34d;
+      padding: 10px 16px;
+      font-family: 'Circular Std', sans-serif;
+      animation: bannerSlideDown 0.3s ease-out;
+    }
+    @keyframes bannerSlideDown {
+      from { transform: translateY(-100%); }
+      to { transform: translateY(0); }
+    }
+    .qb-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .qb-text {
+      font-size: 13px;
+      color: #92400e;
+      font-weight: 500;
+      line-height: 1.4;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .qb-close {
+      background: none;
+      border: none;
+      color: #92400e;
+      font-size: 18px;
+      cursor: pointer;
+      padding: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0.6;
+      transition: opacity 0.2s;
+    }
+    .qb-close:hover { opacity: 1; }
+    .qb-upgrade-btn {
+      color: #7c3aed;
+      font-weight: 700;
+      text-decoration: underline;
+      cursor: pointer;
+      background: none;
+      border: none;
+      padding: 0;
+      font-size: inherit;
+    }
+    @media (max-width: 768px) {
+      .qb-text { font-size: 11px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<div class="sidebar">
+  <div class="sb-logo">
+    <img src="Assets/logo-dashboard.png" style="width: 40px; height: 40px; object-fit: contain;" alt="Logo Larisi">
+  </div>
+  <div class="sb-icon active" onclick="switchMenu('command')" data-label="Dapur Konten">
+    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+  </div>
+  <div class="sb-icon" onclick="switchMenu('monitor')" data-label="Kelola Iklan">
+    <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+  </div>
+  <div class="sb-icon" onclick="switchMenu('analytics')" data-label="Performa Iklan">
+    <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+  </div>
+</div>
+
+<div class="main">
+  <!-- Warning Banner -->
+  <div id="quota-banner">
+    <div class="qb-content">
+      <div class="qb-text" id="qb-message-text">
+        <!-- Text akan diisi via JS -->
+      </div>
+      <button class="qb-close" onclick="closeQuotaBanner()" title="Tutup">✕</button>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <div class="header">
+    <div style="min-width: 0; overflow: hidden; flex-shrink: 1;">
+      <div class="header-title" id="headerTitle">Dapur Konten</div>
+      <div class="header-sub" id="headerSub" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Siapkan foto, video dan pesan terbaikmu di sini untuk tampil maksimal.</div>
+    </div>
+    <div class="header-right">
+      <div class="search-bar">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input placeholder="Cari iklan, aset...">
+      </div>
+      <div id="bufferIndicator"></div>
+      <div class="notif-btn"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg></div>
+                <div class="user-profile-wrap" style="position: relative; display: flex; align-items: center;">
+                    <div class="user-info" style="text-align: right; margin-right: 12px; display: none; max-width: 200px; overflow: visible;" id="user-info-text">
+                        <div class="user-name" style="font-size: 13px; font-weight: 700; color: var(--near-black); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; justify-content: flex-end; gap: 6px;">
+                            <span id="display-business-name">Bisnis Saya</span>
+                            <span id="plan-badge" style="display: none; font-size: 9px; padding: 2px 6px; border-radius: 4px; vertical-align: middle; text-transform: uppercase; font-weight: 800; letter-spacing: 0.5px; line-height: 1;"></span>
+                        </div>
+                        <div class="user-role" id="display-user-name" style="font-size: 11px; color: var(--secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Pemilik</div>
+                    </div>
+                    <div class="avatar" id="user-avatar-btn" style="cursor: pointer; transition: transform 0.2s;" onmouseenter="this.style.transform='scale(1.05)'" onmouseleave="this.style.transform='scale(1)'">
+                        <span id="user-initials">--</span>
+                    </div>
+                    
+                    <!-- Logout Dropdown -->
+                    <div id="logout-dropdown" style="display: none; position: absolute; top: 52px; right: 0; background: white; border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 180px; z-index: 1000; padding: 8px 0; animation: slideDown 0.2s ease;">
+                        <style>
+                            @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+                            .dropdown-item { padding: 10px 16px; font-size: 13px; color: var(--near-black); cursor: pointer; display: flex; align-items: center; gap: 10px; transition: background 0.2s; }
+                            .dropdown-item:hover { background: var(--bg-soft); color: var(--rausch); }
+                            .dropdown-divider { height: 1px; background: var(--border); margin: 4px 0; }
+                        </style>
+                        <div id="upgrade-menu-item" class="dropdown-item" onclick="showTrialModalManual()" style="display: none; color: var(--rausch); font-weight: 600;">
+                            <i class="fas fa-rocket"></i> Upgrade Paket
+                        </div>
+                        <div id="upgrade-divider" class="dropdown-divider" style="display: none;"></div>
+                        <div class="dropdown-item" onclick="window.signOut()" style="color: #dc2626;">
+                            <i class="fas fa-sign-out-alt"></i> Keluar
+                        </div>
+                    </div>
+                </div>
+    </div>
+  </div>
+
+  <div class="content">
+    <div id="view-command" style="display:flex;flex-direction:column;gap:12px;flex:1;min-height:0;">
+    <div class="panels">
+
+      <!-- LEFT: Creative Assets -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-icon">
+            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          </div>
+          <div>
+            <div class="panel-title">Aset Kreatif</div>
+            <div class="panel-sub">Maksimal 5 Foto atau 1 Video</div>
+          </div>
+        </div>
+        <div class="panel-body">
+
+          <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+            <div class="plus-icon">
+              <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </div>
+            <div class="upload-label">Unggah Foto/Video</div>
+            <div class="upload-caption">Geser foto ke sini atau klik untuk pilih</div>
+          </div>
+          <input type="file" id="fileInput" accept="image/*,video/*" multiple style="display:none" onchange="handleUpload(event)">
+          <div class="uploaded-thumbs" id="thumbs" style="display:none"></div>
+
+          <div class="scanning" id="scanning">
+            <div class="scan-dot"></div><div class="scan-dot"></div><div class="scan-dot"></div>
+            <div class="scan-text" id="scanText">SiLaris sedang menganalisis kontenmu...</div>
+          </div>
+
+          <div class="cat-nudge" id="catNudge">
+            <div class="nudge-title">Bantu SiLaris lebih akurat, pilih kategori bisnis.</div>
+            <div class="nudge-desc">SiLaris belum bisa mengenali jenis konten di foto ini. Pilih kategori yang sesuai agar pesan iklan lebih tepat sasaran.</div>
+            <div class="cat-tiles">
+              <div class="cat-tile" onclick="selectCat(this,'Kuliner')"><span class="cat-emoji">🍔</span>Kuliner</div>
+              <div class="cat-tile" onclick="selectCat(this,'Kafe')"><span class="cat-emoji">☕</span>Kafe</div>
+              <div class="cat-tile" onclick="selectCat(this,'FashionWanita')"><span class="cat-emoji">👗</span>F. Wanita</div>
+              <div class="cat-tile" onclick="selectCat(this,'FashionPria')"><span class="cat-emoji">👔</span>F. Pria</div>
+              <div class="cat-tile" onclick="selectCat(this,'FashionMuslim')"><span class="cat-emoji">🧕</span>F. Muslim</div>
+              <div class="cat-tile" onclick="selectCat(this,'FashionMuslimPria')"><span class="cat-emoji">🕌</span>Muslim Pria</div>
+              <div class="cat-tile" onclick="selectCat(this,'Properti')"><span class="cat-emoji">🏠</span>Properti</div>
+              <div class="cat-tile" onclick="selectCat(this,'Beauty')"><span class="cat-emoji">💄</span>Beauty</div>
+              <div class="cat-tile" onclick="selectCat(this,'Salon')"><span class="cat-emoji">🧖</span>Salon</div>
+              <div class="cat-tile" onclick="selectCat(this,'Barber')"><span class="cat-emoji">💈</span>Barber</div>
+              <div class="cat-tile" onclick="selectCat(this,'Bayi')"><span class="cat-emoji">👶</span>Bayi</div>
+              <div class="cat-tile" onclick="selectCat(this,'Gadget')"><span class="cat-emoji">📱</span>Gadget</div>
+              <div class="cat-tile" onclick="selectCat(this,'Wisata')"><span class="cat-emoji">✈️</span>Wisata</div>
+              <div class="cat-tile" onclick="selectCat(this,'Pet')"><span class="cat-emoji">🐾</span>Pet</div>
+              <div class="cat-tile" onclick="selectCat(this,'Seni')"><span class="cat-emoji">🎨</span>Seni</div>
+              <div class="cat-tile" onclick="selectCat(this,'Otomotif')"><span class="cat-emoji">🏍️</span>Otomotif</div>
+              <div class="cat-tile" onclick="selectCat(this,'Pendidikan')"><span class="cat-emoji">📚</span>Pendidikan</div>
+              <div class="cat-tile" onclick="selectCat(this,'Kerajinan')"><span class="cat-emoji">🧶</span>Kerajinan</div>
+              <div class="cat-tile" onclick="selectCat(this,'Olahraga')"><span class="cat-emoji">⚽</span>Olahraga</div>
+              <div class="cat-tile" onclick="selectCat(this,'Fotografi')"><span class="cat-emoji">📸</span>Fotografi</div>
+              <div class="cat-tile" onclick="selectCat(this,'JasaProfesional')"><span class="cat-emoji">💼</span>Jasa Profesional</div>
+              <div class="cat-tile" onclick="selectCat(this,'EventCatering')"><span class="cat-emoji">🎉</span>Event & Catering</div>
+              <div class="cat-tile" onclick="selectCat(this,'KebersihanLaundry')"><span class="cat-emoji">🧺</span>Laundry & Kebersihan</div>
+              <div class="cat-tile" onclick="selectCat(this,'General')"><span class="cat-emoji">🔖</span>Lainnya</div>
+            </div>
+          </div>
+
+          <!-- Vision Conflict Nudge: muncul ketika AI mendeteksi kategori berbeda dari profil bisnis -->
+          <div class="vision-conflict" id="visionConflict">
+            <div class="vc-question" id="conflictQuestion">SiLaris mendeteksi foto ini sebagai <strong>Makanan</strong>, tapi fokus bisnismu di <strong>Properti</strong>. Apakah foto ini sudah benar?</div>
+            <div class="vc-actions">
+              <button class="vc-btn vc-btn-biz" onclick="_resolveConflict(false)">Ya, lanjutkan</button>
+              <button class="vc-btn vc-btn-ai"  onclick="_changePhotoConflict()">Ganti foto</button>
+            </div>
+          </div>
+
+          <div class="persona-card" id="personaCard">
+            <div class="persona-top">
+              <div class="persona-check">
+                <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+              <div class="persona-badge" id="personaBadge">Master Persona</div>
+              <button class="persona-edit-btn" id="personaEditBtn" onclick="openEditPersona()" style="display:none">✏️ Edit</button>
+            </div>
+            <div class="persona-name" id="personaName">Culinary / Cafe</div>
+            <div class="persona-targeting" id="personaTarget">Targeting: Foodies & Urban Professionals</div>
+            <div class="persona-age" id="personaAge">Age range: 20–40 · Mixed</div>
+            <div class="persona-tags" id="personaTags"></div>
+          </div>
+
+          <div style="height:1px;background:var(--border);margin:0 -18px"></div>
+          <div class="section-label">Siapa Target Audiens Kamu?</div>
+
+          <div class="audience-item">
+            <svg class="aud-icon" id="localIcon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <div style="flex:1;">
+              <div class="aud-title" id="localTitle">Warga Sekitar</div>
+              <div class="aud-desc" id="localDesc">Penduduk Lokal atau Orang yang tinggal di sekitar lokasi yang kamu pilih.</div>
+            </div>
+            <div class="toggle" id="toggleLocal" onclick="toggleLocalFn()"><div class="toggle-knob"></div></div>
+          </div>
+
+          <div class="audience-item" id="travelerItem">
+            <svg class="aud-icon" viewBox="0 0 24 24" id="travelerIcon"><path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            <div style="flex:1;">
+              <div class="aud-title" id="travelerTitle">Pengunjung</div>
+              <div class="aud-desc" id="travelerDesc">Pendatang atau orang yang sedang berkunjung atau baru saja melewati lokasi ini.</div>
+            </div>
+            <div class="toggle" id="toggleTraveler" onclick="toggleTravelerFn()" style="cursor:pointer"><div class="toggle-knob"></div></div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- MIDDLE: Map -->
+      <div class="panel" style="padding:0;position:relative;overflow:visible;">
+        <div class="map-search">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input id="mapSearchInput" placeholder="Tentukan titik target iklanmu" oninput="onSearchInput(this.value)" autocomplete="off">
+          <button id="mapSearchClear" onclick="clearMapSearch()" style="display:none;flex-shrink:0;background:none;border:none;cursor:pointer;padding:2px 0 2px 4px;color:#9ca3af;line-height:0;" onmouseover="this.style.color='#6b7280'" onmouseout="this.style.color='#9ca3af'"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+          <div id="searchDropdown" style="position:absolute;top:52px;left:0;right:0;background:#fff;border-radius:0 0 12px 12px;box-shadow:0 8px 24px rgba(0,0,0,0.12);z-index:2000;display:none;max-height:200px;overflow-y:auto;"></div>
+        </div>
+        <div id="map" style="border-radius:var(--radius-card)"></div>
+        <div class="map-popup">
+          <div class="popup-loc">Sumbersari, Daerah Istimewa Yogyakarta</div>
+          <div class="popup-reach" id="popupReach">Jangkauan: 95,000 orang</div>
+        </div>
+        <div class="radius-bar">
+          <div class="radius-row">
+            <div class="radius-label">Target Radius</div>
+            <div class="radius-val" id="radiusVal">1.0 KM</div>
+          </div>
+          <input type="range" min="1" max="25" value="1" step="0.5" oninput="updateRadius(this.value)">
+          <div class="drag-hint">Geser untuk memperluas jangkauan</div>
+        </div>
+      </div>
+
+      <!-- RIGHT: AI Editor -->
+      <div class="panel" style="display:flex;flex-direction:column;">
+        <div class="panel-header" style="justify-content:space-between;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div class="panel-icon">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+            </div>
+            <div>
+              <div class="panel-title">Asisten AI Pintar</div>
+              <div class="panel-sub">Bikin kontenmu lebih menarik secara real-time</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="p3-body">
+
+          <!-- LEFT: Preview Selector → Visual Filters → AI Caption → Publish -->
+          <div class="p3-left">
+
+            <!-- 1. Publish ke Channel Selector -->
+            <div class="opt-mode-row">
+              <div class="section-label">Posting ke Media Sosial</div>
+              <div class="preview-label-badge" id="previewLabel" onclick="cycleChannel()" style="cursor:pointer;user-select:none;" title="Klik untuk ganti platform">Instagram</div>
+            </div>
+
+            <!-- 2. Visual Filters -->
+            <div>
+              <div class="section-label" style="margin-bottom:10px;">Atur Tampilan Gambar</div>
+              <div style="display:flex;flex-direction:column;gap:10px;">
+                <div class="filter-row">
+                  <div class="filter-label">Terang-Gelap</div>
+                  <input type="range" min="0" max="200" value="100" oninput="brightnessVal=parseInt(this.value);document.getElementById('bVal').textContent=this.value+'%';applyFilters()">
+                  <div class="filter-val" id="bVal">100%</div>
+                </div>
+                <div class="filter-row">
+                  <div class="filter-label">Ketajaman Warna</div>
+                  <input type="range" min="0" max="200" value="100" oninput="contrastVal=parseInt(this.value);document.getElementById('cVal').textContent=this.value+'%';applyFilters()">
+                  <div class="filter-val" id="cVal">100%</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 3. AI Caption -->
+            <div>
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                <div class="section-label">Pesan dioptimalkan oleh AI</div>
+                <div id="captionPlatformLabel" style="font-size:10px;font-weight:700;color:#791ADB;text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:4px;"></div>
+              </div>
+              <div class="caption-box">
+                <textarea id="captionArea" placeholder="Tunggu sebentar, AI akan menuliskan pesan untukmu. Kamu bebas mengeditnya kembali agar lebih sesuai." rows="5"></textarea>
+                <div class="caption-actions">
+                  <button class="gen-btn" id="genBtn" onclick="generateCaptionAI()">Generate ulang</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 5. Connect Channels -->
+            <div>
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                <div class="section-label">Hubungkan Akun Media Sosial</div>
+                <button id="connectSettingsBtn" onclick="showManageChannelsModal()" style="display:none;background:none;border:none;cursor:pointer;padding:3px 5px;color:var(--secondary);border-radius:6px;line-height:1;transition:.15s;" title="Kelola akun terhubung" onmouseenter="this.style.color='#791ADB'" onmouseleave="this.style.color='var(--secondary)'">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+                </button>
+              </div>
+              <div id="connectedAvatarsRow" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                <button id="addChannelBtn" onclick="showConnectAccountsFlow()" class="add-channel-btn" title="Tambah Channel">
+                  <span class="add-icon">+</span>
+                  <span class="add-label">Hubungkan Akun Media Sosial</span>
+                </button>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- RIGHT: Live Preview label + Phone mockup + Geo-Stitching -->
+          <div class="p3-right">
+
+            <!-- Hidden chips for JS logic -->
+            <div id="previewChips" style="display:none">
+              <div class="chip-preview active" data-platform="ig-story" onclick="selectPreview(this)">📷 IG Story/Reels</div>
+              <div class="chip-preview" data-platform="ig-feed"  onclick="selectPreview(this)">📸 IG Feed</div>
+              <div class="chip-preview" data-platform="tiktok"   onclick="selectPreview(this)">🎵 TikTok</div>
+              <div class="chip-preview" data-platform="youtube"  onclick="selectPreview(this)">▶ YouTube</div>
+              <div class="chip-preview" data-platform="meta"     onclick="selectPreview(this)">⊡ Meta Feed</div>
+            </div>
+            <div id="ratioLabel" style="display:none">9:16 — Stories</div>
+
+            <!-- Live Preview label + format selector (2 baris) -->
+            <div style="display:flex;flex-direction:column;gap:8px;flex-shrink:0;">
+              <!-- Baris 1: LIVE PREVIEW + nama platform+format -->
+              <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div class="section-label">Live Preview</div>
+                <span id="livePreviewPlatformLabel" style="font-size:11px;font-weight:600;color:var(--secondary);letter-spacing:0.2px;">Instagram Reel</span>
+              </div>
+              <!-- Baris 2: Post / Reel / Story full-width (hanya Instagram & Facebook) -->
+              <div id="formatSelector" class="fmt-selector-row">
+                <label class="fmt-radio-label"><input type="radio" name="fmt" value="post" onchange="selectFormat('post')"> Post</label>
+                <label class="fmt-radio-label"><input type="radio" name="fmt" value="reel" checked onchange="selectFormat('reel')"> Reel</label>
+                <label class="fmt-radio-label"><input type="radio" name="fmt" value="story" onchange="selectFormat('story')"> Story</label>
+              </div>
+            </div>
+
+            <!-- Phone mockup -->
+            <div class="preview-wrap" style="flex:1; padding:16px;">
+              <div style="display:flex; justify-content:center; align-items:center; flex:1; width:100%;">
+                <div class="phone-shell" id="phoneShell">
+                  <div id="phoneChrome"></div>
+                  <div class="phone-placeholder" id="phoneMedia">
+                    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                  </div>
+                  <div class="phone-stitch" id="phoneStitch" style="display:none" contenteditable="true" spellcheck="false" title="Klik teks ini untuk mengedit isinya"></div>
+                </div>
+              </div>
+              <!-- Carousel dots — muncul saat foto > 1 -->
+              <div id="carouselDots" style="display:none;gap:6px;justify-content:center;align-items:center;padding-top:10px;flex-shrink:0;"></div>
+              
+              <!-- Story Zoom & Pan Control -->
+              <div id="storyZoomControl" style="display:none;align-items:center;justify-content:center;gap:10px;padding-top:16px;flex-shrink:0;">
+                <span style="font-size:16px;font-weight:700;color:#9ca3af;line-height:1;cursor:pointer;" onclick="document.getElementById('storyZoomSlider').value=1;document.getElementById('storyZoomSlider').dispatchEvent(new Event('input'))">-</span>
+                <input type="range" id="storyZoomSlider" min="1" max="4" step="0.05" value="1" style="width:140px;height:4px;border-radius:2px;appearance:none;background:#e5e7eb;outline:none;" oninput="applyStoryZoom()">
+                <span style="font-size:16px;font-weight:700;color:#9ca3af;line-height:1;cursor:pointer;" onclick="document.getElementById('storyZoomSlider').value=4;document.getElementById('storyZoomSlider').dispatchEvent(new Event('input'))">+</span>
+                <div style="font-size:10px;color:#9ca3af;margin-left:8px;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;">Drag to pan</div>
+              </div>
+            </div>
+
+            <!-- Smart Geo-Stitching -->
+            <div class="stitch-card" id="stitchCard" style="display:none">
+              <div class="stitch-top">
+                <div class="stitch-icon">
+                  <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                </div>
+                <div class="stitch-title">Smart Geo-Stitching</div>
+                <div class="toggle on" id="toggleStitch" onclick="toggleStitchFn()" style="margin-left:auto;cursor:pointer"><div class="toggle-knob"></div></div>
+              </div>
+              <div class="stitch-desc" id="stitchDesc">Tag lokasi otomatis yang bikin orang berhenti scroll! Tingkatkan minat pembeli sampai <span class="stitch-highlight">40%.</span></div>
+              <div id="stitchVideoNotice" style="display:none;font-size:11px;color:var(--secondary);margin-top:0;line-height:1.4;">Text stitching tidak tersedia untuk video. Fitur ini hanya berlaku untuk foto.</div>
+            </div>
+          </div>
+
+        </div>
+
+        <div style="padding:10px 18px;border-top:1px solid var(--border);flex-shrink:0;">
+          <div class="free-badge" id="freeBadgeContainer" style="display: none;">
+            <span style="font-size:16px;">🎁</span>
+            <span class="free-text">Sisa Kuota Tayang AI Gratis: <span id="freeCount">10</span>/10</span>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /panels -->
+
+    <!-- Bottom Bar -->
+    <div class="bottom-bar">
+      <div>
+        <div class="reach-label">Estimasi Jangkauan</div>
+        <div style="display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;">
+          <div style="font-size:22px;font-weight:700;color:var(--near-black);letter-spacing:-0.44px;" id="reachNum">72K – 119K</div>
+          <div style="font-size:13px;color:var(--secondary);">orang bisa lihat iklanmu</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:0;margin-top:6px;">
+          <div style="display:flex;align-items:center;gap:5px;" id="reachPct"></div>
+          <span id="reachDivider" style="width:1px;height:11px;background:var(--secondary);opacity:0.3;margin:0 8px;display:none;"></span>
+          <div style="font-size:11px;color:var(--secondary);" id="reachLocLabel"></div>
+        </div>
+      </div>
+      <div class="bar-divider"></div>
+      <div style="display:flex;flex-direction:column;gap:6px;flex:1;">
+        <div class="reach-label">Penempatan Iklan Otomatis</div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          <div class="placement-text">Atur Budget Lebih Pintar</div>
+        </div>
+        <div style="font-size:11px;color:var(--secondary);">Segera hadir: SiLaris akan merekomendasikan platform terbaik untuk budget iklanmu berdasarkan performa iklan aktifmu.</div>
+      </div>
+      <button class="launch-btn" onclick="launchRadar()">
+        <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        Tayangkan Sekarang
+      </button>
+    </div>
+    </div><!-- /view-command -->
+
+    <!-- View 2: Campaign Live Monitor -->
+    <div id="view-monitor" style="display:none;flex-direction:column;flex:1;min-height:0;">
+      <div class="panels-monitor">
+
+        <!-- LEFT: Campaign List -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-icon">
+              <svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+            </div>
+            <div>
+              <div class="panel-title">Iklan Aktif</div>
+              <div class="panel-sub">Daftar iklanmu yang sedang tayang</div>
+            </div>
+            <div class="monitor-tabs">
+              <div class="monitor-tab active" onclick="filterCampaigns('all',this)">Semua</div>
+              <div class="monitor-tab" onclick="filterCampaigns('running',this)">Berjalan</div>
+              <div class="monitor-tab" onclick="filterCampaigns('paused',this)">Dihentikan</div>
+            </div>
+          </div>
+          <div id="campaign-list"></div>
+        </div>
+
+        <!-- RIGHT: AI Chat Panel -->
+        <div class="panel" style="padding:0;display:flex;flex-direction:column;">
+          <!-- Header -->
+          <div class="chat-panel-header" style="flex-direction:column;align-items:stretch;gap:8px;">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div class="panel-icon">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+              </div>
+              <div class="panel-title" style="white-space:nowrap;">SiLaris</div>
+            </div>
+            <div class="context-pill" id="contextPill" style="width:fit-content;max-width:100%;">
+              <span class="ctx-dot" id="ctxDot"></span>
+              <span style="color:var(--secondary);">Pilih iklan</span>
+            </div>
+          </div>
+
+          <!-- Chat body -->
+          <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0;">
+            <!-- Empty state -->
+            <div class="chat-empty" id="chatEmpty">
+              <div class="chat-empty-icon">
+                <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+              </div>
+              <div class="chat-empty-title">Halo! Saya SiLaris 👋</div>
+              <div class="chat-empty-sub">Asisten cerdas yang siap bantu iklan kamu jadi rebutan pelanggan! Pilih salah satu iklan di kiri untuk mulai bicara dengan SiLaris.</div>
+            </div>
+            <!-- Messages -->
+            <div class="chat-messages" id="chatMessages" style="display:none;"></div>
+          </div>
+
+          <!-- Input area -->
+          <div class="chat-input-area">
+            <div class="chat-input-wrap">
+              <textarea class="chat-input-field" id="chatInput" placeholder="Ketik pesan ke AI..." rows="1"
+                onkeydown="handleChatKey(event)" oninput="autoResizeChat(this)"></textarea>
+            </div>
+            <button class="chat-send-btn" onclick="sendChatMessage()">
+              <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div><!-- /view-monitor -->
+
+    <!-- View 3: Performa Iklan — diisi oleh renderAnalytics() -->
+    <div id="view-analytics" style="display:none;flex-direction:column;flex:1;min-height:0;overflow-y:auto;">
+
+      <!-- Diisi oleh renderAnalytics() saat menu 3 diklik -->
+
+    </div><!-- /view-analytics -->
+
+  </div>
+</div>
+
+  <!-- Scripts: data first, then modules, then main -->
+
+  <!-- Config — harus paling pertama -->
+  <script src="src/js/config.js"></script>
+
+  <!-- Supabase CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="src/js/supabase.js"></script>
+
+  <!-- Buffer -->
+  <script src="src/js/buffer.js"></script>
+
+  <!-- html2canvas CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <!-- Export engine -->
+    <script src="src/js/export.js"></script>
+
+    <!-- Initialize Auth State UI -->
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const profile = JSON.parse(localStorage.getItem('radar_user_profile') || '{}');
+            
+            if (profile && profile.full_name) {
+                // Update Initials
+                const initials = profile.full_name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+                document.getElementById('user-initials').textContent = initials;
+                
+                // Update Name & Business
+                document.getElementById('display-business-name').textContent = profile.business_name || 'Bisnis Larisi';
+                document.getElementById('display-user-name').textContent = profile.full_name;
+                document.getElementById('user-info-text').style.display = 'block';
+
+                // Tampilkan Badge Paket untuk semua user
+                const badge = document.getElementById('plan-badge');
+                if (badge) {
+                    const plan = (profile && profile.selected_plan) ? profile.selected_plan : 'freemium';
+                    badge.style.display = 'inline-block';
+
+                    if (plan === 'pro') {
+                        badge.textContent = 'PRO';
+                        badge.style.background = '#791ADB';
+                        badge.style.color = 'white';
+                    } else if (plan === 'starter') {
+                        badge.textContent = 'STARTER';
+                        badge.style.background = '#10b981';
+                        badge.style.color = 'white';
+                    } else {
+                        badge.textContent = 'FREE';
+                        badge.style.background = '#f3f4f6';
+                        badge.style.color = '#6b7280';
+                        badge.style.border = '1px solid var(--border)';
+                    }
+                }
+
+                // Update angka jatah iklan di UI dari database
+                if (profile) {
+                    // Fallback ke 10 jika data di DB masih kosong (untuk user baru)
+                    window.freeCount = (typeof profile.ai_launch_count !== 'undefined' && profile.ai_launch_count !== null) 
+                        ? profile.ai_launch_count 
+                        : 10;
+                        
+                    const fcEl = document.getElementById('freeCount');
+                    if (fcEl) fcEl.textContent = window.freeCount;
+                }
+            }
+
+            // Toggle Dropdown
+            const avatarBtn = document.getElementById('user-avatar-btn');
+            const dropdown = document.getElementById('logout-dropdown');
+            
+            avatarBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+            });
+
+            document.addEventListener('click', () => {
+                dropdown.style.display = 'none';
+            });
+        });
+    </script>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="src/data/locations.js"></script>
+  <script src="src/data/region-dialek.js"></script>
+  <script src="src/data/personas.js"></script>
+  <script src="src/data/caption-templates.js"></script>
+  <script src="src/js/state.js"></script>
+  <script src="src/js/reach.js"></script>
+  <script src="src/js/map.js"></script>
+  <script src="src/js/upload.js"></script>
+  <script src="src/js/phone-preview.js"></script>
+  <script src="src/js/vision.js"></script>
+  <script src="src/js/persona.js"></script>
+  <script src="src/js/caption.js"></script>
+  <script src="src/js/stitch.js"></script>
+  <script src="src/js/launch.js"></script>
+  <script src="src/js/main.js"></script>
+  <script src="src/js/boost.js"></script>
+  <script src="src/js/monitor.js"></script>
+  <script src="src/js/analytics.js"></script>
+  <script src="src/js/duitku.js"></script>
+  <script>
+    (function() {
+      var s = document.createElement('script');
+      s.src = 'https://app.duitku.com/lib/js/duitku.js';
+      s.onerror = function() { console.warn('[Duitku] SDK popup tidak tersedia, fallback ke redirect.'); };
+      document.head.appendChild(s);
+    })();
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+
+  <!-- Launch Sequence Modal (Loading → Success) -->
+  <div id="launchingModal" class="lm-overlay">
+    <div class="ll-card">
+      <!-- State 1: Loading -->
+      <div id="llLoading" class="ll-state">
+        <div class="ll-spinner-wrap">
+          <div class="ll-spinner"></div>
+          <div class="ll-spinner-icon">
+            <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          </div>
+        </div>
+        <div class="ll-loading-title">Meluncurkan Iklan...</div>
+        <div id="llCampName" class="ll-camp-name"></div>
+        <div class="ll-loading-dots"><span></span><span></span><span></span></div>
+      </div>
+      <!-- State 2: Success -->
+      <div id="llSuccess" class="ll-state" style="display:none;">
+        <div class="ll-success-ring">
+          <svg class="ll-checkmark" viewBox="0 0 52 52">
+            <circle class="ll-check-circle" cx="26" cy="26" r="23" fill="none"/>
+            <polyline class="ll-check-stroke" points="14,26 22,34 38,18" fill="none"/>
+          </svg>
+        </div>
+        <div class="ll-success-title">Iklan berhasil diluncurkan!</div>
+        <div id="llSuccessCampName" class="ll-camp-name"></div>
+        <div class="ll-redirect-hint">
+          <svg viewBox="0 0 24 24" width="12" height="12"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+          Membuka halaman kelola iklan...
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Social Warning Modal -->
+  <div id="socialWarningModal" class="lm-overlay" style="display:none;" onclick="if(event.target===this)this.style.display='none'">
+    <div class="lm-card">
+      <div class="lm-icon-wrap" style="background:#fef3c7;">
+        <svg viewBox="0 0 24 24" style="width:22px;height:22px;stroke:#d97706;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;">
+          <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+      </div>
+      <div id="swmTitle" class="lm-title">Akun belum terhubung</div>
+      <div id="swmDesc" class="lm-sub"></div>
+      <button class="lm-cta" onclick="document.getElementById('socialWarningModal').style.display='none'; showConnectAccountsFlow();">Hubungkan Akun →</button>
+    </div>
+  </div>
+
+  <!-- Launch Validation Modal -->
+  <div id="launchModal" class="lm-overlay" onclick="closeLaunchModal(event)">
+    <div class="lm-card">
+      <div class="lm-icon-wrap">
+        <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+      </div>
+      <div class="lm-title">Hampir siap!</div>
+      <div class="lm-sub">Lengkapi langkah berikut sebelum tayang:</div>
+      <div id="lmChecklist" class="lm-checklist"></div>
+      <button class="lm-cta" onclick="document.getElementById('launchModal').style.display='none'">Oke, saya lengkapi</button>
+    </div>
+  </div>
+  <div id="an-toast" class="an-toast" style="display:none"></div>
+
+   <!-- ===== TRIAL EXPIRED MODAL ===== -->
+  <div id="trial-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:9999; display:none; align-items:center; justify-content:center;">
+    <div style="background:#fff; border-radius:20px; padding:36px 32px; max-width:440px; width:90%; text-align:center; box-shadow:0 24px 60px rgba(0,0,0,0.2); position:relative;">
+      <!-- Tombol Close (X) -->
+      <button onclick="document.getElementById('trial-modal').style.display='none'; if(typeof initQuotaBanner === 'function') initQuotaBanner();" style="position:absolute; top:16px; right:16px; background:none; border:none; font-size:24px; color:#999; cursor:pointer; padding:4px; line-height:1;">&times;</button>
+      
+      <div style="font-size:40px; margin-bottom:12px;">⏰</div>
+      <h2 id="trial-modal-title" style="font-size:22px; font-weight:700; color:#1a1a1a; margin:0 0 8px;">Masa trial kamu sudah selesai!</h2>
+      <p id="trial-modal-desc" style="font-size:14px; color:#666; margin:0 0 8px;">7 hari gratis telah berakhir. Pilih langkah berikutnya:</p>
+      <div id="trial-modal-plan" style="display:inline-block; background:#f4f0ff; color:#5b17b7; font-size:12px; font-weight:600; padding:4px 12px; border-radius:20px; margin-bottom:24px;"></div>
+
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        <button onclick="choosePlan('pro')" id="trial-btn-pro" style="background:#1a1a1a; color:#fff; border:none; border-radius:12px; padding:14px; font-size:15px; font-weight:700; cursor:pointer; transition: background 0.2s;">
+          Lanjut Berlangganan Pro — Rp 199rb/bln
+        </button>
+        <button onclick="choosePlan('starter')" id="trial-btn-starter" style="display:none; background:#1a1a1a; color:#fff; border:none; border-radius:12px; padding:14px; font-size:15px; font-weight:700; cursor:pointer; transition: background 0.2s;">
+          Lanjut Berlangganan Starter — Rp 99rb/bln
+        </button>
+        <button onclick="choosePlan('freemium')" id="trial-btn-freemium" style="background:#fff; color:#1a1a1a; border:2px solid #e5e5e5; border-radius:12px; padding:14px; font-size:15px; font-weight:600; cursor:pointer; transition: background 0.2s;">
+          Turun ke Freemium (Gratis selamanya)
+        </button>
+      </div>
+      <p style="font-size:12px; color:#999; margin:16px 0 0;">Tidak ada biaya yang ditagih selama trial. Batalkan kapan saja.</p>
+    </div>
+  </div>
+
+  <!-- ===== TRIAL BANNER (hari ke 1-7) ===== -->
+  <div id="trial-banner" style="display:none; position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:#5b17b7; color:#fff; border-radius:30px; padding:10px 20px; font-size:13px; font-weight:600; z-index:999; box-shadow:0 4px 20px rgba(91,23,183,0.4); white-space:nowrap;">
+    <span id="trial-banner-text"></span>
+    <a href="#harga" onclick="document.getElementById('trial-banner').style.display='none'" style="color:#f4e6ff; margin-left:12px; text-decoration:underline; cursor:pointer;">Lihat Paket</a>
+  </div>
+
+  <script>
+    // checkTrial() — hanya dipanggil setelah profil fresh dari DB dikonfirmasi
+    // TIDAK lagi jalan otomatis pakai localStorage (mencegah stale data)
+    window._checkTrialFromDB = function(profile) {
+      const plan = (profile.selected_plan || '').toLowerCase();
+      if (!plan || plan === 'freemium') return;
+
+      const trialStart = profile.trial_start;
+      if (!trialStart) return; // Tidak ada trial_start di DB → skip
+
+      const now      = new Date();
+      const diffDays = Math.floor((now - new Date(trialStart)) / 86400000);
+      const remaining = 7 - diffDays;
+
+      // Sync localStorage agar konsisten
+      localStorage.setItem('larisi_trial_start', trialStart);
+      localStorage.setItem('larisi_selected_plan', plan);
+
+      if (diffDays >= 7) {
+        // Trial benar-benar habis → tampilkan modal
+        const modal = document.getElementById('trial-modal');
+        const planBadge = document.getElementById('trial-modal-plan');
+        planBadge.textContent = 'Paket ' + plan.charAt(0).toUpperCase() + plan.slice(1) + ' — trial 7 hari berakhir';
+        if (plan === 'starter') {
+          document.getElementById('trial-btn-starter').style.display = 'block';
+          document.querySelector('#trial-modal button[onclick="choosePlan(\'pro\')"]').style.display = 'none';
+        }
+        modal.style.display = 'flex';
+      } else if (remaining <= 3) {
+        // Sisa 1-3 hari → tampilkan banner pengingat saja
+        const banner = document.getElementById('trial-banner');
+        document.getElementById('trial-banner-text').textContent =
+          '⏳ Trial berakhir dalam ' + remaining + ' hari';
+        banner.style.display = 'block';
+      }
+    };
+    
+    // Fungsi untuk menampilkan modal upgrade secara manual (Dinamis per Skenario)
+    window.showTrialModalManual = function() {
+      const modal = document.getElementById('trial-modal');
+      const planBadge = document.getElementById('trial-modal-plan');
+      const titleEl = document.getElementById('trial-modal-title');
+      const descEl = document.getElementById('trial-modal-desc');
+      
+      const btnPro = document.getElementById('trial-btn-pro');
+      const btnStarter = document.getElementById('trial-btn-starter');
+      const btnFree = document.getElementById('trial-btn-freemium');
+      
+      const profile = JSON.parse(localStorage.getItem('radar_user_profile') || '{}');
+      const currentPlan = (profile.selected_plan || 'freemium').toLowerCase();
+      const paymentStatus = (profile.payment_status || 'trial').toLowerCase();
+      
+      const now = new Date();
+      const start = profile.trial_start ? new Date(profile.trial_start) : new Date(profile.created_at);
+      const diffDays = Math.floor((now - start) / (1000 * 60 * 60 * 24));
+      
+      // --- 1. PASTIKAN SEMUA TOMBOL MUNCUL ---
+      if (btnPro) btnPro.style.display = 'block';
+      if (btnStarter) btnStarter.style.display = 'block';
+      if (btnFree) btnFree.style.display = 'block';
+
+      // --- 2. RESET ONCLICK DEFAULT (Untuk Downgrade) ---
+      if (btnFree) btnFree.onclick = () => { if(typeof choosePlan === 'function') choosePlan('freemium'); };
+
+      planBadge.textContent = 'Paket saat ini: ' + currentPlan.toUpperCase();
+
+      // --- SKENARIO 1: PAID EXPIRED (30 HARI) atau STARTER QUOTA HABIS ---
+      let _scenarioMatched = false;
+      const _paidQuota = typeof window.freeCount !== 'undefined'
+        ? window.freeCount
+        : (profile.ai_launch_count != null ? profile.ai_launch_count : 1);
+      const _starterQuotaHabis = currentPlan === 'starter' && paymentStatus === 'paid' && _paidQuota <= 0;
+      if (paymentStatus === 'paid' && (diffDays >= 30 || _starterQuotaHabis)) {
+        _scenarioMatched = true;
+        titleEl.textContent = _starterQuotaHabis ? "Jatah Iklan Starter Habis!" : "Masa Langganan Habis!";
+        descEl.innerHTML = _starterQuotaHabis
+          ? `Jatah 50 iklan paket Starter Anda sudah habis. Isi ulang atau upgrade ke Pro.`
+          : `Masa aktif paket <b>${currentPlan.toUpperCase()}</b> Anda telah berakhir. Perpanjang sekarang agar tetap tayang.`;
+
+        if (currentPlan === 'pro') {
+          if (btnPro) btnPro.textContent = 'Perpanjang Paket Pro — Rp 199rb/bln';
+          if (btnStarter) btnStarter.textContent = 'Lanjut ke Paket Starter — Rp 99rb/bln';
+        } else {
+          if (btnPro) btnPro.textContent = 'Upgrade ke Pro — Rp 199rb/bln';
+          if (btnStarter) btnStarter.textContent = 'Perpanjang Paket Starter — Rp 99rb/bln';
+        }
+        if (btnFree) btnFree.textContent = 'Lanjut ke Freemium (Gratis Selamanya)';
+      }
+      // --- SKENARIO 2: TRIAL EXPIRED (7 HARI) ---
+      else if (paymentStatus === 'trial' && diffDays >= 7) {
+        _scenarioMatched = true;
+        titleEl.textContent = "Masa Trial Selesai!";
+        descEl.textContent = "7 hari gratis Anda telah berakhir. Pilih paket untuk mulai berlangganan:";
+
+        if (btnPro) btnPro.textContent = 'Mulai Berlangganan Pro — Rp 199rb/bln';
+        if (btnStarter) btnStarter.textContent = 'Mulai Berlangganan Starter — Rp 99rb/bln';
+        if (btnFree) btnFree.textContent = 'Lanjut ke Freemium (Gratis Selamanya)';
+      }
+      // --- SKENARIO 3: FREEMIUM QUOTA EXPIRED (10 IKLAN) ---
+      else if (currentPlan !== 'pro' && currentPlan !== 'starter') {
+        const _currentQuota = typeof window.freeCount !== 'undefined'
+          ? window.freeCount
+          : (profile.ai_launch_count != null ? profile.ai_launch_count : 10);
+        if (_currentQuota > 0) { /* quota masih ada, jangan tampilkan */ }
+        else {
+        _scenarioMatched = true;
+        titleEl.textContent = "Jatah Iklan Gratis Habis!";
+        const resetDate = (typeof getNextResetDate === 'function') ? getNextResetDate() : 'Bulan Depan';
+        descEl.innerHTML = `Jatah 10 iklan gratis Anda sudah habis.<br>Akan diisi kembali otomatis pada <b>${resetDate}</b>.`;
+
+        if (btnPro) btnPro.textContent = 'Mulai Berlangganan Pro — Rp 199rb/bln';
+        if (btnStarter) btnStarter.textContent = 'Mulai Berlangganan Starter — Rp 99rb/bln';
+        if (btnFree) {
+          btnFree.textContent = 'Tetap di Paket Freemium (Gratis Selamanya)';
+          // Tombol ini hanya menutup modal agar banner merah di atas terlihat
+          btnFree.onclick = () => {
+            modal.style.display = 'none';
+            if(typeof initQuotaBanner === 'function') initQuotaBanner();
+          };
+        }
+        } // end else quota <= 0
+      }
+
+      // Hanya tampilkan modal jika ada skenario yang benar-benar match
+      // Mencegah modal muncul untuk user yang masih aktif/baru daftar
+      if (_scenarioMatched) {
+        modal.style.display = 'flex';
+      }
+    };
+
+    // Fungsi untuk mendapatkan tanggal 1 bulan berikutnya secara otomatis (Scope Global)
+    function getNextResetDate() {
+      const names = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+      const now = new Date();
+      let nextMonth = now.getMonth() + 1;
+      let year = now.getFullYear();
+      if (nextMonth > 11) { nextMonth = 0; year++; }
+      return `1 ${names[nextMonth]} ${year}`;
+    }
+
+    // --- DYNAMIC QUOTA & TRIAL BANNER ---
+    function closeQuotaBanner() {
+      document.getElementById('quota-banner').style.display = 'none';
+      // Simpan status tutup agar tidak muncul lagi di sesi yang sama
+      localStorage.setItem('hide_quota_banner_session', 'true');
+    }
+
+    async function initQuotaBanner() {
+      try {
+        const profile = JSON.parse(localStorage.getItem('radar_user_profile') || '{}');
+        const plan = (profile.selected_plan || 'freemium').toLowerCase();
+        
+        // --- LOGIKA SEMBUNYIKAN BADGE GRATIS DI BAWAH ---
+        const badge = document.getElementById('freeBadgeContainer');
+        if (badge) {
+          badge.style.display = (plan === 'freemium' || plan === 'free') ? 'flex' : 'none';
+        }
+        
+        // 1. Cek jatah iklan (Ambil dari variabel global atau langsung dari profile)
+        let quota = (typeof window.freeCount !== 'undefined') ? window.freeCount : 10;
+        if (profile && typeof profile.ai_launch_count !== 'undefined' && profile.ai_launch_count !== null) {
+          quota = profile.ai_launch_count;
+        }
+        
+        console.log('[Banner Debug] Plan:', plan, 'Quota:', quota);
+
+        const now = new Date();
+        const isResetDay = now.getDate() === 1;
+
+        // 3. Auto-Hide pada tanggal 1 (Jadwal Reset)
+        if (isResetDay && quota <= 0) {
+          document.getElementById('quota-banner').style.display = 'none';
+          return;
+        }
+
+        // 4. Cek apakah user sudah menutup banner (HANYA jika kuota masih ada)
+        // Jika kuota habis (<=0), banner HARUS muncul terus (sticky)
+        if (quota > 0 && localStorage.getItem('hide_quota_banner_session') === 'true') {
+          document.getElementById('quota-banner').style.display = 'none';
+          return;
+        }
+
+        const banner = document.getElementById('quota-banner');
+        const textEl = document.getElementById('qb-message-text');
+        const closeBtn = banner ? banner.querySelector('.qb-close') : null;
+        if (!banner || !textEl) return;
+
+        // Hitung sisa hari trial (7 hari dari created_at)
+        let remainingDays = 99;
+        if (profile.created_at) {
+          const startDate = new Date(profile.created_at);
+          const diffDays = Math.floor((now - startDate) / (1000 * 60 * 60 * 24));
+          remainingDays = 7 - diffDays;
+        }
+
+        // Hitung masa aktif (30 hari) untuk paid status
+        let paidRemaining = 99;
+        let diffPaid = 0;
+        if (profile.payment_status === 'paid') {
+          const start = profile.trial_start ? new Date(profile.trial_start) : new Date(profile.created_at);
+          diffPaid = Math.floor((now - start) / (1000 * 60 * 60 * 24));
+          paidRemaining = 30 - diffPaid;
+        }
+
+        let message = "";
+        const resetDate = getNextResetDate();
+        
+        // KONDISI 1: Jatah/Masa Aktif Habis (Gembok Merah)
+        if (plan === 'pro') {
+          // PRO hanya gembok kalau > 30 hari
+          if (diffPaid >= 30 && profile.payment_status === 'paid') {
+            message = `⚠️ Masa aktif paket PRO Anda sudah <b>Habis</b>. <button class="qb-upgrade-btn" onclick="showTrialModalManual()">Perpanjang Sekarang</button>`;
+          }
+        } else if (plan === 'starter') {
+          // Starter gembok kalau kuota habis ATAU > 30 hari
+          if (quota <= 0 || (diffPaid >= 30 && profile.payment_status === 'paid')) {
+            const reason = (quota <= 0) ? 'Jatah iklan' : 'Masa aktif';
+            message = `⚠️ ${reason} paket STARTER Anda habis. <button class="qb-upgrade-btn" onclick="showTrialModalManual()">Perpanjang / Isi Ulang</button>`;
+          }
+        } else {
+          // Freemium gembok kalau kuota habis
+          if (quota <= 0) {
+            message = `⚠️ Kuota iklan gratis Anda habis. Akan diisi kembali otomatis pada <b>${resetDate}</b>. <button class="qb-upgrade-btn" onclick="showTrialModalManual()">Upgrade ke Pro Sekarang</button>`;
+          }
+        }
+
+        // Set style jika ada pesan error/habis (Merah)
+        if (message) {
+          banner.style.background = '#fee2e2';
+          banner.style.borderBottom = '1px solid #fecaca';
+          if (closeBtn) closeBtn.style.display = 'none'; // Sticky
+        }
+        
+        // KONDISI 2: Peringatan Hampir Habis (Kuning) - Hanya jika belum ada gembok merah
+        if (!message) {
+          if (plan !== 'pro' && quota > 0 && quota <= 2) {
+            // Starter/Freemium sisa kuota sedikit
+            message = `⚠️ Jatah iklan sisa <b>${quota}</b> lagi. <button class="qb-upgrade-btn" onclick="showTrialModalManual()">Upgrade ke Pro Sekarang</button>`;
+          }
+          else if (remainingDays > 0 && remainingDays <= 2 && plan !== 'freemium' && profile.payment_status === 'trial') {
+            // Trial mau habis
+            const timeText = (remainingDays === 1) ? '24 jam' : '2 hari';
+            message = `⚠️ Masa trial Pro Anda berakhir dalam <b>${timeText}</b>. <button class="qb-upgrade-btn" onclick="showTrialModalManual()">Upgrade ke Pro Sekarang</button>`;
+          }
+          else if (profile.payment_status === 'paid' && paidRemaining > 0 && paidRemaining <= 3) {
+            // Langganan berbayar sisa 3 hari
+            const label = (plan === 'pro') ? 'Masa aktif' : 'Masa langganan';
+            message = `⚠️ ${label} paket ${plan.toUpperCase()} Anda sisa <b>${paidRemaining} hari</b> lagi. <button class="qb-upgrade-btn" onclick="showTrialModalManual()">Perpanjang Sekarang</button>`;
+          }
+
+          if (message) {
+            banner.style.background = '#fffbeb';
+            banner.style.borderBottom = '1px solid #fcd34d';
+            if (closeBtn) closeBtn.style.display = 'flex';
+          }
+        }
+
+        if (message) {
+          textEl.innerHTML = message;
+          banner.style.display = 'block';
+        } else {
+          banner.style.display = 'none';
+        }
+      } catch (e) {
+        console.warn('[banner] initQuotaBanner error:', e.message);
+      }
+    }
+
+    // Jalankan pengecekan banner setelah profile terload
+    setTimeout(initQuotaBanner, 2000); 
+    // Tambahkan listener agar saat jatah iklan berubah (saat launch), banner terupdate
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'ai_launch_count') initQuotaBanner();
+    });
+    // Pantau perubahan kuota secara berkala
+    setInterval(initQuotaBanner, 10000);
+
+    async function choosePlan(plan) {
+      const modal = document.getElementById('trial-modal');
+      const btn = modal.querySelector('button[onclick="choosePlan(\'' + plan + '\')"]');
+      if (btn) { btn.disabled = true; btn.textContent = 'Memproses...'; }
+
+      if (plan === 'freemium') {
+        const { error } = await window.updateUserProfile({
+          selected_plan: 'freemium',
+          trial_start:   null,
+          trial_days:    0,
+          payment_status: 'trial',
+          ai_launch_count: 10
+        });
+
+        if (error) {
+          if (btn) { btn.disabled = false; btn.textContent = 'Turun ke Freemium (Gratis selamanya)'; }
+          showAnToast('Gagal memperbarui paket. Coba lagi.');
+          return;
+        }
+
+        modal.style.display = 'none';
+        showAnToast('Akun diturunkan ke Freemium. Halaman akan dimuat ulang...', 'success');
+        
+        // Refresh halaman otomatis agar label header update
+        setTimeout(() => { location.reload(); }, 1500);
+
+      } else {
+        // Slot payment gateway — Duitku Sandbox Integration
+        let price = (plan === 'pro') ? 199000 : 99000;
+        
+        if (window.startDuitkuPayment) {
+          if (btn) btn.textContent = 'Memproses...';
+          
+          window.startDuitkuPayment(plan, price).then(() => {
+            // Kita biarkan modal tetap terbuka dan JANGAN refresh halaman dulu
+            // Agar jendela Duitku tidak tertutup paksa.
+            console.log('Duitku window should be open now.');
+          }).finally(() => {
+            if (btn) btn.textContent = btn.dataset.label || 'Lanjut Berlangganan';
+          });
+        } else {
+          showAnToast('Sistem pembayaran sedang disiapkan.');
+          btn.disabled = false;
+          modal.style.display = 'none';
+        }
+      }
+    }
+  </script>
+</body>
+</html>

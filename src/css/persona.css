@@ -1,0 +1,144 @@
+/* ─── AI Scanning ─── */
+.scanning { display: none; align-items: center; gap: 8px; padding: 12px; background: var(--surface); border-radius: var(--radius-btn); }
+.scanning.visible { display: flex; }
+.scan-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--rausch); animation: pulse 1s infinite; }
+.scan-dot:nth-child(2) { animation-delay: .2s; }
+.scan-dot:nth-child(3) { animation-delay: .4s; }
+@keyframes pulse { 0%,100%{opacity:.3;transform:scale(.8)} 50%{opacity:1;transform:scale(1)} }
+.scan-text {
+  font-size: 12px;
+  font-weight: 500;
+  background: linear-gradient(90deg, #111827 0%, #111827 25%, #7C3AED 50%, #111827 75%, #111827 100%);
+  background-size: 250% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: scanShimmer 2s linear infinite;
+}
+@keyframes scanShimmer {
+  from { background-position: 200% center; }
+  to   { background-position: -200% center; }
+}
+
+/* ─── Category Nudge ─── */
+.cat-nudge {
+  background: #f4f4f5;
+  border: 1px solid #e4e4e7;
+  border-radius: var(--radius-card);
+  padding: 12px 14px;
+  display: none;
+}
+.cat-nudge.visible { display: block; }
+.nudge-title { font-size: 11px; font-weight: 700; color: #3f3f46; margin-bottom: 4px; }
+.nudge-desc { font-size: 11px; font-style: italic; color: #71717a; line-height: 1.45; margin-bottom: 10px; }
+.cat-tiles { display: grid; grid-template-columns: repeat(3,1fr); gap: 6px; max-height: 172px; overflow-y: auto; }
+.cat-tile {
+  padding: 8px 4px;
+  text-align: center;
+  border-radius: var(--radius-btn);
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--white);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--near-black);
+  transition: .15s;
+}
+.cat-tile:hover { border-color: #791ADB; color: #791ADB; background: #faf5ff; }
+.cat-tile.selected { border-color: #791ADB; background: #791ADB; color: #fff; }
+.cat-emoji { font-size: 18px; display: block; margin-bottom: 3px; transition: filter .15s; }
+.cat-tile:hover .cat-emoji { filter: hue-rotate(200deg) saturate(2); }
+
+/* ─── Persona Card ─── */
+.persona-card {
+  background: #f3ebff;
+  border: 1px solid #d4b3f5;
+  border-radius: var(--radius-card);
+  padding: 14px;
+  display: none;
+  position: relative;
+}
+.persona-card.visible { display: block; animation: slideDown 0.35s ease; }
+.persona-top { display: flex; align-items: center; gap: 7px; margin-bottom: 6px; }
+.persona-badge {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 11px; font-weight: 700; color: #6d28d9;
+  flex: 1;
+}
+.persona-check {
+  width: 18px; height: 18px; border-radius: 50%;
+  background: #22c55e;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.persona-check svg { width: 10px; height: 10px; }
+.persona-edit-btn {
+  font-size: 10px; font-weight: 600; color: #6d28d9;
+  background: transparent; border: 1.5px solid #791ADB;
+  border-radius: 6px; padding: 3px 10px; cursor: pointer;
+  transition: all .15s; display: flex; align-items: center; gap: 4px;
+}
+.persona-edit-btn:hover { background: #791ADB; color: #fff; }
+.persona-name { font-size: 16px; font-weight: 700; color: #3b0764; margin-bottom: 3px; letter-spacing: -0.2px; }
+.persona-targeting { font-size: 11px; color: #5b21b6; margin-bottom: 2px; }
+.persona-age { font-size: 11px; font-weight: 600; color: #6d28d9; }
+.persona-tags { display: none; }
+.conf-bar { display: none; }
+.persona-top .confidence-wrap { display: none; }
+
+/* ─── Vision Conflict Nudge ─── */
+.vision-conflict {
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  border-radius: var(--radius-card);
+  padding: 14px;
+  display: none;
+}
+.vision-conflict.visible { display: block; animation: slideDown 0.35s ease; }
+.vc-question {
+  font-size: 12px; font-weight: 500; color: #78350f;
+  line-height: 1.5; margin-bottom: 12px;
+}
+.vc-question strong { font-weight: 700; color: #1c1917; }
+.vc-actions { display: flex; flex-direction: column; gap: 8px; }
+.vc-btn {
+  flex: 1; padding: 8px 10px;
+  border-radius: 8px; font-size: 11px; font-weight: 700;
+  cursor: pointer; transition: background .15s, border-color .15s, color .15s; line-height: 1.3;
+}
+/* Primary — Sesuai Bisnisku */
+.vc-btn-biz { background: #111827; color: #fff; border: none; }
+.vc-btn-biz:hover { background: #7C3AED; }
+/* Secondary — Ikuti Foto */
+.vc-btn-ai  { background: #fff; color: #111827; border: 1.5px solid #d1d5db; }
+.vc-btn-ai:hover  { background: #faf5ff; border-color: #7C3AED; color: #7C3AED; }
+
+/* ─── Audience Toggle ─── */
+.audience-item { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.aud-icon { width: 16px; height: 16px; stroke: var(--near-black); fill: none; stroke-width: 1.5; margin-top: 1px; flex-shrink: 0; }
+.aud-title { font-size: 12px; font-weight: 700; color: var(--near-black); margin-bottom: 2px; }
+.aud-desc { font-size: 11px; color: var(--near-black); line-height: 1.4; }
+
+.toggle {
+  width: 40px; height: 22px;
+  border-radius: 11px;
+  background: var(--border);
+  cursor: pointer;
+  position: relative;
+  transition: background .2s;
+  flex-shrink: 0;
+  margin-top: 1px;
+  border: none;
+}
+.toggle.on { background: var(--rausch); }
+.toggle-knob {
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  position: absolute;
+  top: 2px; left: 2px;
+  transition: left .2s;
+  box-shadow: 0 1px 4px rgba(0,0,0,.2);
+}
+.toggle.on .toggle-knob { left: 20px; }
+.toggle.disabled { opacity: 0.4; cursor: not-allowed; pointer-events: none; }

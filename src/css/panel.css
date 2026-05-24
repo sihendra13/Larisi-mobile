@@ -1,0 +1,47 @@
+/* ─── Panel ─── */
+.panel {
+  background: var(--white);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.panel-header {
+  padding: 16px 18px 14px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.panel-icon {
+  width: 32px; height: 32px;
+  border-radius: var(--radius-btn);
+  background: var(--surface);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.panel-icon svg { width: 16px; height: 16px; stroke: var(--near-black); fill: none; stroke-width: 1.5; }
+
+.panel-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--near-black);
+  letter-spacing: -0.18px;
+  line-height: 1.2;
+}
+.panel-sub { font-size: 11px; color: var(--secondary); margin-top: 2px; line-height: 1.2; }
+
+.panel-body {
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+  flex: 1;
+}
+.panel-body::-webkit-scrollbar { width: 4px; }
+.panel-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }

@@ -1,0 +1,2 @@
+[functions.duitku-callback]
+verify_jwt = false

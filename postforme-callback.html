@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Larisi — Menghubungkan akun…</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+      background: #f9fafb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    .card {
+      background: white;
+      border-radius: 20px;
+      padding: 40px 32px;
+      text-align: center;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.10);
+      max-width: 340px;
+      width: 90%;
+    }
+    .icon { font-size: 48px; margin-bottom: 16px; }
+    .title { font-size: 18px; font-weight: 700; color: #111827; margin-bottom: 8px; }
+    .subtitle { font-size: 13px; color: #6b7280; line-height: 1.5; }
+    .spinner {
+      width: 40px; height: 40px;
+      border: 3px solid #e5e7eb;
+      border-top-color: #791ADB;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin: 0 auto 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .close-link {
+      color: #791ADB; cursor: pointer; font-weight: 600;
+      text-decoration: none; display: inline-block; margin-top: 12px;
+    }
+    .close-link:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="card" id="card">
+    <div class="spinner" id="spinner"></div>
+    <div class="title" id="title">Menghubungkan akun…</div>
+    <div class="subtitle" id="subtitle">Tunggu sebentar, jendela ini akan menutup otomatis.</div>
+  </div>
+
+  <script>
+    (function() {
+      var params   = new URLSearchParams(window.location.search);
+      // ── Jika popup landing di domain lama (larisi.vercel.app), redirect ke domain utama ──
+      // PostForMe mungkin masih pakai redirect URL lama. Dengan redirect ini,
+      // callback selalu berjalan di origin yang sama dengan opener (app.larisi.id)
+      // sehingga postMessage tidak perlu cross-origin.
+      if (window.location.hostname === 'larisi.vercel.app') {
+        var targetUrl = 'https://app.larisi.id/postforme-callback'
+                      + window.location.search
+                      + window.location.hash;
+        window.location.replace(targetUrl);
+        return; // stop — halaman akan redirect
+      }
+
+      var success  = params.get('isSuccess') === 'true';
+      var ids      = params.get('accountIds') || params.get('accountId') || '';
+      var provider = params.get('provider') || '';
+
+      // ── Treat as success if:
+      //    (a) isSuccess=true  OR
+      //    (b) isSuccess=false BUT accountIds is present in URL
+      //        (PostForMe returns false when account already connected,
+      //         but still passes the existing accountId)
+      var hasAccountId = ids.trim().length > 0;
+      var treatAsSuccess = success || hasAccountId;
+
+      if (treatAsSuccess && hasAccountId) {
+        // Kirim data ke window induk (tab utama Larisi)
+        // Pakai '*' sebagai targetOrigin agar bekerja lintas domain
+        // (app.larisi.id ↔ larisi.vercel.app)
+        if (window.opener && !window.opener.closed) {
+          try {
+            window.opener.postMessage({
+              type:       'postforme_oauth_success',
+              accountIds: ids.split(',').map(function(s){ return s.trim(); }).filter(Boolean),
+              provider:   provider
+            }, window.location.origin);
+          } catch(e) { /* cross-origin guard */ }
+        }
+
+        // Tampilkan konfirmasi lalu tutup popup
+        document.getElementById('spinner').style.display = 'none';
+        document.getElementById('card').innerHTML =
+          '<div class="icon">✅</div>' +
+          '<div class="title">Akun berhasil terhubung!</div>' +
+          '<div class="subtitle">Jendela ini akan menutup dalam 2 detik…</div>';
+
+        setTimeout(function() { window.close(); }, 2000);
+
+      } else {
+        document.getElementById('spinner').style.display = 'none';
+
+        // Jika dibuka langsung (bukan popup) tanpa params → arahkan ke dashboard
+        if (!window.opener || window.opener.closed) {
+          document.getElementById('card').innerHTML =
+            '<div class="icon">🔗</div>' +
+            '<div class="title">Larisi</div>' +
+            '<div class="subtitle">Halaman ini digunakan saat menghubungkan akun sosial media.' +
+            ' <a href="/" style="color:#791ADB;font-weight:600;">Kembali ke dashboard</a></div>';
+          return;
+        }
+
+        // isSuccess=false tanpa accountId → mungkin akun sudah terhubung sebelumnya
+        // atau user membatalkan. Kirim pesan ke opener untuk sync ulang dari PostForMe API.
+        try {
+          window.opener.postMessage({
+            type:     'postforme_oauth_resync',
+            provider: provider
+          }, window.location.origin);
+        } catch(e) {}
+
+        document.getElementById('card').innerHTML =
+          '<div class="icon">🔄</div>' +
+          '<div class="title">Menyinkronkan akun…</div>' +
+          '<div class="subtitle">Jendela ini akan menutup otomatis.</div>';
+
+        setTimeout(function() { window.close(); }, 2500);
+      }
+    })();
+  </script>
+</body>
+</html>

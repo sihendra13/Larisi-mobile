@@ -1,0 +1,447 @@
+/* Airbnb Design Tokens (Adapted for Larisi Mockup) */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  --font: 'Inter', -apple-system, system-ui, Roboto, 'Helvetica Neue', sans-serif;
+  --white: #ffffff;
+  --bg: #f7f7f7;
+  --near-black: #222222;
+  --secondary: #6a6a6a;
+  --disabled: rgba(0,0,0,0.24);
+  --border: #e0e0e0;
+  --surface: #f2f2f2;
+  --rausch: #791ADB;
+  --rausch-deep: #6315b8;
+  --shadow-card: rgba(0,0,0,0.02) 0px 0px 0px 1px, rgba(0,0,0,0.04) 0px 2px 6px, rgba(0,0,0,0.08) 0px 4px 8px;
+  --shadow-hover: rgba(0,0,0,0.08) 0px 4px 12px;
+  --radius-btn: 8px;
+  --radius-badge: 14px;
+  --radius-card: 20px;
+  --radius-large: 32px;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: var(--font);
+    background-color: var(--bg);
+    color: var(--near-black);
+    min-height: 100vh;
+    margin: 0;
+}
+
+/* Base Centered Layout for Modals */
+.centered-layout {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+/* Split Screen Layout for Register */
+.split-layout {
+    display: flex;
+    min-height: 100vh;
+    width: 100%;
+}
+
+.split-left {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: var(--white);
+    padding: 40px;
+    width: 50%;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+@media (min-width: 1024px) {
+    .split-left {
+        max-width: 50%;
+        margin: 0;
+    }
+}
+
+.auth-header {
+    margin-bottom: 20px;
+}
+
+.auth-header img {
+    height: 32px;
+}
+
+.split-left .auth-container {
+    margin: auto; /* Center vertically in the flex column */
+    box-shadow: none; /* Flat design */
+    padding: 0;
+    max-width: 400px;
+    width: 100%;
+    border-radius: 0;
+}
+
+.split-right {
+    flex: 1;
+    background-color: var(--surface);
+    background-image: url('../../Assets/Toko_roti.png'); /* Found in radar-larisi/Assets */
+    background-size: cover;
+    background-position: center;
+    display: none;
+}
+
+@media (min-width: 1024px) {
+    .split-right {
+        display: block;
+    }
+}
+
+/* Standalone Auth Container (Register) */
+.auth-container {
+    background: var(--white);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
+    padding: 48px 40px;
+    width: 100%;
+    max-width: 480px;
+}
+
+/* Dashboard Overlay Mockup (Onboarding) */
+.dashboard-mockup {
+    width: 100vw;
+    height: 100vh;
+    background-color: #f7f7f7; /* Placeholder warna dasar */
+    background-image: url('../../Assets/dashboard-bg.png');
+    background-size: cover;
+    background-position: center;
+    filter: brightness(0.9);
+    position: fixed;
+    top: 0;
+    left: 0;
+    overflow: hidden;
+    z-index: 1;
+    opacity: 0; /* Mulai dari transparan agar instan */
+    transition: opacity 1.2s ease-in-out; /* Transisi halus */
+}
+
+.dashboard-mockup::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 10;
+}
+
+.modal-container {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--white);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-hover);
+    padding: 40px;
+    width: 100%;
+    max-width: 500px;
+    z-index: 20;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+/* Typography */
+h1 {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 32px;
+    text-align: left;
+}
+
+h2 {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 24px;
+}
+
+p.subtitle {
+    color: var(--secondary);
+    text-align: center;
+    margin-bottom: 32px;
+    font-size: 15px;
+    line-height: 1.5;
+}
+
+/* Form Styles */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-row {
+    display: flex;
+    gap: 16px;
+}
+
+.form-row .form-group {
+    flex: 1;
+}
+
+label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+input, select, textarea {
+    width: 100%;
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-btn);
+    font-family: var(--font);
+    font-size: 15px;
+    transition: border-color 0.2s;
+}
+
+/* Select: custom chevron agar tidak mepet, teks panjang dipotong elipsis */
+select {
+    appearance: none;
+    -webkit-appearance: none;
+    padding-right: 2.5rem;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.85rem center;
+    background-size: 1rem;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+/* Tanda wajib (*) merah */
+.req {
+    color: #dc2626;
+    margin-left: 1px;
+}
+
+input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--rausch);
+}
+
+.password-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.password-wrapper input {
+    padding-right: 40px;
+}
+
+.toggle-password {
+    position: absolute;
+    right: 14px;
+    cursor: pointer;
+    color: var(--secondary);
+    font-size: 15px;
+    transition: color 0.2s;
+}
+
+.toggle-password:hover {
+    color: var(--near-black);
+}
+
+.help-text {
+    font-size: 13px;
+    color: var(--secondary);
+    margin-top: 6px;
+    display: block;
+}
+
+/* Buttons */
+.btn {
+    display: inline-block;
+    width: 100%;
+    padding: 16px;
+    border-radius: var(--radius-btn);
+    border: none;
+    font-family: var(--font);
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    text-decoration: none;
+    transition: background 0.2s;
+}
+
+.btn-outline {
+    background: #fff;
+    color: var(--near-black);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+}
+
+.btn-outline:hover {
+    background: #f7f7f7;
+}
+
+.divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: 24px 0;
+    color: var(--secondary);
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.divider::before,
+.divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid var(--border);
+}
+
+.divider:not(:empty)::before {
+    margin-right: .25em;
+}
+
+.divider:not(:empty)::after {
+    margin-left: .25em;
+}
+
+.btn-primary {
+    background: var(--near-black);
+    color: var(--white);
+}
+
+.btn-primary:hover {
+    background: var(--rausch);
+}
+
+.btn-secondary {
+    background: var(--surface);
+    color: var(--near-black);
+}
+
+.btn-secondary:hover {
+    background: #e2e2e2;
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: var(--secondary);
+    color: var(--white);
+}
+
+/* Social Buttons */
+.social-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.btn-social {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-btn);
+    background: var(--white);
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--near-black);
+    transition: all 0.2s;
+}
+
+.btn-social:hover {
+    background: var(--surface);
+}
+
+.btn-social img {
+    width: 20px;
+    height: 20px;
+}
+
+/* Stepper */
+.stepper {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 32px;
+}
+
+.step {
+    flex: 1;
+    height: 4px;
+    background: var(--surface);
+    border-radius: 2px;
+}
+
+.step.active {
+    background: var(--rausch);
+}
+
+.skip-link {
+    display: block;
+    text-align: center;
+    color: var(--secondary);
+    text-decoration: underline;
+    font-size: 14px;
+    margin-top: 16px;
+    cursor: pointer;
+}
+
+.skip-link:hover {
+    color: var(--near-black);
+}
+
+.login-link {
+    text-align: center;
+    margin-top: 24px;
+    font-size: 14px;
+    color: var(--secondary);
+}
+
+.login-link a, .terms-link {
+    color: var(--rausch);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.login-link a:hover, .terms-link:hover {
+    text-decoration: underline;
+}
+
+/* Trust Badges */
+.trust-badges {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 24px;
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid var(--surface);
+}
+
+.trust-badges img {
+    height: 24px;
+    opacity: 0.6;
+}
+
+/* Step container for JS toggle */
+.step-container {
+    display: none;
+}
+.step-container.active {
+    display: block;
+}
