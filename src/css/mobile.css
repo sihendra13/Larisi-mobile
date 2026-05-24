@@ -1279,6 +1279,379 @@
 }
 
 /* ═══════════════════════════════════════════════════
+   SCREEN 02 — DAPUR KONTEN
+   Semua override pakai !important agar override
+   panel.css / upload.css / persona.css yg lebih awal
+   ═══════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+
+  /* ── Page title ── */
+  .mobile-dapur-title {
+    font-size: 24px !important;
+    font-family: var(--m-font) !important;
+    color: var(--m-ink) !important;
+    letter-spacing: -0.02em !important;
+    line-height: 1.15 !important;
+  }
+  .mobile-dapur-sub {
+    font-size: 12px !important;
+    font-family: var(--m-font) !important;
+    color: var(--m-ink-sub) !important;
+    line-height: 1.4 !important;
+    margin-top: 3px !important;
+  }
+
+  /* ── Step chips: pakai --m-brand ── */
+  .mobile-dapur-chip {
+    font-family: var(--m-font) !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    color: var(--m-ink-sub) !important;
+    background: var(--m-card) !important;
+    border: 1.5px solid var(--m-line) !important;
+    padding: 5px 12px !important;
+  }
+  .mobile-dapur-chip.active {
+    background: var(--m-brand) !important;
+    border-color: var(--m-brand) !important;
+    color: #fff !important;
+    font-weight: 600 !important;
+  }
+  .mobile-dapur-chip.done {
+    background: var(--m-brand-soft) !important;
+    border-color: var(--m-brand) !important;
+    color: var(--m-brand) !important;
+  }
+  .mobile-dapur-chip .chip-step {
+    background: rgba(0,0,0,0.08) !important;
+    color: var(--m-ink-sub) !important;
+  }
+  .mobile-dapur-chip.active .chip-step {
+    background: rgba(255,255,255,0.25) !important;
+    color: #fff !important;
+  }
+  .mobile-dapur-chip.done .chip-step {
+    background: var(--m-brand) !important;
+    color: #fff !important;
+  }
+
+  /* ── Panels container ── */
+  .panels {
+    padding: 12px 20px !important;
+    gap: 14px !important;
+    padding-bottom: 200px !important;
+  }
+
+  /* ── Panel cards ── */
+  #panel-upload,
+  #panel-map-desktop,
+  #panel-caption {
+    background: var(--m-card) !important;
+    border: var(--border-line) !important;
+    border-radius: var(--r-large) !important;
+    box-shadow: none !important;
+    overflow: hidden !important;
+    padding: 0 !important;
+  }
+
+  .panel-header {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    padding: 14px 16px 12px !important;
+    border-bottom: none !important;
+  }
+  .panel-title {
+    font-family: var(--m-font) !important;
+    font-size: 14px !important;
+    font-weight: 700 !important;
+    color: var(--m-ink) !important;
+    letter-spacing: -0.01em !important;
+  }
+  .panel-sub {
+    font-family: var(--m-font) !important;
+    font-size: 11px !important;
+    color: var(--m-ink-sub) !important;
+  }
+  .panel-icon {
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 10px !important;
+    background: var(--m-brand-soft) !important;
+    border: none !important;
+    flex-shrink: 0 !important;
+  }
+  .panel-icon svg {
+    width: 16px !important;
+    height: 16px !important;
+    stroke: var(--m-brand) !important;
+  }
+
+  /* ── Upload zone: striped diagonal pattern ── */
+  .upload-zone {
+    background: repeating-linear-gradient(
+      135deg,
+      #FAFAFC 0 8px,
+      #F4F4F7 8px 16px
+    ) !important;
+    border: 1.5px dashed var(--m-line) !important;
+    border-radius: 14px !important;
+    padding: 28px 16px !important;
+    margin: 0 16px 0 !important;
+    cursor: pointer !important;
+    text-align: center !important;
+    transition: border-color 150ms !important;
+  }
+  .upload-zone:active {
+    border-color: var(--m-brand) !important;
+  }
+  .plus-icon {
+    width: 44px !important;
+    height: 44px !important;
+    border-radius: 12px !important;
+    background: #fff !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important;
+    margin: 0 auto 10px !important;
+  }
+  .plus-icon svg {
+    width: 18px !important;
+    height: 18px !important;
+    stroke: var(--m-ink-sub) !important;
+    stroke-width: 1.8 !important;
+  }
+  .upload-label {
+    font-family: var(--m-font) !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    color: var(--m-ink) !important;
+    margin-bottom: 3px !important;
+  }
+  .upload-caption {
+    font-family: var(--m-font) !important;
+    font-size: 11px !important;
+    color: var(--m-ink-sub) !important;
+  }
+
+  /* ── 5 thumbnail placeholder slots ── */
+  .mobile-thumb-slots {
+    display: flex !important;
+    gap: 8px !important;
+    padding: 12px 16px 16px !important;
+  }
+  .mobile-thumb-slots .mts-slot {
+    flex: 1 !important;
+    aspect-ratio: 1 !important;
+    border-radius: 10px !important;
+    background: var(--m-bg) !important;
+    border: 1px solid var(--m-line) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  .mobile-thumb-slots .mts-slot--add {
+    background: var(--m-brand-soft) !important;
+    border-color: var(--m-brand) !important;
+    border-style: dashed !important;
+    cursor: pointer !important;
+  }
+  .mobile-thumb-slots .mts-slot--add svg {
+    width: 18px !important;
+    height: 18px !important;
+    stroke: var(--m-brand) !important;
+    stroke-width: 2 !important;
+    fill: none !important;
+  }
+
+  /* Uploaded thumbs: tampil 5 sejajar di mobile */
+  .uploaded-thumbs {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    gap: 8px !important;
+    padding: 12px 16px 16px !important;
+    overflow-x: auto !important;
+  }
+  .thumb-item {
+    width: 52px !important;
+    height: 52px !important;
+    flex-shrink: 0 !important;
+  }
+  .thumb-add {
+    width: 52px !important;
+    height: 52px !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* ── Audiens section: sembunyikan persona card (desktop-only) ── */
+  #personaCard { display: none !important; }
+
+  /* Audiens section header */
+  #mobile-section-audiens {
+    border-top: var(--border-line) !important;
+    margin-top: 4px !important;
+  }
+  #mobile-section-audiens > [style*="height:1px"] {
+    display: none !important;
+  }
+  #mobile-section-audiens > .section-label {
+    font-family: var(--m-font) !important;
+    font-size: 14px !important;
+    font-weight: 700 !important;
+    color: var(--m-ink) !important;
+    letter-spacing: 0 !important;
+    text-transform: none !important;
+    padding: 14px 16px 8px !important;
+    margin: 0 !important;
+    display: block !important;
+  }
+  #mobile-section-audiens > .section-sub,
+  #mobile-section-audiens > div:not(.audience-item):not(.section-label):not([style*="height:1px"]):not(#personaCard) {
+    font-family: var(--m-font) !important;
+    font-size: 11px !important;
+    color: var(--m-ink-sub) !important;
+    padding: 0 16px 10px !important;
+    display: block !important;
+  }
+
+  /* ── Audience items: toggle row layout ── */
+  .audience-item {
+    display: flex !important;
+    align-items: flex-start !important;
+    gap: 10px !important;
+    padding: 12px 16px !important;
+    border-bottom: var(--border-line) !important;
+    margin: 0 !important;
+  }
+  #travelerItem {
+    border-bottom: none !important;
+    padding-bottom: 16px !important;
+  }
+  .aud-icon {
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 10px !important;
+    background: var(--m-bg) !important;
+    border: var(--border-line) !important;
+    padding: 7px !important;
+    stroke: var(--m-ink-sub) !important;
+    flex-shrink: 0 !important;
+    box-sizing: border-box !important;
+  }
+  .aud-title {
+    font-family: var(--m-font) !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    color: var(--m-ink) !important;
+    margin-bottom: 2px !important;
+    letter-spacing: 0 !important;
+  }
+  .aud-desc {
+    font-family: var(--m-font) !important;
+    font-size: 11px !important;
+    color: var(--m-ink-sub) !important;
+    line-height: 1.4 !important;
+    font-weight: 400 !important;
+  }
+
+  /* ── Old .toggle → iOS-style switch ── */
+  .toggle {
+    width: 44px !important;
+    height: 26px !important;
+    border-radius: 9999px !important;
+    background: #E2E2E8 !important;
+    position: relative !important;
+    cursor: pointer !important;
+    border: none !important;
+    padding: 0 !important;
+    flex-shrink: 0 !important;
+    transition: background 200ms ease !important;
+    display: inline-block !important;
+    vertical-align: middle !important;
+    margin-top: 2px !important;
+  }
+  .toggle.on {
+    background: var(--m-brand) !important;
+  }
+  .toggle-knob {
+    width: 22px !important;
+    height: 22px !important;
+    border-radius: 9999px !important;
+    background: #fff !important;
+    position: absolute !important;
+    top: 2px !important;
+    left: 2px !important;
+    transition: left 200ms ease !important;
+    box-shadow: 0 1px 4px rgba(0,0,0,.2) !important;
+    pointer-events: none !important;
+  }
+  .toggle.on .toggle-knob {
+    left: 20px !important;
+  }
+
+  /* ── Map card ── */
+  #panel-map-desktop {
+    min-height: unset !important;
+  }
+  #panel-map-desktop #map {
+    height: 180px !important;
+    border-radius: 0 !important;
+  }
+  /* Sembunyikan map search (digunakan via search bar desktop) */
+  #panel-map-desktop .map-search {
+    top: 10px !important;
+    left: 10px !important;
+    right: 10px !important;
+    height: 34px !important;
+    font-size: 12px !important;
+  }
+  #panel-map-desktop .map-popup {
+    display: none !important;
+  }
+  .radius-bar {
+    padding: 12px 16px 16px !important;
+  }
+  .radius-row {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    margin-bottom: 8px !important;
+  }
+  .radius-label {
+    font-family: var(--m-font) !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    color: var(--m-ink) !important;
+  }
+  .radius-val {
+    font-family: var(--m-font) !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    color: var(--m-brand) !important;
+  }
+  .radius-bar input[type="range"] {
+    width: 100% !important;
+    accent-color: var(--m-brand) !important;
+  }
+  .drag-hint {
+    font-family: var(--m-font) !important;
+    font-size: 11px !important;
+    color: var(--m-ink-sub) !important;
+    margin-top: 6px !important;
+    text-align: center !important;
+  }
+
+  /* Panel-body di panel-upload: flex col */
+  #panel-upload .panel-body {
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 0 0 auto !important;
+    overflow-y: visible !important;
+    height: auto !important;
+    padding: 0 !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════
    SAFE AREA (iPhone notch & home indicator)
    ═══════════════════════════════════════════════════ */
 

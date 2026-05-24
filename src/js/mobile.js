@@ -154,7 +154,8 @@
 
     } else if (chip === 'audiens') {
       if (panelUpload)  panelUpload.style.display  = 'block';
-      if (secAset)      secAset.style.display      = 'none';
+      // Design screen 02: Aset + Audiens keduanya visible saat step Audiens
+      if (secAset)      secAset.style.display      = '';
       if (secAudiens)   secAudiens.style.display   = '';
       if (panelMap)     panelMap.style.display     = 'block';
       if (panelCaption) panelCaption.style.display = 'none';
@@ -480,6 +481,17 @@
     if (initialsEl) {
       var avatarObserver = new MutationObserver(_syncMobileAvatar);
       avatarObserver.observe(initialsEl, { childList: true, characterData: true });
+    }
+
+    // Sembunyikan thumb slots statis saat file nyata diupload ke #thumbs
+    var thumbsEl = document.getElementById('thumbs');
+    var thumbSlots = document.getElementById('mobile-thumb-slots');
+    if (thumbsEl && thumbSlots) {
+      var thumbObserver = new MutationObserver(function() {
+        var hasFiles = thumbsEl.children.length > 0;
+        thumbSlots.style.display = hasFiles ? 'none' : '';
+      });
+      thumbObserver.observe(thumbsEl, { childList: true });
     }
 
     // Default Dapur: chip Aset
