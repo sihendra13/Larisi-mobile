@@ -1597,10 +1597,10 @@
 
   /* ── Audiens section: sembunyikan persona card (desktop-only) ── */
   #personaCard {
-    margin: 0 16px 12px !important;
+    margin: 0 16px 0 !important;
   }
   #catNudge, #visionConflict {
-    margin: 0 16px 12px !important;
+    margin: 0 16px 0 !important;
   }
   #personaSeparator {
     display: none !important;
