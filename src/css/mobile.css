@@ -1173,7 +1173,65 @@
 
 /* ═══════════════════════════════════════════════════
    DAPUR PAGE HEADER (mobile only)
-   ═══════════════════════════════  /* Done chip → Putih, border abu, text abu */
+   ═══════════════════════════════  /* ── DAPUR HEADER ── */
+  .mobile-dapur-header {
+    padding: 24px 20px 4px !important;
+  }
+  .mobile-dapur-title {
+    font-family: var(--m-font) !important;
+    font-size: 28px !important;
+    font-weight: 800 !important;
+    color: var(--m-ink) !important;
+    letter-spacing: -0.02em !important;
+    margin-bottom: 6px !important;
+  }
+  .mobile-dapur-sub {
+    font-family: var(--m-font) !important;
+    font-size: 14px !important;
+    color: var(--m-ink-sub) !important;
+    line-height: 1.4 !important;
+  }
+
+  /* ── DAPUR CHIPS ── */
+  .mobile-dapur-chips {
+    display: flex !important;
+    gap: 8px !important;
+    padding: 12px 20px !important;
+    overflow-x: auto !important;
+  }
+  .mobile-dapur-chips::-webkit-scrollbar {
+    display: none !important;
+  }
+  .mobile-dapur-chip {
+    display: inline-flex !important;
+    align-items: center !important;
+    height: 36px !important;
+    border-radius: 18px !important;
+    padding: 0 14px 0 4px !important;
+    background: #fff !important;
+    border: 1px solid var(--m-line) !important;
+    font-family: var(--m-font) !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    color: var(--m-ink-sub) !important;
+    white-space: nowrap !important;
+    cursor: pointer !important;
+    flex-shrink: 0 !important;
+  }
+  .mobile-dapur-chip .chip-step {
+    width: 28px !important;
+    height: 28px !important;
+    border-radius: 50% !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: #F4F4F7 !important;
+    color: var(--m-ink-sub) !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    margin-right: 6px !important;
+  }
+  /* Done chip → Putih, border abu, text abu */
   .mobile-dapur-chip.done {
     background: var(--m-card) !important;
     border-color: var(--m-line) !important;
