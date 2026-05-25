@@ -1272,8 +1272,8 @@
 
   /* ── Panels container ── */
   .panels {
-    padding: 12px 20px !important;
-    gap: 14px !important;
+    padding: 16px !important;
+    gap: 2px !important;
     padding-bottom: 200px !important;
   }
 
