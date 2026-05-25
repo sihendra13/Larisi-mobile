@@ -27,6 +27,12 @@ function showPersonaDirect(p, detected) {
     document.getElementById('catNudge').classList.remove('visible');
   }
   document.getElementById('genBtn').style.display = 'inline-block';
+  /* Edit button TIDAK pernah ditampilkan dari sini —
+     hanya showPersonaFromCat() (manual pick) dan _applyVisionPersona(key, true) (Opsi B)
+     yang boleh menampilkan Edit button. Sembunyikan supaya sisa state dari
+     _autoSelectFromBizProfile() tidak ikut terus. */
+  var _editBtnDirect = document.getElementById('personaEditBtn');
+  if (_editBtnDirect) _editBtnDirect.style.display = 'none';
   /* Set currentPersona to actual detected persona name for caption mapping */
   currentPersona = p.name;
   captionAltIndex = 0;
