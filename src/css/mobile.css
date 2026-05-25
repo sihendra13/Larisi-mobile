@@ -1173,183 +1173,43 @@
 
 /* ═══════════════════════════════════════════════════
    DAPUR PAGE HEADER (mobile only)
-   ═══════════════════════════════════════════════════ */
-
-#mobile-dapur-header {
-  display: none;
-}
-
-@media (max-width: 768px) {
-  #mobile-dapur-header {
-    display: block;
-    padding: 4px 16px 2px;
-    flex-shrink: 0;
-  }
-  .mobile-dapur-title {
-    font-size: 22px;
-    font-weight: 700;
-    color: var(--near-black);
-    letter-spacing: -0.4px;
-    line-height: 1.2;
-  }
-  .mobile-dapur-sub {
-    font-size: 13px;
-    color: var(--secondary);
-    margin-top: 3px;
-    line-height: 1.4;
-  }
-  /* Sembunyikan desktop header text, tampilkan ikon saja */
-  .header-title,
-  .header-sub {
-    display: none !important;
-  }
-}
-
-/* ═══════════════════════════════════════════════════
-   DAPUR CHIP NAVIGATION
-   ═══════════════════════════════════════════════════ */
-
-#mobile-dapur-chips {
-  display: none; /* hidden on desktop */
-}
-
-@media (max-width: 768px) {
-  #mobile-dapur-chips {
-    display: flex;
-    gap: 8px;
-    padding: 0 16px 8px;
-    flex-shrink: 0;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-  }
-  #mobile-dapur-chips::-webkit-scrollbar { display: none; }
-
-  .mobile-dapur-chip {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    padding: 6px 14px;
-    border-radius: 20px;
-    border: 1.5px solid var(--border);
-    background: var(--white);
-    color: var(--secondary);
-    font-size: 13px;
-    font-weight: 500;
-    white-space: nowrap;
-    cursor: pointer;
-    transition: background 0.15s, border-color 0.15s, color 0.15s;
-    -webkit-tap-highlight-color: transparent;
-    flex-shrink: 0;
-  }
-
-  .mobile-dapur-chip.active {
-    background: #6d28d9;
-    border-color: #6d28d9;
-    color: #fff;
-    font-weight: 600;
-  }
-
+   ═══════════════════════════════  /* Done chip → Putih, border abu, text abu */
   .mobile-dapur-chip.done {
-    border-color: #6d28d9;
-    color: #6d28d9;
-    background: #f5f3ff;
-  }
-
-  .chip-step {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    font-size: 10px;
-    font-weight: 700;
-    background: rgba(0,0,0,0.08);
-    flex-shrink: 0;
-  }
-
-  .mobile-dapur-chip.active .chip-step {
-    background: rgba(255,255,255,0.25);
-    color: #fff;
-  }
-
-  .mobile-dapur-chip.done .chip-step {
-    background: #6d28d9;
-    color: #fff;
-  }
-
-  /* Section wrappers dalam panel-upload */
-  #mobile-section-aset,
-  #mobile-section-audiens {
-    width: 100%;
-  }
-}
-
-/* ═══════════════════════════════════════════════════
-   SCREEN 02 — DAPUR KONTEN
-   Semua override pakai !important agar override
-   panel.css / upload.css / persona.css yg lebih awal
-   ═══════════════════════════════════════════════════ */
-
-@media (max-width: 768px) {
-
-  /* ── Page title ── */
-  .mobile-dapur-title {
-    font-size: 24px !important;
-    font-family: var(--m-font) !important;
-    color: var(--m-ink) !important;
-    letter-spacing: -0.02em !important;
-    line-height: 1.15 !important;
-  }
-  .mobile-dapur-sub {
-    font-size: 12px !important;
-    font-family: var(--m-font) !important;
-    color: var(--m-ink-sub) !important;
-    line-height: 1.4 !important;
-    margin-top: 3px !important;
-  }
-
-  /* ── Step chips: pakai --m-brand ── */
-  .mobile-dapur-chip {
-    font-family: var(--m-font) !important;
-    font-size: 12px !important;
-    font-weight: 500 !important;
-    color: var(--m-ink-sub) !important;
     background: var(--m-card) !important;
-    border: 1.5px solid var(--m-line) !important;
-    padding: 5px 12px !important;
-  }
-  /* Active chip → HITAM (bukan ungu) */
-  .mobile-dapur-chip.active {
-    background: var(--m-ink) !important;
-    border-color: var(--m-ink) !important;
-    color: #fff !important;
-    font-weight: 600 !important;
-  }
-  /* Done chip → HIJAU */
-  .mobile-dapur-chip.done {
-    background: var(--m-green-soft) !important;
-    border-color: var(--m-green) !important;
-    color: var(--m-green) !important;
+    border-color: var(--m-line) !important;
+    color: var(--m-ink-sub) !important;
   }
   .mobile-dapur-chip .chip-step {
     background: rgba(0,0,0,0.08) !important;
     color: var(--m-ink-sub) !important;
+  }
+  /* Active chip → Hitam, teks putih */
+  .mobile-dapur-chip.active {
+    background: var(--m-ink) !important;
+    border-color: var(--m-ink) !important;
+    color: #fff !important;
   }
   /* Active chip badge → UNGU bulat */
   .mobile-dapur-chip.active .chip-step {
     background: var(--m-brand) !important;
     color: #fff !important;
   }
-  /* Done chip ✓ → TIDAK ada circle, plain hijau */
+  /* Done chip ✓ circle → Hijau-soft bg, Hijau text */
   .mobile-dapur-chip.done .chip-step {
-    background: transparent !important;
+    background: var(--m-green-soft) !important;
     color: var(--m-green) !important;
-    width: auto !important;
-    height: auto !important;
-    font-size: 12px !important;
-    border-radius: 0 !important;
+    width: 18px !important;
+    height: 18px !important;
+    border-radius: 50% !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 10px !important;
+    font-weight: 700 !important;
+    padding: 0 !important;
+  }
+  .mobile-dapur-chip.done .chip-step svg {
+    stroke: var(--m-green) !important;
   }
 
   /* ── Panels container ── */
@@ -1360,7 +1220,6 @@
   }
 
   /* ── Panel cards ── */
-  #panel-upload,
   #panel-map-desktop,
   #panel-caption {
     background: var(--m-card) !important;
@@ -1369,6 +1228,42 @@
     box-shadow: none !important;
     overflow: hidden !important;
     padding: 0 !important;
+  }
+
+  /* Split Aset & Audiens into separate cards on mobile */
+  #panel-upload {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+    padding: 0 !important;
+  }
+  #panel-upload .panel-header {
+    background: var(--m-card) !important;
+    border-top: var(--border-line) !important;
+    border-left: var(--border-line) !important;
+    border-right: var(--border-line) !important;
+    border-top-left-radius: var(--r-large) !important;
+    border-top-right-radius: var(--r-large) !important;
+    margin: 0 !important;
+  }
+  #mobile-section-aset {
+    background: var(--m-card) !important;
+    border-bottom: var(--border-line) !important;
+    border-left: var(--border-line) !important;
+    border-right: var(--border-line) !important;
+    border-bottom-left-radius: var(--r-large) !important;
+    border-bottom-right-radius: var(--r-large) !important;
+    margin-bottom: 14px !important;
+    display: block !important;
+  }
+  #mobile-section-audiens {
+    background: var(--m-card) !important;
+    border: var(--border-line) !important;
+    border-radius: var(--r-large) !important;
+    margin-top: 0 !important;
+    display: block !important;
+    overflow: hidden !important;
   }
 
   .panel-header {
@@ -1433,8 +1328,147 @@
   .plus-icon svg {
     width: 18px !important;
     height: 18px !important;
-    stroke: var(--m-ink-sub) !important;
+    stroke: var(--m-brand) !important;
     stroke-width: 1.8 !important;
+  }t;
+    margin-bottom: 3px !important;
+  }
+  .upload-caption {
+    font-family: var(--m-font) !important;
+    font-size: 11px !important;
+    color: var(--m-ink-sub) !important;
+  }
+ 
+  /* ── 5 thumbnail placeholder slots ── */
+  .mobile-thumb-slots {
+    display: flex !important;
+    gap: 8px !important;
+    padding: 12px 16px 16px !important;
+  }
+  .mobile-thumb-slots .mts-slot {
+    flex: 1 !important;
+    aspect-ratio: 1 !important;
+    border-radius: 10px !important;
+    background: var(--m-bg) !important;
+    border: 1px solid var(--m-line) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    color: #C7C7CF !important;
+    font-family: var(--m-font) !important;
+    font-size: 11px !important;
+    font-weight: 500 !important;
+  }
+  .mobile-thumb-slots .mts-slot--add {
+    background: var(--m-brand-soft) !important;
+    border-color: var(--m-line) !important;
+    border-style: solid !important;
+    cursor: pointer !important;
+  }
+  .mobile-thumb-slots .mts-slot--add svg {
+    width: 18px !important;
+    height: 18px !important;
+    stroke: var(--m-brand) !important;
+    stroke-width: 2 !important;
+    fill: none !important;
+  }visible !important;
+    padding: 0 !important;
+  }
+  #panel-upload .panel-header {
+    background: var(--m-card) !important;
+    border-top: var(--border-line) !important;
+    border-left: var(--border-line) !important;
+    border-right: var(--border-line) !important;
+    border-top-left-radius: var(--r-large) !important;
+    border-top-right-radius: var(--r-large) !important;
+    margin: 0 !important;
+  }
+  #mobile-section-aset {
+    background: var(--m-card) !important;
+    border-bottom: var(--border-line) !important;
+    border-left: var(--border-line) !important;
+    border-right: var(--border-line) !important;
+    border-bottom-left-radius: var(--r-large) !important;
+    border-bottom-right-radius: var(--r-large) !important;
+    margin-bottom: 14px !important;
+    display: block !important;
+  }
+  #mobile-section-audiens {
+    background: var(--m-card) !important;
+    border: var(--border-line) !important;
+    border-radius: var(--r-large) !important;
+    margin-top: 0 !important;
+    display: block !important;
+    overflow: hidden !important;
+  }
+
+  .panel-header {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    padding: 14px 16px 12px !important;
+    border-bottom: none !important;
+  }
+  .panel-title {
+    font-family: var(--m-font) !important;
+    font-size: 14px !important;
+    font-weight: 700 !important;
+    color: var(--m-ink) !important;
+    letter-spacing: -0.01em !important;
+  }
+  .panel-sub {
+    font-family: var(--m-font) !important;
+    font-size: 11px !important;
+    color: var(--m-ink-sub) !important;
+  }
+  .panel-icon {
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 10px !important;
+    background: var(--m-brand-soft) !important;
+    border: none !important;
+    flex-shrink: 0 !important;
+  }
+  .panel-icon svg {
+    width: 16px !important;
+    height: 16px !important;
+    stroke: var(--m-brand) !important;
+  }
+
+  /* ── Upload zone: striped diagonal pattern ── */
+  .upload-zone {
+    background: repeating-linear-gradient(
+      135deg,
+      #FAFAFC 0 8px,
+      #F4F4F7 8px 16px
+    ) !important;
+    border: 1.5px dashed var(--m-line) !important;
+    border-radius: 14px !important;
+    padding: 28px 16px !important;
+    margin: 0 16px 0 !important;
+    cursor: pointer !important;
+    text-align: center !important;
+    transition: border-color 150ms !important;
+  }
+  .upload-zone:active {
+    border-color: var(--m-brand) !important;
+  }
+  .plus-icon {
+    width: 44px !important;
+    height: 44px !important;
+    border-radius: 12px !important;
+    background: #fff !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important;
+    margin: 0 auto 10px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  .plus-icon svg {
+    width: 18px !important;
+    height: 18px !important;
+    stroke: var(--m-brand) !important;
+    stroke-width: 2 !important;
   }
   .upload-label {
     font-family: var(--m-font) !important;

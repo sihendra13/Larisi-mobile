@@ -195,9 +195,16 @@
       <button class="m-icon-btn m-icon-btn--ghost" aria-label="Notifikasi" id="mobile-bell-btn">
         <i data-lucide="bell"></i>
       </button>
-      <div class="m-avatar" id="mobile-avatar" style="cursor:pointer">
-        <div class="m-avatar__inner" id="mobile-user-initials">--</div>
-        <div class="m-avatar__badge"></div>
+      <div style="display:flex;align-items:center;gap:12px;margin-left:4px;">
+        <div style="display:flex;flex-direction:column;align-items:flex-end;justify-content:center;gap:2px;">
+          <div style="display:flex;align-items:center;gap:4px;">
+            <span id="mobile-user-name" style="font-family:var(--m-font);font-size:12px;font-weight:700;color:var(--m-ink);">Nila Craft</span>
+            <span style="background:var(--m-brand);color:#fff;font-size:8px;font-weight:800;padding:2px 4px;border-radius:4px;line-height:1;">PRO</span>
+          </div>
+        </div>
+        <div class="m-avatar" id="mobile-avatar" style="cursor:pointer; background: var(--m-ink); padding: 0;">
+          <div class="m-avatar__inner" id="mobile-user-initials" style="color:#fff;background:transparent;border:none;font-weight:600;">A</div>
+        </div>
       </div>
     </div>
   </header>
@@ -256,10 +263,10 @@
     </div>
     <!-- Mobile: step chips Dapur Konten (hidden on desktop) -->
     <div id="mobile-dapur-chips" class="mobile-dapur-chips">
-      <button class="mobile-dapur-chip active" data-chip="aset" onclick="mobileDapurChip('aset')">
-        <span class="chip-step">1</span> Aset
+      <button class="mobile-dapur-chip done" data-chip="aset" onclick="mobileDapurChip('aset')">
+        <span class="chip-step"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span> Aset
       </button>
-      <button class="mobile-dapur-chip" data-chip="audiens" onclick="mobileDapurChip('audiens')">
+      <button class="mobile-dapur-chip active" data-chip="audiens" onclick="mobileDapurChip('audiens')">
         <span class="chip-step">2</span> Audiens
       </button>
       <button class="mobile-dapur-chip" data-chip="ai" onclick="mobileDapurChip('ai')">
@@ -287,7 +294,7 @@
           <div id="mobile-section-aset">
           <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
             <div class="plus-icon">
-              <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
             </div>
             <div class="upload-label">Unggah Foto/Video</div>
             <div class="upload-caption">Ketuk untuk pilih dari galeri</div>
@@ -299,10 +306,10 @@
             <button class="mts-slot mts-slot--add" onclick="document.getElementById('fileInput').click()" aria-label="Tambah foto">
               <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             </button>
-            <div class="mts-slot"></div>
-            <div class="mts-slot"></div>
-            <div class="mts-slot"></div>
-            <div class="mts-slot"></div>
+            <div class="mts-slot">2</div>
+            <div class="mts-slot">3</div>
+            <div class="mts-slot">4</div>
+            <div class="mts-slot">5</div>
           </div>
 
           <div class="scanning" id="scanning">
@@ -370,21 +377,25 @@
           <div class="section-label">Siapa Target Audiens Kamu?</div>
 
           <div class="audience-item">
-            <svg class="aud-icon" id="localIcon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <div class="aud-icon-wrap" style="width: 32px; height: 32px; background: var(--m-brand-soft); border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-right: 12px; flex-shrink: 0;">
+                <svg class="aud-icon" id="localIcon" viewBox="0 0 24 24" style="width: 16px; height: 16px; stroke: var(--m-brand); fill: none;"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </div>
             <div style="flex:1;">
               <div class="aud-title" id="localTitle">Warga Sekitar</div>
-              <div class="aud-desc" id="localDesc">Penduduk Lokal atau Orang yang tinggal di sekitar lokasi yang kamu pilih.</div>
+              <div class="aud-desc" id="localDesc">Penduduk lokal di sekitar lokasi yang kamu pilih.</div>
             </div>
-            <div class="toggle" id="toggleLocal" onclick="toggleLocalFn()"><div class="toggle-knob"></div></div>
+            <button class="m-toggle on" id="toggleLocal" onclick="this.classList.toggle('on'); toggleLocalFn()"><div class="m-toggle__knob"></div></button>
           </div>
 
           <div class="audience-item" id="travelerItem">
-            <svg class="aud-icon" viewBox="0 0 24 24" id="travelerIcon"><path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            <div class="aud-icon-wrap" style="width: 32px; height: 32px; background: var(--m-brand-soft); border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-right: 12px; flex-shrink: 0;">
+                <svg class="aud-icon" viewBox="0 0 24 24" id="travelerIcon" style="width: 16px; height: 16px; stroke: var(--m-brand); fill: none;"><path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            </div>
             <div style="flex:1;">
               <div class="aud-title" id="travelerTitle">Pengunjung</div>
               <div class="aud-desc" id="travelerDesc">Pendatang atau orang yang sedang berkunjung atau baru saja melewati lokasi ini.</div>
             </div>
-            <div class="toggle" id="toggleTraveler" onclick="toggleTravelerFn()" style="cursor:pointer"><div class="toggle-knob"></div></div>
+            <button class="m-toggle" id="toggleTraveler" onclick="this.classList.toggle('on'); toggleTravelerFn()"><div class="m-toggle__knob"></div></button>
           </div>
           </div><!-- /mobile-section-audiens -->
 
@@ -1266,7 +1277,7 @@
       </div>
     </div>
     <button class="m-cta-btn" onclick="launchRadar()" aria-label="Tayangkan iklan sekarang">
-      <i data-lucide="play"></i>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
       Tayangkan
     </button>
   </div>
