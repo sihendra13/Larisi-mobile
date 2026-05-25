@@ -32,7 +32,12 @@ function showPersonaDirect(p, detected) {
   captionAltIndex = 0;
   document.getElementById('stitchCard').style.display = 'block';
   updateStitch();
-  generateCaptionAI();
+  /* Jangan generate caption kalau catNudge sedang muncul —
+     user belum konfirmasi persona, tunggu mereka pilih kategori dulu.
+     generateCaptionAI() akan dipanggil oleh selectCat() setelah user pilih. */
+  if (detected) {
+    generateCaptionAI();
+  }
 }
 
 /* ── Vision conflict state ── */
