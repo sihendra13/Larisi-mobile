@@ -299,17 +299,7 @@
           </div>
           <input type="file" id="fileInput" accept="image/*,video/*" multiple style="display:none" onchange="handleUpload(event)">
           <div class="uploaded-thumbs" id="thumbs" style="display:none"></div>
-          <!-- Mobile: 5 slot placeholder (hidden when real thumbs loaded) -->
-          <div id="mobile-thumb-slots" class="mobile-thumb-slots">
-            <button class="mts-slot mts-slot--add" onclick="document.getElementById('fileInput').click()" aria-label="Tambah foto">
-              <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            </button>
-            <div class="mts-slot">2</div>
-            <div class="mts-slot">3</div>
-            <div class="mts-slot">4</div>
-            <div class="mts-slot">5</div>
-          </div>
-
+          <!-- Placeholder removed as per design -->
           <div class="scanning" id="scanning">
             <div class="scan-dot"></div><div class="scan-dot"></div><div class="scan-dot"></div>
             <div class="scan-text" id="scanText">SiLaris sedang menganalisis kontenmu...</div>
