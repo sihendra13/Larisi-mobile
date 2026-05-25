@@ -1312,7 +1312,7 @@
     border-right: var(--border-line) !important;
     border-bottom-left-radius: var(--r-large) !important;
     border-bottom-right-radius: var(--r-large) !important;
-    margin-bottom: 4px !important;
+    margin-bottom: 12px !important;
     display: block !important;
   }
   #mobile-section-audiens {
@@ -1367,7 +1367,7 @@
     border: 1.5px dashed var(--m-line) !important;
     border-radius: 14px !important;
     padding: 28px 16px !important;
-    margin: 0 16px 4px !important;
+    margin: 0 16px 12px !important;
     width: auto !important;
     box-sizing: border-box !important;
     cursor: pointer !important;
@@ -1450,7 +1450,7 @@
     border-right: var(--border-line) !important;
     border-bottom-left-radius: var(--r-large) !important;
     border-bottom-right-radius: var(--r-large) !important;
-    margin-bottom: 4px !important;
+    margin-bottom: 12px !important;
     display: block !important;
   }
   #mobile-section-audiens {
@@ -1505,7 +1505,7 @@
     border: 1.5px dashed var(--m-line) !important;
     border-radius: 14px !important;
     padding: 28px 16px !important;
-    margin: 0 16px 4px !important;
+    margin: 0 16px 12px !important;
     width: auto !important;
     box-sizing: border-box !important;
     cursor: pointer !important;
@@ -1597,17 +1597,17 @@
 
   /* ── Audiens section: sembunyikan persona card (desktop-only) ── */
   #personaCard {
-    margin: 0 16px 4px !important;
+    margin: 0 16px 12px !important;
   }
   #catNudge, #visionConflict {
-    margin: 0 16px 4px !important;
+    margin: 0 16px 12px !important;
   }
   #personaSeparator {
     display: none !important;
   }
 
   .scanning {
-    margin: 0 16px 4px !important;
+    margin: 0 16px 12px !important;
     border-radius: 12px !important;
   }
 
