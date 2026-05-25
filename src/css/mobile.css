@@ -1076,7 +1076,7 @@
   /* Panels container: scrollable column, beri padding horizontal */
   .panels {
     padding: 16px !important;
-    gap: 8px !important;
+    gap: 6px !important;
     padding-bottom: calc(80px + env(safe-area-inset-bottom)) !important;
     align-items: stretch;
   }
