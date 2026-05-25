@@ -1573,7 +1573,7 @@
 
   /* Uploaded thumbs: tampil 5 sejajar di mobile */
   .uploaded-thumbs {
-    display: flex !important;
+    display: flex;
     flex-wrap: nowrap !important;
     gap: 8px !important;
     padding: 12px 16px 16px !important;
@@ -1593,7 +1593,10 @@
 
   /* ── Audiens section: sembunyikan persona card (desktop-only) ── */
   #personaCard {
-    margin: 16px 16px 16px !important;
+    margin: 0 16px 8px !important;
+  }
+  #personaSeparator {
+    display: none !important;
   }
 
   .scanning {
