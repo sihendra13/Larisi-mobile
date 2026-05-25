@@ -1312,7 +1312,7 @@
     border-right: var(--border-line) !important;
     border-bottom-left-radius: var(--r-large) !important;
     border-bottom-right-radius: var(--r-large) !important;
-    margin-bottom: 4px !important;
+    margin-bottom: 2px !important;
     display: block !important;
   }
   #mobile-section-audiens {
@@ -1450,7 +1450,7 @@
     border-right: var(--border-line) !important;
     border-bottom-left-radius: var(--r-large) !important;
     border-bottom-right-radius: var(--r-large) !important;
-    margin-bottom: 4px !important;
+    margin-bottom: 2px !important;
     display: block !important;
   }
   #mobile-section-audiens {
