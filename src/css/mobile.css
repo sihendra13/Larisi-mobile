@@ -1312,7 +1312,7 @@
     border-right: var(--border-line) !important;
     border-bottom-left-radius: var(--r-large) !important;
     border-bottom-right-radius: var(--r-large) !important;
-    margin-bottom: 8px !important;
+    margin-bottom: 24px !important;
     display: block !important;
   }
   #mobile-section-audiens {
@@ -1367,7 +1367,9 @@
     border: 1.5px dashed var(--m-line) !important;
     border-radius: 14px !important;
     padding: 28px 16px !important;
-    margin: 0 16px 0 !important;
+    margin: 0 16px 24px !important;
+    width: auto !important;
+    box-sizing: border-box !important;
     cursor: pointer !important;
     text-align: center !important;
     transition: border-color 150ms !important;
@@ -1448,7 +1450,7 @@
     border-right: var(--border-line) !important;
     border-bottom-left-radius: var(--r-large) !important;
     border-bottom-right-radius: var(--r-large) !important;
-    margin-bottom: 8px !important;
+    margin-bottom: 24px !important;
     display: block !important;
   }
   #mobile-section-audiens {
@@ -1503,7 +1505,9 @@
     border: 1.5px dashed var(--m-line) !important;
     border-radius: 14px !important;
     padding: 28px 16px !important;
-    margin: 0 16px 0 !important;
+    margin: 0 16px 24px !important;
+    width: auto !important;
+    box-sizing: border-box !important;
     cursor: pointer !important;
     text-align: center !important;
     transition: border-color 150ms !important;
@@ -1593,7 +1597,7 @@
 
   /* ── Audiens section: sembunyikan persona card (desktop-only) ── */
   #personaCard {
-    margin: 0 16px 8px !important;
+    margin: 0 16px 24px !important;
   }
   #personaSeparator {
     display: none !important;
