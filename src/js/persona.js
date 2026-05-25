@@ -74,7 +74,7 @@ function _showVisionConflict(visionKey, visionLabel, bizKey, bizLabel) {
  * _applyVisionPersona(key)
  * Terapkan persona dari kunci personaDB, lock master persona.
  */
-function _applyVisionPersona(key) {
+function _applyVisionPersona(key, showEditBtn) {
   var p = (typeof personaDB !== 'undefined' && personaDB[key]) || (personaDB && personaDB.General);
   if (!p) return;
   currentPersona = key;
@@ -86,6 +86,15 @@ function _applyVisionPersona(key) {
     gender: p.gender || 'Mixed',
   }, true /* detected = true → sembunyikan catNudge */);
   masterPersonaLocked = true;
+  /* Opsi B: tampilkan Edit button bila persona di-apply otomatis dari profil bisnis
+     (bukan dari Vision match atau conflict resolution) — beri user opsi override */
+  if (showEditBtn) {
+    var editBtn = document.getElementById('personaEditBtn');
+    if (editBtn) {
+      editBtn.innerHTML = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Edit';
+      editBtn.style.display = 'flex';
+    }
+  }
 }
 
 /**
@@ -347,7 +356,7 @@ async function startScanWithFile(filename, fileCount) {
       var _bizKeyFb = _bizCatFb && (typeof _BIZ_CAT_TO_TILE !== 'undefined')
         ? (_BIZ_CAT_TO_TILE[_bizCatFb] || null) : null;
       if (_bizKeyFb) {
-        _applyVisionPersona(_bizKeyFb);
+        _applyVisionPersona(_bizKeyFb, true /* Opsi B: auto dari biz profile → show Edit */);
         return;
       }
       /* Tidak ada profil bisnis spesifik → catNudge */
@@ -357,21 +366,8 @@ async function startScanWithFile(filename, fileCount) {
     }
 
     if (!detected) {
-      /* Bug 2 fix: filename generik → cek profil bisnis sebelum fallback ke catNudge */
-      var _bizCatGen = window.userBizProfile && window.userBizProfile.category;
-      if (!_bizCatGen) {
-        try {
-          var _cachedGen = JSON.parse(localStorage.getItem('radar_user_profile') || '{}');
-          _bizCatGen = _cachedGen.category || null;
-        } catch(e) {}
-      }
-      var _bizKeyGen = _bizCatGen && (typeof _BIZ_CAT_TO_TILE !== 'undefined')
-        ? (_BIZ_CAT_TO_TILE[_bizCatGen] || null) : null;
-      if (_bizKeyGen) {
-        _applyVisionPersona(_bizKeyGen);
-        return;
-      }
-      /* Tidak ada profil bisnis spesifik → catNudge */
+      /* Filename generik + Vision null = SiLaris tidak tahu ini konten apa
+         → tampilkan catNudge, biarkan user pilih persona yang tepat */
       showPersonaDirect(p, false);
       masterPersonaLocked = true;
       return;
