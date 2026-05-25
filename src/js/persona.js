@@ -281,8 +281,18 @@ async function startScanWithFile(filename, fileCount) {
     }
 
     if (!bizCategory) {
-      /* Benar-benar tidak ada profil bisnis → langsung pakai hasil AI */
-      _applyVisionPersona(visionKey);
+      /* Profil bisnis tidak tersedia (belum load atau memang tidak ada).
+         Daripada langsung apply Vision tanpa konteks bisnis — tampilkan
+         catNudge supaya user konfirmasi sendiri. Lebih aman dari race
+         condition saat app dibuka fresh dari link eksternal (WhatsApp, dll). */
+      var _vpNoBiz = personaDB[visionKey] || personaDB.General;
+      showPersonaDirect({
+        name:   _vpNoBiz.name,
+        target: _vpNoBiz.target,
+        age:    _vpNoBiz.age || '18–45',
+        gender: _vpNoBiz.gender || 'Mixed',
+      }, false /* detected=false → tampilkan catNudge */);
+      masterPersonaLocked = true;
     } else {
       /* Petakan kategori biz ke persona key.
          Jika kategori biz tidak ada di mapping → null (General) */
