@@ -528,6 +528,29 @@
     // Init platform selector dengan Instagram aktif
     mobileSelectPlatform('instagram');
 
+    // Force-apply styles yang tidak bisa di-override via CSS
+    (function applyMobileAICardStyles() {
+      // 1. Sembunyikan label "Atur Tampilan Gambar"
+      var atur = document.getElementById('aturTampilanLabel');
+      if (atur) atur.style.display = 'none';
+
+      // 2. Pill "Posting ke" → putih
+      var pill = document.getElementById('previewLabel');
+      if (pill) {
+        pill.style.background = '#fff';
+        pill.style.color = '#1a1a1a';
+        pill.style.border = '1px solid rgba(0,0,0,0.12)';
+        pill.style.borderRadius = '99px';
+        pill.style.padding = '6px 12px 6px 10px';
+        pill.style.fontSize = '13px';
+        pill.style.fontWeight = '600';
+        pill.style.display = 'flex';
+        pill.style.alignItems = 'center';
+        pill.style.gap = '6px';
+        pill.style.boxShadow = 'none';
+      }
+    })();
+
     // Register Service Worker
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/service-worker.js').catch(function(e) {
