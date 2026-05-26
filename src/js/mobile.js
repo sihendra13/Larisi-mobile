@@ -403,7 +403,8 @@
   var _PLATFORM_ICONS = {
     instagram: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#E1306C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.8" fill="#E1306C" stroke="none"/></svg>',
     facebook:  '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="flex-shrink:0"><rect width="24" height="24" rx="6" fill="#1877F2"/><path d="M13.5 8h2V5.5h-2C11.57 5.5 10 7.07 10 9v1.5H8V13h2v7h3v-7h2l.5-2.5H13V9c0-.28.22-.5.5-.5z" fill="white"/></svg>',
-    tiktok:    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="flex-shrink:0"><rect width="24" height="24" rx="6" fill="#000"/><path d="M16 8c.55.73 1.4 1.2 2.35 1.25v2.1a4.55 4.55 0 01-2.35-.65v5.8a4.1 4.1 0 11-4.1-4.1h.27v2.1H12a2 2 0 102 2V8z" fill="white"/></svg>'
+    tiktok:    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="flex-shrink:0"><rect width="24" height="24" rx="6" fill="#000"/><path d="M16 8c.55.73 1.4 1.2 2.35 1.25v2.1a4.55 4.55 0 01-2.35-.65v5.8a4.1 4.1 0 11-4.1-4.1h.27v2.1H12a2 2 0 102 2V8z" fill="white"/></svg>',
+    youtube:   '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="flex-shrink:0"><rect width="24" height="24" rx="5" fill="#FF0000"/><path d="M9.5 8.5l6 3.5-6 3.5V8.5z" fill="white"/></svg>'
   };
   /* 'meta' adalah alias dari 'facebook' */
   _PLATFORM_ICONS.meta = _PLATFORM_ICONS.facebook;
@@ -418,8 +419,6 @@
   };
 
   window.mobileSelectPlatform = function(platform) {
-    // Normalisasi: 'youtube' di-skip di mobile (tidak ada ikon)
-    if (platform === 'youtube') platform = 'instagram';
 
     // Update previewLabel badge dengan icon
     var badge = document.getElementById('previewLabel');
