@@ -14,6 +14,7 @@ const allowedOrigins = [
   "http://localhost:3000",
   "https://larisi.vercel.app",
   "https://app.larisi.id",
+  "https://larisi-mobile.pages.dev",
 ];
 
 function getCors(req: Request) {
