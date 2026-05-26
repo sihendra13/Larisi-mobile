@@ -405,13 +405,27 @@
     facebook:  '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="flex-shrink:0"><rect width="24" height="24" rx="6" fill="#1877F2"/><path d="M13.5 8h2V5.5h-2C11.57 5.5 10 7.07 10 9v1.5H8V13h2v7h3v-7h2l.5-2.5H13V9c0-.28.22-.5.5-.5z" fill="white"/></svg>',
     tiktok:    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="flex-shrink:0"><rect width="24" height="24" rx="6" fill="#000"/><path d="M16 8c.55.73 1.4 1.2 2.35 1.25v2.1a4.55 4.55 0 01-2.35-.65v5.8a4.1 4.1 0 11-4.1-4.1h.27v2.1H12a2 2 0 102 2V8z" fill="white"/></svg>'
   };
+  /* 'meta' adalah alias dari 'facebook' */
+  _PLATFORM_ICONS.meta = _PLATFORM_ICONS.facebook;
+
+  /* Label yang tampil di pill untuk tiap platform */
+  var _PLATFORM_LABELS = {
+    instagram: 'Instagram',
+    facebook:  'Facebook',
+    meta:      'Facebook',
+    tiktok:    'TikTok',
+    youtube:   'YouTube'
+  };
 
   window.mobileSelectPlatform = function(platform) {
+    // Normalisasi: 'youtube' di-skip di mobile (tidak ada ikon)
+    if (platform === 'youtube') platform = 'instagram';
+
     // Update previewLabel badge dengan icon
     var badge = document.getElementById('previewLabel');
     if (badge) {
-      var icon = _PLATFORM_ICONS[platform] || '';
-      var label = platform.charAt(0).toUpperCase() + platform.slice(1);
+      var icon  = _PLATFORM_ICONS[platform] || _PLATFORM_ICONS.instagram;
+      var label = _PLATFORM_LABELS[platform] || (platform.charAt(0).toUpperCase() + platform.slice(1));
       badge.innerHTML = icon + label + '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:2px"><path d="m6 9 6 6 6-6"/></svg>';
     }
 
@@ -443,6 +457,27 @@
       setActiveChannel(platform === 'facebook' ? 'meta' : platform);
     } else {
       window.activeChannel = (platform === 'facebook' ? 'meta' : platform);
+    }
+
+    // Sync caption platform label (INSTAGRAM / FACEBOOK / TIKTOK badge)
+    if (typeof updateCaptionPlatformLabel === 'function') {
+      setTimeout(updateCaptionPlatformLabel, 0);
+    }
+
+    // Re-apply pill style (agar tidak ditimpa kembali setelah innerHTML berubah)
+    var pill = document.getElementById('previewLabel');
+    if (pill) {
+      pill.style.setProperty('background', '#fff', 'important');
+      pill.style.setProperty('color', '#1a1a1a', 'important');
+      pill.style.setProperty('border', '1px solid rgba(0,0,0,0.12)', 'important');
+      pill.style.setProperty('border-radius', '99px', 'important');
+      pill.style.setProperty('padding', '6px 12px 6px 10px', 'important');
+      pill.style.setProperty('font-size', '13px', 'important');
+      pill.style.setProperty('font-weight', '600', 'important');
+      pill.style.setProperty('display', 'flex', 'important');
+      pill.style.setProperty('align-items', 'center', 'important');
+      pill.style.setProperty('gap', '6px', 'important');
+      pill.style.setProperty('box-shadow', 'none', 'important');
     }
   };
 
@@ -510,12 +545,14 @@
     }
 
     // Slider fill: update background gradient sesuai nilai
+    // Pakai setProperty(..., 'important') agar bisa override CSS !important
     function updateSliderFill(input) {
       var min = parseFloat(input.min) || 0;
       var max = parseFloat(input.max) || 100;
       var val = parseFloat(input.value) || 0;
       var pct = ((val - min) / (max - min)) * 100;
-      input.style.background = 'linear-gradient(to right, var(--m-ink) ' + pct + '%, var(--m-line) ' + pct + '%)';
+      var grad = 'linear-gradient(to right, #0E0E12 ' + pct + '%, #ECECF1 ' + pct + '%)';
+      input.style.setProperty('background', grad, 'important');
     }
     document.querySelectorAll('.filter-row input[type="range"]').forEach(function(inp) {
       updateSliderFill(inp);
@@ -528,28 +565,9 @@
     // Init platform selector dengan Instagram aktif
     mobileSelectPlatform('instagram');
 
-    // Force-apply styles yang tidak bisa di-override via CSS
-    (function applyMobileAICardStyles() {
-      // 1. Sembunyikan label "Atur Tampilan Gambar"
-      var atur = document.getElementById('aturTampilanLabel');
-      if (atur) atur.style.display = 'none';
-
-      // 2. Pill "Posting ke" → putih
-      var pill = document.getElementById('previewLabel');
-      if (pill) {
-        pill.style.background = '#fff';
-        pill.style.color = '#1a1a1a';
-        pill.style.border = '1px solid rgba(0,0,0,0.12)';
-        pill.style.borderRadius = '99px';
-        pill.style.padding = '6px 12px 6px 10px';
-        pill.style.fontSize = '13px';
-        pill.style.fontWeight = '600';
-        pill.style.display = 'flex';
-        pill.style.alignItems = 'center';
-        pill.style.gap = '6px';
-        pill.style.boxShadow = 'none';
-      }
-    })();
+    // Force-apply: sembunyikan label "Atur Tampilan Gambar" via inline style
+    var atur = document.getElementById('aturTampilanLabel');
+    if (atur) atur.style.setProperty('display', 'none', 'important');
 
     // Register Service Worker
     if ('serviceWorker' in navigator) {
