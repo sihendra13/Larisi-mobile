@@ -1173,7 +1173,10 @@
 
 /* ═══════════════════════════════════════════════════
    DAPUR PAGE HEADER (mobile only)
-   ═══════════════════════════════  /* ── DAPUR HEADER ── */
+   ═══════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+  /* ── DAPUR HEADER ── */
   .mobile-dapur-header {
     padding: 24px 20px 4px !important;
   }
@@ -1389,7 +1392,8 @@
     height: 18px !important;
     stroke: var(--m-brand) !important;
     stroke-width: 1.8 !important;
-  }t;
+  }
+  .upload-label {
     margin-bottom: 3px !important;
   }
   .upload-caption {
@@ -1430,7 +1434,8 @@
     stroke: var(--m-brand) !important;
     stroke-width: 2 !important;
     fill: none !important;
-  }visible !important;
+  }
+  .mobile-thumb-slots .mts-slot--add {
     padding: 0 !important;
   }
   #panel-upload .panel-header {
@@ -2177,19 +2182,6 @@
   .fmt-radio-label:has(input:checked) {
     background: var(--m-ink) !important;
     color: #fff !important;
-  }
-  .fmt-radio-label input[type="radio"] {
-    display: none !important;
-  }
-
-    justify-content: center !important;
-    padding: 8px 4px !important;
-    border-radius: var(--r-circle) !important;
-    font-family: var(--m-font) !important;
-    font-size: 12px !important;
-    font-weight: 500 !important;
-    color: var(--m-ink-sub) !important;
-    cursor: pointer !important;
   }
   .fmt-radio-label input[type="radio"] {
     display: none !important;

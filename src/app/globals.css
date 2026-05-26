@@ -1,0 +1,19 @@
+/* Import semua CSS yang sudah ada — urutan penting */
+@import '../css/tokens.css';
+@import '../css/layout.css';
+@import '../css/panel.css';
+@import '../css/upload.css';
+@import '../css/persona.css';
+@import '../css/map.css';
+@import '../css/chips.css';
+@import '../css/phone.css';
+@import '../css/caption.css';
+@import '../css/stitch.css';
+@import '../css/bottom-bar.css';
+@import '../css/monitor.css';
+@import '../css/analytics.css';
+@import '../css/components.css';
+@import '../css/mobile.css';
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow-x: hidden; }
