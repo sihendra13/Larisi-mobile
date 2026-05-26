@@ -167,7 +167,7 @@
     ────────────────────────────────────────────── */
     if (chip === 'aset') {
       show(panelUpload);
-      show(uploadHeader);   // tampilkan header "Aset Kreatif"
+      show(uploadHeader, 'flex');   // tampilkan header "Aset Kreatif"
       show(secAset);
       hide(secAudiens);
       hide(panelMap);
