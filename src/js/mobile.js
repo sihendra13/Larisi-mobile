@@ -141,17 +141,18 @@
       }
     });
 
-    var panelUpload  = document.getElementById('panel-upload');
-    var panelMap     = document.getElementById('panel-map-desktop');
-    var panelCaption = document.getElementById('panel-caption');
-    var secAset      = document.getElementById('mobile-section-aset');
-    var secAudiens   = document.getElementById('mobile-section-audiens');
-    var secAI        = document.getElementById('mobile-section-ai');
-    var secSocial    = document.getElementById('mobile-section-social');
-    var secPreview   = document.getElementById('mobile-section-preview'); // .p3-right
-    var p3Left       = document.querySelector('#panel-caption .p3-left');
-    var ctaBar       = document.getElementById('mobile-cta-bar');
-    var panels       = document.querySelector('.panels');
+    var panelUpload      = document.getElementById('panel-upload');
+    var uploadHeader     = document.querySelector('#panel-upload > .panel-header');
+    var panelMap         = document.getElementById('panel-map-desktop');
+    var panelCaption     = document.getElementById('panel-caption');
+    var secAset          = document.getElementById('mobile-section-aset');
+    var secAudiens       = document.getElementById('mobile-section-audiens');
+    var secAI            = document.getElementById('mobile-section-ai');
+    var secSocial        = document.getElementById('mobile-section-social');
+    var secPreview       = document.getElementById('mobile-section-preview'); // .p3-right
+    var p3Left           = document.querySelector('#panel-caption .p3-left');
+    var ctaBar           = document.getElementById('mobile-cta-bar');
+    var panels           = document.querySelector('.panels');
 
     // Helper: set display dengan !important agar override CSS !important
     function show(el, val) {
@@ -166,6 +167,7 @@
     ────────────────────────────────────────────── */
     if (chip === 'aset') {
       show(panelUpload);
+      show(uploadHeader);   // tampilkan header "Aset Kreatif"
       show(secAset);
       hide(secAudiens);
       hide(panelMap);
@@ -177,6 +179,7 @@
     ────────────────────────────────────────────── */
     } else if (chip === 'audiens') {
       show(panelUpload);
+      hide(uploadHeader);   // sembunyikan header "Aset Kreatif"
       hide(secAset);
       show(secAudiens);
       show(panelMap);
