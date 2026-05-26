@@ -1966,13 +1966,7 @@
   }
 
   /* Chevron ∨ */
-  .preview-label-badge::after {
-    content: '∨';
-    font-size: 11px;
-    font-weight: 500;
-    color: var(--m-ink-sub);
-    margin-left: 2px;
-  }
+  
 
   /* Section labels dalam p3-left — base: sentence-case, medium weight */
   #panel-caption .p3-left .section-label {
