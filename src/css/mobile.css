@@ -2285,10 +2285,10 @@
     letter-spacing: 0 !important;
   }
 
-  /* Instagram Pill — override phone.css yang set background: near-black */
-  #mobile-section-ai .preview-label-badge {
+  /* Instagram Pill — pakai #previewLabel langsung, pasti menang */
+  #previewLabel {
     background: #fff !important;
-    border: 1px solid var(--border-line) !important;
+    border: 1px solid rgba(0,0,0,0.12) !important;
     border-radius: 99px !important;
     padding: 6px 12px 6px 10px !important;
     font-size: 13px !important;
@@ -2299,8 +2299,8 @@
     align-items: center !important;
     gap: 6px !important;
   }
-  /* Hapus segitiga CSS dari phone.css — kita pakai SVG chevron sendiri */
-  #mobile-section-ai .preview-label-badge::after {
+  /* Hapus segitiga CSS dari phone.css */
+  #previewLabel::after {
     display: none !important;
   }
   
