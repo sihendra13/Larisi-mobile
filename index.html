@@ -10,11 +10,7 @@
     <!-- html disembunyikan dulu — cegah flash of content sebelum auth confirmed -->
     <!-- Pakai html bukan body karena body belum di-parse saat script di head ini jalan -->
     <style>
-  @media (max-width: 768px) {
-    #panel-caption .panel-header {
-      padding-top: 24px !important;
-    }
-  }
+  
 
       html { visibility: hidden; }
       button:hover {
@@ -25,7 +21,22 @@
         opacity: 0 !important;
         transition: opacity 0.3s ease !important;
       }
-    </style>
+    
+  /* EXACT PADDING TO MATCH REFERENCE ALIGNMENT */
+  @media (max-width: 768px) {
+    #panel-caption .panel-header {
+      padding: 32px 24px 12px 24px !important;
+    }
+    #mobile-section-ai {
+      padding: 12px 24px 32px 24px !important;
+    }
+    /* EXACT BORDER RADIUS TO MATCH TAYANGKAN BUTTON (12px) */
+    #mobile-section-ai .gen-btn {
+      border-radius: 12px !important;
+    }
+  }
+
+</style>
     <script src="src/js/config.js?v=1779770251"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <script src="src/js/supabase.js?v=1779770251"></script>
@@ -100,11 +111,7 @@
   <link rel="stylesheet" href="src/css/mobile.css?v=1779770600">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
-  @media (max-width: 768px) {
-    #panel-caption .panel-header {
-      padding-top: 24px !important;
-    }
-  }
+  
 
     /* Warning Banner Styles */
     #quota-banner {
@@ -166,7 +173,22 @@
     @media (max-width: 768px) {
       .qb-text { font-size: 11px; }
     }
-  </style>
+  
+  /* EXACT PADDING TO MATCH REFERENCE ALIGNMENT */
+  @media (max-width: 768px) {
+    #panel-caption .panel-header {
+      padding: 32px 24px 12px 24px !important;
+    }
+    #mobile-section-ai {
+      padding: 12px 24px 32px 24px !important;
+    }
+    /* EXACT BORDER RADIUS TO MATCH TAYANGKAN BUTTON (12px) */
+    #mobile-section-ai .gen-btn {
+      border-radius: 12px !important;
+    }
+  }
+
+</style>
 </head>
 <body>
 
@@ -247,17 +269,28 @@
                     <!-- Logout Dropdown -->
                     <div id="logout-dropdown" style="display: none; position: absolute; top: 52px; right: 0; background: white; border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 180px; z-index: 1000; padding: 8px 0; animation: slideDown 0.2s ease;">
                         <style>
-  @media (max-width: 768px) {
-    #panel-caption .panel-header {
-      padding-top: 24px !important;
-    }
-  }
+  
 
                             @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
                             .dropdown-item { padding: 10px 16px; font-size: 13px; color: var(--near-black); cursor: pointer; display: flex; align-items: center; gap: 10px; transition: background 0.2s; }
                             .dropdown-item:hover { background: var(--bg-soft); color: var(--rausch); }
                             .dropdown-divider { height: 1px; background: var(--border); margin: 4px 0; }
-                        </style>
+                        
+  /* EXACT PADDING TO MATCH REFERENCE ALIGNMENT */
+  @media (max-width: 768px) {
+    #panel-caption .panel-header {
+      padding: 32px 24px 12px 24px !important;
+    }
+    #mobile-section-ai {
+      padding: 12px 24px 32px 24px !important;
+    }
+    /* EXACT BORDER RADIUS TO MATCH TAYANGKAN BUTTON (12px) */
+    #mobile-section-ai .gen-btn {
+      border-radius: 12px !important;
+    }
+  }
+
+</style>
                         <div id="upgrade-menu-item" class="dropdown-item" onclick="showTrialModalManual()" style="display: none; color: var(--rausch); font-weight: 600;">
                             <i class="fas fa-rocket"></i> Upgrade Paket
                         </div>
@@ -455,11 +488,7 @@
 
             
 <style>
-  @media (max-width: 768px) {
-    #panel-caption .panel-header {
-      padding-top: 24px !important;
-    }
-  }
+  
 
   /* Slider Track & Thumb Inline Fallback for AI Card */
   #mobile-section-ai input[type="range"]::-webkit-slider-thumb {
@@ -480,6 +509,21 @@
     background: var(--m-ink, #111) !important;
     border-radius: 4px !important;
   }
+
+  /* EXACT PADDING TO MATCH REFERENCE ALIGNMENT */
+  @media (max-width: 768px) {
+    #panel-caption .panel-header {
+      padding: 32px 24px 12px 24px !important;
+    }
+    #mobile-section-ai {
+      padding: 12px 24px 32px 24px !important;
+    }
+    /* EXACT BORDER RADIUS TO MATCH TAYANGKAN BUTTON (12px) */
+    #mobile-section-ai .gen-btn {
+      border-radius: 12px !important;
+    }
+  }
+
 </style>
 <div id="mobile-section-ai"
  style="padding: 16px;">
