@@ -2270,7 +2270,7 @@
     background: #F5F5F7 !important;
     border-radius: 12px !important;
     padding: 10px 14px !important;
-    margin-bottom: 24px !important;
+    margin-bottom: 16px !important;
     display: flex !important;
     align-items: center !important;
     justify-content: space-between !important;
@@ -2285,7 +2285,7 @@
     letter-spacing: 0 !important;
   }
 
-  /* Instagram Pill */
+  /* Instagram Pill — override phone.css yang set background: near-black */
   #mobile-section-ai .preview-label-badge {
     background: #fff !important;
     border: 1px solid var(--border-line) !important;
@@ -2299,6 +2299,10 @@
     align-items: center !important;
     gap: 6px !important;
   }
+  /* Hapus segitiga CSS dari phone.css — kita pakai SVG chevron sendiri */
+  #mobile-section-ai .preview-label-badge::after {
+    display: none !important;
+  }
   
   /* Remove flex gap from the visual filters wrapper so we control spacing exactly */
   #mobile-section-ai > div:nth-child(2) > div {
@@ -2308,12 +2312,12 @@
   /* Sliders */
   #mobile-section-ai .filter-row {
     display: grid !important;
-    grid-template-areas: 
+    grid-template-areas:
       "label val"
       "slider slider" !important;
     grid-template-columns: 1fr auto !important;
-    row-gap: 10px !important;
-    margin-bottom: 24px !important;
+    row-gap: 8px !important;
+    margin-bottom: 16px !important;
     align-items: center !important;
   }
   #mobile-section-ai .filter-label {
@@ -2402,8 +2406,8 @@
   }
   #mobile-section-ai .gen-btn {
     width: 100% !important;
-    padding: 12px !important;
-    border-radius: 10px !important;
+    padding: 14px !important;
+    border-radius: 16px !important;
     background: var(--m-ink) !important;
     color: #fff !important;
     border: none !important;
