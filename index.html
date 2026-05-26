@@ -460,12 +460,12 @@
 <div id="mobile-section-ai"
  style="padding: 16px;">
             <!-- 1. Publish ke Channel Selector -->
-            <div class="opt-mode-row" style="background: #F5F5F7; border-radius: 12px; padding: 10px 14px; margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between;">
+            <div class="opt-mode-row" style="background: #F5F5F7; border-radius: 12px; padding: 10px 14px; margin-bottom: 24px; margin-top: 24px; display: flex; align-items: center; justify-content: space-between;">
               <div class="section-label" style="font-size: 13px; font-weight: 500; color: var(--m-ink-sub); margin: 0; text-transform: none; letter-spacing: 0;">Posting ke</div>
-              <div class="preview-label-badge" id="previewLabel" onclick="cycleChannel()" style="cursor:pointer; user-select:none; background: #fff; border: 1px solid rgba(0,0,0,0.12); border-radius: 99px; padding: 6px 12px 6px 10px; font-size: 13px; font-weight: 600; color: var(--m-ink); display: flex; align-items: center; gap: 6px;" title="Klik untuk ganti platform">
+              <div class="preview-label-badge" id="previewLabel" onclick="cycleChannel()" style="cursor:pointer; user-select:none; background: #fff; border: 1px solid rgba(0,0,0,0.12); border-radius: 99px; padding: 6px 16px 6px 12px; font-size: 13px; font-weight: 600; color: var(--m-ink); display: flex; align-items: center; gap: 6px;" title="Klik untuk ganti platform">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#E1306C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.8" fill="#E1306C" stroke="none"/></svg>
                 Instagram
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:2px"><path d="m6 9 6 6 6-6"/></svg>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:6px"><path d="m6 9 6 6 6-6"/></svg>
               </div>
             </div>
 
@@ -492,12 +492,12 @@
                 <div class="section-label" style="font-size: 13px; font-weight: 700; color: var(--m-ink); margin: 0; text-transform: none; letter-spacing: 0;">Pesan dioptimalkan AI</div>
                 <div id="captionPlatformLabel" style="font-size:11px;font-weight:700;color:#4A3FCC;text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:4px;"></div>
               </div>
-              <div class="caption-box" style="background: #F5F5F7; border-radius: 12px; padding: 16px; margin-bottom: 16px; display: flex; flex-direction: column;">
+              <div class="caption-box" style="background: #F9F9FB; border: 1px solid rgba(0,0,0,0.06); box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); border-radius: 12px; padding: 16px; margin-bottom: 16px; display: flex; flex-direction: column;">
                 <textarea id="captionArea" placeholder="Tunggu sebentar, AI akan menuliskan pesan untukmu. Kamu bebas mengeditnya kembali agar lebih sesuai." rows="5" style="background: transparent; border: none; font-size: 13px; color: var(--m-ink-sub); line-height: 1.5; resize: none; padding: 0; min-height: 80px; width: 100%; outline: none;"></textarea>
               </div>
               <div class="caption-actions" style="margin-top: 0; background: transparent; padding: 0; border: none;">
-                <button class="gen-btn" id="genBtn" onclick="generateCaptionAI()" style="width: 100%; padding: 14px; border-radius: 16px; background: var(--m-ink, #111); color: #fff; border: none; font-weight: 600; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                  <i data-lucide="loader" style="width:16px;height:16px;stroke-width:2.2;"></i>Generate ulang
+                <button class="gen-btn" id="genBtn" onclick="generateCaptionAI()" style="width: 100%; padding: 14px; border-radius: 99px; background: var(--m-ink, #111); color: #fff; border: none; font-weight: 600; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: none;">
+                  <i data-lucide="loader-2" style="width:16px;height:16px;stroke-width:2.2;"></i>Generate ulang
                 </button>
               </div>
             </div>
