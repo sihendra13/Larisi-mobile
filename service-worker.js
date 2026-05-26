@@ -1,34 +1,34 @@
-const CACHE_NAME = 'larisi-mobile-v3';
+const CACHE_NAME = 'larisi-mobile-v4';
 
 const STATIC_ASSETS = [
-  '/',
-  '/index.html',
-  '/login.html',
-  '/register.html',
-  '/onboarding.html',
-  '/src/css/tokens.css',
-  '/src/css/layout.css',
-  '/src/css/panel.css',
-  '/src/css/upload.css',
-  '/src/css/persona.css',
-  '/src/css/map.css',
-  '/src/css/chips.css',
-  '/src/css/phone.css',
-  '/src/css/caption.css',
-  '/src/css/stitch.css',
-  '/src/css/bottom-bar.css',
-  '/src/css/monitor.css',
-  '/src/css/analytics.css',
-  '/src/css/mobile.css',
-  '/src/js/config.js',
-  '/src/js/state.js',
-  '/src/js/main.js',
-  '/src/js/mobile.js',
-  '/src/data/personas.js',
-  '/src/data/locations.js',
-  '/src/data/region-dialek.js',
-  '/src/data/caption-templates.js',
-  '/Assets/logo-dashboard.png'
+  '/?cb=4',
+  '/index.html?cb=4',
+  '/login.html?cb=4',
+  '/register.html?cb=4',
+  '/onboarding.html?cb=4',
+  '/src/css/tokens.css?cb=4',
+  '/src/css/layout.css?cb=4',
+  '/src/css/panel.css?cb=4',
+  '/src/css/upload.css?cb=4',
+  '/src/css/persona.css?cb=4',
+  '/src/css/map.css?cb=4',
+  '/src/css/chips.css?cb=4',
+  '/src/css/phone.css?cb=4',
+  '/src/css/caption.css?cb=4',
+  '/src/css/stitch.css?cb=4',
+  '/src/css/bottom-bar.css?cb=4',
+  '/src/css/monitor.css?cb=4',
+  '/src/css/analytics.css?cb=4',
+  '/src/css/mobile.css?cb=4',
+  '/src/js/config.js?cb=4',
+  '/src/js/state.js?cb=4',
+  '/src/js/main.js?cb=4',
+  '/src/js/mobile.js?cb=4',
+  '/src/data/personas.js?cb=4',
+  '/src/data/locations.js?cb=4',
+  '/src/data/region-dialek.js?cb=4',
+  '/src/data/caption-templates.js?cb=4',
+  '/Assets/logo-dashboard.png?cb=4'
 ];
 
 // Install — cache semua static assets
@@ -71,7 +71,7 @@ self.addEventListener('fetch', function(event) {
   // Cache-first untuk static assets (CSS, JS, gambar)
   if (event.request.method === 'GET') {
     event.respondWith(
-      caches.match(event.request).then(function(cached) {
+      caches.match(event.request, { ignoreSearch: true }).then(function(cached) {
         if (cached) return cached;
         return fetch(event.request).then(function(response) {
           if (response && response.status === 200) {
