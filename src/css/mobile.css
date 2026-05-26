@@ -1978,7 +1978,7 @@
     text-transform: none !important;
   }
   /* Hide "Atur Tampilan Gambar" header on mobile */
-  #panel-caption .p3-left > div:nth-child(2) > .section-label {
+  #aturTampilanLabel {
     display: none !important;
   }
 
@@ -2260,8 +2260,8 @@
     padding: 16px !important;
   }
 
-  /* Hide "Atur Tampilan Gambar" */
-  #mobile-section-ai > div:nth-child(2) > .section-label {
+  /* Hide "Atur Tampilan Gambar" — pakai ID langsung, anti-galat */
+  #aturTampilanLabel {
     display: none !important;
   }
 
