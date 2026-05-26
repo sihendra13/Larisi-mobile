@@ -153,27 +153,35 @@
     var ctaBar       = document.getElementById('mobile-cta-bar');
     var panels       = document.querySelector('.panels');
 
+    // Helper: set display dengan !important agar override CSS !important
+    function show(el, val) {
+      if (el) el.style.setProperty('display', val || 'block', 'important');
+    }
+    function hide(el) {
+      if (el) el.style.setProperty('display', 'none', 'important');
+    }
+
     /* ── Chip 1: Aset ──────────────────────────────
-       Upload zone + Master Persona card
+       Upload zone + Master Persona card saja
     ────────────────────────────────────────────── */
     if (chip === 'aset') {
-      if (panelUpload)  panelUpload.style.display  = 'block';
-      if (secAset)      secAset.style.display      = '';
-      if (secAudiens)   secAudiens.style.display   = 'none';
-      if (panelMap)     panelMap.style.display     = 'none';
-      if (panelCaption) panelCaption.style.display = 'none';
-      if (ctaBar)       ctaBar.style.display       = 'none';
+      show(panelUpload);
+      show(secAset);
+      hide(secAudiens);
+      hide(panelMap);
+      hide(panelCaption);
+      hide(ctaBar);
 
     /* ── Chip 2: Audiens ────────────────────────────
        Warga Sekitar/Pengunjung + Map + Radius slider
     ────────────────────────────────────────────── */
     } else if (chip === 'audiens') {
-      if (panelUpload)  panelUpload.style.display  = 'block';
-      if (secAset)      secAset.style.display      = 'none'; // ketat — aset hilang
-      if (secAudiens)   secAudiens.style.display   = '';
-      if (panelMap)     panelMap.style.display     = 'block';
-      if (panelCaption) panelCaption.style.display = 'none';
-      if (ctaBar)       ctaBar.style.display       = 'none';
+      show(panelUpload);
+      hide(secAset);
+      show(secAudiens);
+      show(panelMap);
+      hide(panelCaption);
+      hide(ctaBar);
       // Map perlu invalidate size karena sempat hidden
       setTimeout(function() {
         if (window.State && window.State.map) window.State.map.invalidateSize();
@@ -183,25 +191,25 @@
        Caption generator + Akun Media Sosial
     ────────────────────────────────────────────── */
     } else if (chip === 'ai') {
-      if (panelUpload)  panelUpload.style.display  = 'none';
-      if (panelMap)     panelMap.style.display     = 'none';
-      if (panelCaption) panelCaption.style.display = 'flex';
-      if (p3Left)       p3Left.style.display       = 'flex';
-      if (secAI)        secAI.style.display        = 'block';
-      if (secSocial)    secSocial.style.display    = 'block';
-      if (secPreview)   secPreview.style.display   = 'none'; // sembunyikan phone mockup
-      if (ctaBar)       ctaBar.style.display       = 'none';
+      hide(panelUpload);
+      hide(panelMap);
+      show(panelCaption, 'flex');
+      show(p3Left, 'flex');
+      show(secAI);
+      show(secSocial);
+      hide(secPreview);
+      hide(ctaBar);
 
     /* ── Chip 4: Preview ────────────────────────────
        Live preview phone + Posting ke + Tayangkan
     ────────────────────────────────────────────── */
     } else if (chip === 'preview') {
-      if (panelUpload)  panelUpload.style.display  = 'none';
-      if (panelMap)     panelMap.style.display     = 'none';
-      if (panelCaption) panelCaption.style.display = 'flex';
-      if (p3Left)       p3Left.style.display       = 'none'; // sembunyikan AI editor
-      if (secPreview)   secPreview.style.display   = 'flex'; // tampilkan phone mockup
-      if (ctaBar)       ctaBar.style.display       = 'block'; // tombol Tayangkan muncul
+      hide(panelUpload);
+      hide(panelMap);
+      show(panelCaption, 'flex');
+      hide(p3Left);
+      show(secPreview, 'flex');
+      show(ctaBar);
       setTimeout(function() {
         var phone = document.getElementById('phoneShell');
         if (phone) phone.scrollIntoView({ behavior: 'smooth', block: 'start' });
