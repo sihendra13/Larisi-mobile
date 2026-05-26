@@ -64,9 +64,12 @@
       tab.classList.toggle('active', tab.dataset.view === view);
     });
 
-    // CTA bar: hanya Dapur
-    var ctaBar = document.getElementById('mobile-cta-bar');
-    if (ctaBar) ctaBar.style.display = (view === 'command') ? 'block' : 'none';
+    // CTA bar: dikontrol oleh mobileDapurChip (hanya muncul di chip 4)
+    // Non-Dapur views → selalu sembunyikan
+    if (view !== 'command') {
+      var ctaBar = document.getElementById('mobile-cta-bar');
+      if (ctaBar) ctaBar.style.display = 'none';
+    }
 
     // FAB SiLaris: hanya Kelola
     var fab = document.querySelector('.mobile-silaris-fab');
@@ -143,36 +146,62 @@
     var panelCaption = document.getElementById('panel-caption');
     var secAset      = document.getElementById('mobile-section-aset');
     var secAudiens   = document.getElementById('mobile-section-audiens');
+    var secAI        = document.getElementById('mobile-section-ai');
+    var secSocial    = document.getElementById('mobile-section-social');
+    var secPreview   = document.getElementById('mobile-section-preview'); // .p3-right
+    var p3Left       = document.querySelector('#panel-caption .p3-left');
+    var ctaBar       = document.getElementById('mobile-cta-bar');
     var panels       = document.querySelector('.panels');
 
+    /* ── Chip 1: Aset ──────────────────────────────
+       Upload zone + Master Persona card
+    ────────────────────────────────────────────── */
     if (chip === 'aset') {
       if (panelUpload)  panelUpload.style.display  = 'block';
       if (secAset)      secAset.style.display      = '';
       if (secAudiens)   secAudiens.style.display   = 'none';
       if (panelMap)     panelMap.style.display     = 'none';
       if (panelCaption) panelCaption.style.display = 'none';
+      if (ctaBar)       ctaBar.style.display       = 'none';
 
+    /* ── Chip 2: Audiens ────────────────────────────
+       Warga Sekitar/Pengunjung + Map + Radius slider
+    ────────────────────────────────────────────── */
     } else if (chip === 'audiens') {
       if (panelUpload)  panelUpload.style.display  = 'block';
-      // Design screen 02: Aset + Audiens keduanya visible saat step Audiens
-      if (secAset)      secAset.style.display      = '';
+      if (secAset)      secAset.style.display      = 'none'; // ketat — aset hilang
       if (secAudiens)   secAudiens.style.display   = '';
       if (panelMap)     panelMap.style.display     = 'block';
       if (panelCaption) panelCaption.style.display = 'none';
+      if (ctaBar)       ctaBar.style.display       = 'none';
       // Map perlu invalidate size karena sempat hidden
       setTimeout(function() {
         if (window.State && window.State.map) window.State.map.invalidateSize();
       }, 150);
 
+    /* ── Chip 3: AI ─────────────────────────────────
+       Caption generator + Akun Media Sosial
+    ────────────────────────────────────────────── */
     } else if (chip === 'ai') {
       if (panelUpload)  panelUpload.style.display  = 'none';
       if (panelMap)     panelMap.style.display     = 'none';
       if (panelCaption) panelCaption.style.display = 'flex';
+      if (p3Left)       p3Left.style.display       = 'flex';
+      if (secAI)        secAI.style.display        = 'block';
+      if (secSocial)    secSocial.style.display    = 'block';
+      if (secPreview)   secPreview.style.display   = 'none'; // sembunyikan phone mockup
+      if (ctaBar)       ctaBar.style.display       = 'none';
 
+    /* ── Chip 4: Preview ────────────────────────────
+       Live preview phone + Posting ke + Tayangkan
+    ────────────────────────────────────────────── */
     } else if (chip === 'preview') {
       if (panelUpload)  panelUpload.style.display  = 'none';
       if (panelMap)     panelMap.style.display     = 'none';
       if (panelCaption) panelCaption.style.display = 'flex';
+      if (p3Left)       p3Left.style.display       = 'none'; // sembunyikan AI editor
+      if (secPreview)   secPreview.style.display   = 'flex'; // tampilkan phone mockup
+      if (ctaBar)       ctaBar.style.display       = 'block'; // tombol Tayangkan muncul
       setTimeout(function() {
         var phone = document.getElementById('phoneShell');
         if (phone) phone.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -512,9 +541,9 @@
     if (fab) fab.style.display = 'none';
 
     // Default state: Dapur tab active
-    // (tidak memanggil mobileNavSwitch karena switchMenu belum tentu siap)
+    // CTA bar tersembunyi — akan muncul HANYA saat chip 4 (Preview) aktif
     var ctaBar = document.getElementById('mobile-cta-bar');
-    if (ctaBar) ctaBar.style.display = 'block';
+    if (ctaBar) ctaBar.style.display = 'none';
 
     // Sync avatar dari desktop initials
     _syncMobileAvatar();
