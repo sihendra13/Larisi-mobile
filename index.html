@@ -10,6 +10,12 @@
     <!-- html disembunyikan dulu — cegah flash of content sebelum auth confirmed -->
     <!-- Pakai html bukan body karena body belum di-parse saat script di head ini jalan -->
     <style>
+  @media (max-width: 768px) {
+    #panel-caption .panel-header {
+      padding-top: 24px !important;
+    }
+  }
+
       html { visibility: hidden; }
       button:hover {
         background: #5b17b7 !important;
@@ -94,6 +100,12 @@
   <link rel="stylesheet" href="src/css/mobile.css?v=1779770600">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
+  @media (max-width: 768px) {
+    #panel-caption .panel-header {
+      padding-top: 24px !important;
+    }
+  }
+
     /* Warning Banner Styles */
     #quota-banner {
       display: none;
@@ -235,6 +247,12 @@
                     <!-- Logout Dropdown -->
                     <div id="logout-dropdown" style="display: none; position: absolute; top: 52px; right: 0; background: white; border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 180px; z-index: 1000; padding: 8px 0; animation: slideDown 0.2s ease;">
                         <style>
+  @media (max-width: 768px) {
+    #panel-caption .panel-header {
+      padding-top: 24px !important;
+    }
+  }
+
                             @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
                             .dropdown-item { padding: 10px 16px; font-size: 13px; color: var(--near-black); cursor: pointer; display: flex; align-items: center; gap: 10px; transition: background 0.2s; }
                             .dropdown-item:hover { background: var(--bg-soft); color: var(--rausch); }
@@ -437,6 +455,12 @@
 
             
 <style>
+  @media (max-width: 768px) {
+    #panel-caption .panel-header {
+      padding-top: 24px !important;
+    }
+  }
+
   /* Slider Track & Thumb Inline Fallback for AI Card */
   #mobile-section-ai input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none !important;
@@ -474,12 +498,12 @@
               <div class="section-label" id="aturTampilanLabel" style="display: none !important;">Atur Tampilan Gambar</div>
               <div style="display:flex;flex-direction:column;gap:16px;margin-bottom:24px;">
                 <div class="filter-row" style="display: grid; grid-template-areas: 'label val' 'slider slider'; grid-template-columns: 1fr auto; row-gap: 8px; align-items: center;">
-                  <div class="filter-label" style="grid-area: label; font-size: 13px; color: var(--m-ink-sub);">Terang-Gelap</div>
+                  <div class="filter-label" style="grid-area: label; font-size: 13px; color: var(--m-ink-sub); white-space: nowrap;">Terang-Gelap</div>
                   <input type="range" min="0" max="100" value="100" oninput="brightnessVal=parseInt(this.value)*2;document.getElementById('bVal').textContent=this.value+'%';applyFilters()" style="grid-area: slider; -webkit-appearance: none; width: 100%; height: 4px; background: var(--m-ink); border-radius: 4px; outline: none; margin: 0;">
                   <div class="filter-val" id="bVal" style="grid-area: val; font-size: 13px; font-weight: 600; color: var(--m-ink);">100%</div>
                 </div>
                 <div class="filter-row" style="display: grid; grid-template-areas: 'label val' 'slider slider'; grid-template-columns: 1fr auto; row-gap: 8px; align-items: center;">
-                  <div class="filter-label" style="grid-area: label; font-size: 13px; color: var(--m-ink-sub);">Ketajaman Warna</div>
+                  <div class="filter-label" style="grid-area: label; font-size: 13px; color: var(--m-ink-sub); white-space: nowrap;">Ketajaman Warna</div>
                   <input type="range" min="0" max="100" value="100" oninput="contrastVal=parseInt(this.value)*2;document.getElementById('cVal').textContent=this.value+'%';applyFilters()" style="grid-area: slider; -webkit-appearance: none; width: 100%; height: 4px; background: var(--m-ink); border-radius: 4px; outline: none; margin: 0;">
                   <div class="filter-val" id="cVal" style="grid-area: val; font-size: 13px; font-weight: 600; color: var(--m-ink);">100%</div>
                 </div>
@@ -492,11 +516,11 @@
                 <div class="section-label" style="font-size: 13px; font-weight: 700; color: var(--m-ink); margin: 0; text-transform: none; letter-spacing: 0;">Pesan dioptimalkan AI</div>
                 <div id="captionPlatformLabel" style="font-size:11px;font-weight:700;color:#4A3FCC;text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:4px;"></div>
               </div>
-              <div class="caption-box" style="background: #F9F9FB; border: 1px solid rgba(0,0,0,0.06); box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); border-radius: 12px; padding: 16px; margin-bottom: 16px; display: flex; flex-direction: column;">
+              <div class="caption-box" style="background: #F5F5F7; border-radius: 12px; padding: 16px; margin-bottom: 16px; display: flex; flex-direction: column; border: none; box-shadow: none;">
                 <textarea id="captionArea" placeholder="Tunggu sebentar, AI akan menuliskan pesan untukmu. Kamu bebas mengeditnya kembali agar lebih sesuai." rows="5" style="background: transparent; border: none; font-size: 13px; color: var(--m-ink-sub); line-height: 1.5; resize: none; padding: 0; min-height: 80px; width: 100%; outline: none;"></textarea>
               </div>
               <div class="caption-actions" style="margin-top: 0; background: transparent; padding: 0; border: none;">
-                <button class="gen-btn" id="genBtn" onclick="generateCaptionAI()" style="width: 100%; padding: 14px; border-radius: 99px; background: var(--m-ink, #111); color: #fff; border: none; font-weight: 600; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: none;">
+                <button class="gen-btn" id="genBtn" onclick="generateCaptionAI()" style="width: 100%; padding: 14px; border-radius: 16px; background: var(--m-ink, #111); color: #fff; border: none; font-weight: 600; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: none;">
                   <i data-lucide="loader-2" style="width:16px;height:16px;stroke-width:2.2;"></i>Generate ulang
                 </button>
               </div>
