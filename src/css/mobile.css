@@ -2257,4 +2257,170 @@
   .panels {
     padding-bottom: calc(72px + env(safe-area-inset-bottom));
   }
-}
+
+  /* ====================================================
+     STRICT OVERRIDES FOR AI CARD (MATCHING IMAGE 3)
+     ==================================================== */
+
+  #panel-caption #mobile-section-ai {
+    padding: 16px !important;
+  }
+
+  /* Hide "Atur Tampilan Gambar" */
+  #mobile-section-ai > div:nth-child(2) > .section-label {
+    display: none !important;
+  }
+
+  /* Posting ke row */
+  #mobile-section-ai .opt-mode-row {
+    background: #F5F5F7 !important;
+    border-radius: 12px !important;
+    padding: 10px 14px !important;
+    margin-bottom: 24px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    border: none !important;
+  }
+  #mobile-section-ai .opt-mode-row .section-label {
+    font-family: var(--m-font) !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    color: var(--m-ink-sub) !important;
+    text-transform: none !important;
+    letter-spacing: 0 !important;
+  }
+
+  /* Instagram Pill */
+  #mobile-section-ai .preview-label-badge {
+    background: #fff !important;
+    border: 1px solid var(--border-line) !important;
+    border-radius: 99px !important;
+    padding: 6px 12px 6px 10px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    color: var(--m-ink) !important;
+    box-shadow: none !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+  }
+  
+  /* Remove flex gap from the visual filters wrapper so we control spacing exactly */
+  #mobile-section-ai > div:nth-child(2) > div {
+    gap: 0 !important;
+  }
+
+  /* Sliders */
+  #mobile-section-ai .filter-row {
+    display: grid !important;
+    grid-template-areas: 
+      "label val"
+      "slider slider" !important;
+    grid-template-columns: 1fr auto !important;
+    row-gap: 10px !important;
+    margin-bottom: 24px !important;
+    align-items: center !important;
+  }
+  #mobile-section-ai .filter-label {
+    grid-area: label !important;
+    font-family: var(--m-font) !important;
+    font-size: 13px !important;
+    color: var(--m-ink-sub) !important;
+    white-space: nowrap !important;
+  }
+  #mobile-section-ai .filter-val {
+    grid-area: val !important;
+    font-family: var(--m-font) !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    color: var(--m-ink) !important;
+  }
+  
+  /* Slider Track & Thumb */
+  #mobile-section-ai .filter-row input[type="range"] {
+    grid-area: slider !important;
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    width: 100% !important;
+    height: 4px !important;
+    background: var(--m-ink) !important;
+    border-radius: 4px !important;
+    outline: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  #mobile-section-ai .filter-row input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    width: 18px !important;
+    height: 18px !important;
+    border-radius: 50% !important;
+    background: var(--m-ink) !important;
+    cursor: pointer !important;
+    border: none !important;
+    box-shadow: none !important;
+    margin-top: 0 !important;
+  }
+
+  /* AI Textarea Section Header */
+  #mobile-section-ai > div:nth-child(3) > div:first-child {
+    margin-bottom: 12px !important;
+  }
+  #mobile-section-ai > div:nth-child(3) > div:first-child .section-label {
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    color: var(--m-ink) !important;
+    text-transform: none !important;
+    letter-spacing: 0 !important;
+  }
+  #captionPlatformLabel {
+    font-size: 11px !important;
+    color: #4A3FCC !important; /* Purple-blue */
+    font-weight: 700 !important;
+  }
+
+  /* Textarea box */
+  #mobile-section-ai .caption-box {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    margin-bottom: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    padding: 0 !important;
+  }
+  #mobile-section-ai #captionArea {
+    background: #F5F5F7 !important;
+    border-radius: 12px !important;
+    border: none !important;
+    font-size: 13px !important;
+    color: var(--m-ink-sub) !important;
+    line-height: 1.5 !important;
+    resize: none !important;
+    padding: 16px !important;
+    min-height: 80px !important;
+    margin-bottom: 16px !important;
+  }
+  #mobile-section-ai .caption-actions {
+    display: block !important;
+    margin-top: 0 !important;
+  }
+  #mobile-section-ai .gen-btn {
+    width: 100% !important;
+    padding: 12px !important;
+    border-radius: 10px !important;
+    background: var(--m-ink) !important;
+    color: #fff !important;
+    border: none !important;
+    font-weight: 600 !important;
+    font-size: 13px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+  }
+
+} /* closing media query */
+
+  .mobile-dapur-chip:focus, .mobile-dapur-chip:active { outline: none !important; }
