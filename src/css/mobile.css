@@ -1733,7 +1733,7 @@
     display: none !important;
   }
   .radius-bar {
-    padding: 12px 16px 16px !important;
+    padding: 12px 16px calc(80px + env(safe-area-inset-bottom)) !important;
   }
   .radius-row {
     display: flex !important;
