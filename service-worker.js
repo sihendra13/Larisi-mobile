@@ -1,4 +1,4 @@
-const CACHE_NAME = 'larisi-mobile-v1';
+const CACHE_NAME = 'larisi-mobile-v2';
 
 const STATIC_ASSETS = [
   '/',
