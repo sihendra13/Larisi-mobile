@@ -338,7 +338,13 @@ function cycleChannel() {
 
   var labels = { instagram: 'Instagram', meta: 'Facebook', tiktok: 'TikTok', youtube: 'YouTube' };
   var badge  = document.getElementById('previewLabel');
-  if (badge) badge.textContent = labels[activeChannel];
+  if (badge) {
+    if (window.innerWidth <= 768 && typeof mobileSelectPlatform === 'function') {
+      mobileSelectPlatform(activeChannel);
+    } else {
+      badge.textContent = labels[activeChannel];
+    }
+  }
 
   // Tampilkan/sembunyikan format selector
   var hasFmt = (activeChannel === 'instagram' || activeChannel === 'meta');
