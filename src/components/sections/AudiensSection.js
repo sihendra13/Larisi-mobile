@@ -73,6 +73,8 @@ export default function AudiensSection() {
   const circleRef            = useRef(null);
   const bottomSheetMapRef    = useRef(null);
   const bottomSheetLeafRef   = useRef(null);
+  const bottomSheetMarkerRef = useRef(null);
+  const bottomSheetCircleRef = useRef(null);
   const searchTimerRef       = useRef(null);
   /* snapshot ref so bottom-sheet effect can read latest state */
   const snapRef = useRef({ lat: DEFAULT_LAT, lng: DEFAULT_LNG, locName: 'Sumbersari, Sleman', locPop: 50000, radius: 1.0 });
@@ -88,8 +90,8 @@ export default function AudiensSection() {
 
   /* ── Update Leaflet popup whenever locName / reach changes ── */
   useEffect(() => {
-    if (!markerRef.current) return;
-    markerRef.current.setPopupContent(popupHtml(locName, reachText));
+    if (markerRef.current) markerRef.current.setPopupContent(popupHtml(locName, reachText));
+    if (bottomSheetMarkerRef.current) bottomSheetMarkerRef.current.setPopupContent(popupHtml(locName, reachText));
   }, [locName, reachText]);
 
   /* ── Helpers ── */
@@ -127,6 +129,10 @@ export default function AudiensSection() {
     if (markerRef.current) markerRef.current.setLatLng([latitude, longitude]);
     if (circleRef.current) circleRef.current.setLatLng([latitude, longitude]);
     if (leafletMapRef.current) leafletMapRef.current.flyTo([latitude, longitude], 13, { duration: 1.2 });
+    /* sync bottom sheet map too */
+    if (bottomSheetMarkerRef.current) bottomSheetMarkerRef.current.setLatLng([latitude, longitude]);
+    if (bottomSheetCircleRef.current) bottomSheetCircleRef.current.setLatLng([latitude, longitude]);
+    if (bottomSheetLeafRef.current) bottomSheetLeafRef.current.flyTo([latitude, longitude], 14, { duration: 1.2 });
     setLat(latitude);
     setLng(longitude);
     const nearest = findNearest(latitude, longitude);
@@ -229,9 +235,10 @@ export default function AudiensSection() {
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /* ── Update circle radius ── */
+  /* ── Update circle radius (both maps) ── */
   useEffect(() => {
     if (circleRef.current) circleRef.current.setRadius(radius * 1000);
+    if (bottomSheetCircleRef.current) bottomSheetCircleRef.current.setRadius(radius * 1000);
   }, [radius]);
 
   /* ── Bottom sheet map ── */
@@ -239,7 +246,9 @@ export default function AudiensSection() {
     if (!isBottomSheet) {
       if (bottomSheetLeafRef.current) {
         bottomSheetLeafRef.current.remove();
-        bottomSheetLeafRef.current = null;
+        bottomSheetLeafRef.current   = null;
+        bottomSheetMarkerRef.current = null;
+        bottomSheetCircleRef.current = null;
       }
       document.body.style.overflow = '';
       return;
@@ -266,16 +275,42 @@ export default function AudiensSection() {
         html: `<div style="width:14px;height:14px;border-radius:50%;background:#6d28d9;border:2px solid #fff;box-shadow:0 0 0 3px rgba(109,40,217,0.35)"></div>`,
         iconSize: [14, 14], iconAnchor: [7, 7],
       });
-      L.marker([bLat, bLng], { icon })
+
+      /* Store marker + circle in refs so they can be updated live */
+      const bsMarker = L.marker([bLat, bLng], { icon })
         .addTo(map)
         .bindPopup(popupHtml(bName, rText2),
           { closeButton: false, autoClose: false, closeOnClick: false, offset: [0, -4] })
         .openPopup();
+      bottomSheetMarkerRef.current = bsMarker;
 
-      L.circle([bLat, bLng], {
+      const bsCircle = L.circle([bLat, bLng], {
         radius: bRad * 1000, color: '#6d28d9',
         fillColor: '#6d28d9', fillOpacity: 0.12, weight: 1.5,
       }).addTo(map);
+      bottomSheetCircleRef.current = bsCircle;
+
+      /* Click on bottom sheet map → move pin (same as main map) */
+      map.on('click', (e) => {
+        const { lat: cLat, lng: cLng } = e.latlng;
+        movePinTo(cLat, cLng);
+        reverseGeocode(cLat, cLng);
+      });
+
+      /* Locate Me button inside bottom sheet */
+      const locBtn = L.control({ position: 'topleft' });
+      locBtn.onAdd = () => {
+        const btn = L.DomUtil.create('button', '');
+        btn.title = 'Gunakan lokasi saya';
+        btn.style.cssText = 'width:34px;height:34px;background:#fff;border:2px solid rgba(0,0,0,.2);border-radius:4px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.15);';
+        btn.innerHTML = '📍';
+        L.DomEvent.on(btn, 'click', (ev) => {
+          L.DomEvent.stopPropagation(ev);
+          moveToUserLocation();
+        });
+        return btn;
+      };
+      locBtn.addTo(map);
 
       bottomSheetLeafRef.current = map;
       setTimeout(() => map.invalidateSize(), 100);
@@ -303,11 +338,8 @@ export default function AudiensSection() {
     const short = loc.n.split(',').slice(0, 2).join(', ');
     setLocName(short);
     if (loc.pop) setLocPop(loc.pop);
-    if (markerRef.current) markerRef.current.setLatLng([loc.lat, loc.lng]);
-    if (circleRef.current) circleRef.current.setLatLng([loc.lat, loc.lng]);
-    if (leafletMapRef.current) leafletMapRef.current.flyTo([loc.lat, loc.lng], 13, { duration: 1.2 });
-    setLat(loc.lat);
-    setLng(loc.lng);
+    /* movePinTo updates BOTH main map and bottom sheet map */
+    movePinTo(loc.lat, loc.lng);
   };
 
   const sliderPercent = ((radius - 0.5) / 9.5) * 100;
