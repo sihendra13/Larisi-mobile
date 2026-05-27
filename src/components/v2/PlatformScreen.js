@@ -118,7 +118,7 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext }) {
         paddingBottom:'calc(80px + env(safe-area-inset-bottom))',
       }}>
         {/* Page title */}
-        <div style={{padding:'24px 0 20px'}}>
+        <div style={{padding:'32px 0 20px'}}>
           <h1 style={{fontFamily:'var(--m-font)', fontSize:'28px', fontWeight:'800', color:'var(--m-ink)', lineHeight:'1.2', marginBottom:'6px'}}>
             Dapur Konten
           </h1>
@@ -239,10 +239,10 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext }) {
                   ) : (
                     <button style={{
                       flexShrink:0, padding:'7px 14px',
-                      borderRadius:'8px', border:'1.5px solid var(--m-brand)',
+                      borderRadius:'8px', border:'1.5px solid #1A1A1A',
                       background:'transparent', cursor:'pointer',
                       fontFamily:'var(--m-font)', fontSize:'12px',
-                      fontWeight:'700', color:'var(--m-brand)',
+                      fontWeight:'700', color:'#1A1A1A',
                     }}>
                       Hubungkan
                     </button>
