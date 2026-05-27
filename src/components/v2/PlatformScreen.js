@@ -5,47 +5,53 @@ import { useState } from 'react';
 const PLATFORMS = [
   {
     id: 'instagram', label: 'Instagram',
-    bg: 'linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)',
     icon: (
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="3" y="3" width="18" height="18" rx="5"/>
-        <circle cx="12" cy="12" r="4"/>
-        <circle cx="17.5" cy="6.5" r="0.8" fill="#fff" stroke="none"/>
+      <svg width="38" height="38" viewBox="0 0 24 24" fill="none">
+        <defs>
+          <linearGradient id="ig-g" x1="0%" y1="100%" x2="100%" y2="0%">
+            <stop offset="0%"   stopColor="#f09433"/>
+            <stop offset="30%"  stopColor="#e6683c"/>
+            <stop offset="55%"  stopColor="#dc2743"/>
+            <stop offset="80%"  stopColor="#cc2366"/>
+            <stop offset="100%" stopColor="#bc1888"/>
+          </linearGradient>
+        </defs>
+        <rect x="3" y="3" width="18" height="18" rx="5" stroke="url(#ig-g)" strokeWidth="2"/>
+        <circle cx="12" cy="12" r="4" stroke="url(#ig-g)" strokeWidth="2"/>
+        <circle cx="17.5" cy="6.5" r="1" fill="#bc1888"/>
       </svg>
     ),
   },
   {
     id: 'facebook', label: 'Facebook',
-    bg: '#1877F2',
     icon: (
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-        <path d="M13.5 8h2V5.5h-2C11.57 5.5 10 7.07 10 9v1.5H8V13h2v7h3v-7h2l.5-2.5H13V9c0-.28.22-.5.5-.5z" fill="white"/>
+      <svg width="38" height="38" viewBox="0 0 24 24" fill="none">
+        <path d="M13.5 8h2V5.5h-2C11.57 5.5 10 7.07 10 9v1.5H8V13h2v7h3v-7h2l.5-2.5H13V9c0-.28.22-.5.5-.5z" fill="#1877F2"/>
       </svg>
     ),
   },
   {
     id: 'tiktok', label: 'TikTok',
-    bg: '#0E0E12',
     icon: (
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-        <path d="M16 8c.55.73 1.4 1.2 2.35 1.25v2.1a4.55 4.55 0 01-2.35-.65v5.8a4.1 4.1 0 11-4.1-4.1h.27v2.1H12a2 2 0 102 2V8z" fill="white"/>
+      <svg width="38" height="38" viewBox="0 0 24 24" fill="none">
+        <path d="M16 8c.55.73 1.4 1.2 2.35 1.25v2.1a4.55 4.55 0 01-2.35-.65v5.8a4.1 4.1 0 11-4.1-4.1h.27v2.1H12a2 2 0 102 2V8z" fill="#0E0E12"/>
       </svg>
     ),
   },
   {
     id: 'youtube', label: 'YouTube',
-    bg: '#FF0000',
     icon: (
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+      <svg width="38" height="38" viewBox="0 0 24 24" fill="none">
+        <path d="M21.8 8s-.2-1.4-.8-2c-.8-.8-1.6-.8-2-.9C16.8 5 12 5 12 5s-4.8 0-7 .1c-.4.1-1.2.1-2 .9-.6.6-.8 2-.8 2S2 9.6 2 11.2v1.5c0 1.6.2 3.2.2 3.2s.2 1.4.8 2c.8.8 1.8.8 2.3.9C6.8 19 12 19 12 19s4.8 0 7-.2c.4-.1 1.2-.1 2-.9.6-.6.8-2 .8-2s.2-1.6.2-3.2v-1.5C22 9.6 21.8 8 21.8 8z" fill="#FF0000"/>
         <path d="M9.5 8.5l6 3.5-6 3.5V8.5z" fill="white"/>
       </svg>
     ),
   },
 ];
 
-/* ── Mock akun — nanti diganti dari API / Supabase ── */
+/* ── Mock akun ── */
 const MOCK_ACCOUNTS = {
-  instagram: { connected:true,  handle:'@dapurkonten_id', sub:'Instagram Business', initials:'N', avatarBg:'linear-gradient(135deg,#E1306C,#F77737)' },
+  instagram: { connected:true,  handle:'@dapurkonten_id', sub:'Instagram Business', initials:'N', avatarBg:'linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)' },
   facebook:  { connected:false, handle:'Facebook',        sub:'Facebook Page',      initials:null, avatarBg:null },
   tiktok:    { connected:false, handle:'TikTok',          sub:'TikTok Account',     initials:null, avatarBg:null },
   youtube:   { connected:false, handle:'YouTube',         sub:'YouTube Channel',    initials:null, avatarBg:null },
@@ -60,12 +66,8 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext }) {
       display:'flex', alignItems:'center', justifyContent:'space-between',
       padding:'12px 16px', background:'var(--m-bg)',
     }}>
-      {/* Logo */}
       <img src="/logo_larisi.svg" alt="Larisi" style={{height:'22px', width:'auto'}} />
-
-      {/* Right: icon circles + user pill */}
       <div style={{display:'flex', alignItems:'center', gap:'8px'}}>
-        {/* Search */}
         <button style={{
           width:'38px', height:'38px', borderRadius:'50%',
           background:'#fff', border:'none', cursor:'pointer',
@@ -76,7 +78,6 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext }) {
             <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
           </svg>
         </button>
-        {/* Bell */}
         <button style={{
           width:'38px', height:'38px', borderRadius:'50%',
           background:'#fff', border:'none', cursor:'pointer',
@@ -87,7 +88,6 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext }) {
             <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/>
           </svg>
         </button>
-        {/* User pill */}
         <div style={{
           display:'flex', alignItems:'center', gap:'8px',
           background:'#F4F4F7', borderRadius:'999px',
@@ -113,10 +113,9 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext }) {
     <div style={{display:'flex', flexDirection:'column', flex:1, overflow:'hidden', background:'var(--m-bg)'}}>
       <Header />
 
-      {/* Scrollable content */}
       <main style={{
         flex:1, overflowY:'auto', padding:'0 16px',
-        paddingBottom:'calc(80px + env(safe-area-inset-bottom) + 60px)',
+        paddingBottom:'calc(80px + env(safe-area-inset-bottom))',
       }}>
         {/* Page title */}
         <div style={{padding:'8px 0 20px'}}>
@@ -129,7 +128,11 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext }) {
         </div>
 
         {/* ── Card: Posting ke Platform ── */}
-        <div className="panel" style={{marginBottom:'12px', padding:'16px'}}>
+        <div style={{
+          marginBottom:'12px', padding:'16px',
+          background:'#fff', borderRadius:'16px',
+          border:'1.5px solid #EBEBF0',
+        }}>
           <div style={{fontFamily:'var(--m-font)', fontSize:'15px', fontWeight:'700', color:'var(--m-ink)', marginBottom:'14px'}}>
             Posting ke Platform
           </div>
@@ -143,21 +146,13 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext }) {
                   style={{
                     display:'flex', flexDirection:'column', alignItems:'center',
                     gap:'8px', padding:'14px 6px',
-                    borderRadius:'12px', border:'none', cursor:'pointer',
-                    background: active ? 'var(--m-brand-soft)' : '#F5F5F7',
-                    outline: active ? '2px solid var(--m-brand)' : '2px solid transparent',
+                    borderRadius:'12px', cursor:'pointer',
+                    background: active ? 'var(--m-brand-soft)' : '#fff',
+                    border: active ? '2px solid var(--m-brand)' : '1.5px solid #EBEBF0',
                     transition:'all .15s',
                   }}
                 >
-                  {/* Platform icon circle */}
-                  <div style={{
-                    width:'44px', height:'44px', borderRadius:'12px',
-                    background: p.bg,
-                    display:'flex', alignItems:'center', justifyContent:'center',
-                    flexShrink:0,
-                  }}>
-                    {p.icon}
-                  </div>
+                  {p.icon}
                   <span style={{
                     fontFamily:'var(--m-font)', fontSize:'11px', fontWeight:'600',
                     color: active ? 'var(--m-brand)' : 'var(--m-ink-sub)',
@@ -171,9 +166,23 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext }) {
         </div>
 
         {/* ── Card: Hubungkan Akun ── */}
-        <div className="panel" style={{padding:'16px'}}>
-          <div style={{fontFamily:'var(--m-font)', fontSize:'15px', fontWeight:'700', color:'var(--m-ink)', marginBottom:'14px'}}>
-            Hubungkan Akun
+        <div style={{
+          padding:'16px',
+          background:'#fff', borderRadius:'16px',
+          border:'1.5px solid #EBEBF0',
+        }}>
+          <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'14px'}}>
+            <div style={{fontFamily:'var(--m-font)', fontSize:'15px', fontWeight:'700', color:'var(--m-ink)'}}>
+              Hubungkan Akun
+            </div>
+            <button style={{
+              display:'flex', alignItems:'center', gap:'4px',
+              background:'none', border:'none', cursor:'pointer',
+              fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'700', color:'var(--m-brand)',
+              padding:0,
+            }}>
+              <span style={{fontSize:'18px', lineHeight:'1', marginTop:'-1px'}}>+</span> Add
+            </button>
           </div>
 
           <div style={{display:'flex', flexDirection:'column', gap:'10px'}}>
@@ -185,10 +194,10 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext }) {
                   style={{
                     display:'flex', alignItems:'center', gap:'12px',
                     padding:'12px', borderRadius:'12px',
-                    background:'#F5F5F7',
+                    background:'#fff', border:'1.5px solid #EBEBF0',
                   }}
                 >
-                  {/* Avatar / Logo */}
+                  {/* Avatar */}
                   {acc.connected ? (
                     <div style={{
                       width:'40px', height:'40px', borderRadius:'50%',
@@ -201,12 +210,11 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext }) {
                   ) : (
                     <div style={{
                       width:'40px', height:'40px', borderRadius:'50%',
-                      background: p.bg,
+                      border:'1.5px solid #EBEBF0',
                       display:'flex', alignItems:'center', justifyContent:'center',
-                      flexShrink:0,
+                      flexShrink:0, background:'#F9F9FB',
                     }}>
-                      {/* Smaller icon for avatar size */}
-                      <div style={{transform:'scale(0.75)', display:'flex'}}>
+                      <div style={{transform:'scale(0.72)', display:'flex'}}>
                         {p.icon}
                       </div>
                     </div>
@@ -245,30 +253,6 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext }) {
           </div>
         </div>
       </main>
-
-      {/* ── Sticky CTA ── */}
-      <div style={{
-        position:'fixed',
-        bottom:'calc(60px + env(safe-area-inset-bottom) + 12px)',
-        left:'16px', right:'16px', zIndex:300,
-      }}>
-        <button
-          onClick={onNext}
-          style={{
-            width:'100%', padding:'16px', borderRadius:'16px',
-            background:'var(--m-brand)', color:'#fff', border:'none',
-            fontFamily:'var(--m-font)', fontSize:'15px', fontWeight:'700',
-            cursor:'pointer', display:'flex', alignItems:'center',
-            justifyContent:'center', gap:'8px',
-            boxShadow:'0 4px 20px rgba(121,26,219,0.35)',
-          }}
-        >
-          Lanjut ke Audiens
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
-          </svg>
-        </button>
-      </div>
     </div>
   );
 }
