@@ -39,3 +39,23 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Claude Code
+.claude/
+AGENTS.md
+
+# Supabase temp
+supabase/.temp/
+
+# Test files
+test-*.html
+
+# Default Next.js placeholder SVGs (tidak dipakai)
+public/file.svg
+public/globe.svg
+public/next.svg
+public/vercel.svg
+public/window.svg
+
+# Default Next.js README (template, bukan dokumentasi proyek)
+README.md
