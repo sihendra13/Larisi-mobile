@@ -4,7 +4,7 @@
  * Population data: BPS Sensus 2020
  * TODO: Replace with Google Maps Places API when API key available
  */
-var ID_LOCATIONS = [
+export const ID_LOCATIONS = [
   /* ── JAKARTA UTARA ── */
   {n:'Warakas, Tanjung Priok, Jakarta Utara',lat:-6.1276,lng:106.8762,pop:45000},
   {n:'Tanjung Priok, Jakarta Utara',lat:-6.1257,lng:106.8764,pop:162000},
