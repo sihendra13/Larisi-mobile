@@ -266,7 +266,7 @@ export default function AsetSection() {
   if (files.length === 0) {
     return (
       <>
-      <div className="panel" style={{display:'flex', flexDirection:'column', gap:'16px', padding:'16px', boxShadow:'none'}}>
+      <div className="panel" style={{display:'flex', flexDirection:'column', gap:'16px', padding:'16px', boxShadow:'none', border:'1px solid #E4E4EB'}}>
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <div style={{
             width: '36px', height: '36px', borderRadius: '10px',
