@@ -201,20 +201,20 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext }) {
               return (
                 <button
                   key={p.id}
-                  onClick={() => onSelectPlatform(p.id)}
+                  onClick={() => { onSelectPlatform(p.id); onNext(); }}
                   style={{
                     display:'flex', flexDirection:'column', alignItems:'center',
                     gap:'8px', padding:'14px 6px',
                     borderRadius:'12px', cursor:'pointer',
-                    background: active ? 'var(--m-brand-soft)' : '#FAFAFA',
-                    border: active ? '1.5px solid var(--m-brand)' : '1.5px solid transparent',
+                    background:'#FAFAFA',
+                    border:'1.5px solid transparent',
                     transition:'all .15s',
                   }}
                 >
                   {p.icon}
                   <span style={{
                     fontFamily:'var(--m-font)', fontSize:'11px', fontWeight:'600',
-                    color: active ? 'var(--m-brand)' : 'var(--m-ink-sub)',
+                    color:'var(--m-ink-sub)',
                   }}>
                     {p.label}
                   </span>

@@ -359,11 +359,10 @@ export default function AudiensScreen({
       }}>
         <button onClick={onNext} style={{
           width:'100%', padding:'16px', borderRadius:'16px',
-          background:'var(--m-brand)', color:'#fff', border:'none',
+          background:'#1A1A1A', color:'#fff', border:'none',
           fontFamily:'var(--m-font)', fontSize:'15px', fontWeight:'700',
           cursor:'pointer', display:'flex', alignItems:'center',
           justifyContent:'center', gap:'8px',
-          boxShadow:'0 4px 20px rgba(121,26,219,0.35)',
         }}>
           Lanjut ke Konten
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
