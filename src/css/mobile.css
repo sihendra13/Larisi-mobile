@@ -1081,18 +1081,17 @@
     align-items: stretch;
   }
 
-  /* Semua panel Dapur: card-look kembali */
-  #panel-upload,
-  #panel-map-desktop,
-  #panel-caption {
+  /* Semua panel Dapur: card-look seragam (Aset Kreatif as baseline) */
+  .panels > .panel {
     width: 100% !important;
     min-width: unset !important;
     max-width: unset !important;
     border-radius: 16px !important;
     flex-shrink: 0 !important;
     overflow: hidden;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04);
-    border: 1px solid var(--border);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04) !important;
+    border: 1px solid #E4E4EB !important;
+    background: #fff !important;
   }
 
   /* Kritis: panel-body jangan stretch — ini yang bikin whitespace besar */
@@ -1103,10 +1102,10 @@
     height: auto !important;
   }
 
-  /* Map panel: JS yang control (chip Audiens) — min-height untuk map render */
+  /* Map panel: tampilkan di mobile sebagai card */
   #panel-map-desktop {
-    display: none;
-    min-height: 340px;
+    display: flex;
+    flex-direction: column;
   }
 
   /* Caption panel: JS yang control (chip AI/Preview) */
@@ -1330,7 +1329,7 @@
     display: flex !important;
     align-items: center !important;
     gap: 10px !important;
-    padding: 14px 16px 12px !important;
+    padding: 16px 16px 0 !important;
     border-bottom: none !important;
   }
   .panel-title {
@@ -1470,7 +1469,7 @@
     display: flex !important;
     align-items: center !important;
     gap: 10px !important;
-    padding: 14px 16px 12px !important;
+    padding: 16px 16px 0 !important;
     border-bottom: none !important;
   }
   .panel-title {

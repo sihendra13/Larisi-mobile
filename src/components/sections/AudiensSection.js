@@ -29,13 +29,13 @@ export default function AudiensSection() {
       const map = L.map(mapRef.current, {
         center: [DEFAULT_LAT, DEFAULT_LNG],
         zoom: 13,
-        zoomControl: false,
+        zoomControl: true,
         attributionControl: false,
       });
 
-      /* Dark CartoDB tiles */
+      /* Light CartoDB tiles to match Image 3 */
       L.tileLayer(
-        'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+        'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
         { subdomains: 'abcd', maxZoom: 19 }
       ).addTo(map);
 
@@ -46,7 +46,16 @@ export default function AudiensSection() {
         iconSize: [14, 14],
         iconAnchor: [7, 7],
       });
-      markerRef.current = L.marker([DEFAULT_LAT, DEFAULT_LNG], { icon }).addTo(map);
+      const popupHtml = `
+        <div style="text-align: center; padding: 2px 4px; min-width: 130px;">
+          <div style="font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 700; color: #1C1C28;">Sumbersari, Sleman</div>
+          <div style="font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 700; color: #6d28d9; margin-top: 2px;">Jangkauan: 0 orang</div>
+        </div>
+      `;
+      markerRef.current = L.marker([DEFAULT_LAT, DEFAULT_LNG], { icon })
+        .addTo(map)
+        .bindPopup(popupHtml, { closeButton: false, autoClose: false, closeOnClick: false, offset: [0, -4] })
+        .openPopup();
 
       /* Radius circle */
       circleRef.current = L.circle([DEFAULT_LAT, DEFAULT_LNG], {
@@ -153,10 +162,10 @@ export default function AudiensSection() {
           }}>
             <div style={{
               width: '36px', height: '36px', borderRadius: '10px',
-              background: 'var(--m-brand-soft)', display: 'flex',
+              background: '#F0F0F5', display: 'flex',
               alignItems: 'center', justifyContent: 'center', flexShrink: 0,
             }}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="var(--m-brand)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '17px', height: '17px' }}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--m-ink-sub)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '17px', height: '17px' }}>
                 <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
                 <circle cx="12" cy="7" r="4"/>
               </svg>
@@ -175,10 +184,10 @@ export default function AudiensSection() {
           }}>
             <div style={{
               width: '36px', height: '36px', borderRadius: '10px',
-              background: 'var(--m-brand-soft)', display: 'flex',
+              background: '#F0F0F5', display: 'flex',
               alignItems: 'center', justifyContent: 'center', flexShrink: 0,
             }}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="var(--m-brand)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '17px', height: '17px' }}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--m-ink-sub)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '17px', height: '17px' }}>
                 <path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
                 <path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
               </svg>
@@ -193,71 +202,59 @@ export default function AudiensSection() {
       </div>
 
       {/* ── Card: Lokasi Kampanye (map) ── */}
-      <div className="panel" id="panel-map-desktop" style={{ padding: '0', overflow: 'hidden' }}>
-
-        {/* Card header */}
-        <div className="panel-header" style={{ display: 'flex', padding: '14px 16px 12px' }}>
-          <div className="panel-icon">
-            <PinIcon />
-          </div>
-          <div>
-            <div className="panel-title">Lokasi Kampanye</div>
-            <div className="panel-sub">Tentukan titik target iklanmu di peta</div>
-          </div>
-        </div>
-
-        {/* Search bar */}
-        <div style={{ padding: '0 16px 12px' }}>
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: '8px',
-            background: '#F5F5F7', borderRadius: '12px',
-            padding: '0 14px', height: '40px',
-          }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--m-ink-sub)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-            </svg>
-            <input
-              id="mapSearchInput"
-              placeholder="Cari kota atau kelurahan…"
-              autoComplete="off"
-              style={{
-                border: 'none', background: 'none', outline: 'none',
-                fontFamily: 'var(--m-font)', fontSize: '13px',
-                color: 'var(--m-ink)', width: '100%',
-              }}
-            />
-          </div>
+      <div className="panel" id="panel-map-mobile" style={{ padding: '0', overflow: 'hidden', position: 'relative' }}>
+        {/* Floating Search bar */}
+        <div style={{
+          position: 'absolute', top: '12px', left: '50px', right: '12px', zIndex: 400,
+          display: 'flex', alignItems: 'center', gap: '8px',
+          background: '#fff', borderRadius: '8px',
+          padding: '0 12px', height: '40px',
+          boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
+        }}>
+          <input
+            id="mapSearchInput"
+            placeholder="Tentukan titik target iklanmu"
+            autoComplete="off"
+            style={{
+              border: 'none', background: 'none', outline: 'none',
+              fontFamily: 'var(--m-font)', fontSize: '13px',
+              color: 'var(--m-ink)', width: '100%',
+            }}
+          />
         </div>
 
         {/* Map */}
         <div
           ref={mapRef}
           id="map"
-          style={{ width: '100%', height: '220px' }}
+          style={{ width: '100%', height: '320px' }}
         />
 
         {/* Radius control */}
-        <div style={{ padding: '14px 16px 16px', background: 'var(--m-bg)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-            <span style={{ fontFamily: 'var(--m-font)', fontSize: '13px', fontWeight: '600', color: 'var(--m-ink)' }}>
+        <div style={{ padding: '16px', background: '#fff' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+            <span style={{ fontFamily: 'var(--m-font)', fontSize: '12px', fontWeight: '600', color: 'var(--m-ink)' }}>
               Target Radius
             </span>
-            <span style={{ fontFamily: 'var(--m-font)', fontSize: '13px', fontWeight: '700', color: 'var(--m-brand)' }}>
+            <span style={{ fontFamily: 'var(--m-font)', fontSize: '12px', fontWeight: '700', color: 'var(--m-brand)' }}>
               {radius.toFixed(1)} KM
             </span>
           </div>
-          <input
-            type="range"
-            min="0.5"
-            max="10"
-            step="0.5"
-            value={radius}
-            onChange={handleRadius}
-            style={{ width: '100%' }}
-          />
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
-            <span style={{ fontFamily: 'var(--m-font)', fontSize: '11px', color: 'var(--m-ink-sub)' }}>0.5 KM</span>
-            <span style={{ fontFamily: 'var(--m-font)', fontSize: '11px', color: 'var(--m-ink-sub)' }}>10 KM</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <input
+              type="range"
+              min="0.5"
+              max="10"
+              step="0.5"
+              value={radius}
+              onChange={handleRadius}
+              style={{ flex: 1, accentColor: 'var(--m-brand)' }}
+            />
+          </div>
+          <div style={{ textAlign: 'center', marginTop: '12px' }}>
+            <span style={{ fontFamily: 'var(--m-font)', fontSize: '11px', color: 'var(--m-ink-sub)' }}>
+              Geser untuk memperluas jangkauan
+            </span>
           </div>
         </div>
       </div>
