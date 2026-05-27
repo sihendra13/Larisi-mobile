@@ -1199,7 +1199,7 @@
   .mobile-dapur-chips {
     display: flex !important;
     gap: 8px !important;
-    padding: 8px 20px 0px !important;
+    padding: 8px 20px 8px !important;
     overflow-x: auto !important;
   }
   .mobile-dapur-chips::-webkit-scrollbar {
