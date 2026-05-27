@@ -1098,6 +1098,23 @@
     gap: 16px !important;
   }
 
+  /* Map card specific override so it doesn't get standard card padding */
+  #panel-map-mobile {
+    padding: 0 !important;
+    gap: 0 !important;
+  }
+  
+  .map-fullscreen {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    z-index: 9999 !important;
+    border-radius: 0 !important;
+    border: none !important;
+  }
+
   /* Kritis: panel-body jangan stretch — ini yang bikin whitespace besar */
   #panel-upload .panel-body,
   #panel-caption .panel-body {

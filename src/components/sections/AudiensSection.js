@@ -209,14 +209,9 @@ export default function AudiensSection() {
 
       {/* ── Card: Lokasi Kampanye (map) ── */}
       <div 
-        className="panel" 
+        className={`panel ${isMapFullscreen ? 'map-fullscreen' : ''}`}
         id="panel-map-mobile" 
-        style={isMapFullscreen ? {
-          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999,
-          borderRadius: 0, border: 'none', padding: 0, display: 'flex', flexDirection: 'column'
-        } : { 
-          padding: '0', overflow: 'hidden', position: 'relative' 
-        }}
+        style={{ position: 'relative' }}
       >
         
         {/* Expand/Collapse Button */}
