@@ -162,13 +162,13 @@ export default function AsetSection() {
       </div>
 
       {/* Thumbnail grid */}
-      <div className="panel" style={{padding:'12px'}}>
-        <div style={{display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:'8px'}}>
+      <div className="panel" style={{padding:'16px'}}>
+        <div style={{display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:'12px'}}>
           {files.map((f, i) => (
             <div
               key={i}
-              onClick={() => setActiveIdx(i)}
               style={{
+                position: 'relative',
                 aspectRatio:'1', borderRadius:'10px', overflow:'hidden', cursor:'pointer',
                 outline: i === activeIdx ? '2.5px solid var(--m-brand)' : 'none',
                 outlineOffset:'2px',
@@ -177,8 +177,32 @@ export default function AsetSection() {
               <img
                 src={URL.createObjectURL(f)}
                 alt=""
+                onClick={() => setActiveIdx(i)}
                 style={{width:'100%', height:'100%', objectFit:'cover', display:'block'}}
               />
+              {/* Delete Button */}
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const newFiles = files.filter((_, index) => index !== i);
+                  setFiles(newFiles);
+                  if (activeIdx >= newFiles.length) {
+                    setActiveIdx(Math.max(0, newFiles.length - 1));
+                  }
+                }}
+                style={{
+                  position: 'absolute', top: '4px', right: '4px',
+                  width: '24px', height: '24px', borderRadius: '12px',
+                  background: 'rgba(0,0,0,0.6)', border: 'none', color: '#fff',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  cursor: 'pointer', backdropFilter: 'blur(4px)'
+                }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
             </div>
           ))}
           {files.length < 5 && (
