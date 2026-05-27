@@ -118,7 +118,7 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext }) {
         paddingBottom:'calc(80px + env(safe-area-inset-bottom))',
       }}>
         {/* Page title */}
-        <div style={{padding:'8px 0 20px'}}>
+        <div style={{padding:'24px 0 20px'}}>
           <h1 style={{fontFamily:'var(--m-font)', fontSize:'28px', fontWeight:'800', color:'var(--m-ink)', lineHeight:'1.2', marginBottom:'6px'}}>
             Dapur Konten
           </h1>
@@ -148,7 +148,7 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext }) {
                     gap:'8px', padding:'14px 6px',
                     borderRadius:'12px', cursor:'pointer',
                     background: active ? 'var(--m-brand-soft)' : '#fff',
-                    border: active ? '2px solid var(--m-brand)' : '1.5px solid #EBEBF0',
+                    border: active ? '1px solid var(--m-brand)' : '1.5px solid #EBEBF0',
                     transition:'all .15s',
                   }}
                 >
