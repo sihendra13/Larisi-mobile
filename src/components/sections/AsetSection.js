@@ -266,9 +266,9 @@ export default function AsetSection() {
   if (files.length === 0) {
     return (
       <>
-      <div className="panel">
-        <div className="panel-header" style={{ display: 'flex', padding: '16px 16px 0', borderBottom: 'none' }}>
-          <div className="panel-icon" style={{
+      <div className="panel" style={{display:'flex', flexDirection:'column', gap:'16px', padding:'16px'}}>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <div style={{
             width: '36px', height: '36px', borderRadius: '10px',
             background: 'var(--m-brand-soft)', display: 'flex',
             alignItems: 'center', justifyContent: 'center', flexShrink: 0,
@@ -280,14 +280,10 @@ export default function AsetSection() {
               <polyline points="21 15 16 10 5 21"/>
             </svg>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            <div style={{ fontFamily:'var(--m-font)', fontSize:'16px', fontWeight:'700', color:'var(--m-ink)' }}>
-              Aset Kreatif
-            </div>
+          <div style={{ fontFamily:'var(--m-font)', fontSize:'16px', fontWeight:'700', color:'var(--m-ink)' }}>
+            Aset Kreatif
           </div>
         </div>
-        
-        <div className="panel-body" style={{ padding: '16px', display:'flex', flexDirection:'column', gap:'16px' }}>
 
         <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'12px'}}>
           <button onClick={() => galleryRef.current?.click()} style={{

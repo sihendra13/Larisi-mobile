@@ -16,6 +16,7 @@ export default function AudiensSection() {
   const [radius, setRadius]           = useState(1.0);
   const [localOn, setLocalOn]         = useState(true);
   const [travelerOn, setTravelerOn]   = useState(false);
+  const [isMapFullscreen, setIsMapFullscreen] = useState(false);
 
   /* ── Load Leaflet once, init map ── */
   useEffect(() => {
@@ -141,20 +142,25 @@ export default function AudiensSection() {
     <>
       {/* ── Card: Siapa Target Audiens ── */}
       <div className="panel" id="panel-audiens-card">
-        <div className="panel-header" style={{ display: 'flex' }}>
-          <div className="panel-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <div style={{
+            width: '36px', height: '36px', borderRadius: '10px',
+            background: 'var(--m-brand-soft)', display: 'flex',
+            alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+            marginRight: '12px'
+          }}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--m-brand)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '18px', height: '18px' }}>
               <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
               <circle cx="12" cy="7" r="4"/>
             </svg>
           </div>
           <div>
-            <div className="panel-title">Siapa Target Audiens Kamu?</div>
-            <div className="panel-sub">Pilih siapa yang akan lihat iklanmu</div>
+            <div style={{ fontFamily:'var(--m-font)', fontSize:'16px', fontWeight:'700', color:'var(--m-ink)' }}>Siapa Target Audiens Kamu?</div>
+            <div style={{ fontFamily: 'var(--m-font)', fontSize: '12px', color: 'var(--m-ink-sub)', marginTop: '2px' }}>Pilih siapa yang akan lihat iklanmu</div>
           </div>
         </div>
 
-        <div className="panel-body" style={{ padding: '0 16px 16px' }}>
+        <div>
           {/* Warga Sekitar */}
           <div className="audience-item" style={{
             display: 'flex', alignItems: 'center', gap: '12px',
@@ -202,13 +208,49 @@ export default function AudiensSection() {
       </div>
 
       {/* ── Card: Lokasi Kampanye (map) ── */}
-      <div className="panel" id="panel-map-mobile" style={{ padding: '0', overflow: 'hidden', position: 'relative' }}>
+      <div 
+        className="panel" 
+        id="panel-map-mobile" 
+        style={isMapFullscreen ? {
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999,
+          borderRadius: 0, border: 'none', padding: 0, display: 'flex', flexDirection: 'column'
+        } : { 
+          padding: '0', overflow: 'hidden', position: 'relative' 
+        }}
+      >
+        
+        {/* Expand/Collapse Button */}
+        <button
+          onClick={() => {
+            setIsMapFullscreen(!isMapFullscreen);
+            // Invalidate size slightly after transition so Leaflet recalculates bounds
+            setTimeout(() => { if (leafletMapRef.current) leafletMapRef.current.invalidateSize(); }, 300);
+          }}
+          style={{
+            position: 'absolute', top: '12px', right: '12px', zIndex: 400,
+            width: '36px', height: '36px', borderRadius: '8px',
+            background: '#fff', border: 'none', boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'pointer'
+          }}
+        >
+          {isMapFullscreen ? (
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--m-ink)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '18px', height: '18px' }}>
+              <path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7" />
+            </svg>
+          ) : (
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--m-ink)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '18px', height: '18px' }}>
+              <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
+            </svg>
+          )}
+        </button>
+
         {/* Floating Search bar */}
         <div style={{
-          position: 'absolute', top: '12px', left: '50px', right: '12px', zIndex: 400,
+          position: 'absolute', top: '12px', left: '50px', right: '60px', zIndex: 400,
           display: 'flex', alignItems: 'center', gap: '8px',
           background: '#fff', borderRadius: '8px',
-          padding: '0 12px', height: '40px',
+          padding: '0 12px', height: '36px',
           boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
         }}>
           <input
@@ -227,7 +269,7 @@ export default function AudiensSection() {
         <div
           ref={mapRef}
           id="map"
-          style={{ width: '100%', height: '320px' }}
+          style={isMapFullscreen ? { flex: 1, width: '100%' } : { width: '100%', height: '200px' }}
         />
 
         {/* Radius control */}
