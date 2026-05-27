@@ -1086,12 +1086,16 @@
     width: 100% !important;
     min-width: unset !important;
     max-width: unset !important;
-    border-radius: 16px !important;
     flex-shrink: 0 !important;
-    overflow: hidden;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04) !important;
-    border: 1px solid #E4E4EB !important;
-    background: #fff !important;
+    overflow: hidden !important;
+    border-radius: var(--radius-card) !important;
+    box-shadow: var(--shadow-card) !important;
+    border: none !important;
+    background: var(--white) !important;
+    padding: 16px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 16px !important;
   }
 
   /* Kritis: panel-body jangan stretch — ini yang bikin whitespace besar */

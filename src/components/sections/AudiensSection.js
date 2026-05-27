@@ -269,7 +269,10 @@ export default function AudiensSection() {
         <div
           ref={mapRef}
           id="map"
-          style={isMapFullscreen ? { flex: 1, width: '100%' } : { width: '100%', height: '200px' }}
+          style={isMapFullscreen 
+            ? { flex: 1, width: '100%', borderRadius: 0 } 
+            : { width: '100%', height: '200px', borderRadius: '12px', overflow: 'hidden' }
+          }
         />
 
         {/* Radius control */}
