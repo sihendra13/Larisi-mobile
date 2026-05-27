@@ -3,7 +3,13 @@
 export default function MobileHeader({ userName = 'Pengguna', userInitials = 'P', isPro = false }) {
   return (
     <header id="mobile-app-header" className="mobile-app-header" aria-label="Header aplikasi">
-      <div className="m-logo" aria-hidden="true">L</div>
+      <div style={{ display: 'flex', alignItems: 'center' }}>
+        <img 
+          src="/logo_larisi.svg" 
+          alt="Larisi" 
+          style={{ height: '24px', width: 'auto', display: 'block' }} 
+        />
+      </div>
       <div className="mobile-app-header__right">
         <button className="m-icon-btn m-icon-btn--ghost" aria-label="Cari">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
