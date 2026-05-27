@@ -54,6 +54,17 @@ export default function AudiensSection() {
   const [searchResults, setSearchResults] = useState([]);
   const [showDropdown, setShowDropdown]   = useState(false);
   const [isBottomSheet, setIsBottomSheet] = useState(false);
+  const [animateSheet, setAnimateSheet]   = useState(false);
+
+  const openSheet = () => {
+    setIsBottomSheet(true);
+    setTimeout(() => setAnimateSheet(true), 10);
+  };
+
+  const closeSheet = () => {
+    setAnimateSheet(false);
+    setTimeout(() => setIsBottomSheet(false), 300);
+  };
 
   /* refs */
   const mapRef               = useRef(null);
@@ -481,7 +492,7 @@ export default function AudiensSection() {
           />
           {/* Expand button — bottom-right corner of map */}
           <button
-            onClick={() => setIsBottomSheet(true)}
+            onClick={openSheet}
             title="Perbesar peta"
             style={{
               position:'absolute', bottom:'12px', right:'28px', zIndex:400,
@@ -507,8 +518,11 @@ export default function AudiensSection() {
         <>
           {/* Backdrop */}
           <div
-            style={{position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:9998}}
-            onClick={() => setIsBottomSheet(false)}
+            style={{
+              position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:9998,
+              opacity: animateSheet ? 1 : 0, transition: 'opacity 0.3s ease-out'
+            }}
+            onClick={closeSheet}
           />
           {/* Sheet */}
           <div style={{
@@ -516,6 +530,8 @@ export default function AudiensSection() {
             background:'#fff', borderRadius:'20px 20px 0 0',
             height:'72vh', display:'flex', flexDirection:'column',
             overflow:'hidden',
+            transform: animateSheet ? 'translateY(0)' : 'translateY(100%)',
+            transition: 'transform 0.3s ease-out'
           }}>
             {/* Drag handle */}
             <div style={{display:'flex', justifyContent:'center', paddingTop:'10px'}}>
@@ -550,7 +566,7 @@ export default function AudiensSection() {
               </div>
               <button
                 type="button"
-                onClick={(e) => { e.stopPropagation(); e.preventDefault(); setIsBottomSheet(false); }}
+                onClick={(e) => { e.stopPropagation(); e.preventDefault(); closeSheet(); }}
                 style={{
                   width:'32px', height:'32px', borderRadius:'50%',
                   background:'#F4F4F7', border:'none',
