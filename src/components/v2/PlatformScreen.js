@@ -64,7 +64,7 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext }) {
     <header style={{
       position:'sticky', top:0, zIndex:200,
       display:'flex', alignItems:'center', justifyContent:'space-between',
-      padding:'12px 16px', background:'var(--m-bg)',
+      padding:'12px 16px', background:'#fff',
     }}>
       <img src="/logo_larisi.svg" alt="Larisi" style={{height:'22px', width:'auto'}} />
       <div style={{display:'flex', alignItems:'center', gap:'8px'}}>
