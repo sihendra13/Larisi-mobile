@@ -33,67 +33,67 @@ export default function AsetSection() {
   /* ─── EMPTY STATE ─── */
   if (files.length === 0) {
     return (
-      <div className="panel" id="panel-upload">
-        <div style={{padding:'20px 16px 0 16px'}}>
-          <div style={{fontFamily:'var(--m-font)', fontSize:'16px', fontWeight:'700', color:'var(--m-ink)'}}>
-            Aset Kreatif
-          </div>
+      <div style={{
+        background:'#fff',
+        borderRadius:'16px',
+        border:'1px solid #E4E4EB',
+        padding:'20px 16px',
+        display:'flex', flexDirection:'column', gap:'16px'
+      }}>
+        <div style={{fontFamily:'var(--m-font)', fontSize:'16px', fontWeight:'700', color:'var(--m-ink)'}}>
+          Aset Kreatif
         </div>
 
-        <div className="panel-body" style={{padding:'16px', display:'flex', flexDirection:'column', gap:'12px'}}>
-          {/* Tombol Unggah + Kamera — style seperti design ref */}
-          <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'12px'}}>
-            <button onClick={() => galleryRef.current?.click()} style={{
-              display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',
-              gap:'12px', padding:'28px 12px',
-              border:'1.5px dashed #D7D7DE', borderRadius:'16px',
-              background:'#F7F7FA', color:'var(--m-ink)',
-              fontFamily:'var(--m-font)', fontSize:'14px', fontWeight:'600',
-              cursor:'pointer', minHeight:'130px',
-            }}>
-              <div style={{
-                width:'48px', height:'48px', borderRadius:'24px', background:'#EAEAF0', 
-                display:'flex', alignItems:'center', justifyContent:'center', color:'var(--m-ink)'
-              }}>
-                <UploadIcon />
-              </div>
-              Unggah
-            </button>
-            <button onClick={() => cameraRef.current?.click()} style={{
-              display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',
-              gap:'12px', padding:'28px 12px',
-              border:'1.5px dashed #D7D7DE', borderRadius:'16px',
-              background:'#F7F7FA', color:'var(--m-ink)',
-              fontFamily:'var(--m-font)', fontSize:'14px', fontWeight:'600',
-              cursor:'pointer', minHeight:'130px',
-            }}>
-              <div style={{
-                width:'48px', height:'48px', borderRadius:'24px', background:'#EAEAF0', 
-                display:'flex', alignItems:'center', justifyContent:'center', color:'var(--m-ink)'
-              }}>
-                <CameraIcon />
-              </div>
-              Kamera
-            </button>
-          </div>
-
-          {/* Info */}
-          <div style={{
-            display:'flex', alignItems:'center', gap:'8px',
-            padding:'10px 14px', background:'var(--m-bg)',
-            borderRadius:'12px', border:'1px solid #E8E8EE',
+        <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'12px'}}>
+          <button onClick={() => galleryRef.current?.click()} style={{
+            display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',
+            gap:'12px', padding:'28px 12px',
+            border:'1.5px dashed #D7D7DE', borderRadius:'12px',
+            background:'#F9F9FB', color:'var(--m-ink)',
+            fontFamily:'var(--m-font)', fontSize:'14px', fontWeight:'600',
+            cursor:'pointer', minHeight:'120px',
           }}>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--m-ink-sub)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10"/>
-              <line x1="12" y1="8" x2="12" y2="12"/>
-              <line x1="12" y1="16" x2="12.01" y2="16"/>
-            </svg>
-            <span style={{fontSize:'13px', color:'var(--m-ink-sub)', fontFamily:'var(--m-font)'}}>
-              Maksimal 5 Foto atau 1 Video
-            </span>
-          </div>
+            <div style={{
+              width:'44px', height:'44px', borderRadius:'22px', background:'#F0F0F5', 
+              display:'flex', alignItems:'center', justifyContent:'center', color:'var(--m-ink)'
+            }}>
+              <UploadIcon />
+            </div>
+            Unggah
+          </button>
+          <button onClick={() => cameraRef.current?.click()} style={{
+            display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',
+            gap:'12px', padding:'28px 12px',
+            border:'1.5px dashed #D7D7DE', borderRadius:'12px',
+            background:'#F9F9FB', color:'var(--m-ink)',
+            fontFamily:'var(--m-font)', fontSize:'14px', fontWeight:'600',
+            cursor:'pointer', minHeight:'120px',
+          }}>
+            <div style={{
+              width:'44px', height:'44px', borderRadius:'22px', background:'#F0F0F5', 
+              display:'flex', alignItems:'center', justifyContent:'center', color:'var(--m-ink)'
+            }}>
+              <CameraIcon />
+            </div>
+            Kamera
+          </button>
         </div>
 
+        <div style={{
+          display:'flex', alignItems:'center', gap:'8px',
+          padding:'12px 14px', background:'#F4F4F7',
+          borderRadius:'8px'
+        }}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--m-ink-sub)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          <span style={{fontSize:'13px', color:'var(--m-ink-sub)', fontFamily:'var(--m-font)'}}>
+            Maksimal 5 Foto atau 1 Video
+          </span>
+        </div>
+        
         <input ref={galleryRef} type="file" accept="image/*,video/*" multiple style={{display:'none'}} onChange={handleFiles} />
         <input ref={cameraRef} type="file" accept="image/*" capture="environment" style={{display:'none'}} onChange={handleFiles} />
       </div>
