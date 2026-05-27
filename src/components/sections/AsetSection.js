@@ -1,5 +1,5 @@
 'use client';
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { analyzeImageCategory } from '@/lib/vision';
 import { detectPersona, personaDB } from '@/data/personas';
 
@@ -18,11 +18,19 @@ const CameraIcon = () => (
   </svg>
 );
 
+/* Pesan yang berganti saat scanning — memberi kesan AI sedang berpikir */
+const SCAN_MESSAGES = [
+  'SiLaris sedang menganalisis kontenmu...',
+  'Mendeteksi kategori bisnis...',
+  'Mengidentifikasi target audiens...',
+  'Menyiapkan Master Persona...',
+];
+
 export default function AsetSection() {
   const [files, setFiles]                 = useState([]);
   const [activeIdx, setActiveIdx]         = useState(0);
   const [isScanning, setIsScanning]       = useState(false);
-  const [scanText, setScanText]           = useState('SiLaris sedang menganalisis kontenmu...');
+  const [scanText, setScanText]           = useState(SCAN_MESSAGES[0]);
   const [detectedPersona, setDetectedPersona] = useState(null);
 
   const galleryRef              = useRef(null);
@@ -30,11 +38,23 @@ export default function AsetSection() {
   const masterPersonaLockedRef  = useRef(false);
   const uploadedDataURLsRef     = useRef([]);
 
+  /* ── Cycling scan text saat isScanning aktif — beri efek AI ── */
+  useEffect(() => {
+    if (!isScanning) return;
+    setScanText(SCAN_MESSAGES[0]);
+    let idx = 0;
+    const interval = setInterval(() => {
+      idx = (idx + 1) % SCAN_MESSAGES.length;
+      setScanText(SCAN_MESSAGES[idx]);
+    }, 950);
+    return () => clearInterval(interval);
+  }, [isScanning]);
+
   /* ── showScanningOnly: upload berikutnya, persona tidak berubah ── */
   const showScanningOnly = useCallback(() => {
-    setScanText('SiLaris sedang menganalisis kontenmu...');
+    setScanText(SCAN_MESSAGES[0]);
     setIsScanning(true);
-    setTimeout(() => setIsScanning(false), 1800);
+    setTimeout(() => setIsScanning(false), 2200);
   }, []);
 
   /* ── startScanWithFile: sama persis logic desktop ── */
@@ -52,16 +72,13 @@ export default function AsetSection() {
 
     /* VIDEO: tidak bisa dianalisis Groq — cek filename, fallback ke General */
     if (isVideo) {
-      setScanText('SiLaris sedang menyiapkan kontenmu...');
-      await new Promise(r => setTimeout(r, 1000));
+      await new Promise(r => setTimeout(r, 1800));
       setIsScanning(false);
       const p = detectPersona(filename);
       setDetectedPersona(p);
       masterPersonaLockedRef.current = true;
       return;
     }
-
-    setScanText('SiLaris sedang menganalisis kontenmu...');
 
     /* Tunggu base64 dari FileReader (max 3 detik, sama persis desktop) */
     let base64 = null;
@@ -87,9 +104,9 @@ export default function AsetSection() {
       }
     }
 
-    /* Pastikan animasi minimal 2 detik (sama persis desktop) */
+    /* Pastikan animasi minimal 3.5 detik — beri "AI magic" feel */
     const elapsed   = Date.now() - startTime;
-    const remaining = Math.max(0, 2000 - elapsed);
+    const remaining = Math.max(0, 3500 - elapsed);
     if (remaining > 0) await new Promise(r => setTimeout(r, remaining));
 
     setIsScanning(false);
@@ -235,27 +252,38 @@ export default function AsetSection() {
           style={{width:'100%', display:'block', aspectRatio:'4/3', objectFit:'cover'}}
         />
 
-        {/* ── Scanning overlay — letaknya di gambar preview besar ── */}
+        {/* ── AI Scanning overlay — letaknya di gambar preview besar ── */}
         {isScanning && (
           <div style={{
             position:'absolute', inset:0,
-            background:'rgba(0,0,0,0.72)',
-            backdropFilter:'blur(4px)',
+            background:'rgba(0,0,0,0.70)',
+            backdropFilter:'blur(3px)',
             display:'flex', flexDirection:'column',
             alignItems:'center', justifyContent:'center',
-            gap:'12px', zIndex:10,
+            gap:'14px', zIndex:10,
+            overflow:'hidden',
           }}>
-            <div style={{display:'flex', gap:'6px', alignItems:'center'}}>
-              <div className="scan-dot" />
-              <div className="scan-dot" />
-              <div className="scan-dot" />
-            </div>
-            <div className="scan-text" style={{
-              fontFamily:'var(--m-font)', fontSize:'13px',
-              fontWeight:'600', color:'rgba(255,255,255,0.9)',
-              textAlign:'center', padding:'0 24px',
+            {/* Corner targeting brackets */}
+            <div className="ai-corner ai-corner--tl" />
+            <div className="ai-corner ai-corner--tr" />
+            <div className="ai-corner ai-corner--bl" />
+            <div className="ai-corner ai-corner--br" />
+
+            {/* Sweep scan line */}
+            <div className="ai-scan-line" />
+
+            {/* Center content */}
+            <div style={{
+              display:'flex', flexDirection:'column',
+              alignItems:'center', gap:'10px', zIndex:1,
+              position:'relative',
             }}>
-              {scanText}
+              <div style={{display:'flex', gap:'6px', alignItems:'center'}}>
+                <div className="scan-dot" style={{background:'#a78bfa'}} />
+                <div className="scan-dot" style={{background:'#a78bfa'}} />
+                <div className="scan-dot" style={{background:'#a78bfa'}} />
+              </div>
+              <div className="scan-text-overlay">{scanText}</div>
             </div>
           </div>
         )}
@@ -283,8 +311,10 @@ export default function AsetSection() {
             background:'linear-gradient(to top, rgba(0,0,0,0.88) 0%, transparent 100%)',
             padding:'40px 12px 12px',
           }}>
-            <div className="persona-card" id="personaCard" style={{
+            {/* className="persona-card visible" — .visible wajib agar display:block (CSS default display:none) */}
+            <div className="persona-card visible" id="personaCard" style={{
               margin:0,
+              display:'block',
               background:'rgba(255,255,255,0.08)',
               backdropFilter:'blur(10px)',
               border:'1px solid rgba(255,255,255,0.15)',
@@ -295,7 +325,7 @@ export default function AsetSection() {
                     <polyline points="20 6 9 17 4 12"/>
                   </svg>
                 </div>
-                <div className="persona-badge" id="personaBadge">Master Persona</div>
+                <div className="persona-badge" id="personaBadge" style={{color:'#e9d5ff'}}>Master Persona</div>
               </div>
               <div className="persona-name" id="personaName" style={{color:'#fff'}}>
                 {detectedPersona.name}

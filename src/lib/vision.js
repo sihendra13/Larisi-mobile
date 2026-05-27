@@ -79,7 +79,8 @@ function _visionCategoryToPersonaKey(category, bizCategory) {
     if (bizCategory === 'fashion_muslim_pria') return 'FashionMuslimPria';
     if (bizCategory === 'fashion_pria')        return 'FashionPria';
     if (bizCategory === 'fashion' || bizCategory === 'fashion_wanita') return 'FashionWanita';
-    return null;
+    /* Tidak ada bizCategory → gunakan FashionWanita sebagai default pakaian */
+    return 'FashionWanita';
   }
   return VISION_TO_PERSONA[category] || null;
 }

@@ -20,6 +20,50 @@
   to   { background-position: -200% center; }
 }
 
+/* ─── AI Scan Overlay (upload preview) ─── */
+/* Sweeping scan line */
+.ai-scan-line {
+  position: absolute;
+  left: 20px; right: 20px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent 0%, #7C3AED 20%, #c4b5fd 50%, #7C3AED 80%, transparent 100%);
+  box-shadow: 0 0 12px 4px rgba(124,58,237,0.55), 0 0 3px 1px rgba(196,181,253,0.9);
+  animation: aiScanLine 2.4s ease-in-out infinite;
+  pointer-events: none;
+  border-radius: 2px;
+}
+@keyframes aiScanLine {
+  0%   { top: 8%;  opacity: 0; }
+  6%   { opacity: 1; }
+  94%  { opacity: 1; }
+  100% { top: 92%; opacity: 0; }
+}
+/* Corner targeting brackets */
+.ai-corner {
+  position: absolute;
+  width: 18px; height: 18px;
+  pointer-events: none;
+}
+.ai-corner--tl { top: 14px; left: 14px; border-top: 2px solid #a78bfa; border-left: 2px solid #a78bfa; border-radius: 3px 0 0 0; }
+.ai-corner--tr { top: 14px; right: 14px; border-top: 2px solid #a78bfa; border-right: 2px solid #a78bfa; border-radius: 0 3px 0 0; }
+.ai-corner--bl { bottom: 14px; left: 14px; border-bottom: 2px solid #a78bfa; border-left: 2px solid #a78bfa; border-radius: 0 0 0 3px; }
+.ai-corner--br { bottom: 14px; right: 14px; border-bottom: 2px solid #a78bfa; border-right: 2px solid #a78bfa; border-radius: 0 0 3px 0; }
+/* White shimmer text for dark overlay */
+.scan-text-overlay {
+  font-size: 13px;
+  font-weight: 600;
+  background: linear-gradient(90deg, rgba(255,255,255,0.65) 0%, rgba(255,255,255,0.65) 20%, #e9d5ff 50%, rgba(255,255,255,0.65) 80%, rgba(255,255,255,0.65) 100%);
+  background-size: 250% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: scanShimmer 2s linear infinite;
+  text-align: center;
+  padding: 0 28px;
+  font-family: var(--m-font);
+  line-height: 1.4;
+}
+
 /* ─── Category Nudge ─── */
 .cat-nudge {
   background: #f4f4f5;
@@ -50,6 +94,10 @@
 .cat-tile:hover .cat-emoji { filter: hue-rotate(200deg) saturate(2); }
 
 /* ─── Persona Card ─── */
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
 .persona-card {
   background: #f3ebff;
   border: 1px solid #d4b3f5;
