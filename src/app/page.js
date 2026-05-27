@@ -29,15 +29,29 @@ export default function Home() {
 
             {/* Dapur header */}
             <div className="mobile-dapur-header">
-              <div className="mobile-dapur-title">Dapur Konten</div>
-              <div className="mobile-dapur-sub">Siapkan foto, video, dan pesan terbaikmu di sini untuk tampil maksimal.</div>
+              <div style={{display:'flex', alignItems:'center', gap:'10px', flexWrap:'wrap'}}>
+                <div className="mobile-dapur-title" style={{margin:0}}>Dapur Konten</div>
+                <span style={{
+                  background:'var(--m-brand-soft)', color:'var(--m-brand)',
+                  fontSize:'12px', fontWeight:'700', borderRadius:'99px',
+                  padding:'3px 10px', fontFamily:'var(--m-font)',
+                }}>
+                  Langkah {['aset','audiens','ai','preview'].indexOf(activeChip)+1}/4
+                </span>
+              </div>
+              <div className="mobile-dapur-sub">
+                {activeChip === 'aset' && 'Siapkan Foto/Video yang menarik untuk kontenmu'}
+                {activeChip === 'audiens' && 'Tentukan siapa yang akan melihat konten iklanmu berdasarkan target lokasi dan radius yang kamu pilih'}
+                {activeChip === 'ai' && 'Susun Narasi iklanmu'}
+                {activeChip === 'preview' && 'Pratinjau iklanmu sebelum diposting ke platform media sosial yang kamu pilih'}
+              </div>
             </div>
 
             {/* Chip stepper */}
             <DapurChips activeChip={activeChip} onChipChange={setActiveChip} />
 
             {/* ── Chip 1: Aset ── */}
-            {activeChip === 'aset' && <AsetSection />}
+            {activeChip === 'aset' && <AsetSection onNext={() => setActiveChip('audiens')} />}
 
             {/* ── Chip 2: Audiens + Map ── */}
             {activeChip === 'audiens' && <AudiensSection />}
