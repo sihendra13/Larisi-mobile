@@ -80,6 +80,8 @@ export const ID_LOCATIONS = [
   {n:'Pakualaman, Yogyakarta',lat:-7.8012,lng:110.3763,pop:9500},
   {n:'Umbulharjo, Yogyakarta',lat:-7.8136,lng:110.3874,pop:59000},
   {n:'Kotagede, Yogyakarta',lat:-7.8268,lng:110.4005,pop:31000},
+  {n:'Kraton, Yogyakarta',lat:-7.8051,lng:110.3636,pop:8500},
+  {n:'Gondomanan, Yogyakarta',lat:-7.8018,lng:110.3668,pop:10000},
   {n:'Mlati, Sleman, Yogyakarta',lat:-7.7538,lng:110.3456,pop:83000},
   {n:'Depok, Sleman, Yogyakarta',lat:-7.7667,lng:110.4094,pop:130000},
   {n:'Ngaglik, Sleman, Yogyakarta',lat:-7.7289,lng:110.4012,pop:97000},
