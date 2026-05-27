@@ -1,0 +1,16 @@
+{
+  "name": "Larisi",
+  "short_name": "Larisi",
+  "description": "Buat iklan yang laris manis",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#6d28d9",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "16x16",
+      "type": "image/x-icon"
+    }
+  ]
+}
