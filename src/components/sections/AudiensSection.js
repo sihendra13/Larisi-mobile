@@ -299,6 +299,95 @@ export default function AudiensSection() {
     setLng(loc.lng);
   };
 
+  const sliderPercent = ((radius - 0.5) / 9.5) * 100;
+
+  const renderSearchBar = () => (
+    <div style={{padding:'12px 16px 0', position:'relative'}} onClick={e => e.stopPropagation()}>
+      <div style={{
+        display:'flex', alignItems:'center', gap:'8px',
+        background:'#F4F4F7', borderRadius:'8px',
+        padding:'0 12px', height:'38px',
+      }}>
+        <svg viewBox="0 0 24 24" fill="none" stroke="var(--m-ink-sub)" strokeWidth="2"
+             strokeLinecap="round" strokeLinejoin="round" style={{width:'14px', height:'14px', flexShrink:0}}>
+          <circle cx="11" cy="11" r="8"/>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input
+          value={searchVal}
+          onChange={e => handleSearchInput(e.target.value)}
+          onFocus={() => searchResults.length > 0 && setShowDropdown(true)}
+          placeholder="Cari kecamatan atau kota..."
+          style={{
+            border:'none', background:'none', outline:'none', flex:1,
+            fontFamily:'var(--m-font)', fontSize:'13px', color:'var(--m-ink)',
+          }}
+        />
+        {searchVal && (
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); e.preventDefault(); setSearchVal(''); setShowDropdown(false); setSearchResults([]); }}
+            style={{background:'none', border:'none', cursor:'pointer', color:'var(--m-ink-sub)', lineHeight:1, padding:0, fontSize:'16px', zIndex: 10}}
+          >×</button>
+        )}
+      </div>
+
+      {showDropdown && searchResults.length > 0 && (
+        <div style={{
+          position:'absolute', top:'100%', left:'16px', right:'16px',
+          background:'#fff', borderRadius:'8px',
+          boxShadow:'0 4px 16px rgba(0,0,0,0.12)', zIndex:500,
+          overflow:'hidden', marginTop:'4px',
+        }}>
+          {searchResults.map((loc, i) => (
+            <div
+              key={i}
+              onClick={() => selectCity(loc)}
+              style={{
+                padding:'10px 14px', fontSize:'12px', cursor:'pointer',
+                fontFamily:'var(--m-font)', color:'var(--m-ink)',
+                borderBottom: i < searchResults.length - 1 ? '1px solid #F4F4F7' : 'none',
+                transition:'background .1s',
+              }}
+              onMouseOver={e => e.currentTarget.style.background = '#F3EBFF'}
+              onMouseOut={e => e.currentTarget.style.background = ''}
+            >
+              {loc.n}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
+  const renderRadiusSlider = () => (
+    <div style={{padding:'16px'}}>
+      <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'10px'}}>
+        <span style={{fontFamily:'var(--m-font)', fontSize:'12px', fontWeight:'600', color:'var(--m-ink)'}}>
+          Target Radius
+        </span>
+        <span style={{fontFamily:'var(--m-font)', fontSize:'12px', fontWeight:'700', color:'var(--m-brand)'}}>
+          {radius.toFixed(1)} KM
+        </span>
+      </div>
+      <input
+        type="range" min="0.5" max="10" step="0.5"
+        className="larisi-slider"
+        value={radius}
+        onChange={e => setRadius(parseFloat(e.target.value))}
+        style={{
+          width:'100%',
+          background: `linear-gradient(to right, var(--m-brand) 0%, var(--m-brand) ${sliderPercent}%, #E4E4EB ${sliderPercent}%, #E4E4EB 100%)`
+        }}
+      />
+      <div style={{textAlign:'center', marginTop:'8px'}}>
+        <span style={{fontFamily:'var(--m-font)', fontSize:'11px', color:'var(--m-ink-sub)'}}>
+          Geser untuk memperluas jangkauan
+        </span>
+      </div>
+    </div>
+  );
+
   /* ═══════════════════════ RENDER ═══════════════════════ */
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -382,63 +471,7 @@ export default function AudiensSection() {
           </div>
         </div>
 
-        {/* Search bar */}
-        <div style={{padding:'12px 16px 0', position:'relative'}} onClick={e => e.stopPropagation()}>
-          <div style={{
-            display:'flex', alignItems:'center', gap:'8px',
-            background:'#F4F4F7', borderRadius:'8px',
-            padding:'0 12px', height:'38px',
-          }}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="var(--m-ink-sub)" strokeWidth="2"
-                 strokeLinecap="round" strokeLinejoin="round" style={{width:'14px', height:'14px', flexShrink:0}}>
-              <circle cx="11" cy="11" r="8"/>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-            </svg>
-            <input
-              value={searchVal}
-              onChange={e => handleSearchInput(e.target.value)}
-              onFocus={() => searchResults.length > 0 && setShowDropdown(true)}
-              placeholder="Cari kecamatan atau kota..."
-              style={{
-                border:'none', background:'none', outline:'none', flex:1,
-                fontFamily:'var(--m-font)', fontSize:'13px', color:'var(--m-ink)',
-              }}
-            />
-            {searchVal && (
-              <button
-                onClick={() => { setSearchVal(''); setShowDropdown(false); setSearchResults([]); }}
-                style={{background:'none', border:'none', cursor:'pointer', color:'var(--m-ink-sub)', lineHeight:1, padding:0, fontSize:'16px'}}
-              >×</button>
-            )}
-          </div>
-
-          {/* Search dropdown */}
-          {showDropdown && searchResults.length > 0 && (
-            <div style={{
-              position:'absolute', top:'100%', left:'16px', right:'16px',
-              background:'#fff', borderRadius:'8px',
-              boxShadow:'0 4px 16px rgba(0,0,0,0.12)', zIndex:500,
-              overflow:'hidden', marginTop:'4px',
-            }}>
-              {searchResults.map((loc, i) => (
-                <div
-                  key={i}
-                  onClick={() => selectCity(loc)}
-                  style={{
-                    padding:'10px 14px', fontSize:'12px', cursor:'pointer',
-                    fontFamily:'var(--m-font)', color:'var(--m-ink)',
-                    borderBottom: i < searchResults.length - 1 ? '1px solid #F4F4F7' : 'none',
-                    transition:'background .1s',
-                  }}
-                  onMouseOver={e => e.currentTarget.style.background = '#F3EBFF'}
-                  onMouseOut={e => e.currentTarget.style.background = ''}
-                >
-                  {loc.n}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        {renderSearchBar()}
 
         {/* Map container */}
         <div style={{padding:'12px 16px 0', position:'relative'}}>
@@ -466,28 +499,7 @@ export default function AudiensSection() {
           </button>
         </div>
 
-        {/* Radius control */}
-        <div style={{padding:'16px'}}>
-          <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'10px'}}>
-            <span style={{fontFamily:'var(--m-font)', fontSize:'12px', fontWeight:'600', color:'var(--m-ink)'}}>
-              Target Radius
-            </span>
-            <span style={{fontFamily:'var(--m-font)', fontSize:'12px', fontWeight:'700', color:'var(--m-brand)'}}>
-              {radius.toFixed(1)} KM
-            </span>
-          </div>
-          <input
-            type="range" min="0.5" max="10" step="0.5"
-            value={radius}
-            onChange={e => setRadius(parseFloat(e.target.value))}
-            style={{width:'100%', accentColor:'var(--m-brand)'}}
-          />
-          <div style={{textAlign:'center', marginTop:'8px'}}>
-            <span style={{fontFamily:'var(--m-font)', fontSize:'11px', color:'var(--m-ink-sub)'}}>
-              Geser untuk memperluas jangkauan
-            </span>
-          </div>
-        </div>
+        {renderRadiusSlider()}
       </div>
 
       {/* ──────────── Bottom Sheet: Peta Diperbesar ──────────── */}
@@ -529,7 +541,7 @@ export default function AudiensSection() {
                 </div>
                 <div>
                   <div style={{fontFamily:'var(--m-font)', fontSize:'15px', fontWeight:'700', color:'var(--m-ink)'}}>
-                    Lokasi Kampanye
+                    Tentukan Titik Target Iklanmu
                   </div>
                   <div style={{fontFamily:'var(--m-font)', fontSize:'11px', color:'var(--m-ink-sub)', marginTop:'2px'}}>
                     Radius {radius.toFixed(1)} KM · {locName}
@@ -537,12 +549,13 @@ export default function AudiensSection() {
                 </div>
               </div>
               <button
-                onClick={() => setIsBottomSheet(false)}
+                type="button"
+                onClick={(e) => { e.stopPropagation(); e.preventDefault(); setIsBottomSheet(false); }}
                 style={{
                   width:'32px', height:'32px', borderRadius:'50%',
                   background:'#F4F4F7', border:'none',
                   display:'flex', alignItems:'center', justifyContent:'center',
-                  cursor:'pointer',
+                  cursor:'pointer', zIndex: 50
                 }}
               >
                 <svg viewBox="0 0 24 24" fill="none" stroke="var(--m-ink)" strokeWidth="2.5"
@@ -553,8 +566,15 @@ export default function AudiensSection() {
               </button>
             </div>
 
+            {renderSearchBar()}
+            <div style={{ height: '8px' }} />
+
             {/* Bottom sheet map */}
-            <div ref={bottomSheetMapRef} style={{flex:1}} />
+            <div ref={bottomSheetMapRef} style={{flex:1, position: 'relative'}} />
+
+            <div style={{ background: '#fff', borderTop: '1px solid #E4E4EB' }}>
+              {renderRadiusSlider()}
+            </div>
           </div>
         </>
       )}
