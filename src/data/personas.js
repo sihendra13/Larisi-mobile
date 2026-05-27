@@ -22,7 +22,7 @@ var personaDB = {
   JasaProfesional:   {name:'Jasa Profesional',      target:'Individuals & Businesses Seeking Help', tags:['Usia 25–50','Profesional','Pengusaha'],  age:'25–50', gender:'Mixed',   conf:80, stitch:'{greeting} {usp} di {loc}. {cta}'},
   EventCatering:     {name:'Event & Catering',      target:'Couples, Families & Event Organizers',  tags:['Usia 22–45','Acara','Keluarga'],         age:'22–45', gender:'Mixed',   conf:82, stitch:'{greeting} {usp} di {loc}. {cta}'},
   KebersihanLaundry: {name:'Kebersihan & Laundry',  target:'Busy Households & Professionals',       tags:['Usia 20–45','Sibuk','Praktis'],          age:'20–45', gender:'Mixed',   conf:79, stitch:'{greeting} {usp} di {loc}. {cta}'},
-  General:           {name:'General Content',        target:'Broad Local Awareness',                 tags:['Semua usia','Lokal','Umum'],             conf:62,                        stitch:'{greeting} {usp} di {loc}. {cta}'}
+  General:           {name:'General Content',        target:'Konten umum, cocok untuk semua kalangan', tags:['Semua usia','Lokal','Umum'],             conf:62,                        stitch:'{greeting} {usp} di {loc}. {cta}'}
 };
 
 var personaKeys = ['Kuliner','Kafe','FashionWanita','FashionPria','FashionMuslim','FashionMuslimPria','Properti','Beauty','Salon','Barber','Bayi','Gadget','Wisata','Pet','Seni','Otomotif','Pendidikan','Kerajinan','Olahraga','Fotografi','JasaProfesional','EventCatering','KebersihanLaundry'];
@@ -68,7 +68,7 @@ function detectPersona(filename) {
       if (lower.indexOf(entry.keys[j]) !== -1) return entry.p;
     }
   }
-  return {name:'General Content', target:'Optimized for Broad Local Awareness', age:'Usia 18–55', gender:'Mixed'};
+  return {name:'General Content', target:'Konten umum, cocok untuk semua kalangan', age:'Usia 18–55', gender:'Mixed'};
 }
 
 /* ── Mapping: onboarding category → personaDB key (sama persis desktop) ── */

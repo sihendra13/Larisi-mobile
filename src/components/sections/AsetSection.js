@@ -178,7 +178,7 @@ export default function AsetSection() {
     if (!isFirst && uploadMode === 'photo' && newHasVideo) {
       pendingFilesRef.current = incoming;
       setModal({
-        message: 'Kamu sudah upload foto. Mau ganti dengan video? Semua foto akan dihapus.',
+        message: 'Foto dan video tidak bisa dicampur dalam satu konten. Mau beralih ke video? Semua foto yang sudah diupload akan dihapus.',
         onConfirm: () => {
           setFiles([]);
           setDetectedPersona(null);
@@ -194,7 +194,7 @@ export default function AsetSection() {
     if (!isFirst && uploadMode === 'video' && !newHasVideo) {
       pendingFilesRef.current = incoming;
       setModal({
-        message: 'Kamu sudah upload video. Mau ganti dengan foto? Video akan dihapus.',
+        message: 'Foto dan video tidak bisa dicampur dalam satu konten. Mau beralih ke foto? Video kamu akan dihapus.',
         onConfirm: () => {
           setFiles([]);
           setDetectedPersona(null);
@@ -253,7 +253,7 @@ export default function AsetSection() {
           </button>
           <button
             onClick={modal.onConfirm}
-            style={{padding:'8px 16px', borderRadius:'8px', border:'none', background:'#791ADB', color:'#fff', fontSize:'12px', fontWeight:'700', cursor:'pointer', fontFamily:'var(--m-font)'}}
+            style={{padding:'8px 16px', borderRadius:'8px', border:'none', background:'#111827', color:'#fff', fontSize:'12px', fontWeight:'700', cursor:'pointer', fontFamily:'var(--m-font)'}}
           >
             Ganti
           </button>
@@ -337,7 +337,6 @@ export default function AsetSection() {
 
         <input ref={galleryRef} type="file" accept="image/*,video/*" multiple style={{display:'none'}} onChange={handleFiles} />
         <input ref={cameraRef} type="file" accept="image/*" capture="environment" style={{display:'none'}} onChange={handleFiles} />
-        </div>
       </div>
       {UploadModal}
       </>
