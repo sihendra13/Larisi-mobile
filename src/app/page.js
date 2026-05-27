@@ -50,8 +50,8 @@ export default function Home() {
               top:'0',
               zIndex:100,
               background:'var(--m-bg)',
-              paddingTop:'8px',
-              paddingBottom:'16px',
+              paddingTop:'2px',
+              paddingBottom:'12px',
               marginTop:'0px',
             }}>
               {/* Dapur header */}
@@ -81,7 +81,7 @@ export default function Home() {
               <DapurChips activeChip={activeChip} onChipChange={setActiveChip} />
             </div>
             {/* Padding di bawah sticky sebelum konten */}
-            <div style={{height:'16px'}} />
+            <div style={{height:'8px'}} />
 
             {/* ── Chip sections ── */}
             {activeChip === 'aset'    && <AsetSection />}
