@@ -47,12 +47,12 @@ export default function Home() {
             {/* ── STICKY: Dapur header + Chips ── */}
             <div style={{
               position:'sticky',
-              top:'-1px',
+              top:'-50px',
               zIndex:300,
               background:'var(--m-bg)',
-              paddingTop:'8px',
+              paddingTop:'58px', /* 50px seal + 8px padding */
               paddingBottom:'8px',
-              marginTop:'-1px',
+              marginTop:'-50px', /* pull up to hide the seal */
             }}>
               {/* Dapur header */}
               <div className="mobile-dapur-header" style={{padding:'0 0 8px 0'}}>
