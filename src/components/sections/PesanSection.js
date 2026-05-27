@@ -102,7 +102,7 @@ export default function PesanSection() {
               <span>{PLATFORM_LABELS[platform].toUpperCase()}</span>
             </div>
           </div>
-          <div style={{background:'#F5F5F7',borderRadius:'12px',padding:'16px',marginBottom:'16px'}}>
+          <div style={{background:'#F5F5F7',borderRadius:'12px',padding:'16px',marginBottom:'6px'}}>
             <textarea
               id="captionArea"
               placeholder="Tunggu sebentar, AI akan menuliskan pesan untukmu. Kamu bebas mengeditnya kembali agar lebih sesuai."
@@ -111,6 +111,10 @@ export default function PesanSection() {
               onChange={e => setCaption(e.target.value)}
               style={{background:'transparent',border:'none',fontSize:'13px',color:'var(--m-ink-sub)',lineHeight:'1.5',resize:'none',padding:'0',minHeight:'80px',width:'100%',outline:'none'}}
             />
+          </div>
+          {/* Character counter */}
+          <div style={{textAlign:'right',fontSize:'11px',color: caption.length > 2000 ? '#E53E3E' : 'var(--m-ink-sub)',fontFamily:'var(--m-font)',marginBottom:'16px'}}>
+            {caption.length} / 2.200
           </div>
           <button
             style={{width:'100%',padding:'14px',borderRadius:'16px',background:'var(--m-ink)',color:'#fff',border:'none',fontWeight:'600',fontSize:'13px',display:'flex',alignItems:'center',justifyContent:'center',gap:'8px',cursor:'pointer'}}
@@ -122,24 +126,42 @@ export default function PesanSection() {
           </button>
         </div>
 
-        {/* Akun Media Sosial */}
-        <div id="mobile-section-social" style={{marginTop:'16px'}}>
-          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'8px'}}>
-            <div className="section-label">Akun Media Sosial</div>
-          </div>
-          <div style={{display:'flex',gap:'10px',alignItems:'center'}}>
-            <div style={{position:'relative',width:'44px',height:'44px',flexShrink:0}}>
-              <div style={{width:'44px',height:'44px',borderRadius:'99px',background:'linear-gradient(135deg,#E1306C,#F77737)',padding:'2px'}}>
-                <div style={{width:'100%',height:'100%',borderRadius:'99px',background:'#FFF6E8',display:'grid',placeItems:'center',color:'#E1306C',fontWeight:'700',fontSize:'16px'}}>N</div>
-              </div>
+        {/* Hubungkan Akun */}
+        <div id="mobile-section-social" style={{marginTop:'8px'}}>
+          <div style={{fontSize:'13px',fontWeight:'700',color:'var(--m-ink)',marginBottom:'12px',fontFamily:'var(--m-font)'}}>Hubungkan Akun</div>
+
+          {/* Connected account example */}
+          <div style={{display:'flex',alignItems:'center',gap:'10px',marginBottom:'10px'}}>
+            <div style={{width:'40px',height:'40px',borderRadius:'99px',background:'linear-gradient(135deg,#E1306C,#F77737)',padding:'2px',flexShrink:0}}>
+              <div style={{width:'100%',height:'100%',borderRadius:'99px',background:'#FFF6E8',display:'grid',placeItems:'center',color:'#E1306C',fontWeight:'700',fontSize:'15px'}}>N</div>
             </div>
-            <button style={{width:'44px',height:'44px',borderRadius:'99px',border:'1.5px dashed #D7D7DE',background:'transparent',color:'var(--m-ink-sub)',display:'grid',placeItems:'center',padding:'0',flexShrink:0,cursor:'pointer'}}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <div style={{flex:1}}>
+              <div style={{fontFamily:'var(--m-font)',fontSize:'13px',fontWeight:'600',color:'var(--m-ink)'}}>@nila.craft</div>
+              <div style={{fontFamily:'var(--m-font)',fontSize:'11px',color:'var(--m-ink-sub)'}}>Instagram · Terhubung</div>
+            </div>
+            <div style={{width:'8px',height:'8px',borderRadius:'50%',background:'#22C55E',flexShrink:0}} />
+          </div>
+
+          {/* Add account button */}
+          <button style={{
+            display:'flex', alignItems:'center', gap:'10px',
+            width:'100%', padding:'12px 14px',
+            border:'1.5px dashed #D7D7DE', borderRadius:'12px',
+            background:'transparent', cursor:'pointer',
+          }}>
+            <div style={{
+              width:'36px', height:'36px', borderRadius:'99px',
+              border:'1.5px solid #D7D7DE', background:'var(--m-bg)',
+              display:'grid', placeItems:'center', flexShrink:0,
+            }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--m-ink-sub)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M12 5v14M5 12h14"/>
               </svg>
-            </button>
-            <div style={{flex:1,fontSize:'11px',color:'var(--m-ink-sub)',lineHeight:'1.4'}}>Tambah akun untuk publikasi ke beberapa platform sekaligus.</div>
-          </div>
+            </div>
+            <span style={{fontFamily:'var(--m-font)',fontSize:'13px',fontWeight:'600',color:'var(--m-ink-sub)'}}>
+              Tambah akun lain
+            </span>
+          </button>
         </div>
       </div>
     </div>
