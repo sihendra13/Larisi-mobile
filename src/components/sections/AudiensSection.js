@@ -301,7 +301,7 @@ export default function AudiensSection() {
 
   /* ═══════════════════════ RENDER ═══════════════════════ */
   return (
-    <>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
       {/* ──────────── Card 1: Target Audiens ──────────── */}
       <div className="panel" style={{
         boxShadow:'none', border:'1px solid #E4E4EB', overflow:'hidden',
@@ -332,14 +332,7 @@ export default function AudiensSection() {
         {/* Audience items */}
         <div style={{padding:'0 16px 16px'}}>
           {/* Warga Sekitar */}
-          <div style={{display:'flex', alignItems:'center', gap:'12px', padding:'14px 0', borderBottom:'1px solid #F0F0F5'}}>
-            <div style={{width:'36px', height:'36px', borderRadius:'10px', background:'#F0F0F5', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0}}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="var(--m-ink-sub)" strokeWidth="2"
-                   strokeLinecap="round" strokeLinejoin="round" style={{width:'17px', height:'17px'}}>
-                <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
-                <circle cx="12" cy="7" r="4"/>
-              </svg>
-            </div>
+          <div style={{display:'flex', alignItems:'center', padding:'14px 0', borderBottom:'1px solid #F0F0F5'}}>
             <div style={{flex:1}}>
               <div style={{fontFamily:'var(--m-font)', fontSize:'14px', fontWeight:'600', color:'var(--m-ink)'}}>Warga Sekitar</div>
               <div style={{fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)', marginTop:'2px'}}>
@@ -350,14 +343,7 @@ export default function AudiensSection() {
           </div>
 
           {/* Pengunjung */}
-          <div style={{display:'flex', alignItems:'center', gap:'12px', padding:'14px 0'}}>
-            <div style={{width:'36px', height:'36px', borderRadius:'10px', background:'#F0F0F5', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0}}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="var(--m-ink-sub)" strokeWidth="2"
-                   strokeLinecap="round" strokeLinejoin="round" style={{width:'17px', height:'17px'}}>
-                <path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-                <path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-              </svg>
-            </div>
+          <div style={{display:'flex', alignItems:'center', padding:'14px 0'}}>
             <div style={{flex:1}}>
               <div style={{fontFamily:'var(--m-font)', fontSize:'14px', fontWeight:'600', color:'var(--m-ink)'}}>Pengunjung</div>
               <div style={{fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)', marginTop:'2px'}}>
@@ -388,7 +374,7 @@ export default function AudiensSection() {
           </div>
           <div>
             <div style={{fontFamily:'var(--m-font)', fontSize:'16px', fontWeight:'700', color:'var(--m-ink)'}}>
-              Lokasi Kampanye
+              Tentukan Titik Target Iklanmu
             </div>
             <div style={{fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)', marginTop:'2px'}}>
               Klik peta atau cari kecamatan / kota
@@ -580,6 +566,6 @@ export default function AudiensSection() {
           onClick={() => setShowDropdown(false)}
         />
       )}
-    </>
+    </div>
   );
 }
