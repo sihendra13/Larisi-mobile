@@ -70,3 +70,32 @@ function detectPersona(filename) {
   }
   return {name:'General Content', target:'Optimized for Broad Local Awareness', age:'Usia 18–55', gender:'Mixed'};
 }
+
+/* ── Mapping: onboarding category → personaDB key (sama persis desktop) ── */
+var BIZ_CAT_TO_TILE = {
+  fnb:                 'Kuliner',
+  kafe:                'Kafe',
+  fashion:             'FashionWanita',
+  fashion_wanita:      'FashionWanita',
+  fashion_pria:        'FashionPria',
+  fashion_muslim:      'FashionMuslim',
+  fashion_muslim_pria: 'FashionMuslimPria',
+  kesehatan:           'Beauty',
+  salon:               'Salon',
+  barber:              'Barber',
+  elektronik:          'Gadget',
+  properti:            'Properti',
+  wisata:              'Wisata',
+  otomotif:            'Otomotif',
+  pendidikan:          'Pendidikan',
+  kerajinan:           'Kerajinan',
+  olahraga:            'Olahraga',
+  laundry:             'KebersihanLaundry',
+  fotografi:           'Fotografi',
+  catering:            'EventCatering',
+  jasa_profesional:    'JasaProfesional',
+  pet:                 'Pet',
+};
+
+/* ── ES Module exports untuk Next.js ── */
+export { personaDB, personaKeys, filenamePersonaMap, detectPersona, BIZ_CAT_TO_TILE };
