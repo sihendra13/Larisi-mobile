@@ -16,29 +16,7 @@ const CameraIcon = () => (
   </svg>
 );
 
-const ImagePlaceholder = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{opacity:0.25}}>
-    <rect x="3" y="3" width="18" height="18" rx="2"/>
-    <circle cx="8.5" cy="8.5" r="1.5"/>
-    <polyline points="21 15 16 10 5 21"/>
-  </svg>
-);
-
-const LanjutBtn = ({ onClick, label }) => (
-  <button onClick={onClick} style={{
-    width:'100%', padding:'16px', borderRadius:'16px',
-    background:'var(--m-ink)', color:'#fff', border:'none',
-    fontFamily:'var(--m-font)', fontSize:'15px', fontWeight:'700',
-    cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:'8px',
-  }}>
-    {label}
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
-    </svg>
-  </button>
-);
-
-export default function AsetSection({ onNext }) {
+export default function AsetSection() {
   const [files, setFiles] = useState([]);
   const [activeIdx, setActiveIdx] = useState(0);
   const galleryRef = useRef(null);
@@ -59,7 +37,9 @@ export default function AsetSection({ onNext }) {
         <div className="panel-header" style={{display:'flex'}}>
           <div className="panel-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
+              <rect x="3" y="3" width="18" height="18" rx="2"/>
+              <circle cx="8.5" cy="8.5" r="1.5"/>
+              <polyline points="21 15 16 10 5 21"/>
             </svg>
           </div>
           <div>
@@ -69,22 +49,26 @@ export default function AsetSection({ onNext }) {
         </div>
 
         <div className="panel-body" style={{padding:'16px', display:'flex', flexDirection:'column', gap:'12px'}}>
-          {/* Tombol Unggah + Kamera */}
+          {/* Tombol Unggah + Kamera — style seperti design ref */}
           <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'12px'}}>
             <button onClick={() => galleryRef.current?.click()} style={{
               display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',
-              gap:'10px', padding:'24px 12px', border:'1.5px dashed var(--m-brand)',
-              borderRadius:'16px', background:'var(--m-brand-soft)', color:'var(--m-brand)',
-              fontFamily:'var(--m-font)', fontSize:'14px', fontWeight:'600', cursor:'pointer', minHeight:'120px',
+              gap:'12px', padding:'28px 12px',
+              border:'1.5px solid #E2E2EA', borderRadius:'16px',
+              background:'var(--m-bg)', color:'var(--m-ink)',
+              fontFamily:'var(--m-font)', fontSize:'14px', fontWeight:'600',
+              cursor:'pointer', minHeight:'130px',
             }}>
               <UploadIcon />
               Unggah
             </button>
             <button onClick={() => cameraRef.current?.click()} style={{
               display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',
-              gap:'10px', padding:'24px 12px', border:'1.5px dashed #D7D7DE',
-              borderRadius:'16px', background:'var(--m-bg)', color:'var(--m-ink-sub)',
-              fontFamily:'var(--m-font)', fontSize:'14px', fontWeight:'600', cursor:'pointer', minHeight:'120px',
+              gap:'12px', padding:'28px 12px',
+              border:'1.5px solid #E2E2EA', borderRadius:'16px',
+              background:'var(--m-bg)', color:'var(--m-ink)',
+              fontFamily:'var(--m-font)', fontSize:'14px', fontWeight:'600',
+              cursor:'pointer', minHeight:'130px',
             }}>
               <CameraIcon />
               Kamera
@@ -92,28 +76,20 @@ export default function AsetSection({ onNext }) {
           </div>
 
           {/* Info */}
-          <div style={{display:'flex', alignItems:'center', gap:'8px', padding:'10px 14px', background:'var(--m-bg)', borderRadius:'12px'}}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--m-ink-sub)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+          <div style={{
+            display:'flex', alignItems:'center', gap:'8px',
+            padding:'10px 14px', background:'var(--m-bg)',
+            borderRadius:'12px', border:'1px solid #E8E8EE',
+          }}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--m-ink-sub)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
             </svg>
-            <span style={{fontSize:'13px', color:'var(--m-ink-sub)', fontFamily:'var(--m-font)'}}>Maksimal 5 Foto atau 1 Video</span>
+            <span style={{fontSize:'13px', color:'var(--m-ink-sub)', fontFamily:'var(--m-font)'}}>
+              Maksimal 5 Foto atau 1 Video
+            </span>
           </div>
-
-          {/* Empty thumbnails */}
-          <div style={{display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:'8px'}}>
-            {[0,1,2].map(i => (
-              <div key={i} style={{
-                aspectRatio:'1', borderRadius:'12px', background:'var(--m-bg)',
-                border:'1px solid #E8E8EE', display:'flex', alignItems:'center', justifyContent:'center',
-              }}>
-                <ImagePlaceholder />
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div style={{padding:'0 16px 16px'}}>
-          <LanjutBtn onClick={onNext} label="Simpan & Lanjutkan" />
         </div>
 
         <input ref={galleryRef} type="file" accept="image/*,video/*" multiple style={{display:'none'}} onChange={handleFiles} />
@@ -146,7 +122,8 @@ export default function AsetSection({ onNext }) {
           display:'flex', alignItems:'center', gap:'6px',
         }}>
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/>
+            <polyline points="1 4 1 10 7 10"/>
+            <path d="M3.51 15a9 9 0 102.13-9.36L1 10"/>
           </svg>
           Ubah Foto
         </button>
@@ -172,8 +149,12 @@ export default function AsetSection({ onNext }) {
               <div className="persona-badge" id="personaBadge">Master Persona</div>
             </div>
             <div className="persona-name" id="personaName" style={{color:'#fff'}}>Culinary / Cafe</div>
-            <div className="persona-targeting" id="personaTarget" style={{color:'rgba(255,255,255,0.75)'}}>Targeting: Foodies &amp; Urban Professionals</div>
-            <div className="persona-age" id="personaAge" style={{color:'rgba(255,255,255,0.75)'}}>Age range: 20–40 · Mixed</div>
+            <div className="persona-targeting" id="personaTarget" style={{color:'rgba(255,255,255,0.75)'}}>
+              Targeting: Foodies &amp; Urban Professionals
+            </div>
+            <div className="persona-age" id="personaAge" style={{color:'rgba(255,255,255,0.75)'}}>
+              Age range: 20–40 · Mixed
+            </div>
           </div>
         </div>
       </div>
@@ -200,19 +181,17 @@ export default function AsetSection({ onNext }) {
           ))}
           {files.length < 5 && (
             <button onClick={() => galleryRef.current?.click()} style={{
-              aspectRatio:'1', borderRadius:'10px', border:'1.5px dashed #D7D7DE',
-              background:'var(--m-bg)', color:'var(--m-ink-sub)', display:'flex',
-              alignItems:'center', justifyContent:'center', cursor:'pointer',
-              fontSize:'24px', fontWeight:'400',
+              aspectRatio:'1', borderRadius:'10px',
+              border:'1.5px dashed #D7D7DE', background:'var(--m-bg)',
+              color:'var(--m-ink-sub)', display:'flex',
+              alignItems:'center', justifyContent:'center',
+              cursor:'pointer', fontSize:'24px',
             }}>
               +
             </button>
           )}
         </div>
       </div>
-
-      {/* CTA */}
-      <LanjutBtn onClick={onNext} label="Lanjutkan ke Audiens" />
 
       <input ref={galleryRef} type="file" accept="image/*,video/*" multiple style={{display:'none'}} onChange={handleFiles} />
       <input ref={cameraRef} type="file" accept="image/*" capture="environment" style={{display:'none'}} onChange={handleFiles} />

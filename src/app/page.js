@@ -8,66 +8,92 @@ import AudiensSection from '@/components/sections/AudiensSection';
 import PesanSection from '@/components/sections/PesanSection';
 import PreviewSection from '@/components/sections/PreviewSection';
 
+const CHIP_META = {
+  aset:    { step:1, sub:'Siapkan Foto/Video yang menarik untuk kontenmu', next:'audiens', cta:'Simpan & Lanjutkan' },
+  audiens: { step:2, sub:'Tentukan siapa yang akan melihat konten iklanmu berdasarkan target lokasi dan radius yang kamu pilih', next:'ai', cta:'Lanjutkan ke Pesan' },
+  ai:      { step:3, sub:'Susun narasi iklanmu agar lebih persuasif dan menarik', next:'preview', cta:'Simpan & Lanjut' },
+  preview: { step:4, sub:'Pratinjau iklanmu sebelum diposting ke platform media sosial yang kamu pilih', next:null, cta:null },
+};
+
 export default function Home() {
   const [activeNav, setActiveNav] = useState('command');
   const [activeChip, setActiveChip] = useState('aset');
 
   const isCommand = activeNav === 'command';
   const isPreviewChip = activeChip === 'preview';
+  const meta = CHIP_META[activeChip];
+
+  const goNext = () => {
+    if (meta.next) setActiveChip(meta.next);
+  };
 
   return (
     <div id="app-root" className="mobile-app-root">
-      {/* ── Header ── */}
+
+      {/* ── Header (sticky via CSS) ── */}
       <MobileHeader userName="Nila Craft" userInitials="N" isPro />
 
       {/* ── Main scroll area ── */}
-      <main className="panels" id="panels" role="main">
+      <main className="panels" id="panels" role="main" style={{
+        paddingBottom: isPreviewChip
+          ? 'calc(140px + env(safe-area-inset-bottom))'
+          : 'calc(100px + env(safe-area-inset-bottom))',
+      }}>
 
         {/* ── Dapur view ── */}
         {isCommand && (
           <div id="view-command" className="view-active">
 
-            {/* Dapur header */}
-            <div className="mobile-dapur-header">
-              <div style={{display:'flex', alignItems:'center', gap:'10px', flexWrap:'wrap'}}>
-                <div className="mobile-dapur-title" style={{margin:0}}>Dapur Konten</div>
-                <span style={{
-                  background:'var(--m-brand-soft)', color:'var(--m-brand)',
-                  fontSize:'12px', fontWeight:'700', borderRadius:'99px',
-                  padding:'3px 10px', fontFamily:'var(--m-font)',
+            {/* ── STICKY: Dapur header + Chips ── */}
+            <div style={{
+              position:'sticky',
+              top:'56px',
+              zIndex:100,
+              background:'var(--m-bg)',
+              paddingBottom:'12px',
+            }}>
+              {/* Dapur header */}
+              <div className="mobile-dapur-header" style={{paddingBottom:'8px'}}>
+                <div style={{display:'flex', alignItems:'center', gap:'10px', flexWrap:'wrap'}}>
+                  <div className="mobile-dapur-title" style={{margin:0}}>Dapur Konten</div>
+                  <span style={{
+                    background:'var(--m-brand-soft)', color:'var(--m-brand)',
+                    fontSize:'12px', fontWeight:'700', borderRadius:'99px',
+                    padding:'3px 10px', fontFamily:'var(--m-font)', whiteSpace:'nowrap',
+                  }}>
+                    Langkah {meta.step}/4
+                  </span>
+                </div>
+                {/* Max 2 baris */}
+                <div className="mobile-dapur-sub" style={{
+                  display:'-webkit-box',
+                  WebkitLineClamp:2,
+                  WebkitBoxOrient:'vertical',
+                  overflow:'hidden',
                 }}>
-                  Langkah {['aset','audiens','ai','preview'].indexOf(activeChip)+1}/4
-                </span>
+                  {meta.sub}
+                </div>
               </div>
-              <div className="mobile-dapur-sub">
-                {activeChip === 'aset' && 'Siapkan Foto/Video yang menarik untuk kontenmu'}
-                {activeChip === 'audiens' && 'Tentukan siapa yang akan melihat konten iklanmu berdasarkan target lokasi dan radius yang kamu pilih'}
-                {activeChip === 'ai' && 'Susun Narasi iklanmu'}
-                {activeChip === 'preview' && 'Pratinjau iklanmu sebelum diposting ke platform media sosial yang kamu pilih'}
-              </div>
+
+              {/* Chips */}
+              <DapurChips activeChip={activeChip} onChipChange={setActiveChip} />
             </div>
+            {/* Padding di bawah sticky sebelum konten */}
+            <div style={{height:'16px'}} />
 
-            {/* Chip stepper */}
-            <DapurChips activeChip={activeChip} onChipChange={setActiveChip} />
-
-            {/* ── Chip 1: Aset ── */}
-            {activeChip === 'aset' && <AsetSection onNext={() => setActiveChip('audiens')} />}
-
-            {/* ── Chip 2: Audiens + Map ── */}
+            {/* ── Chip sections ── */}
+            {activeChip === 'aset'    && <AsetSection />}
             {activeChip === 'audiens' && <AudiensSection />}
-
-            {/* ── Chip 3: Pesan (AI Caption) ── */}
-            {activeChip === 'ai' && <PesanSection />}
-
-            {/* ── Chip 4: Preview ── */}
+            {activeChip === 'ai'      && <PesanSection />}
             {activeChip === 'preview' && (
               <div className="panel" id="panel-caption" style={{display:'flex',flexDirection:'column'}}>
-                {/* Header */}
                 <div className="panel-header" style={{justifyContent:'space-between'}}>
                   <div style={{display:'flex',alignItems:'center',gap:'10px'}}>
                     <div className="panel-icon">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+                        <rect x="2" y="3" width="20" height="14" rx="2"/>
+                        <line x1="8" y1="21" x2="16" y2="21"/>
+                        <line x1="12" y1="17" x2="12" y2="21"/>
                       </svg>
                     </div>
                     <div>
@@ -76,7 +102,6 @@ export default function Home() {
                     </div>
                   </div>
                 </div>
-                {/* Preview body */}
                 <div style={{padding:'16px'}}>
                   <PreviewSection />
                 </div>
@@ -109,7 +134,32 @@ export default function Home() {
 
       </main>
 
-      {/* ── CTA Bar — hanya saat Chip 4 (Preview) ── */}
+      {/* ── Floating CTA — chip 1, 2, 3 ── */}
+      {isCommand && !isPreviewChip && (
+        <div style={{
+          position:'fixed',
+          bottom:'calc(60px + env(safe-area-inset-bottom) + 12px)',
+          left:'16px', right:'16px',
+          zIndex:400,
+        }}>
+          <button onClick={goNext} style={{
+            width:'100%', padding:'16px', borderRadius:'16px',
+            background:'var(--m-ink)', color:'#fff', border:'none',
+            fontFamily:'var(--m-font)', fontSize:'15px', fontWeight:'700',
+            cursor:'pointer', display:'flex', alignItems:'center',
+            justifyContent:'center', gap:'8px',
+            boxShadow:'0 4px 20px rgba(0,0,0,0.18)',
+          }}>
+            {meta.cta}
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="5" y1="12" x2="19" y2="12"/>
+              <polyline points="12 5 19 12 12 19"/>
+            </svg>
+          </button>
+        </div>
+      )}
+
+      {/* ── CTA Bar chip 4 (Tayangkan + Estimasi) ── */}
       {isCommand && isPreviewChip && (
         <div id="mobile-cta-bar" className="mobile-cta-bar" style={{display:'block'}} aria-live="polite">
           <div className="m-cta-fade" aria-hidden="true"></div>
