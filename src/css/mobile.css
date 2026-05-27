@@ -1178,7 +1178,7 @@
 @media (max-width: 768px) {
   /* ── DAPUR HEADER ── */
   .mobile-dapur-header {
-    padding: 24px 20px 4px !important;
+    padding: 8px 20px 4px !important;
   }
   .mobile-dapur-title {
     font-family: var(--m-font) !important;
@@ -1199,7 +1199,7 @@
   .mobile-dapur-chips {
     display: flex !important;
     gap: 8px !important;
-    padding: 12px 20px !important;
+    padding: 8px 20px 0px !important;
     overflow-x: auto !important;
   }
   .mobile-dapur-chips::-webkit-scrollbar {
