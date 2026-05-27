@@ -275,10 +275,13 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext }) {
 
                   {/* Status */}
                   {acc.connected ? (
-                    /* Thin checkmark */
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22C55E" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0}}>
-                      <polyline points="20 6 9 17 4 12"/>
-                    </svg>
+                    /* Chip: checkmark + Terhubung */
+                    <div style={{display:'flex',alignItems:'center',gap:'4px',flexShrink:0,background:'#DCFCE7',borderRadius:'999px',padding:'4px 10px 4px 7px'}}>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#16A34A" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="20 6 9 17 4 12"/>
+                      </svg>
+                      <span style={{fontFamily:'var(--m-font)',fontSize:'12px',fontWeight:'600',color:'#16A34A'}}>Terhubung</span>
+                    </div>
                   ) : (
                     <button style={{flexShrink:0,padding:'7px 14px',borderRadius:'8px',border:'1.5px solid #1A1A1A',background:'transparent',cursor:'pointer',fontFamily:'var(--m-font)',fontSize:'12px',fontWeight:'700',color:'#1A1A1A'}}>
                       Hubungkan
