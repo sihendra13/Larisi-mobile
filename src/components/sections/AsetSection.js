@@ -28,15 +28,18 @@ const SCAN_MESSAGES = [
 
 export default function AsetSection() {
   const [files, setFiles]                 = useState([]);
+  const [uploadMode, setUploadMode]       = useState(null); // 'photo' | 'video' | null
   const [activeIdx, setActiveIdx]         = useState(0);
   const [isScanning, setIsScanning]       = useState(false);
   const [scanText, setScanText]           = useState(SCAN_MESSAGES[0]);
   const [detectedPersona, setDetectedPersona] = useState(null);
+  const [modal, setModal]                 = useState(null); // { message, onConfirm }
 
   const galleryRef              = useRef(null);
   const cameraRef               = useRef(null);
   const masterPersonaLockedRef  = useRef(false);
   const uploadedDataURLsRef     = useRef([]);
+  const pendingFilesRef         = useRef(null); // simpan incoming files saat modal muncul
 
   /* ── Cycling scan text saat isScanning aktif — beri efek AI ── */
   useEffect(() => {
@@ -131,31 +134,84 @@ export default function AsetSection() {
     masterPersonaLockedRef.current = true;
   }, [showScanningOnly]);
 
-  /* ── handleFiles: trigger scan on first upload ── */
-  const handleFiles = (e) => {
-    const incoming = Array.from(e.target.files || []);
-    if (!incoming.length) return;
+  /* ── processFiles: terapkan file setelah validasi lolos ── */
+  const processFiles = useCallback((incoming, treatAsFirst) => {
+    const newHasVideo = incoming.some(f => f.type.startsWith('video/'));
+    let accepted;
 
-    const isFirst = files.length === 0;
-    const newFiles = [...files, ...incoming].slice(0, 5);
+    if (newHasVideo) {
+      accepted = incoming.filter(f => f.type.startsWith('video/')).slice(0, 1);
+      setUploadMode('video');
+    } else {
+      const remaining = treatAsFirst ? 5 : Math.max(0, 5 - files.length);
+      accepted = incoming.filter(f => f.type.startsWith('image/')).slice(0, remaining);
+      setUploadMode('photo');
+    }
+
+    if (!accepted.length) return;
+
+    const newFiles = treatAsFirst ? accepted : [...files, ...accepted].slice(0, 5);
     setFiles(newFiles);
     setActiveIdx(0);
-    e.target.value = '';
 
-    if (isFirst) {
+    if (treatAsFirst) {
       masterPersonaLockedRef.current = false;
       uploadedDataURLsRef.current    = [];
-      /* Read base64 async (sama seperti desktop pakai FileReader) */
       const reader = new FileReader();
       reader.onload = (ev) => { uploadedDataURLsRef.current[0] = ev.target.result; };
-      reader.readAsDataURL(incoming[0]);
-      startScanWithFile(incoming[0].name, incoming[0]);
+      reader.readAsDataURL(accepted[0]);
+      startScanWithFile(accepted[0].name, accepted[0]);
     } else {
       showScanningOnly();
     }
+  }, [files, startScanWithFile, showScanningOnly]);
+
+  /* ── handleFiles: validasi mixing foto↔video — sama persis desktop ── */
+  const handleFiles = (e) => {
+    const incoming = Array.from(e.target.files || []);
+    if (!incoming.length) return;
+    e.target.value = '';
+
+    const isFirst     = files.length === 0;
+    const newHasVideo = incoming.some(f => f.type.startsWith('video/'));
+
+    if (!isFirst && uploadMode === 'photo' && newHasVideo) {
+      pendingFilesRef.current = incoming;
+      setModal({
+        message: 'Kamu sudah upload foto. Mau ganti dengan video? Semua foto akan dihapus.',
+        onConfirm: () => {
+          setFiles([]);
+          setDetectedPersona(null);
+          setUploadMode(null);
+          masterPersonaLockedRef.current = false;
+          uploadedDataURLsRef.current    = [];
+          setModal(null);
+          processFiles(pendingFilesRef.current, true);
+        },
+      });
+      return;
+    }
+    if (!isFirst && uploadMode === 'video' && !newHasVideo) {
+      pendingFilesRef.current = incoming;
+      setModal({
+        message: 'Kamu sudah upload video. Mau ganti dengan foto? Video akan dihapus.',
+        onConfirm: () => {
+          setFiles([]);
+          setDetectedPersona(null);
+          setUploadMode(null);
+          masterPersonaLockedRef.current = false;
+          uploadedDataURLsRef.current    = [];
+          setModal(null);
+          processFiles(pendingFilesRef.current, true);
+        },
+      });
+      return;
+    }
+
+    processFiles(incoming, isFirst);
   };
 
-  /* ── Delete file: reset persona jika semua dihapus ── */
+  /* ── Delete file: reset persona & uploadMode jika semua dihapus ── */
   const deleteFile = (idx) => {
     const newFiles = files.filter((_, i) => i !== idx);
     setFiles(newFiles);
@@ -164,23 +220,74 @@ export default function AsetSection() {
       uploadedDataURLsRef.current    = [];
       setDetectedPersona(null);
       setIsScanning(false);
+      setUploadMode(null);
     }
     if (activeIdx >= newFiles.length) setActiveIdx(Math.max(0, newFiles.length - 1));
   };
 
+  /* ── Modal konfirmasi mixing foto↔video ── */
+  const UploadModal = modal && (
+    <div style={{
+      position:'fixed', inset:0,
+      background:'rgba(0,0,0,0.45)',
+      zIndex:9999,
+      display:'flex', alignItems:'center', justifyContent:'center',
+    }} onClick={() => setModal(null)}>
+      <div style={{
+        background:'#fff', borderRadius:'16px',
+        padding:'28px 24px', maxWidth:'340px', width:'90%',
+        boxShadow:'0 8px 32px rgba(0,0,0,0.18)',
+      }} onClick={e => e.stopPropagation()}>
+        <div style={{fontSize:'15px', fontWeight:'700', color:'#222', marginBottom:'8px', fontFamily:'var(--m-font)'}}>
+          Perhatian
+        </div>
+        <div style={{fontSize:'13px', color:'#6a6a6a', marginBottom:'20px', lineHeight:'1.5', fontFamily:'var(--m-font)'}}>
+          {modal.message}
+        </div>
+        <div style={{display:'flex', gap:'10px', justifyContent:'flex-end'}}>
+          <button
+            onClick={() => setModal(null)}
+            style={{padding:'8px 16px', borderRadius:'8px', border:'1px solid #e0e0e0', background:'#fff', fontSize:'12px', fontWeight:'600', cursor:'pointer', fontFamily:'var(--m-font)'}}
+          >
+            Batal
+          </button>
+          <button
+            onClick={modal.onConfirm}
+            style={{padding:'8px 16px', borderRadius:'8px', border:'none', background:'#791ADB', color:'#fff', fontSize:'12px', fontWeight:'700', cursor:'pointer', fontFamily:'var(--m-font)'}}
+          >
+            Ganti
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
   /* ─── EMPTY STATE ─── */
   if (files.length === 0) {
     return (
-      <div style={{
-        background:'#fff',
-        borderRadius:'16px',
-        border:'1px solid #E4E4EB',
-        padding:'20px 16px',
-        display:'flex', flexDirection:'column', gap:'16px'
-      }}>
-        <div style={{fontFamily:'var(--m-font)', fontSize:'16px', fontWeight:'700', color:'var(--m-ink)'}}>
-          Aset Kreatif
+      <>
+      <div className="panel">
+        <div className="panel-header" style={{ display: 'flex', padding: '16px 16px 0', borderBottom: 'none' }}>
+          <div className="panel-icon" style={{
+            width: '36px', height: '36px', borderRadius: '10px',
+            background: 'var(--m-brand-soft)', display: 'flex',
+            alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+            marginRight: '12px'
+          }}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--m-brand)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '18px', height: '18px' }}>
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+              <circle cx="8.5" cy="8.5" r="1.5"/>
+              <polyline points="21 15 16 10 5 21"/>
+            </svg>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <div style={{ fontFamily:'var(--m-font)', fontSize:'16px', fontWeight:'700', color:'var(--m-ink)' }}>
+              Aset Kreatif
+            </div>
+          </div>
         </div>
+        
+        <div className="panel-body" style={{ padding: '16px', display:'flex', flexDirection:'column', gap:'16px' }}>
 
         <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'12px'}}>
           <button onClick={() => galleryRef.current?.click()} style={{
@@ -234,7 +341,10 @@ export default function AsetSection() {
 
         <input ref={galleryRef} type="file" accept="image/*,video/*" multiple style={{display:'none'}} onChange={handleFiles} />
         <input ref={cameraRef} type="file" accept="image/*" capture="environment" style={{display:'none'}} onChange={handleFiles} />
+        </div>
       </div>
+      {UploadModal}
+      </>
     );
   }
 
@@ -393,6 +503,8 @@ export default function AsetSection() {
 
       <input ref={galleryRef} type="file" accept="image/*,video/*" multiple style={{display:'none'}} onChange={handleFiles} />
       <input ref={cameraRef} type="file" accept="image/*" capture="environment" style={{display:'none'}} onChange={handleFiles} />
+
+      {UploadModal}
     </div>
   );
 }
