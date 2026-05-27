@@ -207,7 +207,7 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext }) {
                     gap:'8px', padding:'14px 6px',
                     borderRadius:'12px', cursor:'pointer',
                     background:'#FAFAFA',
-                    border:'1.5px solid transparent',
+                    border:'1.5px solid #EBEBF0',
                     transition:'all .15s',
                   }}
                 >
