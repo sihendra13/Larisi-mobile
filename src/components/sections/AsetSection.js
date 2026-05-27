@@ -34,17 +34,9 @@ export default function AsetSection() {
   if (files.length === 0) {
     return (
       <div className="panel" id="panel-upload">
-        <div className="panel-header" style={{display:'flex'}}>
-          <div className="panel-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="3" width="18" height="18" rx="2"/>
-              <circle cx="8.5" cy="8.5" r="1.5"/>
-              <polyline points="21 15 16 10 5 21"/>
-            </svg>
-          </div>
-          <div>
-            <div className="panel-title">Aset Kreatif</div>
-            <div className="panel-sub">Pilih foto atau ambil dari kamera</div>
+        <div style={{padding:'20px 16px 0 16px'}}>
+          <div style={{fontFamily:'var(--m-font)', fontSize:'16px', fontWeight:'700', color:'var(--m-ink)'}}>
+            Aset Kreatif
           </div>
         </div>
 
@@ -55,12 +47,12 @@ export default function AsetSection() {
               display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',
               gap:'12px', padding:'28px 12px',
               border:'1.5px dashed #D7D7DE', borderRadius:'16px',
-              background:'var(--m-bg)', color:'var(--m-ink)',
+              background:'#F7F7FA', color:'var(--m-ink)',
               fontFamily:'var(--m-font)', fontSize:'14px', fontWeight:'600',
               cursor:'pointer', minHeight:'130px',
             }}>
               <div style={{
-                width:'48px', height:'48px', borderRadius:'24px', background:'#F2F2F7', 
+                width:'48px', height:'48px', borderRadius:'24px', background:'#EAEAF0', 
                 display:'flex', alignItems:'center', justifyContent:'center', color:'var(--m-ink)'
               }}>
                 <UploadIcon />
@@ -71,12 +63,12 @@ export default function AsetSection() {
               display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',
               gap:'12px', padding:'28px 12px',
               border:'1.5px dashed #D7D7DE', borderRadius:'16px',
-              background:'var(--m-bg)', color:'var(--m-ink)',
+              background:'#F7F7FA', color:'var(--m-ink)',
               fontFamily:'var(--m-font)', fontSize:'14px', fontWeight:'600',
               cursor:'pointer', minHeight:'130px',
             }}>
               <div style={{
-                width:'48px', height:'48px', borderRadius:'24px', background:'#F2F2F7', 
+                width:'48px', height:'48px', borderRadius:'24px', background:'#EAEAF0', 
                 display:'flex', alignItems:'center', justifyContent:'center', color:'var(--m-ink)'
               }}>
                 <CameraIcon />

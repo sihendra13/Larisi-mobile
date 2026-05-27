@@ -50,9 +50,9 @@ export default function Home() {
               top:'0',
               zIndex:100,
               background:'var(--m-bg)',
-              paddingTop:'6px',
+              paddingTop:'0px',
               paddingBottom:'24px',
-              marginTop:'-16px',
+              marginTop:'-24px',
             }}>
               {/* Dapur header */}
               <div className="mobile-dapur-header" style={{padding:'0 0 8px 0'}}>
