@@ -18,7 +18,7 @@ export default function Home() {
   return (
     <div id="app-root" className="mobile-app-root">
       {/* ── Header ── */}
-      <MobileHeader userName="Nanda" userInitials="N" isPro />
+      <MobileHeader userName="Nila Craft" userInitials="N" isPro />
 
       {/* ── Main scroll area ── */}
       <main className="panels" id="panels" role="main">
@@ -26,6 +26,12 @@ export default function Home() {
         {/* ── Dapur view ── */}
         {isCommand && (
           <div id="view-command" className="view-active">
+
+            {/* Dapur header */}
+            <div className="mobile-dapur-header">
+              <div className="mobile-dapur-title">Dapur Konten</div>
+              <div className="mobile-dapur-sub">Siapkan foto, video, dan pesan terbaikmu di sini untuk tampil maksimal.</div>
+            </div>
 
             {/* Chip stepper */}
             <DapurChips activeChip={activeChip} onChipChange={setActiveChip} />
