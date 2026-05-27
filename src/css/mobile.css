@@ -1088,11 +1088,11 @@
     max-width: unset !important;
     flex-shrink: 0 !important;
     overflow: hidden !important;
-    border-radius: var(--radius-card) !important;
-    box-shadow: var(--shadow-card) !important;
-    border: none !important;
+    border-radius: 16px !important;
+    border: 1px solid #E4E4EB !important;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.02) !important;
     background: var(--white) !important;
-    padding: 16px !important;
+    padding: 20px 16px !important;
     display: flex !important;
     flex-direction: column !important;
     gap: 16px !important;
