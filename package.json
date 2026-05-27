@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "deploy": "next build && npx wrangler pages deploy out --project-name=larisi-mobile --branch=nextjs"
   },
   "dependencies": {
     "next": "15.3.3",
