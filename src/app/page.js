@@ -50,8 +50,8 @@ export default function Home() {
               top:'0',
               zIndex:100,
               background:'var(--m-bg)',
-              paddingTop:'16px',
-              paddingBottom:'12px',
+              paddingTop:'6px',
+              paddingBottom:'24px',
               marginTop:'-16px',
             }}>
               {/* Dapur header */}

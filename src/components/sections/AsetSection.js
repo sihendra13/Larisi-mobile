@@ -54,23 +54,33 @@ export default function AsetSection() {
             <button onClick={() => galleryRef.current?.click()} style={{
               display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',
               gap:'12px', padding:'28px 12px',
-              border:'1.5px solid #E2E2EA', borderRadius:'16px',
+              border:'1.5px dashed #D7D7DE', borderRadius:'16px',
               background:'var(--m-bg)', color:'var(--m-ink)',
               fontFamily:'var(--m-font)', fontSize:'14px', fontWeight:'600',
               cursor:'pointer', minHeight:'130px',
             }}>
-              <UploadIcon />
+              <div style={{
+                width:'48px', height:'48px', borderRadius:'24px', background:'#F2F2F7', 
+                display:'flex', alignItems:'center', justifyContent:'center', color:'var(--m-ink)'
+              }}>
+                <UploadIcon />
+              </div>
               Unggah
             </button>
             <button onClick={() => cameraRef.current?.click()} style={{
               display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',
               gap:'12px', padding:'28px 12px',
-              border:'1.5px solid #E2E2EA', borderRadius:'16px',
+              border:'1.5px dashed #D7D7DE', borderRadius:'16px',
               background:'var(--m-bg)', color:'var(--m-ink)',
               fontFamily:'var(--m-font)', fontSize:'14px', fontWeight:'600',
               cursor:'pointer', minHeight:'130px',
             }}>
-              <CameraIcon />
+              <div style={{
+                width:'48px', height:'48px', borderRadius:'24px', background:'#F2F2F7', 
+                display:'flex', alignItems:'center', justifyContent:'center', color:'var(--m-ink)'
+              }}>
+                <CameraIcon />
+              </div>
               Kamera
             </button>
           </div>
