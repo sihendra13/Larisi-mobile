@@ -67,6 +67,7 @@ const MAX_CHAR = { instagram:2200, facebook:63206, tiktok:2200, youtube:5000 };
 export default function CaptionScreen({
   platform, format, files,
   locName, locFull, locPop, radius, localOn, travelerOn,
+  persona,
   caption, setCaption,
   onBack, onUbahAset,
 }) {
@@ -138,6 +139,67 @@ export default function CaptionScreen({
         paddingBottom:'calc(88px + env(safe-area-inset-bottom) + 60px)',
         display:'flex', flexDirection:'column', gap:'12px',
       }}>
+
+        {/* ── Master Persona summary card (if detected in AsetScreen) ── */}
+        {persona && (
+          <div style={{
+            borderRadius: '16px', overflow: 'hidden',
+            background: 'linear-gradient(135deg, #1e0a3c 0%, #2d1060 100%)',
+            border: '1px solid rgba(167,139,250,0.25)',
+          }}>
+            <div style={{ padding: '14px 16px' }}>
+              {/* Top row */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+                <div style={{
+                  width: '20px', height: '20px', borderRadius: '50%',
+                  background: '#22c55e', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                }}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ width: '11px', height: '11px' }}>
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                </div>
+                <span style={{ fontFamily: 'var(--m-font)', fontSize: '11px', fontWeight: '700', color: '#e9d5ff', letterSpacing: '0.4px', textTransform: 'uppercase' }}>
+                  Master Persona Terdeteksi
+                </span>
+                {/* Sparkle icon */}
+                <svg viewBox="0 0 24 24" fill="none" stroke="#c4b5fd" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ width: '14px', height: '14px', marginLeft: 'auto', flexShrink: 0 }}>
+                  <path d="M12 2L9.5 9.5 2 12l7.5 2.5L12 22l2.5-7.5L22 12l-7.5-2.5z"/>
+                </svg>
+              </div>
+              {/* Persona name */}
+              <div style={{ fontFamily: 'var(--m-font)', fontSize: '17px', fontWeight: '800', color: '#fff', marginBottom: '4px', letterSpacing: '-0.02em' }}>
+                {persona.name}
+              </div>
+              {/* Target & age */}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                <span style={{
+                  fontFamily: 'var(--m-font)', fontSize: '11px', fontWeight: '600',
+                  color: '#e9d5ff',
+                  background: 'rgba(255,255,255,0.10)',
+                  padding: '3px 10px', borderRadius: '99px',
+                  border: '1px solid rgba(255,255,255,0.12)',
+                }}>
+                  {persona.target}
+                </span>
+                <span style={{
+                  fontFamily: 'var(--m-font)', fontSize: '11px', fontWeight: '600',
+                  color: 'rgba(255,255,255,0.7)',
+                  background: 'rgba(255,255,255,0.07)',
+                  padding: '3px 10px', borderRadius: '99px',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                }}>
+                  {persona.age || '18–45'} · {persona.gender || 'Mixed'}
+                </span>
+              </div>
+            </div>
+            {/* Footer note */}
+            <div style={{ background: 'rgba(0,0,0,0.25)', padding: '8px 16px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+              <span style={{ fontFamily: 'var(--m-font)', fontSize: '11px', color: 'rgba(255,255,255,0.4)' }}>
+                Digunakan untuk mengoptimalkan targeting iklanmu
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* ── Mini preview card ── */}
         <div className="panel" style={{boxShadow:'none', border:'1px solid #E4E4EB', padding:'14px'}}>

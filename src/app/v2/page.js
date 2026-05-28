@@ -20,6 +20,7 @@ export default function DapurV2() {
   const [localOn,    setLocalOn]    = useState(true);
   const [travelerOn, setTravelerOn] = useState(false);
   const [files,      setFiles]      = useState([]);   /* { url, type, name }[] */
+  const [persona,    setPersona]    = useState(null); /* detected master persona */
   const [caption,    setCaption]    = useState('');
 
   const BACK = { audiens:'platform', aset:'audiens', caption:'aset' };
@@ -57,7 +58,7 @@ export default function DapurV2() {
           format={format}       onFormatChange={setFormat}
           files={files}         onFilesChange={setFiles}
           onBack={goBack}
-          onNext={() => goTo('caption')}
+          onNext={(p) => { if (p) setPersona(p); goTo('caption'); }}
         />
       )}
 
@@ -72,6 +73,7 @@ export default function DapurV2() {
           radius={radius}
           localOn={localOn}
           travelerOn={travelerOn}
+          persona={persona}
           caption={caption}
           setCaption={setCaption}
           onBack={goBack}
