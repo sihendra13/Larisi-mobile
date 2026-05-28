@@ -439,10 +439,10 @@ export default function AudiensScreen({
         flex:1, overflowY:'auto',
         padding:'4px 16px',
         paddingBottom:'calc(100px + env(safe-area-inset-bottom) + 60px)',
-        display:'flex', flexDirection:'column', gap:'12px',
       }}>
 
         {/* Card 1: Target Audiens */}
+        <div style={{marginBottom:'12px'}}>
         <div style={{
           background:'#fff', borderRadius:'16px',
           border:'1px solid #E4E4EB', overflow:'hidden',
@@ -479,6 +479,7 @@ export default function AudiensScreen({
             </div>
           </div>
         </div>
+        </div>{/* end card-1 wrapper */}
 
         {/* Card 2: Tentukan Titik Target */}
         <div style={{
