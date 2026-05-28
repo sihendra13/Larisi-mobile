@@ -112,7 +112,7 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
       {/* ── Scrollable content ── */}
       <main style={{
         flex:1, overflowY:'auto', padding:'16px 16px 0',
-        paddingBottom:'calc(80px + env(safe-area-inset-bottom) + 60px)',
+        paddingBottom:'calc(160px + env(safe-area-inset-bottom) + 60px)',
         display:'flex', flexDirection:'column', gap:'14px',
       }}>
 
@@ -183,14 +183,7 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
                   </div>
                   <span style={{fontFamily:'var(--m-font)', fontSize:'8px', color:'rgba(255,255,255,0.8)'}}>Sponsored</span>
                 </div>
-                {/* Learn More */}
-                <div style={{
-                  background:'rgba(255,255,255,0.92)', borderRadius:'8px',
-                  padding:'8px 0', textAlign:'center',
-                  fontFamily:'var(--m-font)', fontSize:'11px', fontWeight:'700', color:'#111',
-                }}>
-                  Learn More
-                </div>
+                {/* Learn More dihilangkan */}
               </div>
             )}
           </div>
@@ -267,11 +260,10 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
       }}>
         <button onClick={onNext} style={{
           width:'100%', padding:'16px', borderRadius:'16px',
-          background:'var(--m-brand)', color:'#fff', border:'none',
+          background:'#1A1A1A', color:'#fff', border:'none',
           fontFamily:'var(--m-font)', fontSize:'15px', fontWeight:'700',
           cursor:'pointer', display:'flex', alignItems:'center',
           justifyContent:'center', gap:'8px',
-          boxShadow:'0 4px 20px rgba(121,26,219,0.35)',
         }}>
           Lanjut ke Caption
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
