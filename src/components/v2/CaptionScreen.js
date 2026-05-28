@@ -194,62 +194,6 @@ export default function CaptionScreen({
         display:'flex', flexDirection:'column', gap:'12px',
       }}>
 
-        {/* ── Master Persona summary card (if detected in AsetScreen) ── */}
-        {persona && (
-          <div style={{
-            borderRadius:'16px', overflow:'hidden',
-            background:'linear-gradient(135deg, #1e0a3c 0%, #2d1060 100%)',
-            border:'1px solid rgba(167,139,250,0.25)',
-            flexShrink:0,
-          }}>
-            <div style={{padding:'14px 16px'}}>
-              {/* Top row */}
-              <div style={{display:'flex', alignItems:'center', gap:'8px', marginBottom:'10px'}}>
-                <div style={{
-                  width:'20px', height:'20px', borderRadius:'50%',
-                  background:'#22c55e', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0,
-                }}>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{width:'11px', height:'11px'}}>
-                    <polyline points="20 6 9 17 4 12"/>
-                  </svg>
-                </div>
-                <span style={{fontFamily:'var(--m-font)', fontSize:'11px', fontWeight:'700', color:'#e9d5ff', letterSpacing:'0.4px', textTransform:'uppercase'}}>
-                  Master Persona Terdeteksi
-                </span>
-                <svg viewBox="0 0 24 24" fill="none" stroke="#c4b5fd" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{width:'14px', height:'14px', marginLeft:'auto', flexShrink:0}}>
-                  <path d="M12 2L9.5 9.5 2 12l7.5 2.5L12 22l2.5-7.5L22 12l-7.5-2.5z"/>
-                </svg>
-              </div>
-              {/* Persona name */}
-              <div style={{fontFamily:'var(--m-font)', fontSize:'17px', fontWeight:'800', color:'#fff', marginBottom:'4px', letterSpacing:'-0.02em'}}>
-                {persona.name}
-              </div>
-              {/* Target & age chips */}
-              <div style={{display:'flex', flexWrap:'wrap', gap:'6px'}}>
-                <span style={{
-                  fontFamily:'var(--m-font)', fontSize:'11px', fontWeight:'600', color:'#e9d5ff',
-                  background:'rgba(255,255,255,0.10)', padding:'3px 10px', borderRadius:'99px',
-                  border:'1px solid rgba(255,255,255,0.12)',
-                }}>
-                  {persona.target}
-                </span>
-                <span style={{
-                  fontFamily:'var(--m-font)', fontSize:'11px', fontWeight:'600', color:'rgba(255,255,255,0.7)',
-                  background:'rgba(255,255,255,0.07)', padding:'3px 10px', borderRadius:'99px',
-                  border:'1px solid rgba(255,255,255,0.08)',
-                }}>
-                  {persona.age || '18–45'} · {persona.gender || 'Mixed'}
-                </span>
-              </div>
-            </div>
-            <div style={{background:'rgba(0,0,0,0.25)', padding:'8px 16px', borderTop:'1px solid rgba(255,255,255,0.06)'}}>
-              <span style={{fontFamily:'var(--m-font)', fontSize:'11px', color:'rgba(255,255,255,0.4)'}}>
-                Digunakan untuk mengoptimalkan targeting iklanmu
-              </span>
-            </div>
-          </div>
-        )}
-
         {/* ── Mini preview card ── */}
         <div className="panel" style={{boxShadow:'none', border:'1px solid #E4E4EB', padding:'14px', flexShrink:0}}>
           <div style={{display:'flex', alignItems:'center', gap:'14px'}}>
@@ -298,6 +242,56 @@ export default function CaptionScreen({
             </div>
           </div>
         </div>
+
+        {/* ── Master Persona card — shown below preview, styled like other cards ── */}
+        {persona && (
+          <div className="panel" style={{boxShadow:'none', border:'1px solid #E4E4EB', padding:'14px', flexShrink:0}}>
+            {/* Top row */}
+            <div style={{display:'flex', alignItems:'center', gap:'8px', marginBottom:'10px'}}>
+              <div style={{
+                width:'22px', height:'22px', borderRadius:'50%',
+                background:'#22c55e', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0,
+              }}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{width:'11px', height:'11px'}}>
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+              </div>
+              <span style={{fontFamily:'var(--m-font)', fontSize:'11px', fontWeight:'700', color:'var(--m-ink-sub)', letterSpacing:'0.4px', textTransform:'uppercase'}}>
+                Master Persona Terdeteksi
+              </span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--m-brand)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{width:'13px', height:'13px', marginLeft:'auto', flexShrink:0}}>
+                <path d="M12 2L9.5 9.5 2 12l7.5 2.5L12 22l2.5-7.5L22 12l-7.5-2.5z"/>
+              </svg>
+            </div>
+            {/* Persona name */}
+            <div style={{fontFamily:'var(--m-font)', fontSize:'17px', fontWeight:'800', color:'var(--m-ink)', marginBottom:'8px', letterSpacing:'-0.02em'}}>
+              {persona.name}
+            </div>
+            {/* Target & age chips */}
+            <div style={{display:'flex', flexWrap:'wrap', gap:'6px'}}>
+              <span style={{
+                fontFamily:'var(--m-font)', fontSize:'11px', fontWeight:'600', color:'var(--m-ink)',
+                background:'#F0F0F5', padding:'3px 10px', borderRadius:'99px',
+                border:'1px solid #E4E4EB',
+              }}>
+                {persona.target}
+              </span>
+              <span style={{
+                fontFamily:'var(--m-font)', fontSize:'11px', fontWeight:'600', color:'var(--m-ink-sub)',
+                background:'#F7F7FA', padding:'3px 10px', borderRadius:'99px',
+                border:'1px solid #E4E4EB',
+              }}>
+                {persona.age || '18–45'} · {persona.gender || 'Mixed'}
+              </span>
+            </div>
+            {/* Footer note */}
+            <div style={{marginTop:'10px', paddingTop:'10px', borderTop:'1px solid #F0F0F5'}}>
+              <span style={{fontFamily:'var(--m-font)', fontSize:'11px', color:'var(--m-ink-sub)'}}>
+                Digunakan untuk mengoptimalkan targeting iklanmu
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* ── Caption card ── */}
         <div className="panel" style={{boxShadow:'none', border:'1px solid #E4E4EB', padding:'14px', flexShrink:0}}>
