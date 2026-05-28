@@ -187,11 +187,44 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
           </div>
         </div>
 
+        {/* ── AI Kreatif entry ── */}
+        <div style={{
+          background:'#fff', borderRadius:'16px', border:'1px solid #E4E4EB',
+          padding:'12px 14px', marginBottom:'14px',
+          display:'flex', alignItems:'center', gap:'12px', cursor:'pointer',
+        }}>
+          <div style={{
+            width:'44px', height:'44px', borderRadius:'12px', flexShrink:0,
+            background:'var(--m-brand-soft)',
+            display:'flex', alignItems:'center', justifyContent:'center',
+          }}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--m-brand)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{width:'22px',height:'22px'}}>
+              <path d="M12 2L9.5 9.5 2 12l7.5 2.5L12 22l2.5-7.5L22 12l-7.5-2.5z"/>
+            </svg>
+          </div>
+          <div style={{flex:1}}>
+            <div style={{display:'flex', alignItems:'center', gap:'6px', marginBottom:'2px'}}>
+              <span style={{fontFamily:'var(--m-font)', fontSize:'14px', fontWeight:'700', color:'var(--m-ink)'}}>AI Kreatif</span>
+              <span style={{
+                fontFamily:'var(--m-font)', fontSize:'10px', fontWeight:'700',
+                color:'#fff', background:'var(--m-brand)',
+                padding:'2px 7px', borderRadius:'99px', letterSpacing:'0.3px',
+              }}>BARU</span>
+            </div>
+            <div style={{fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)'}}>
+              Upload foto → AI bikin 3 variasi profesional
+            </div>
+          </div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="var(--m-ink-sub)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{width:'16px',height:'16px',flexShrink:0}}>
+            <path d="M9 18l6-6-6-6"/>
+          </svg>
+        </div>
+
         {/* ── Asset selection card ── */}
         <div className="panel" style={{boxShadow:'none', border:'1px solid #E4E4EB', padding:'14px', marginBottom:'14px'}}>
           <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'12px'}}>
             <span style={{fontFamily:'var(--m-font)', fontSize:'14px', fontWeight:'700', color:'var(--m-ink)'}}>
-              Pilih foto untuk preview
+              Maksimal 5 Foto atau 1 Video
             </span>
             <span style={{fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)'}}>
               {files.length} foto · maks {MAX_FILES}
