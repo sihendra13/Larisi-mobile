@@ -407,19 +407,20 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
         position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 20,
         background: 'linear-gradient(to top, rgba(0,0,0,0.90) 0%, rgba(0,0,0,0.55) 55%, transparent 100%)',
         paddingTop: '40px', // space for gradient fade
-        paddingBottom: 'calc(60px + env(safe-area-inset-bottom))',
+        paddingBottom: 'calc(80px + env(safe-area-inset-bottom))',
       }}>
 
-        {/* ── Master Persona card (after scan) ── */}
+        {/* ── Master Persona card — V1 glass style ── */}
         {!isScanning && detectedPersona && (
           <div style={{ padding: '0 14px 12px' }}>
             <div style={{
-              background: 'rgba(15,8,30,0.72)',
-              backdropFilter: 'blur(12px)',
-              border: '1px solid rgba(167,139,250,0.28)',
+              background: 'rgba(255,255,255,0.08)',
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(255,255,255,0.15)',
               borderRadius: '14px',
-              padding: '12px 14px',
+              padding: '14px',
             }}>
+              {/* Top: check + label */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '6px' }}>
                 <div style={{
                   width: '18px', height: '18px', borderRadius: '50%',
@@ -430,15 +431,21 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
                     <polyline points="20 6 9 17 4 12"/>
                   </svg>
                 </div>
-                <span style={{ fontFamily: 'var(--m-font)', fontSize: '10px', fontWeight: '700', color: '#e9d5ff', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
+                <span style={{ fontFamily: 'var(--m-font)', fontSize: '11px', fontWeight: '700', color: '#e9d5ff', letterSpacing: '0.3px' }}>
                   Master Persona
                 </span>
               </div>
-              <div style={{ fontFamily: 'var(--m-font)', fontSize: '15px', fontWeight: '800', color: '#fff', marginBottom: '3px', letterSpacing: '-0.01em' }}>
+              {/* Name */}
+              <div style={{ fontFamily: 'var(--m-font)', fontSize: '16px', fontWeight: '700', color: '#fff', marginBottom: '3px', letterSpacing: '-0.01em' }}>
                 {detectedPersona.name}
               </div>
-              <div style={{ fontFamily: 'var(--m-font)', fontSize: '11px', color: 'rgba(255,255,255,0.65)' }}>
-                {detectedPersona.target} · {detectedPersona.age}
+              {/* Targeting */}
+              <div style={{ fontFamily: 'var(--m-font)', fontSize: '11px', color: 'rgba(255,255,255,0.75)', marginBottom: '2px' }}>
+                Targeting: {detectedPersona.target}
+              </div>
+              {/* Age range */}
+              <div style={{ fontFamily: 'var(--m-font)', fontSize: '11px', fontWeight: '600', color: 'rgba(255,255,255,0.75)' }}>
+                Age range: {detectedPersona.age || '18–45'} · {detectedPersona.gender || 'Mixed'}
               </div>
             </div>
           </div>
@@ -456,7 +463,7 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
                 onClick={() => setSelectedIdx(i)}
                 style={{
                   position: 'relative', flexShrink: 0,
-                  width: '48px', height: '48px', borderRadius: '8px', overflow: 'hidden',
+                  width: '60px', height: '60px', borderRadius: '10px', overflow: 'hidden',
                   border: i === selectedIdx ? '2.5px solid #fff' : '2px solid rgba(255,255,255,0.2)',
                   cursor: 'pointer',
                   boxShadow: i === selectedIdx ? '0 0 0 1px rgba(0,0,0,0.4)' : 'none',
@@ -508,7 +515,7 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
             <button
               onClick={() => fileInputRef.current?.click()}
               style={{
-                width: '44px', height: '44px', borderRadius: '50%',
+                width: '52px', height: '48px', borderRadius: '14px',
                 background: 'rgba(255,255,255,0.18)',
                 backdropFilter: 'blur(8px)',
                 border: '1.5px solid rgba(255,255,255,0.28)',
@@ -526,7 +533,7 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
             <button
               onClick={openAISheet}
               style={{
-                width: '44px', height: '44px', borderRadius: '50%',
+                width: '52px', height: '48px', borderRadius: '14px',
                 background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
                 border: 'none',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -541,11 +548,11 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
             </button>
           </div>
 
-          {/* Right: Next → (pill) */}
+          {/* Right: Next → */}
           <button
             onClick={handleNext}
             style={{
-              padding: '11px 26px', borderRadius: '99px',
+              padding: '11px 26px', borderRadius: '14px',
               background: '#fff', color: '#111', border: 'none',
               fontFamily: 'var(--m-font)', fontSize: '15px', fontWeight: '700',
               cursor: 'pointer',
