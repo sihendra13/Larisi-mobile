@@ -4,7 +4,7 @@ import { useState } from 'react';
 export default function PerformaScreen() {
   const [activeTab, setActiveTab] = useState('Insight');
   
-  const tabs = ['Insight', 'Rekomendasi', 'Local Pulse', 'Tools'];
+  const tabs = ['Insight', 'Rekomendasi', 'Local Pulse', 'Strategi'];
 
   return (
     <div style={{display:'flex', flexDirection:'column', flex:1, overflow:'hidden', background:'var(--m-bg)'}}>
@@ -51,7 +51,7 @@ export default function PerformaScreen() {
         </div>
 
         {/* Status */}
-        <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'16px'}}>
+        <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'4px'}}>
           <div style={{display:'flex', alignItems:'center', gap:'6px'}}>
             <div style={{width:'8px', height:'8px', borderRadius:'50%', background:'#34A853'}} />
             <span style={{fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)', fontWeight:'600'}}>Diperbarui baru saja</span>
@@ -70,8 +70,9 @@ export default function PerformaScreen() {
 
         {/* ── Tabs ── */}
         <div style={{
+          position: 'sticky', top: 0, zIndex: 190, background: 'var(--m-bg)',
           display:'flex', alignItems:'center', gap:'8px', overflowX:'auto',
-          paddingBottom:'16px', margin:'0 -16px', paddingLeft:'16px', paddingRight:'16px',
+          paddingTop:'12px', paddingBottom:'16px', margin:'0 -16px', paddingLeft:'16px', paddingRight:'16px',
           scrollbarWidth:'none'
         }}>
           {tabs.map(tab => {
@@ -398,7 +399,7 @@ export default function PerformaScreen() {
           </div>
         )}
 
-        {activeTab === 'Tools' && (
+        {activeTab === 'Strategi' && (
           <div style={{display:'flex', flexDirection:'column', gap:'12px'}}>
             
             {/* Competitor Analysis */}
@@ -486,7 +487,7 @@ export default function PerformaScreen() {
       </main>
       
       {/* Sticky Bottom CTA for Tab 3/4 */}
-      {(activeTab === 'Tools' || activeTab === 'Rekomendasi') && (
+      {(activeTab === 'Strategi' || activeTab === 'Rekomendasi') && (
         <div style={{
           position:'fixed', bottom:'80px', left:0, right:0, padding:'16px',
           background:'linear-gradient(to top, rgba(255,255,255,1) 50%, rgba(255,255,255,0))', zIndex:100
