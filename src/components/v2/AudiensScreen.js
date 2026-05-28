@@ -582,7 +582,7 @@ export default function AudiensScreen({
       <div style={{
         position:'fixed',
         bottom:'calc(60px + env(safe-area-inset-bottom) + 12px)',
-        left:'16px', right:'16px', zIndex:300,
+        left:'16px', right:'16px', zIndex:950,
       }}>
         <button onClick={onNext} style={{
           width:'100%', padding:'16px', borderRadius:'16px',
