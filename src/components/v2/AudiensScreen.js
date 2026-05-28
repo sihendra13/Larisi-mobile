@@ -23,6 +23,7 @@ function fmtReach(n) {
   return n.toLocaleString('id-ID');
 }
 
+/* ── Toggle (stable, defined outside) ── */
 const Toggle = ({ on, onToggle }) => (
   <button onClick={onToggle} style={{
     width:'44px', height:'24px', borderRadius:'99px', border:'none',
@@ -39,6 +40,78 @@ const Toggle = ({ on, onToggle }) => (
   </button>
 );
 
+/* ── SearchBar — defined OUTSIDE to prevent remount on parent re-render ── */
+function SearchBar({ searchVal, onInput, results, showDropdown, onSelect, onClear, onFocus }) {
+  return (
+    <div style={{padding:'12px 16px 0', position:'relative'}} onClick={e => e.stopPropagation()}>
+      <div style={{display:'flex',alignItems:'center',gap:'8px',background:'#F4F4F7',borderRadius:'8px',padding:'0 12px',height:'42px'}}>
+        <svg viewBox="0 0 24 24" fill="none" stroke="var(--m-ink-sub)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{width:'14px',height:'14px',flexShrink:0}}>
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input
+          value={searchVal}
+          onChange={e => onInput(e.target.value)}
+          onFocus={onFocus}
+          placeholder="Cari kecamatan atau kota..."
+          style={{
+            border:'none', background:'none', outline:'none', flex:1,
+            fontFamily:'var(--m-font)',
+            fontSize:'16px', /* 16px prevents mobile auto-zoom */
+            color:'var(--m-ink)',
+          }}
+        />
+        {searchVal && (
+          <button onClick={e => { e.stopPropagation(); onClear(); }}
+            style={{background:'none',border:'none',cursor:'pointer',color:'var(--m-ink-sub)',fontSize:'18px',padding:0,lineHeight:1,flexShrink:0}}>×</button>
+        )}
+      </div>
+      {showDropdown && results.length > 0 && (
+        <div style={{
+          position:'absolute',top:'calc(100% - 0px)',left:'16px',right:'16px',
+          background:'#fff',borderRadius:'8px',
+          boxShadow:'0 4px 16px rgba(0,0,0,0.12)',
+          zIndex:500,overflow:'hidden',marginTop:'4px',
+        }}>
+          {results.map((loc, i) => (
+            <div key={i} onClick={() => onSelect(loc)}
+              style={{
+                padding:'10px 14px',fontSize:'13px',cursor:'pointer',
+                fontFamily:'var(--m-font)',color:'var(--m-ink)',
+                borderBottom: i < results.length-1 ? '1px solid #F4F4F7' : 'none',
+              }}
+              onMouseOver={e => e.currentTarget.style.background='#F3EBFF'}
+              onMouseOut={e => e.currentTarget.style.background=''}
+            >{loc.n}</div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── RadiusSlider — defined OUTSIDE to prevent remount on parent re-render ── */
+function RadiusSlider({ radius, onChange }) {
+  const sliderPct = ((radius - 0.5) / 9.5) * 100;
+  return (
+    <div style={{padding:'14px 16px 16px'}}>
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'10px'}}>
+        <span style={{fontFamily:'var(--m-font)',fontSize:'13px',fontWeight:'600',color:'var(--m-ink)'}}>Target Radius</span>
+        <span style={{fontFamily:'var(--m-font)',fontSize:'12px',fontWeight:'700',color:'var(--m-brand)',background:'var(--m-brand-soft)',padding:'3px 10px',borderRadius:'8px'}}>
+          {radius.toFixed(1)} KM
+        </span>
+      </div>
+      <input type="range" min="0.5" max="10" step="0.5" className="larisi-slider" value={radius}
+        onChange={e => onChange(parseFloat(e.target.value))}
+        style={{width:'100%',background:`linear-gradient(to right, var(--m-brand) 0%, var(--m-brand) ${sliderPct}%, #E4E4EB ${sliderPct}%, #E4E4EB 100%)`}}
+      />
+      <div style={{textAlign:'center',marginTop:'8px'}}>
+        <span style={{fontFamily:'var(--m-font)',fontSize:'11px',color:'var(--m-ink-sub)'}}>Geser untuk memperluas jangkauan</span>
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════ */
 export default function AudiensScreen({
   platform, onBack, onNext,
   locName, setLocName, locFull, setLocFull,
@@ -64,10 +137,16 @@ export default function AudiensScreen({
   const bottomSheetMarkerRef = useRef(null);
   const bottomSheetCircleRef = useRef(null);
   const searchTimerRef       = useRef(null);
-  const snapRef = useRef({ lat: DEFAULT_LAT, lng: DEFAULT_LNG, locName: 'Sumbersari, Sleman', locPop: 50000, radius: 1.0 });
+  const snapRef = useRef({ lat: DEFAULT_LAT, lng: DEFAULT_LNG });
 
   /* keep snapshot fresh */
-  useEffect(() => { snapRef.current = { lat: snapRef.current.lat, lng: snapRef.current.lng, locName, locPop, radius }; });
+  useEffect(() => {
+    snapRef.current.lat    = snapRef.current.lat;
+    snapRef.current.lng    = snapRef.current.lng;
+    snapRef.current.locName = locName;
+    snapRef.current.locPop  = locPop;
+    snapRef.current.radius  = radius;
+  });
 
   /* ── Reach ── */
   const reach     = computeReach(locPop, radius, localOn, travelerOn);
@@ -75,15 +154,15 @@ export default function AudiensScreen({
 
   function popupHtml(name, rText) {
     return `<div style="text-align:center;padding:2px 4px;min-width:130px;">
-      <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;font-weight:700;color:#1C1C28;">${name}</div>
+      <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;font-weight:700;color:#1C1C28;">${name || 'Lokasiku'}</div>
       <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:11px;font-weight:700;color:#6d28d9;margin-top:2px;">${rText}</div>
     </div>`;
   }
 
-  /* ── Sync popup when locName / reach changes ── */
+  /* ── Sync popup ── */
   useEffect(() => {
-    if (markerRef.current)             markerRef.current.setPopupContent(popupHtml(locName, reachText));
-    if (bottomSheetMarkerRef.current)  bottomSheetMarkerRef.current.setPopupContent(popupHtml(locName, reachText));
+    if (markerRef.current)            markerRef.current.setPopupContent(popupHtml(locName, reachText));
+    if (bottomSheetMarkerRef.current) bottomSheetMarkerRef.current.setPopupContent(popupHtml(locName, reachText));
   }, [locName, reachText]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const findNearest = useCallback((lat, lng) => {
@@ -100,10 +179,18 @@ export default function AudiensScreen({
       const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=id`);
       const d = await r.json();
       const a = d.address || {};
-      const name = a.village || a.suburb || a.neighbourhood || a.city_district || a.city || a.county || '';
-      const city = a.city || a.county || a.state || '';
-      const loc  = name + (city && name !== city ? ', ' + city : '');
-      if (loc) { setLocName(name || loc); setLocFull(loc); }
+      const name = a.village || a.suburb || a.neighbourhood || a.city_district || '';
+      const city = a.city || a.county || a.state_district || a.state || '';
+      if (name) {
+        /* only build loc string when name is non-empty */
+        const loc = name + (city && name !== city ? ', ' + city : '');
+        setLocName(name);
+        setLocFull(loc || name);
+      } else if (city) {
+        /* fallback: use city as both name and full */
+        setLocName(city);
+        setLocFull(city);
+      }
     } catch (_) {}
   }, [setLocName, setLocFull]);
 
@@ -122,8 +209,11 @@ export default function AudiensScreen({
   const moveToUserLocation = useCallback(() => {
     if (!navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(
-      (pos) => { movePinTo(pos.coords.latitude, pos.coords.longitude); reverseGeocode(pos.coords.latitude, pos.coords.longitude); },
-      (err)  => console.warn('[map]', err.message),
+      (pos) => {
+        movePinTo(pos.coords.latitude, pos.coords.longitude);
+        reverseGeocode(pos.coords.latitude, pos.coords.longitude);
+      },
+      (err) => console.warn('[map]', err.message),
       { timeout: 8000, maximumAge: 60000 }
     );
   }, [movePinTo, reverseGeocode]);
@@ -133,16 +223,25 @@ export default function AudiensScreen({
     const buildMap = () => {
       if (!mapRef.current || leafletMapRef.current) return;
       const L = window.L;
-      const map = L.map(mapRef.current, { center:[DEFAULT_LAT, DEFAULT_LNG], zoom:13, zoomControl:true, attributionControl:false });
+      const map = L.map(mapRef.current, {
+        center:[DEFAULT_LAT, DEFAULT_LNG], zoom:13,
+        zoomControl:true, attributionControl:false,
+      });
       L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { subdomains:'abcd', maxZoom:19 }).addTo(map);
 
-      const icon = L.divIcon({ className:'', html:`<div style="width:14px;height:14px;border-radius:50%;background:#6d28d9;border:2px solid #fff;box-shadow:0 0 0 3px rgba(109,40,217,0.35)"></div>`, iconSize:[14,14], iconAnchor:[7,7] });
+      const icon = L.divIcon({
+        className:'',
+        html:`<div style="width:14px;height:14px;border-radius:50%;background:#6d28d9;border:2px solid #fff;box-shadow:0 0 0 3px rgba(109,40,217,0.35)"></div>`,
+        iconSize:[14,14], iconAnchor:[7,7],
+      });
       markerRef.current = L.marker([DEFAULT_LAT, DEFAULT_LNG], { icon })
         .addTo(map)
-        .bindPopup(popupHtml('Sumbersari, Sleman','Jangkauan: 0 orang'), { closeButton:false, autoClose:false, closeOnClick:false, offset:[0,-4] })
+        .bindPopup(popupHtml('Sumbersari', 'Jangkauan: 0 orang'), { closeButton:false, autoClose:false, closeOnClick:false, offset:[0,-4] })
         .openPopup();
 
-      circleRef.current = L.circle([DEFAULT_LAT, DEFAULT_LNG], { radius:1000, color:'#6d28d9', fillColor:'#6d28d9', fillOpacity:0.12, weight:1.5 }).addTo(map);
+      circleRef.current = L.circle([DEFAULT_LAT, DEFAULT_LNG], {
+        radius:1000, color:'#6d28d9', fillColor:'#6d28d9', fillOpacity:0.12, weight:1.5,
+      }).addTo(map);
 
       map.on('click', (e) => { movePinTo(e.latlng.lat, e.latlng.lng); reverseGeocode(e.latlng.lat, e.latlng.lng); });
 
@@ -156,23 +255,37 @@ export default function AudiensScreen({
       };
       locBtn.addTo(map);
       leafletMapRef.current = map;
-      moveToUserLocation();
+
+      /* invalidateSize ensures correct zoom on mobile */
+      setTimeout(() => { map.invalidateSize(); moveToUserLocation(); }, 200);
     };
 
     if (!document.getElementById('leaflet-css')) {
-      const css = document.createElement('link'); css.id='leaflet-css'; css.rel='stylesheet';
-      css.href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'; document.head.appendChild(css);
+      const css = document.createElement('link');
+      css.id='leaflet-css'; css.rel='stylesheet';
+      css.href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+      document.head.appendChild(css);
     }
     if (window.L) { buildMap(); }
     else if (!document.getElementById('leaflet-js')) {
-      const s = document.createElement('script'); s.id='leaflet-js'; s.src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+      const s = document.createElement('script');
+      s.id='leaflet-js'; s.src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
       s.onload = buildMap; document.head.appendChild(s);
-    } else { document.getElementById('leaflet-js').addEventListener('load', buildMap); }
+    } else {
+      const existing = document.getElementById('leaflet-js');
+      if (existing.dataset.loaded) buildMap();
+      else existing.addEventListener('load', buildMap);
+    }
 
-    return () => { if (leafletMapRef.current) { leafletMapRef.current.remove(); leafletMapRef.current=null; markerRef.current=null; circleRef.current=null; } };
+    return () => {
+      if (leafletMapRef.current) {
+        leafletMapRef.current.remove();
+        leafletMapRef.current=null; markerRef.current=null; circleRef.current=null;
+      }
+    };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /* ── Sync radius (both maps) ── */
+  /* ── Sync radius ── */
   useEffect(() => {
     if (circleRef.current)            circleRef.current.setRadius(radius * 1000);
     if (bottomSheetCircleRef.current) bottomSheetCircleRef.current.setRadius(radius * 1000);
@@ -181,28 +294,39 @@ export default function AudiensScreen({
   /* ── Bottom sheet map ── */
   useEffect(() => {
     if (!isBottomSheet) {
-      if (bottomSheetLeafRef.current) { bottomSheetLeafRef.current.remove(); bottomSheetLeafRef.current=null; bottomSheetMarkerRef.current=null; bottomSheetCircleRef.current=null; }
+      if (bottomSheetLeafRef.current) {
+        bottomSheetLeafRef.current.remove();
+        bottomSheetLeafRef.current=null; bottomSheetMarkerRef.current=null; bottomSheetCircleRef.current=null;
+      }
       document.body.style.overflow = '';
       return;
     }
     document.body.style.overflow = 'hidden';
     const { lat:bLat, lng:bLng, locName:bName, locPop:bPop, radius:bRad } = snapRef.current;
-    const r2 = computeReach(bPop, bRad, localOn, travelerOn);
+    const r2 = computeReach(bPop || locPop, bRad || radius, localOn, travelerOn);
     const rT2 = r2 === 0 ? 'Jangkauan: 0 orang' : `Jangkauan: ${fmtReach(r2)} orang`;
 
     const timer = setTimeout(() => {
       if (!bottomSheetMapRef.current || bottomSheetLeafRef.current) return;
       const L = window.L; if (!L) return;
-      const map = L.map(bottomSheetMapRef.current, { center:[bLat, bLng], zoom:14, zoomControl:true, attributionControl:false });
+      const map = L.map(bottomSheetMapRef.current, {
+        center:[bLat, bLng], zoom:14, zoomControl:true, attributionControl:false,
+      });
       L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { subdomains:'abcd', maxZoom:19 }).addTo(map);
 
-      const icon = L.divIcon({ className:'', html:`<div style="width:14px;height:14px;border-radius:50%;background:#6d28d9;border:2px solid #fff;box-shadow:0 0 0 3px rgba(109,40,217,0.35)"></div>`, iconSize:[14,14], iconAnchor:[7,7] });
+      const icon = L.divIcon({
+        className:'',
+        html:`<div style="width:14px;height:14px;border-radius:50%;background:#6d28d9;border:2px solid #fff;box-shadow:0 0 0 3px rgba(109,40,217,0.35)"></div>`,
+        iconSize:[14,14], iconAnchor:[7,7],
+      });
       const bsMarker = L.marker([bLat, bLng], { icon }).addTo(map)
-        .bindPopup(popupHtml(bName, rT2), { closeButton:false, autoClose:false, closeOnClick:false, offset:[0,-4] })
+        .bindPopup(popupHtml(bName || locName, rT2), { closeButton:false, autoClose:false, closeOnClick:false, offset:[0,-4] })
         .openPopup();
       bottomSheetMarkerRef.current = bsMarker;
 
-      const bsCircle = L.circle([bLat, bLng], { radius:bRad*1000, color:'#6d28d9', fillColor:'#6d28d9', fillOpacity:0.12, weight:1.5 }).addTo(map);
+      const bsCircle = L.circle([bLat, bLng], {
+        radius:(bRad || radius)*1000, color:'#6d28d9', fillColor:'#6d28d9', fillOpacity:0.12, weight:1.5,
+      }).addTo(map);
       bottomSheetCircleRef.current = bsCircle;
 
       map.on('click', (e) => { movePinTo(e.latlng.lat, e.latlng.lng); reverseGeocode(e.latlng.lat, e.latlng.lng); });
@@ -217,92 +341,54 @@ export default function AudiensScreen({
       };
       locBtn.addTo(map);
       bottomSheetLeafRef.current = map;
-      setTimeout(() => map.invalidateSize(), 100);
+      setTimeout(() => map.invalidateSize(), 150);
     }, 80);
 
     return () => clearTimeout(timer);
   }, [isBottomSheet]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /* ── Search ── */
-  const handleSearchInput = (val) => {
+  /* ── Search handlers ── */
+  const handleSearchInput = useCallback((val) => {
     setSearchVal(val);
     if (!val || val.length < 2) { setShowDropdown(false); setSearchResults([]); return; }
     if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
     searchTimerRef.current = setTimeout(() => {
       const lower = val.toLowerCase();
       const results = ID_LOCATIONS.filter(l => l.n.toLowerCase().includes(lower)).slice(0, 7);
-      setSearchResults(results); setShowDropdown(results.length > 0);
-    }, 350);
-  };
+      setSearchResults(results);
+      setShowDropdown(results.length > 0);
+    }, 300);
+  }, []);
 
-  const selectCity = (loc) => {
+  const handleClear = useCallback(() => {
+    setSearchVal(''); setShowDropdown(false); setSearchResults([]);
+  }, []);
+
+  const handleFocus = useCallback(() => {
+    if (searchResults.length > 0) setShowDropdown(true);
+  }, [searchResults.length]);
+
+  const selectCity = useCallback((loc) => {
     setShowDropdown(false);
-    setSearchVal(loc.n.split(',')[0]);
-    const short = loc.n.split(',').slice(0, 2).join(', ');
-    setLocName(loc.n.split(',')[0]); setLocFull(short);
+    const shortName = loc.n.split(',')[0].trim();
+    const shortFull = loc.n.split(',').slice(0,2).join(', ').trim();
+    setSearchVal(shortName);
+    setLocName(shortName);
+    setLocFull(shortFull);
     if (loc.pop) setLocPop(loc.pop);
     movePinTo(loc.lat, loc.lng);
-  };
-
-  const sliderPct = ((radius - 0.5) / 9.5) * 100;
-
-  /* ── Shared: search bar ── */
-  const SearchBar = () => (
-    <div style={{padding:'12px 16px 0', position:'relative'}} onClick={e => e.stopPropagation()}>
-      <div style={{display:'flex',alignItems:'center',gap:'8px',background:'#F4F4F7',borderRadius:'8px',padding:'0 12px',height:'38px'}}>
-        <svg viewBox="0 0 24 24" fill="none" stroke="var(--m-ink-sub)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{width:'14px',height:'14px',flexShrink:0}}>
-          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-        </svg>
-        <input
-          value={searchVal} onChange={e => handleSearchInput(e.target.value)}
-          onFocus={() => searchResults.length > 0 && setShowDropdown(true)}
-          placeholder="Cari kecamatan atau kota..."
-          style={{border:'none',background:'none',outline:'none',flex:1,fontFamily:'var(--m-font)',fontSize:'13px',color:'var(--m-ink)'}}
-        />
-        {searchVal && (
-          <button onClick={e => { e.stopPropagation(); setSearchVal(''); setShowDropdown(false); setSearchResults([]); }}
-            style={{background:'none',border:'none',cursor:'pointer',color:'var(--m-ink-sub)',fontSize:'16px',padding:0,lineHeight:1}}>×</button>
-        )}
-      </div>
-      {showDropdown && searchResults.length > 0 && (
-        <div style={{position:'absolute',top:'100%',left:'16px',right:'16px',background:'#fff',borderRadius:'8px',boxShadow:'0 4px 16px rgba(0,0,0,0.12)',zIndex:500,overflow:'hidden',marginTop:'4px'}}>
-          {searchResults.map((loc, i) => (
-            <div key={i} onClick={() => selectCity(loc)}
-              style={{padding:'10px 14px',fontSize:'12px',cursor:'pointer',fontFamily:'var(--m-font)',color:'var(--m-ink)',borderBottom:i<searchResults.length-1?'1px solid #F4F4F7':'none'}}
-              onMouseOver={e => e.currentTarget.style.background='#F3EBFF'}
-              onMouseOut={e => e.currentTarget.style.background=''}
-            >{loc.n}</div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-
-  /* ── Shared: radius slider ── */
-  const RadiusSlider = () => (
-    <div style={{padding:'16px'}}>
-      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'10px'}}>
-        <span style={{fontFamily:'var(--m-font)',fontSize:'13px',fontWeight:'600',color:'var(--m-ink)'}}>Target Radius</span>
-        <span style={{fontFamily:'var(--m-font)',fontSize:'12px',fontWeight:'700',color:'var(--m-brand)',background:'var(--m-brand-soft)',padding:'3px 10px',borderRadius:'8px'}}>
-          {radius.toFixed(1)} KM
-        </span>
-      </div>
-      <input type="range" min="0.5" max="10" step="0.5" className="larisi-slider" value={radius}
-        onChange={e => setRadius(parseFloat(e.target.value))}
-        style={{width:'100%',background:`linear-gradient(to right, var(--m-brand) 0%, var(--m-brand) ${sliderPct}%, #E4E4EB ${sliderPct}%, #E4E4EB 100%)`}}
-      />
-      <div style={{textAlign:'center',marginTop:'8px'}}>
-        <span style={{fontFamily:'var(--m-font)',fontSize:'11px',color:'var(--m-ink-sub)'}}>Geser untuk memperluas jangkauan</span>
-      </div>
-    </div>
-  );
+  }, [movePinTo, setLocName, setLocFull, setLocPop]);
 
   /* ══════════════════════ RENDER ══════════════════════ */
   return (
     <div style={{display:'flex', flexDirection:'column', flex:1, overflow:'hidden', background:'var(--m-bg)'}}>
 
       {/* ── Header Larisi ── */}
-      <header style={{position:'sticky',top:0,zIndex:200,display:'flex',alignItems:'center',justifyContent:'space-between',padding:'12px 16px',background:'#fff'}}>
+      <header style={{
+        position:'sticky', top:0, zIndex:200,
+        display:'flex', alignItems:'center', justifyContent:'space-between',
+        padding:'12px 16px', background:'#fff', flexShrink:0,
+      }}>
         <img src="/logo_larisi.svg" alt="Larisi" style={{height:'22px',width:'auto'}} />
         <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
           <button style={{width:'38px',height:'38px',borderRadius:'50%',background:'#fff',border:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 1px 4px rgba(0,0,0,0.08)'}}>
@@ -328,33 +414,51 @@ export default function AudiensScreen({
       </header>
 
       {/* ── Page title ── */}
-      <div style={{padding:'20px 16px 0', background:'var(--m-bg)'}}>
-        <div style={{display:'flex',alignItems:'center',gap:'14px',marginBottom:'6px'}}>
-          <button onClick={onBack} style={{width:'38px',height:'38px',borderRadius:'50%',background:'#fff',border:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 1px 4px rgba(0,0,0,0.10)',flexShrink:0}}>
+      <div style={{padding:'20px 16px 12px', background:'var(--m-bg)', flexShrink:0}}>
+        <div style={{display:'flex',alignItems:'center',gap:'14px',marginBottom:'4px'}}>
+          <button onClick={onBack} style={{
+            width:'38px',height:'38px',borderRadius:'50%',background:'#fff',
+            border:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',
+            boxShadow:'0 1px 4px rgba(0,0,0,0.10)',flexShrink:0,
+          }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--m-ink)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M15 18l-6-6 6-6"/>
             </svg>
           </button>
-          <h1 style={{fontFamily:'var(--m-font)',fontSize:'26px',fontWeight:'800',color:'var(--m-ink)',lineHeight:'1.2'}}>Target Audiens</h1>
+          <h1 style={{fontFamily:'var(--m-font)',fontSize:'26px',fontWeight:'800',color:'var(--m-ink)',lineHeight:'1.2'}}>
+            Target Audiens
+          </h1>
         </div>
-        <p style={{fontFamily:'var(--m-font)',fontSize:'14px',color:'var(--m-ink-sub)',paddingLeft:'52px',marginBottom:'16px'}}>
+        <p style={{fontFamily:'var(--m-font)',fontSize:'13px',color:'var(--m-ink-sub)',paddingLeft:'52px'}}>
           Tentukan siapa yang akan melihat iklanmu di {PLATFORM_LABELS[platform] || 'Instagram'}
         </p>
       </div>
 
       {/* ── Scrollable content ── */}
-      <main style={{flex:1,overflowY:'auto',padding:'0 16px',paddingBottom:'calc(80px + env(safe-area-inset-bottom) + 60px)',display:'flex',flexDirection:'column',gap:'12px'}}>
+      <main style={{
+        flex:1, overflowY:'auto',
+        padding:'4px 16px',
+        paddingBottom:'calc(100px + env(safe-area-inset-bottom) + 60px)',
+        display:'flex', flexDirection:'column', gap:'12px',
+      }}>
 
         {/* Card 1: Target Audiens */}
-        <div className="panel" style={{boxShadow:'none',border:'1px solid #E4E4EB',overflow:'hidden'}}>
+        <div style={{
+          background:'#fff', borderRadius:'16px',
+          border:'1px solid #E4E4EB', overflow:'hidden',
+        }}>
           <div style={{display:'flex',alignItems:'center',gap:'12px',padding:'16px 16px 0'}}>
-            <div style={{width:'36px',height:'36px',borderRadius:'10px',background:'var(--m-brand-soft)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+            <div style={{
+              width:'36px',height:'36px',borderRadius:'10px',
+              background:'var(--m-brand-soft)',
+              display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,
+            }}>
               <svg viewBox="0 0 24 24" fill="none" stroke="var(--m-brand)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{width:'18px',height:'18px'}}>
                 <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>
               </svg>
             </div>
             <div>
-              <div style={{fontFamily:'var(--m-font)',fontSize:'16px',fontWeight:'700',color:'var(--m-ink)'}}>Siapa Target Audiens Kamu?</div>
+              <div style={{fontFamily:'var(--m-font)',fontSize:'15px',fontWeight:'700',color:'var(--m-ink)'}}>Siapa Target Audiens Kamu?</div>
               <div style={{fontFamily:'var(--m-font)',fontSize:'12px',color:'var(--m-ink-sub)',marginTop:'2px'}}>Pilih siapa yang akan lihat iklanmu</div>
             </div>
           </div>
@@ -362,14 +466,14 @@ export default function AudiensScreen({
             <div style={{display:'flex',alignItems:'center',padding:'14px 0',borderBottom:'1px solid #F0F0F5'}}>
               <div style={{flex:1}}>
                 <div style={{fontFamily:'var(--m-font)',fontSize:'14px',fontWeight:'600',color:'var(--m-ink)'}}>Warga Sekitar</div>
-                <div style={{fontFamily:'var(--m-font)',fontSize:'12px',color:'var(--m-ink-sub)',marginTop:'2px'}}>Penduduk lokal di sekitar lokasi yang kamu pilih</div>
+                <div style={{fontFamily:'var(--m-font)',fontSize:'12px',color:'var(--m-ink-sub)',marginTop:'2px'}}>Orang yang tinggal di area ini</div>
               </div>
               <Toggle on={localOn} onToggle={() => setLocalOn(v => !v)} />
             </div>
-            <div style={{display:'flex',alignItems:'center',padding:'14px 0'}}>
+            <div style={{display:'flex',alignItems:'center',padding:'14px 0 0'}}>
               <div style={{flex:1}}>
                 <div style={{fontFamily:'var(--m-font)',fontSize:'14px',fontWeight:'600',color:'var(--m-ink)'}}>Pengunjung</div>
-                <div style={{fontFamily:'var(--m-font)',fontSize:'12px',color:'var(--m-ink-sub)',marginTop:'2px'}}>Pendatang atau orang yang baru saja melewati lokasi ini</div>
+                <div style={{fontFamily:'var(--m-font)',fontSize:'12px',color:'var(--m-ink-sub)',marginTop:'2px'}}>Orang yang sedang berada di sini</div>
               </div>
               <Toggle on={travelerOn} onToggle={() => setTravelerOn(v => !v)} />
             </div>
@@ -377,30 +481,49 @@ export default function AudiensScreen({
         </div>
 
         {/* Card 2: Tentukan Titik Target */}
-        <div className="panel" style={{boxShadow:'none',border:'1px solid #E4E4EB',overflow:'visible'}}>
+        <div style={{
+          background:'#fff', borderRadius:'16px',
+          border:'1px solid #E4E4EB',
+          overflow:'visible', /* allow search dropdown to show outside card */
+          position:'relative',
+        }}>
           <div style={{display:'flex',alignItems:'center',gap:'12px',padding:'16px 16px 0'}}>
-            <div style={{width:'36px',height:'36px',borderRadius:'10px',background:'var(--m-brand-soft)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+            <div style={{
+              width:'36px',height:'36px',borderRadius:'10px',
+              background:'var(--m-brand-soft)',
+              display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,
+            }}>
               <svg viewBox="0 0 24 24" fill="none" stroke="var(--m-brand)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{width:'18px',height:'18px'}}>
                 <path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
                 <path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
               </svg>
             </div>
             <div>
-              <div style={{fontFamily:'var(--m-font)',fontSize:'16px',fontWeight:'700',color:'var(--m-ink)'}}>Tentukan Titik Target Iklanmu</div>
+              <div style={{fontFamily:'var(--m-font)',fontSize:'15px',fontWeight:'700',color:'var(--m-ink)'}}>Tentukan Titik Target Iklanmu</div>
               <div style={{fontFamily:'var(--m-font)',fontSize:'12px',color:'var(--m-ink-sub)',marginTop:'2px'}}>Klik peta atau cari kecamatan / kota</div>
             </div>
           </div>
 
-          <SearchBar />
+          <SearchBar
+            searchVal={searchVal}
+            onInput={handleSearchInput}
+            results={searchResults}
+            showDropdown={showDropdown}
+            onSelect={selectCity}
+            onClear={handleClear}
+            onFocus={handleFocus}
+          />
 
-          {/* Mini map + expand button */}
+          {/* Mini map */}
           <div style={{padding:'12px 16px 0',position:'relative'}}>
-            <div ref={mapRef} style={{width:'100%',height:'230px',borderRadius:'12px',overflow:'hidden'}} />
+            <div ref={mapRef} style={{width:'100%',height:'200px',borderRadius:'12px',overflow:'hidden'}} />
+            {/* Expand button */}
             <button onClick={openSheet} title="Perbesar peta" style={{
-              position:'absolute',bottom:'12px',right:'28px',zIndex:400,
-              width:'34px',height:'34px',borderRadius:'50%',
-              background:'#fff',border:'none',boxShadow:'0 2px 8px rgba(0,0,0,0.18)',
-              display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',
+              position:'absolute', bottom:'12px', right:'28px', zIndex:400,
+              width:'34px', height:'34px', borderRadius:'50%',
+              background:'#fff', border:'none',
+              boxShadow:'0 2px 8px rgba(0,0,0,0.18)',
+              display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer',
             }}>
               <svg viewBox="0 0 24 24" fill="none" stroke="var(--m-ink)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{width:'16px',height:'16px'}}>
                 <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>
@@ -408,17 +531,21 @@ export default function AudiensScreen({
             </button>
           </div>
 
-          <RadiusSlider />
+          <RadiusSlider radius={radius} onChange={setRadius} />
         </div>
       </main>
 
       {/* ── Sticky CTA ── */}
-      <div style={{position:'fixed',bottom:'calc(60px + env(safe-area-inset-bottom) + 12px)',left:'16px',right:'16px',zIndex:300}}>
+      <div style={{
+        position:'fixed',
+        bottom:'calc(60px + env(safe-area-inset-bottom) + 12px)',
+        left:'16px', right:'16px', zIndex:300,
+      }}>
         <button onClick={onNext} style={{
-          width:'100%',padding:'16px',borderRadius:'16px',
-          background:'#1A1A1A',color:'#fff',border:'none',
-          fontFamily:'var(--m-font)',fontSize:'15px',fontWeight:'700',
-          cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:'8px',
+          width:'100%', padding:'16px', borderRadius:'16px',
+          background:'#1A1A1A', color:'#fff', border:'none',
+          fontFamily:'var(--m-font)', fontSize:'15px', fontWeight:'700',
+          cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:'8px',
         }}>
           Lanjut ke Konten
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -430,21 +557,24 @@ export default function AudiensScreen({
       {/* ── Bottom Sheet: Peta Diperbesar ── */}
       {isBottomSheet && (
         <>
-          <div onClick={closeSheet} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',zIndex:9998,opacity:animateSheet?1:0,transition:'opacity 0.3s ease-out'}} />
+          <div onClick={closeSheet} style={{
+            position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:9998,
+            opacity: animateSheet ? 1 : 0, transition:'opacity 0.3s ease-out',
+          }} />
           <div style={{
-            position:'fixed',bottom:0,left:0,right:0,zIndex:9999,
-            background:'#fff',borderRadius:'20px 20px 0 0',
-            height:'72vh',display:'flex',flexDirection:'column',overflow:'hidden',
-            transform:animateSheet?'translateY(0)':'translateY(100%)',
-            transition:'transform 0.3s ease-out',
+            position:'fixed', bottom:0, left:0, right:0, zIndex:9999,
+            background:'#fff', borderRadius:'20px 20px 0 0',
+            height:'80vh', display:'flex', flexDirection:'column', overflow:'hidden',
+            transform: animateSheet ? 'translateY(0)' : 'translateY(100%)',
+            transition:'transform 0.3s cubic-bezier(0.32,0.72,0,1)',
           }}>
             {/* Drag handle */}
-            <div style={{display:'flex',justifyContent:'center',paddingTop:'10px'}}>
+            <div style={{display:'flex',justifyContent:'center',paddingTop:'10px',flexShrink:0}}>
               <div style={{width:'40px',height:'4px',borderRadius:'2px',background:'#E4E4EB'}} />
             </div>
 
             {/* Sheet header */}
-            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'10px 16px 12px'}}>
+            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'10px 16px 0',flexShrink:0}}>
               <div style={{display:'flex',alignItems:'center',gap:'12px'}}>
                 <div style={{width:'36px',height:'36px',borderRadius:'10px',background:'var(--m-brand-soft)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
                   <svg viewBox="0 0 24 24" fill="none" stroke="var(--m-brand)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{width:'18px',height:'18px'}}>
@@ -454,27 +584,42 @@ export default function AudiensScreen({
                 </div>
                 <div>
                   <div style={{fontFamily:'var(--m-font)',fontSize:'15px',fontWeight:'700',color:'var(--m-ink)'}}>Tentukan Titik Target Iklanmu</div>
-                  <div style={{fontFamily:'var(--m-font)',fontSize:'11px',color:'var(--m-ink-sub)',marginTop:'2px'}}>Radius {radius.toFixed(1)} KM · {locName}</div>
+                  <div style={{fontFamily:'var(--m-font)',fontSize:'11px',color:'var(--m-ink-sub)',marginTop:'2px'}}>Radius {radius.toFixed(1)} KM · {locName || 'Lokasiku'}</div>
                 </div>
               </div>
-              <button onClick={e => { e.stopPropagation(); closeSheet(); }} style={{width:'32px',height:'32px',borderRadius:'50%',background:'#F4F4F7',border:'none',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer'}}>
+              <button onClick={e => { e.stopPropagation(); closeSheet(); }} style={{
+                width:'32px',height:'32px',borderRadius:'50%',background:'#F4F4F7',
+                border:'none',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',flexShrink:0,
+              }}>
                 <svg viewBox="0 0 24 24" fill="none" stroke="var(--m-ink)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{width:'16px',height:'16px'}}>
                   <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
                 </svg>
               </button>
             </div>
 
-            <SearchBar />
-            <div style={{height:'8px'}} />
-            <div ref={bottomSheetMapRef} style={{flex:1,position:'relative'}} />
-            <div style={{background:'#fff',borderTop:'1px solid #E4E4EB'}}>
-              <RadiusSlider />
+            <SearchBar
+              searchVal={searchVal}
+              onInput={handleSearchInput}
+              results={searchResults}
+              showDropdown={showDropdown}
+              onSelect={selectCity}
+              onClear={handleClear}
+              onFocus={handleFocus}
+            />
+
+            <div style={{height:'8px',flexShrink:0}} />
+            <div ref={bottomSheetMapRef} style={{flex:1,position:'relative',minHeight:0}} />
+            <div style={{background:'#fff',borderTop:'1px solid #E4E4EB',flexShrink:0}}>
+              <RadiusSlider radius={radius} onChange={setRadius} />
             </div>
           </div>
         </>
       )}
 
-      {showDropdown && <div style={{position:'fixed',inset:0,zIndex:499}} onClick={() => setShowDropdown(false)} />}
+      {/* Backdrop to close dropdown */}
+      {showDropdown && (
+        <div style={{position:'fixed',inset:0,zIndex:499}} onClick={() => setShowDropdown(false)} />
+      )}
     </div>
   );
 }
