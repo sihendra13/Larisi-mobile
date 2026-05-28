@@ -31,12 +31,9 @@ export default function SiLarisScreen({ onBack }) {
           <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
             <div style={{
               width:'40px', height:'40px', borderRadius:'50%', background:'var(--m-brand-soft)',
-              display:'flex', alignItems:'center', justifyContent:'center'
+              display:'flex', alignItems:'center', justifyContent:'center', overflow:'hidden'
             }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--m-brand)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 3a6 6 0 009 9 9 9 0 11-9-9z"/>
-                <path d="M19 3v4M21 5h-4"/>
-              </svg>
+              <img src="/logo-dashboard.png" alt="SiLaris" style={{width:'24px', height:'24px', objectFit:'contain'}} />
             </div>
             <div style={{display:'flex', flexDirection:'column'}}>
               <div style={{display:'flex', alignItems:'center', gap:'6px'}}>
@@ -65,11 +62,9 @@ export default function SiLarisScreen({ onBack }) {
         <div style={{display:'flex', gap:'10px', alignItems:'flex-start'}}>
           <div style={{
             width:'28px', height:'28px', borderRadius:'50%', background:'var(--m-brand-soft)', flexShrink:0,
-            display:'flex', alignItems:'center', justifyContent:'center', marginTop:'4px'
+            display:'flex', alignItems:'center', justifyContent:'center', marginTop:'4px', overflow:'hidden'
           }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--m-brand)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 3a6 6 0 009 9 9 9 0 11-9-9z"/>
-            </svg>
+            <img src="/logo-dashboard.png" alt="SiLaris" style={{width:'18px', height:'18px', objectFit:'contain'}} />
           </div>
           <div style={{
             background:'#fff', borderRadius:'16px', borderTopLeftRadius:'4px',
@@ -158,11 +153,9 @@ export default function SiLarisScreen({ onBack }) {
         <div style={{display:'flex', gap:'10px', alignItems:'flex-start'}}>
           <div style={{
             width:'28px', height:'28px', borderRadius:'50%', background:'var(--m-brand-soft)', flexShrink:0,
-            display:'flex', alignItems:'center', justifyContent:'center', marginTop:'4px'
+            display:'flex', alignItems:'center', justifyContent:'center', marginTop:'4px', overflow:'hidden'
           }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--m-brand)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 3a6 6 0 009 9 9 9 0 11-9-9z"/>
-            </svg>
+            <img src="/logo-dashboard.png" alt="SiLaris" style={{width:'18px', height:'18px', objectFit:'contain'}} />
           </div>
           <div style={{
             background:'#fff', borderRadius:'16px', borderTopLeftRadius:'4px',

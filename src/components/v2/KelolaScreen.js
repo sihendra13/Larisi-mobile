@@ -133,8 +133,11 @@ export default function KelolaScreen() {
                 <span style={{fontFamily:'var(--m-font)', fontSize:'11px', fontWeight:'700', color:'#34A853'}}>Berjalan</span>
               </div>
               <button style={{background:'none', border:'none', cursor:'pointer', color:'var(--m-ink-sub)', display:'flex', alignItems:'center', padding:0}}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                  <circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  <line x1="10" y1="11" x2="10" y2="17"></line>
+                  <line x1="14" y1="11" x2="14" y2="17"></line>
                 </svg>
               </button>
             </div>
@@ -218,57 +221,7 @@ export default function KelolaScreen() {
           </button>
         </div>
 
-        {/* ── Ad Card 2 (Partial, as in mockup) ── */}
-        <div style={{
-          background:'#fff', border:'1px solid #E4E4EB', borderRadius:'20px',
-          padding:'16px', marginBottom:'16px',
-        }}>
-          {/* Card Header */}
-          <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'12px'}}>
-            <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
-              <div style={{position:'relative'}}>
-                <div style={{
-                  width:'40px', height:'40px', borderRadius:'50%', border:'1.5px solid #E1306C',
-                  display:'flex', alignItems:'center', justifyContent:'center', background:'#FFF0F5'
-                }}>
-                  <span style={{fontFamily:'var(--m-font)', fontSize:'18px', fontWeight:'700', color:'#E1306C'}}>N</span>
-                </div>
-                {/* Small IG badge */}
-                <div style={{
-                  position:'absolute', bottom:'-4px', right:'-4px', background:'#fff',
-                  borderRadius:'50%', width:'20px', height:'20px', display:'flex', alignItems:'center', justifyContent:'center',
-                  boxShadow:'0 1px 3px rgba(0,0,0,0.12)'
-                }}>
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#E1306C" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.8" fill="#E1306C" stroke="none"/>
-                  </svg>
-                </div>
-              </div>
-              <div>
-                <div style={{fontFamily:'var(--m-font)', fontSize:'15px', fontWeight:'800', color:'var(--m-ink)', marginBottom:'2px'}}>Reel Pondok Indah</div>
-                <div style={{fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)'}}>Jakarta</div>
-              </div>
-            </div>
-            
-            <div style={{display:'flex', alignItems:'center', gap:'8px'}}>
-              <span style={{fontFamily:'var(--m-font)', fontSize:'10px', fontWeight:'800', color:'var(--m-ink-sub)', background:'#F5F5F7', padding:'3px 6px', borderRadius:'4px'}}>
-                REEL
-              </span>
-              <div style={{
-                background:'#E6F4EA', padding:'4px 10px', borderRadius:'99px',
-                display:'flex', alignItems:'center', gap:'6px'
-              }}>
-                <div style={{width:'6px', height:'6px', borderRadius:'50%', background:'#34A853'}} />
-                <span style={{fontFamily:'var(--m-font)', fontSize:'11px', fontWeight:'700', color:'#34A853'}}>Berjalan</span>
-              </div>
-              <button style={{background:'none', border:'none', cursor:'pointer', color:'var(--m-ink-sub)', display:'flex', alignItems:'center', padding:0}}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                  <circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/>
-                </svg>
-              </button>
-            </div>
-          </div>
-        </div>
+
 
       </main>
     </div>
