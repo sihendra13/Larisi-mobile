@@ -1,11 +1,14 @@
 'use client';
 import { useState } from 'react';
+import SiLarisScreen from './SiLarisScreen';
 
 export default function KelolaScreen() {
   const [activeTab, setActiveTab] = useState('Semua');
+  const [showSiLaris, setShowSiLaris] = useState(false);
 
   return (
-    <div style={{display:'flex', flexDirection:'column', flex:1, overflow:'hidden', background:'var(--m-bg)'}}>
+    <>
+      <div style={{display:'flex', flexDirection:'column', flex:1, overflow:'hidden', background:'var(--m-bg)'}}>
       {/* ── Header ── */}
       <header style={{
         position:'sticky', top:0, zIndex:200,
@@ -87,10 +90,13 @@ export default function KelolaScreen() {
         </div>
 
         {/* ── Ad Card 1 ── */}
-        <div style={{
-          background:'#fff', border:'1px solid #E4E4EB', borderRadius:'20px',
-          padding:'16px', marginBottom:'16px',
-        }}>
+        <div 
+          onClick={() => setShowSiLaris(true)}
+          style={{
+            background:'#fff', border:'1px solid #E4E4EB', borderRadius:'20px',
+            padding:'16px', marginBottom:'16px', cursor:'pointer'
+          }}
+        >
           {/* Card Header */}
           <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'12px'}}>
             <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
@@ -266,5 +272,7 @@ export default function KelolaScreen() {
 
       </main>
     </div>
+    {showSiLaris && <SiLarisScreen onBack={() => setShowSiLaris(false)} />}
+    </>
   );
 }
