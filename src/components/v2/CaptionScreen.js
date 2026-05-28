@@ -316,24 +316,18 @@ export default function CaptionScreen({
           {/* Header row */}
           <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'12px'}}>
             <div style={{display:'flex', alignItems:'center', gap:'8px'}}>
-              {/* AI icon box */}
+              {/* Platform icon box */}
               <div style={{
                 width:'30px', height:'30px', borderRadius:'8px',
-                background:'var(--m-brand-soft)', display:'flex',
+                background:'#F4F4F7', display:'flex',
                 alignItems:'center', justifyContent:'center', flexShrink:0,
               }}>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--m-brand)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 3a6 6 0 009 9 9 9 0 11-9-9z"/>
-                  <path d="M19 3v4M21 5h-4"/>
-                </svg>
-              </div>
-              {/* Platform icon + title */}
-              <div style={{display:'flex', alignItems:'center', gap:'5px'}}>
                 {PLATFORM_ICONS_SM[platform]}
-                <span style={{fontFamily:'var(--m-font)', fontSize:'14px', fontWeight:'700', color:'var(--m-ink)'}}>
-                  Caption {platLabel}
-                </span>
               </div>
+              {/* Title */}
+              <span style={{fontFamily:'var(--m-font)', fontSize:'14px', fontWeight:'700', color:'var(--m-ink)'}}>
+                Caption {platLabel}
+              </span>
             </div>
             <span style={{fontFamily:'var(--m-font)', fontSize:'11px', fontWeight:'700', color:'var(--m-brand)', background:'var(--m-brand-soft)', padding:'3px 8px', borderRadius:'6px', flexShrink:0}}>
               AI · ID
