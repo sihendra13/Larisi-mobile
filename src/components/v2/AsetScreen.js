@@ -66,8 +66,9 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
   const [aiStyle,     setAiStyle]     = useState('studio');
 
   /* ── Edit tampilan sheet ── */
-  const [showEditSheet,    setShowEditSheet]    = useState(false);
-  const [animateEditSheet, setAnimateEditSheet] = useState(false);
+  const [showEditSheet,      setShowEditSheet]      = useState(false);
+  const [animateEditSheet,   setAnimateEditSheet]   = useState(false);
+  const [editPanelCollapsed, setEditPanelCollapsed] = useState(false);
   /* Per-file edit settings keyed by file.url */
   const [editSettings,     setEditSettings]     = useState({});
   /* { brightness:100, saturation:100, panY:0 } */
@@ -284,6 +285,7 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
   const currentEdit = previewFile ? getEdit(previewFile.url) : DEFAULT_EDIT;
 
   const openEditSheet = () => {
+    setEditPanelCollapsed(false);
     setShowEditSheet(true);
     requestAnimationFrame(() => requestAnimationFrame(() => setAnimateEditSheet(true)));
   };
@@ -944,18 +946,17 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
         <div style={{
           position: 'fixed', inset: 0, zIndex: 9999,
           background: '#111',
-          display: 'flex', flexDirection: 'column',
           transform: animateEditSheet ? 'translateY(0)' : 'translateY(100%)',
           transition: 'transform 0.35s cubic-bezier(0.32,0.72,0,1)',
         }}>
 
-          {/* ── Image area: touch drag to pan, crop frame overlay ── */}
+          {/* ── Image area: full-screen, touch drag to pan ── */}
           <div
             ref={editImageAreaRef}
             onTouchStart={handleEditTouchStart}
             onTouchMove={handleEditTouchMove}
             onTouchEnd={handleEditTouchEnd}
-            style={{ flex: 1, position: 'relative', overflow: 'hidden', cursor: 'grab' }}
+            style={{ position: 'absolute', inset: 0, overflow: 'hidden', cursor: 'grab' }}
           >
             {/* Blurred background (always cover, decorative) */}
             {previewFile.type === 'video' ? (
@@ -1074,74 +1075,100 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
             </div>
           </div>
 
-          {/* ── White controls panel ── */}
+          {/* ── White controls panel — collapsible bottom sheet ── */}
           <div style={{
-            flexShrink: 0, background: '#fff', borderRadius: '20px 20px 0 0',
-            padding: '20px 20px 0',
-            paddingBottom: 'calc(16px + env(safe-area-inset-bottom))',
-            display: 'flex', flexDirection: 'column', gap: '20px',
+            position: 'absolute', left: 0, right: 0, bottom: 0,
+            transform: editPanelCollapsed ? 'translateY(calc(100% - 40px))' : 'translateY(0)',
+            transition: 'transform 0.3s cubic-bezier(0.32,0.72,0,1)',
           }}>
+            <div style={{ background: '#fff', borderRadius: '20px 20px 0 0' }}>
 
-            {/* Zoom — drag gambar untuk pan, slider untuk scale */}
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-                <span style={{ fontFamily: 'var(--m-font)', fontSize: '13px', fontWeight: '700', color: 'var(--m-ink)' }}>Zoom & Geser</span>
-                <span style={{ fontFamily: 'var(--m-font)', fontSize: '12px', color: 'var(--m-ink-sub)' }}>
-                  {currentEdit.cropScale <= 1.01 ? 'Original' : `${currentEdit.cropScale.toFixed(1)}×`}
-                </span>
+              {/* ── Drag handle: tap to collapse/expand ── */}
+              <div
+                onClick={() => setEditPanelCollapsed(p => !p)}
+                style={{
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px',
+                  padding: '10px 0 8px', cursor: 'pointer',
+                  WebkitTapHighlightColor: 'transparent', userSelect: 'none',
+                }}
+              >
+                <div style={{ width: '40px', height: '4px', borderRadius: '2px', background: '#E4E4EB' }} />
+                <svg width="16" height="9" viewBox="0 0 16 9" fill="none"
+                  stroke="#BBBBC8" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"
+                  style={{
+                    transform: editPanelCollapsed ? 'rotate(180deg)' : 'rotate(0deg)',
+                    transition: 'transform 0.3s',
+                  }}>
+                  <polyline points="1 1 8 8 15 1"/>
+                </svg>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <span style={{ fontFamily: 'var(--m-font)', fontSize: '17px', color: 'var(--m-ink-sub)', fontWeight: '400', lineHeight: 1 }}>−</span>
-                <input type="range" min={1} max={4} step={0.05}
-                  value={currentEdit.cropScale}
-                  onChange={e => handleZoomChange(Number(e.target.value))}
-                  style={{ flex: 1, accentColor: '#111', height: '4px', cursor: 'pointer' }}
-                />
-                <span style={{ fontFamily: 'var(--m-font)', fontSize: '17px', color: 'var(--m-ink-sub)', fontWeight: '400', lineHeight: 1 }}>+</span>
-              </div>
-              <div style={{ fontFamily: 'var(--m-font)', fontSize: '11px', color: 'var(--m-ink-sub)', marginTop: '6px', textAlign: 'center' }}>
-                Drag gambar di atas untuk menggeser
+
+              {/* ── Sliders + Selesai ── */}
+              <div style={{ padding: '4px 20px 0', display: 'flex', flexDirection: 'column', gap: '20px',
+                paddingBottom: 'calc(16px + env(safe-area-inset-bottom))' }}>
+
+                {/* Zoom & Geser */}
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                    <span style={{ fontFamily: 'var(--m-font)', fontSize: '13px', fontWeight: '700', color: 'var(--m-ink)' }}>Zoom & Geser</span>
+                    <span style={{ fontFamily: 'var(--m-font)', fontSize: '12px', color: 'var(--m-ink-sub)' }}>
+                      {currentEdit.cropScale <= 1.01 ? 'Original' : `${currentEdit.cropScale.toFixed(1)}×`}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <span style={{ fontFamily: 'var(--m-font)', fontSize: '17px', color: 'var(--m-ink-sub)', fontWeight: '400', lineHeight: 1 }}>−</span>
+                    <input type="range" min={1} max={4} step={0.05}
+                      value={currentEdit.cropScale}
+                      onChange={e => handleZoomChange(Number(e.target.value))}
+                      style={{ flex: 1, accentColor: '#111', height: '4px', cursor: 'pointer' }}
+                    />
+                    <span style={{ fontFamily: 'var(--m-font)', fontSize: '17px', color: 'var(--m-ink-sub)', fontWeight: '400', lineHeight: 1 }}>+</span>
+                  </div>
+                  <div style={{ fontFamily: 'var(--m-font)', fontSize: '11px', color: 'var(--m-ink-sub)', marginTop: '6px', textAlign: 'center' }}>
+                    Drag gambar di atas untuk menggeser
+                  </div>
+                </div>
+
+                {/* Terang-Gelap */}
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                    <span style={{ fontFamily: 'var(--m-font)', fontSize: '13px', fontWeight: '700', color: 'var(--m-ink)' }}>Terang–Gelap</span>
+                    <span style={{ fontFamily: 'var(--m-font)', fontSize: '12px', color: 'var(--m-ink-sub)' }}>{currentEdit.brightness}%</span>
+                  </div>
+                  <input type="range" min={50} max={150} step={1}
+                    value={currentEdit.brightness}
+                    onChange={e => setEditKey(previewFile.url, 'brightness', Number(e.target.value))}
+                    style={{ width: '100%', accentColor: '#111', height: '4px', cursor: 'pointer' }}
+                  />
+                </div>
+
+                {/* Ketajaman Warna */}
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                    <span style={{ fontFamily: 'var(--m-font)', fontSize: '13px', fontWeight: '700', color: 'var(--m-ink)' }}>Ketajaman Warna</span>
+                    <span style={{ fontFamily: 'var(--m-font)', fontSize: '12px', color: 'var(--m-ink-sub)' }}>{currentEdit.saturation}%</span>
+                  </div>
+                  <input type="range" min={0} max={200} step={1}
+                    value={currentEdit.saturation}
+                    onChange={e => setEditKey(previewFile.url, 'saturation', Number(e.target.value))}
+                    style={{ width: '100%', accentColor: '#111', height: '4px', cursor: 'pointer' }}
+                  />
+                </div>
+
+                {/* Selesai */}
+                <button
+                  onClick={closeEditSheet}
+                  style={{
+                    width: '100%', padding: '15px', borderRadius: '14px', border: 'none',
+                    background: 'var(--m-ink)',
+                    fontFamily: 'var(--m-font)', fontSize: '15px', fontWeight: '700',
+                    color: '#fff', cursor: 'pointer', WebkitTapHighlightColor: 'transparent',
+                  }}
+                >
+                  Selesai
+                </button>
               </div>
             </div>
-
-            {/* Terang-Gelap */}
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-                <span style={{ fontFamily: 'var(--m-font)', fontSize: '13px', fontWeight: '700', color: 'var(--m-ink)' }}>Terang–Gelap</span>
-                <span style={{ fontFamily: 'var(--m-font)', fontSize: '12px', color: 'var(--m-ink-sub)' }}>{currentEdit.brightness}%</span>
-              </div>
-              <input type="range" min={50} max={150} step={1}
-                value={currentEdit.brightness}
-                onChange={e => setEditKey(previewFile.url, 'brightness', Number(e.target.value))}
-                style={{ width: '100%', accentColor: '#111', height: '4px', cursor: 'pointer' }}
-              />
-            </div>
-
-            {/* Ketajaman Warna */}
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-                <span style={{ fontFamily: 'var(--m-font)', fontSize: '13px', fontWeight: '700', color: 'var(--m-ink)' }}>Ketajaman Warna</span>
-                <span style={{ fontFamily: 'var(--m-font)', fontSize: '12px', color: 'var(--m-ink-sub)' }}>{currentEdit.saturation}%</span>
-              </div>
-              <input type="range" min={0} max={200} step={1}
-                value={currentEdit.saturation}
-                onChange={e => setEditKey(previewFile.url, 'saturation', Number(e.target.value))}
-                style={{ width: '100%', accentColor: '#111', height: '4px', cursor: 'pointer' }}
-              />
-            </div>
-
-            {/* Selesai */}
-            <button
-              onClick={closeEditSheet}
-              style={{
-                width: '100%', padding: '15px', borderRadius: '14px', border: 'none',
-                background: 'var(--m-ink)',
-                fontFamily: 'var(--m-font)', fontSize: '15px', fontWeight: '700',
-                color: '#fff', cursor: 'pointer', WebkitTapHighlightColor: 'transparent',
-              }}
-            >
-              Selesai
-            </button>
           </div>
         </div>
       )}
