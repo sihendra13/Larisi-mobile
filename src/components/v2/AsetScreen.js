@@ -254,17 +254,20 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
   };
 
   const previewFile = files[selectedIdx] || null;
+  const isEmpty     = files.length === 0;   /* light-mode flag */
   const handleNext  = () => onNext(detectedPersona);
 
   /* ════════════════════════════════════════════════════
      RENDER — full-screen overlay layout
+     Empty state = light bg (matches app); media loaded = dark
   ════════════════════════════════════════════════════ */
   return (
     <div style={{
       display: 'flex', flexDirection: 'column',
       flex: 1, overflow: 'hidden',
       position: 'relative',
-      background: '#000',
+      background: isEmpty ? 'var(--m-bg)' : '#000',
+      transition: 'background 0.3s ease',
     }}>
 
       {/* ══════════════════════════════════════════
@@ -280,21 +283,22 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
               style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           )
         ) : (
-          /* ── Empty state ── */
+          /* ── Empty state — light bg, dark content ── */
           <div style={{
             width: '100%', height: '100%',
-            background: 'linear-gradient(160deg, #12082a 0%, #1a1035 50%, #0e2040 100%)',
+            background: 'var(--m-bg)',
             display: 'flex', flexDirection: 'column',
-            alignItems: 'center', justifyContent: 'center', gap: '16px',
+            alignItems: 'center', justifyContent: 'center', gap: '0',
           }}>
-            <div style={{ opacity: 0.35, textAlign: 'center' }}>
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
-                <polyline points="21 15 16 10 5 21"/>
-              </svg>
-              <div style={{ color: 'rgba(255,255,255,0.5)', fontFamily: 'var(--m-font)', fontSize: '13px', marginTop: '10px' }}>
-                Tap + untuk tambah foto atau video
-              </div>
+            <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#C0C0CC" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: '12px' }}>
+              <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
+              <polyline points="21 15 16 10 5 21"/>
+            </svg>
+            <div style={{ color: 'var(--m-ink-sub)', fontFamily: 'var(--m-font)', fontSize: '13px', fontWeight: '500', marginBottom: '6px' }}>
+              Tap + untuk tambah foto atau video
+            </div>
+            <div style={{ color: '#B0B0BC', fontFamily: 'var(--m-font)', fontSize: '12px', fontWeight: '500' }}>
+              Maksimal 5 Foto dan 1 Video
             </div>
           </div>
         )}
@@ -329,36 +333,59 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
       )}
 
       {/* ══════════════════════════════════════════
-          3. TOP OVERLAY — transparent header + chips
+          3. TOP OVERLAY — header + chips
+          Light mode when empty, dark overlay when media loaded
       ══════════════════════════════════════════ */}
       <div style={{
         position: 'absolute', top: 0, left: 0, right: 0, zIndex: 20,
-        background: 'linear-gradient(to bottom, rgba(0,0,0,0.70) 0%, rgba(0,0,0,0.30) 65%, transparent 100%)',
+        background: isEmpty
+          ? 'var(--m-bg)'
+          : 'linear-gradient(to bottom, rgba(0,0,0,0.70) 0%, rgba(0,0,0,0.30) 65%, transparent 100%)',
         paddingTop: '12px',
+        borderBottom: isEmpty ? '1px solid #ECECF1' : 'none',
       }}>
         {/* Header row */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px 8px' }}>
           <button onClick={onBack} style={{
             width: '34px', height: '34px', borderRadius: '50%',
-            background: 'rgba(0,0,0,0.35)',
-            backdropFilter: 'blur(6px)',
-            border: '1px solid rgba(255,255,255,0.18)',
+            background: isEmpty ? '#fff' : 'rgba(0,0,0,0.35)',
+            backdropFilter: isEmpty ? 'none' : 'blur(6px)',
+            border: isEmpty ? 'none' : '1px solid rgba(255,255,255,0.18)',
+            boxShadow: isEmpty ? '0 1px 4px rgba(0,0,0,0.10)' : 'none',
             cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
           }}>
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none"
+              stroke={isEmpty ? 'var(--m-ink)' : '#fff'} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M15 18l-6-6 6-6"/>
             </svg>
           </button>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
-            {PLATFORM_ICONS[platform]}
-            <span style={{ fontFamily: 'var(--m-font)', fontSize: '15px', fontWeight: '700', color: '#fff', textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>
+            {/* Platform icon: light mode = colour icon, dark = white icon */}
+            {isEmpty ? (
+              /* Colour icons for light bg */
+              platform === 'instagram' ? (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E1306C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/>
+                  <circle cx="17.5" cy="6.5" r="0.8" fill="#E1306C" stroke="none"/>
+                </svg>
+              ) : PLATFORM_ICONS[platform]
+            ) : PLATFORM_ICONS[platform]}
+            <span style={{
+              fontFamily: 'var(--m-font)', fontSize: '15px', fontWeight: '700',
+              color: isEmpty ? 'var(--m-ink)' : '#fff',
+              textShadow: isEmpty ? 'none' : '0 1px 4px rgba(0,0,0,0.5)',
+            }}>
               Aset Kreatif
             </span>
           </div>
 
-          <span style={{ fontFamily: 'var(--m-font)', fontSize: '13px', fontWeight: '600', color: 'rgba(255,255,255,0.55)', textShadow: '0 1px 3px rgba(0,0,0,0.4)' }}>
+          <span style={{
+            fontFamily: 'var(--m-font)', fontSize: '13px', fontWeight: '600',
+            color: isEmpty ? 'var(--m-ink-sub)' : 'rgba(255,255,255,0.55)',
+            textShadow: isEmpty ? 'none' : '0 1px 3px rgba(0,0,0,0.4)',
+          }}>
             1/2
           </span>
         </div>
@@ -368,7 +395,9 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
           {[0, 1].map(i => (
             <div key={i} style={{
               flex: 1, height: '2.5px', borderRadius: '2px',
-              background: i < 1 ? '#fff' : 'rgba(255,255,255,0.25)',
+              background: i < 1
+                ? (isEmpty ? 'var(--m-brand)' : '#fff')
+                : (isEmpty ? '#E4E4EB' : 'rgba(255,255,255,0.25)'),
             }} />
           ))}
         </div>
@@ -386,9 +415,13 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
                   cursor: 'pointer',
                   fontFamily: 'var(--m-font)', fontSize: '14px',
                   fontWeight: active ? '700' : '500',
-                  color: active ? '#fff' : 'rgba(255,255,255,0.45)',
-                  borderBottom: active ? '2px solid #fff' : '2px solid transparent',
-                  textShadow: '0 1px 3px rgba(0,0,0,0.4)',
+                  color: isEmpty
+                    ? (active ? 'var(--m-ink)' : 'var(--m-ink-sub)')
+                    : (active ? '#fff' : 'rgba(255,255,255,0.45)'),
+                  borderBottom: active
+                    ? `2px solid ${isEmpty ? 'var(--m-ink)' : '#fff'}`
+                    : '2px solid transparent',
+                  textShadow: isEmpty ? 'none' : '0 1px 3px rgba(0,0,0,0.4)',
                   WebkitTapHighlightColor: 'transparent',
                   transition: 'color .15s',
                 }}
@@ -405,8 +438,11 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
       ══════════════════════════════════════════ */}
       <div style={{
         position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 20,
-        background: 'linear-gradient(to top, rgba(0,0,0,0.90) 0%, rgba(0,0,0,0.55) 55%, transparent 100%)',
-        paddingTop: '40px', // space for gradient fade
+        background: isEmpty
+          ? 'var(--m-bg)'
+          : 'linear-gradient(to top, rgba(0,0,0,0.90) 0%, rgba(0,0,0,0.55) 55%, transparent 100%)',
+        borderTop: isEmpty ? '1px solid #ECECF1' : 'none',
+        paddingTop: isEmpty ? '14px' : '40px',
         paddingBottom: 'calc(80px + env(safe-area-inset-bottom))',
       }}>
 
@@ -516,9 +552,9 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
               onClick={() => fileInputRef.current?.click()}
               style={{
                 width: '52px', height: '48px', borderRadius: '14px',
-                background: 'rgba(255,255,255,0.18)',
-                backdropFilter: 'blur(8px)',
-                border: '1.5px solid rgba(255,255,255,0.28)',
+                background: isEmpty ? '#2d2d36' : 'rgba(255,255,255,0.18)',
+                backdropFilter: isEmpty ? 'none' : 'blur(8px)',
+                border: isEmpty ? 'none' : '1.5px solid rgba(255,255,255,0.28)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 cursor: 'pointer', color: '#fff',
                 WebkitTapHighlightColor: 'transparent',
@@ -553,11 +589,13 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
             onClick={handleNext}
             style={{
               padding: '11px 26px', borderRadius: '14px',
-              background: '#fff', color: '#111', border: 'none',
+              background: isEmpty ? 'var(--m-ink)' : '#fff',
+              color: isEmpty ? '#fff' : '#111',
+              border: 'none',
               fontFamily: 'var(--m-font)', fontSize: '15px', fontWeight: '700',
               cursor: 'pointer',
               display: 'flex', alignItems: 'center', gap: '7px',
-              boxShadow: '0 2px 12px rgba(0,0,0,0.35)',
+              boxShadow: isEmpty ? '0 2px 12px rgba(0,0,0,0.18)' : '0 2px 12px rgba(0,0,0,0.35)',
               WebkitTapHighlightColor: 'transparent',
             }}
           >

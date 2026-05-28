@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const PLATFORM_ICONS = {
   instagram: (
@@ -136,6 +136,15 @@ export default function CaptionScreen({
     if (files.length > 0) setTimeout(handleGenerate, 400);
   }
 
+  /* ── Clear caption when all assets are removed ── */
+  useEffect(() => {
+    if (files.length === 0) {
+      setCaption('');
+      setGenerating(false);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [files.length]);
+
   /* ── Edit sheet helpers ── */
   const openEditSheet = () => {
     setEditDraft(caption);
@@ -189,8 +198,7 @@ export default function CaptionScreen({
       {/* ── Scrollable content ── */}
       <main style={{
         flex:1, minHeight:0, overflowY:'auto',
-        padding:'14px 16px',
-        paddingBottom:'148px',
+        padding:'14px 16px 16px',
         display:'flex', flexDirection:'column', gap:'12px',
       }}>
 
@@ -212,7 +220,17 @@ export default function CaptionScreen({
                   <img src={thumb.url} alt="preview" style={{width:'100%', height:'100%', objectFit:'cover'}} />
                 )
               ) : (
-                <div style={{width:'100%', height:'100%', background:'linear-gradient(135deg,#f0a58a,#e8845a)'}} />
+                /* No asset — light grey with image icon */
+                <div style={{
+                  width:'100%', height:'100%',
+                  background:'#ECECF1',
+                  display:'flex', alignItems:'center', justifyContent:'center',
+                }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#B0B0BC" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
+                    <polyline points="21 15 16 10 5 21"/>
+                  </svg>
+                </div>
               )}
             </div>
 
@@ -460,14 +478,14 @@ export default function CaptionScreen({
         </div>
       </main>
 
-      {/* ── Sticky bottom bar: Estimasi + Tayangkan ── */}
+      {/* ── Bottom bar: Estimasi + Tayangkan
+           Flush against BottomNav via paddingBottom that absorbs nav height ── */}
       <div style={{
-        position:'fixed',
-        bottom:'78px',
-        left:0, right:0, zIndex:300,
+        flexShrink:0,
         background:'#fff',
         borderTop:'1px solid #ECECF1',
         padding:'12px 16px',
+        paddingBottom:'calc(12px + 78px + env(safe-area-inset-bottom))',
         display:'flex', alignItems:'center', gap:'12px',
       }}>
         <div style={{flex:1, minWidth:0}}>
