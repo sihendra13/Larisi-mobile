@@ -103,11 +103,11 @@ export default function KelolaScreen() {
                 </div>
                 {/* Small IG badge */}
                 <div style={{
-                  position:'absolute', bottom:'-2px', right:'-2px', background:'#fff',
-                  borderRadius:'50%', width:'16px', height:'16px', display:'flex', alignItems:'center', justifyContent:'center',
-                  boxShadow:'0 1px 2px rgba(0,0,0,0.1)'
+                  position:'absolute', bottom:'-4px', right:'-4px', background:'#fff',
+                  borderRadius:'50%', width:'20px', height:'20px', display:'flex', alignItems:'center', justifyContent:'center',
+                  boxShadow:'0 1px 3px rgba(0,0,0,0.12)'
                 }}>
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#E1306C" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#E1306C" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.8" fill="#E1306C" stroke="none"/>
                   </svg>
                 </div>
@@ -163,7 +163,7 @@ export default function KelolaScreen() {
 
           {/* Engagements */}
           <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'12px'}}>
-            <span style={{fontFamily:'var(--m-font)', fontSize:'11px', fontWeight:'800', color:'var(--m-brand)', letterSpacing:'0.5px', textTransform:'uppercase'}}>
+            <span style={{fontFamily:'var(--m-font)', fontSize:'11px', fontWeight:'800', color:'var(--m-ink)', letterSpacing:'0.5px', textTransform:'uppercase'}}>
               ENGAGEMENTS
             </span>
             <span style={{fontFamily:'var(--m-font)', fontSize:'18px', fontWeight:'800', color:'var(--m-brand)'}}>
@@ -229,11 +229,11 @@ export default function KelolaScreen() {
                 </div>
                 {/* Small IG badge */}
                 <div style={{
-                  position:'absolute', bottom:'-2px', right:'-2px', background:'#fff',
-                  borderRadius:'50%', width:'16px', height:'16px', display:'flex', alignItems:'center', justifyContent:'center',
-                  boxShadow:'0 1px 2px rgba(0,0,0,0.1)'
+                  position:'absolute', bottom:'-4px', right:'-4px', background:'#fff',
+                  borderRadius:'50%', width:'20px', height:'20px', display:'flex', alignItems:'center', justifyContent:'center',
+                  boxShadow:'0 1px 3px rgba(0,0,0,0.12)'
                 }}>
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#E1306C" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#E1306C" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.8" fill="#E1306C" stroke="none"/>
                   </svg>
                 </div>
