@@ -338,27 +338,36 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
   };
 
   const handleEditTouchMove = (e) => {
-    if (!touchRef.current || !previewFile || e.touches.length !== 1) return;
-    const t     = e.touches[0];
-    const dx    = t.clientX - touchRef.current.startX;
-    const dy    = t.clientY - touchRef.current.startY;
-    const scale = (editSettings[previewFile.url] || DEFAULT_EDIT).cropScale;
-    const info  = fileRatios[previewFile.url];
-    const ratio = info?.ratio ?? (isCurrentLandscape ? 16/9 : 3/4);
-    const el    = editImageAreaRef.current;
-    const W     = el ? el.offsetWidth  : window.innerWidth;
-    const H     = el ? el.offsetHeight : window.innerHeight * 0.65;
-    const cr    = W / H;
-    const imgW  = ratio > cr ? W           : H * ratio;
-    const imgH  = ratio > cr ? W / ratio   : H;
-    const maxX  = Math.max(0, (imgW * scale - W) / 2);
-    const maxY  = Math.max(0, (imgH * scale - H) / 2);
+    const tr = touchRef.current;
+    if (!tr || !previewFile || e.touches.length !== 1) return;
+    const t  = e.touches[0];
+    /* Capture all ref values into local vars BEFORE setEditSettings,
+       because touchRef.current may be nulled by touchEnd before React
+       processes the batched update. */
+    const dx         = t.clientX - tr.startX;
+    const dy         = t.clientY - tr.startY;
+    const startOffX  = tr.startOffsetX;
+    const startOffY  = tr.startOffsetY;
+    const scale      = (editSettings[previewFile.url] || DEFAULT_EDIT).cropScale;
+    const info       = fileRatios[previewFile.url];
+    const ratio      = info?.ratio ?? (isCurrentLandscape ? 16/9 : 3/4);
+    const el         = editImageAreaRef.current;
+    const W          = el ? el.offsetWidth  : window.innerWidth;
+    const H          = el ? el.offsetHeight : window.innerHeight * 0.65;
+    const cr         = W / H;
+    const imgW       = ratio > cr ? W         : H * ratio;
+    const imgH       = ratio > cr ? W / ratio : H;
+    const maxX       = Math.max(0, (imgW * scale - W) / 2);
+    const maxY       = Math.max(0, (imgH * scale - H) / 2);
+    /* All values already captured — safe to update state */
+    const clampedX   = Math.max(-maxX, Math.min(maxX, startOffX + dx));
+    const clampedY   = Math.max(-maxY, Math.min(maxY, startOffY + dy));
     setEditSettings(prev => ({
       ...prev,
       [previewFile.url]: {
         ...(prev[previewFile.url] || DEFAULT_EDIT),
-        cropOffsetX: Math.max(-maxX, Math.min(maxX, touchRef.current.startOffsetX + dx)),
-        cropOffsetY: Math.max(-maxY, Math.min(maxY, touchRef.current.startOffsetY + dy)),
+        cropOffsetX: clampedX,
+        cropOffsetY: clampedY,
       },
     }));
   };
