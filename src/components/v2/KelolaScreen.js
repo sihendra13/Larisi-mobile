@@ -52,7 +52,12 @@ export default function KelolaScreen() {
         </div>
 
         {/* ── Tabs & Filter ── */}
-        <div style={{display:'flex', alignItems:'center', gap:'12px', marginBottom:'24px'}}>
+        <div style={{
+          position:'sticky', top:0, zIndex:190, background:'var(--m-bg)',
+          display:'flex', alignItems:'center', gap:'12px', 
+          paddingTop:'12px', paddingBottom:'16px', margin:'0 -16px', paddingLeft:'16px', paddingRight:'16px',
+          marginBottom:'8px'
+        }}>
           <div style={{
             display:'flex', alignItems:'center', background:'#F5F5F7',
             borderRadius:'999px', padding:'4px', flex:1,
@@ -143,13 +148,16 @@ export default function KelolaScreen() {
             </div>
           </div>
 
-          <div style={{fontFamily:'var(--m-font)', fontSize:'12px', fontWeight:'700', color:'var(--m-brand)', marginBottom:'12px'}}>
-            Minggu, 24 Mei 2026 • 10.54
+          <div style={{display:'inline-flex', alignItems:'center', gap:'4px', padding:'4px 8px', background:'#F0E6FF', borderRadius:'6px', cursor:'pointer', marginBottom:'12px'}}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--m-brand)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            <span style={{fontFamily:'var(--m-font)', fontSize:'11px', fontWeight:'800', color:'var(--m-brand)'}}>
+              Minggu, 24 Mei 2026 • 10.54
+            </span>
           </div>
 
           {/* Thumbnail */}
           <div style={{
-            width:'100%', aspectRatio:'16/9', background:'#E8C39E', borderRadius:'12px',
+            width:'100%', aspectRatio:'21/9', background:'#E8C39E', borderRadius:'12px',
             marginBottom:'16px', position:'relative', overflow:'hidden',
             backgroundImage:'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0,0,0,0.05) 10px, rgba(0,0,0,0.05) 20px)'
           }}>
