@@ -5,6 +5,7 @@ import PlatformScreen from '@/components/v2/PlatformScreen';
 import AudiensScreen  from '@/components/v2/AudiensScreen';
 import AsetScreen     from '@/components/v2/AsetScreen';
 import CaptionScreen  from '@/components/v2/CaptionScreen';
+import KelolaScreen   from '@/components/v2/KelolaScreen';
 
 export default function DapurV2() {
   const [screen,     setScreen]     = useState('platform');
@@ -30,56 +31,60 @@ export default function DapurV2() {
   return (
     <div id="app-root" className="mobile-app-root">
 
-      {screen === 'platform' && (
-        <PlatformScreen
-          platform={platform}
-          onSelectPlatform={setPlatform}
-          onNext={() => goTo('audiens')}
-        />
-      )}
+      <div style={{ display: activeNav === 'command' ? 'contents' : 'none' }}>
+        {screen === 'platform' && (
+          <PlatformScreen
+            platform={platform}
+            onSelectPlatform={setPlatform}
+            onNext={() => goTo('audiens')}
+          />
+        )}
 
-      {screen === 'audiens' && (
-        <AudiensScreen
-          platform={platform}
-          onBack={goBack}
-          onNext={() => goTo('aset')}
-          locName={locName}   setLocName={setLocName}
-          locFull={locFull}   setLocFull={setLocFull}
-          locPop={locPop}     setLocPop={setLocPop}
-          radius={radius}     setRadius={setRadius}
-          localOn={localOn}   setLocalOn={setLocalOn}
-          travelerOn={travelerOn} setTravelerOn={setTravelerOn}
-        />
-      )}
+        {screen === 'audiens' && (
+          <AudiensScreen
+            platform={platform}
+            onBack={goBack}
+            onNext={() => goTo('aset')}
+            locName={locName}   setLocName={setLocName}
+            locFull={locFull}   setLocFull={setLocFull}
+            locPop={locPop}     setLocPop={setLocPop}
+            radius={radius}     setRadius={setRadius}
+            localOn={localOn}   setLocalOn={setLocalOn}
+            travelerOn={travelerOn} setTravelerOn={setTravelerOn}
+          />
+        )}
 
-      {screen === 'aset' && (
-        <AsetScreen
-          platform={platform}
-          format={format}       onFormatChange={setFormat}
-          files={files}         onFilesChange={setFiles}
-          onBack={goBack}
-          onNext={(p) => { if (p) setPersona(p); goTo('caption'); }}
-        />
-      )}
+        {screen === 'aset' && (
+          <AsetScreen
+            platform={platform}
+            format={format}       onFormatChange={setFormat}
+            files={files}         onFilesChange={setFiles}
+            onBack={goBack}
+            onNext={(p) => { if (p) setPersona(p); goTo('caption'); }}
+          />
+        )}
 
-      {screen === 'caption' && (
-        <CaptionScreen
-          platform={platform}
-          format={format}
-          files={files}
-          locName={locName}
-          locFull={locFull}
-          locPop={locPop}
-          radius={radius}
-          localOn={localOn}
-          travelerOn={travelerOn}
-          persona={persona}
-          caption={caption}
-          setCaption={setCaption}
-          onBack={goBack}
-          onUbahAset={() => goTo('aset')}
-        />
-      )}
+        {screen === 'caption' && (
+          <CaptionScreen
+            platform={platform}
+            format={format}
+            files={files}
+            locName={locName}
+            locFull={locFull}
+            locPop={locPop}
+            radius={radius}
+            localOn={localOn}
+            travelerOn={travelerOn}
+            persona={persona}
+            caption={caption}
+            setCaption={setCaption}
+            onBack={goBack}
+            onUbahAset={() => goTo('aset')}
+          />
+        )}
+      </div>
+
+      {activeNav === 'monitor' && <KelolaScreen />}
 
       <BottomNav activeNav={activeNav} onSwitch={setActiveNav} />
     </div>
