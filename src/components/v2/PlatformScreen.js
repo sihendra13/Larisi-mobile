@@ -143,6 +143,18 @@ function SoftIcon({ platform, size = 44 }) {
 
 export default function PlatformScreen({ platform, onSelectPlatform, onNext }) {
   const [showManage, setShowManage] = useState(false);
+  const [animateManage, setAnimateManage] = useState(false);
+  
+  const openManage = () => {
+    setShowManage(true);
+    setTimeout(() => setAnimateManage(true), 10);
+  };
+
+  const closeManage = () => {
+    setAnimateManage(false);
+    setTimeout(() => setShowManage(false), 300);
+  };
+
   const connectedPlatforms = PLATFORMS.filter(p => MOCK_ACCOUNTS[p.id].connected);
 
   return (
@@ -231,7 +243,7 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext }) {
               Hubungkan Akun
             </div>
             <button
-              onClick={() => setShowManage(true)}
+              onClick={openManage}
               style={{width:'32px',height:'32px',borderRadius:'50%',background:'#F5F5F7',border:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--m-ink-sub)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -296,15 +308,32 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext }) {
 
       {/* ── Modal: Kelola Akun Terhubung ── */}
       {showManage && (
-        <div onClick={() => setShowManage(false)} style={{position:'fixed',inset:0,zIndex:500,background:'rgba(0,0,0,0.45)',display:'flex',alignItems:'flex-end'}}>
-          <div onClick={e => e.stopPropagation()} style={{width:'100%',background:'#fff',borderRadius:'20px 20px 0 0',padding:'24px 16px calc(32px + env(safe-area-inset-bottom))'}}>
-
+        <>
+          {/* Backdrop */}
+          <div
+            onClick={closeManage}
+            style={{
+              position:'fixed', inset:0, zIndex:9998, background:'rgba(0,0,0,0.45)',
+              opacity: animateManage ? 1 : 0, transition: 'opacity 0.3s ease-out'
+            }}
+          />
+          {/* Sheet */}
+          <div
+            style={{
+              position:'fixed', bottom:0, left:0, right:0, zIndex:9999,
+              background:'#fff', borderRadius:'20px 20px 0 0',
+              padding:'24px 16px calc(32px + env(safe-area-inset-bottom))',
+              transform: animateManage ? 'translateY(0)' : 'translateY(100%)',
+              transition: 'transform 0.3s ease-out',
+              display: 'flex', flexDirection: 'column'
+            }}
+          >
             <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:'20px'}}>
               <div>
                 <div style={{fontFamily:'var(--m-font)',fontSize:'18px',fontWeight:'800',color:'var(--m-ink)',marginBottom:'4px'}}>Kelola Akun Terhubung</div>
                 <div style={{fontFamily:'var(--m-font)',fontSize:'13px',color:'var(--m-ink-sub)'}}>Pilih akun untuk diputuskan</div>
               </div>
-              <button onClick={() => setShowManage(false)} style={{width:'32px',height:'32px',borderRadius:'50%',background:'#F5F5F7',border:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+              <button onClick={closeManage} style={{width:'32px',height:'32px',borderRadius:'50%',background:'#F5F5F7',border:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--m-ink)" strokeWidth="2.5" strokeLinecap="round">
                   <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
                 </svg>
@@ -331,7 +360,7 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext }) {
               })}
             </div>
           </div>
-        </div>
+        </>
       )}
     </div>
   );
