@@ -517,7 +517,7 @@ export default function AudiensScreen({
 
           {/* Mini map */}
           <div style={{padding:'12px 16px 0',position:'relative'}}>
-            <div ref={mapRef} style={{width:'100%',height:'200px',borderRadius:'12px',overflow:'hidden'}} />
+            <div ref={mapRef} style={{width:'100%',height:'200px',borderRadius:'12px',overflow:'hidden',position:'relative',zIndex:10}} />
             {/* Expand button */}
             <button onClick={openSheet} title="Perbesar peta" style={{
               position:'absolute', bottom:'12px', right:'28px', zIndex:400,
