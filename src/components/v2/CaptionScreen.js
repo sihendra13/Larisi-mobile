@@ -210,8 +210,8 @@ export default function CaptionScreen({
               width:'64px', flexShrink:0,
               aspectRatio:'9/16',
               background:'#111', borderRadius:'10px',
-              overflow:'hidden', border:'2px solid #1a1a1a',
-              boxShadow:'0 4px 12px rgba(0,0,0,0.18)',
+              overflow:'hidden', border:'1.5px solid #E4E4EB',
+              boxShadow:'none',
             }}>
               {thumb ? (
                 thumb.type === 'video' ? (
@@ -486,23 +486,45 @@ export default function CaptionScreen({
         borderTop:'1px solid #ECECF1',
         padding:'12px 16px',
         paddingBottom:'calc(12px + 78px + env(safe-area-inset-bottom))',
-        display:'flex', alignItems:'center', gap:'12px',
+        display:'flex', alignItems:'center', justifyContent:'space-between',
       }}>
-        <div style={{flex:1, minWidth:0}}>
-          <div style={{fontFamily:'var(--m-font)', fontSize:'10px', fontWeight:'700', color:'var(--m-ink-sub)', textTransform:'uppercase', letterSpacing:'.5px', marginBottom:'2px'}}>
-            ESTIMASI JANGKAUAN
+        {/* Left: Info */}
+        <div style={{display:'flex', flexDirection:'column', flex:1, paddingRight:'8px', minWidth:0}}>
+          <div style={{fontFamily:'var(--m-font)', fontSize:'10px', fontWeight:'700', color:'var(--m-ink-sub)', textTransform:'uppercase', letterSpacing:'0.5px'}}>
+            Estimasi Jangkauan <span style={{margin:'0 2px'}}>•</span> Radius {radius.toFixed(1)} KM
           </div>
-          <div style={{fontFamily:'var(--m-font)', fontSize:'15px', fontWeight:'700', color:'var(--m-ink)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis'}}>
-            <span style={{color:'var(--m-brand)'}}>{reachText}</span>
-            <span style={{fontWeight:'400', color:'var(--m-ink-sub)', fontSize:'13px'}}> warga · {locName}</span>
+          <div style={{display:'flex', alignItems:'center', gap:'4px', marginTop:'2px', minWidth:0}}>
+            <span style={{fontFamily:'var(--m-font)', fontSize:'16px', fontWeight:'800', color:'var(--m-brand)', flexShrink:0}}>
+              {reach > 0 ? `~${reachText}` : '0'}
+            </span>
+            <span style={{fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'500', color:'var(--m-ink-sub)', display:'flex', alignItems:'center', flex:1, minWidth:0}}>
+              {reach > 0 ? (
+                <>
+                  {localOn && <span style={{whiteSpace:'nowrap', flexShrink:0}}>warga&nbsp;</span>}
+                  {localOn && (
+                    <span style={{
+                      whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis',
+                      flexShrink:1, minWidth:0
+                    }}>
+                      {locName || 'sekitar'}
+                    </span>
+                  )}
+                  {localOn && travelerOn && <span style={{margin:'0 4px', whiteSpace:'nowrap', flexShrink:0}}>·</span>}
+                  {travelerOn && <span style={{whiteSpace:'nowrap', flexShrink:0}}>pengunjung</span>}
+                </>
+              ) : (
+                <span>orang</span>
+              )}
+            </span>
           </div>
         </div>
+
+        {/* Right: Button */}
         <button style={{
-          flexShrink:0, padding:'12px 20px', borderRadius:'14px',
-          background:'var(--m-ink)', color:'#fff', border:'none', cursor:'pointer',
+          padding:'10px 16px', borderRadius:'12px', flexShrink:0,
+          background:'#1A1A1A', color:'#fff', border:'none', cursor:'pointer',
           fontFamily:'var(--m-font)', fontSize:'14px', fontWeight:'700',
-          display:'flex', alignItems:'center', gap:'7px',
-          boxShadow:'0 4px 14px rgba(14,14,18,0.25)',
+          display:'flex', alignItems:'center', gap:'6px',
         }}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none">
             <polygon points="5 3 19 12 5 21 5 3"/>
