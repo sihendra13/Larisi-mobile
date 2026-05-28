@@ -416,28 +416,33 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
                   transform: 'scale(1.14)',
                 }}/>
               )}
-              {/* Foreground — contained; panY shifts vertical position within bars */}
+              {/* Foreground — flex wrapper clips zoom; no objectFit (iOS WebKit compat) */}
               {previewFile.type === 'video' ? (
-                <video src={previewFile.url} autoPlay muted loop playsInline style={{
-                  position: 'absolute', inset: 0, width: '100%', height: '100%',
-                  objectFit: 'contain',
-                  transform: `translate(${currentEdit.cropOffsetX}px, ${currentEdit.cropOffsetY}px) scale(${currentEdit.cropScale})`,
-                  transformOrigin: 'center',
-                  filter: `brightness(${currentEdit.brightness/100}) saturate(${currentEdit.saturation/100})`,
-                }}/>
-              ) : (
-                <img src={previewFile.url} alt="preview"
-                  onLoad={e => {
-                    const {naturalWidth:w, naturalHeight:h} = e.target;
-                    setFileRatios(prev => ({...prev, [previewFile.url]: {isLandscape: w > h, ratio: w/h}}));
-                  }}
-                  style={{
-                    position: 'absolute', inset: 0, width: '100%', height: '100%',
-                    objectFit: 'contain',
+                <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                  <video src={previewFile.url} autoPlay muted loop playsInline style={{
+                    maxWidth: '100%', maxHeight: '100%', width: 'auto', height: 'auto', display: 'block',
                     transform: `translate(${currentEdit.cropOffsetX}px, ${currentEdit.cropOffsetY}px) scale(${currentEdit.cropScale})`,
-                    transformOrigin: 'center',
+                    WebkitTransform: `translate(${currentEdit.cropOffsetX}px, ${currentEdit.cropOffsetY}px) scale(${currentEdit.cropScale})`,
+                    transformOrigin: 'center', willChange: 'transform',
                     filter: `brightness(${currentEdit.brightness/100}) saturate(${currentEdit.saturation/100})`,
                   }}/>
+                </div>
+              ) : (
+                <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                  <img src={previewFile.url} alt="preview"
+                    onLoad={e => {
+                      const {naturalWidth:w, naturalHeight:h} = e.target;
+                      setFileRatios(prev => ({...prev, [previewFile.url]: {isLandscape: w > h, ratio: w/h}}));
+                    }}
+                    style={{
+                      maxWidth: '100%', maxHeight: '100%', width: 'auto', height: 'auto',
+                      display: 'block', flexShrink: 0,
+                      transform: `translate(${currentEdit.cropOffsetX}px, ${currentEdit.cropOffsetY}px) scale(${currentEdit.cropScale})`,
+                      WebkitTransform: `translate(${currentEdit.cropOffsetX}px, ${currentEdit.cropOffsetY}px) scale(${currentEdit.cropScale})`,
+                      transformOrigin: 'center', willChange: 'transform',
+                      filter: `brightness(${currentEdit.brightness/100}) saturate(${currentEdit.saturation/100})`,
+                    }}/>
+                </div>
               )}
             </>
           ) : (
@@ -969,23 +974,50 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
               }}/>
             )}
 
-            {/* Foreground — crop transform (contain for pillarbox, cover for post portrait) */}
+            {/* Foreground — flex wrapper for pillarbox; cover for non-pillarbox (iOS WebKit compat) */}
             {previewFile.type === 'video' ? (
-              <video src={previewFile.url} autoPlay muted loop playsInline style={{
-                position: 'absolute', inset: 0, width: '100%', height: '100%',
-                objectFit: showPillarbox ? 'contain' : 'cover',
-                transform: `translate(${currentEdit.cropOffsetX}px, ${currentEdit.cropOffsetY}px) scale(${currentEdit.cropScale})`,
-                transformOrigin: 'center',
-                filter: `brightness(${currentEdit.brightness/100}) saturate(${currentEdit.saturation/100})`,
-              }}/>
+              showPillarbox ? (
+                <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                  <video src={previewFile.url} autoPlay muted loop playsInline style={{
+                    maxWidth: '100%', maxHeight: '100%', width: 'auto', height: 'auto', display: 'block',
+                    transform: `translate(${currentEdit.cropOffsetX}px, ${currentEdit.cropOffsetY}px) scale(${currentEdit.cropScale})`,
+                    WebkitTransform: `translate(${currentEdit.cropOffsetX}px, ${currentEdit.cropOffsetY}px) scale(${currentEdit.cropScale})`,
+                    transformOrigin: 'center', willChange: 'transform',
+                    filter: `brightness(${currentEdit.brightness/100}) saturate(${currentEdit.saturation/100})`,
+                  }}/>
+                </div>
+              ) : (
+                <video src={previewFile.url} autoPlay muted loop playsInline style={{
+                  position: 'absolute', inset: 0, width: '100%', height: '100%',
+                  objectFit: 'cover',
+                  transform: `translate(${currentEdit.cropOffsetX}px, ${currentEdit.cropOffsetY}px) scale(${currentEdit.cropScale})`,
+                  WebkitTransform: `translate(${currentEdit.cropOffsetX}px, ${currentEdit.cropOffsetY}px) scale(${currentEdit.cropScale})`,
+                  transformOrigin: 'center', willChange: 'transform',
+                  filter: `brightness(${currentEdit.brightness/100}) saturate(${currentEdit.saturation/100})`,
+                }}/>
+              )
             ) : (
-              <img src={previewFile.url} alt="preview" style={{
-                position: 'absolute', inset: 0, width: '100%', height: '100%',
-                objectFit: showPillarbox ? 'contain' : 'cover',
-                transform: `translate(${currentEdit.cropOffsetX}px, ${currentEdit.cropOffsetY}px) scale(${currentEdit.cropScale})`,
-                transformOrigin: 'center',
-                filter: `brightness(${currentEdit.brightness/100}) saturate(${currentEdit.saturation/100})`,
-              }}/>
+              showPillarbox ? (
+                <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                  <img src={previewFile.url} alt="preview" style={{
+                    maxWidth: '100%', maxHeight: '100%', width: 'auto', height: 'auto',
+                    display: 'block', flexShrink: 0,
+                    transform: `translate(${currentEdit.cropOffsetX}px, ${currentEdit.cropOffsetY}px) scale(${currentEdit.cropScale})`,
+                    WebkitTransform: `translate(${currentEdit.cropOffsetX}px, ${currentEdit.cropOffsetY}px) scale(${currentEdit.cropScale})`,
+                    transformOrigin: 'center', willChange: 'transform',
+                    filter: `brightness(${currentEdit.brightness/100}) saturate(${currentEdit.saturation/100})`,
+                  }}/>
+                </div>
+              ) : (
+                <img src={previewFile.url} alt="preview" style={{
+                  position: 'absolute', inset: 0, width: '100%', height: '100%',
+                  objectFit: 'cover',
+                  transform: `translate(${currentEdit.cropOffsetX}px, ${currentEdit.cropOffsetY}px) scale(${currentEdit.cropScale})`,
+                  WebkitTransform: `translate(${currentEdit.cropOffsetX}px, ${currentEdit.cropOffsetY}px) scale(${currentEdit.cropScale})`,
+                  transformOrigin: 'center', willChange: 'transform',
+                  filter: `brightness(${currentEdit.brightness/100}) saturate(${currentEdit.saturation/100})`,
+                }}/>
+              )
             )}
 
             {/* ── Crop frame indicator: white border + dim outside ── */}
