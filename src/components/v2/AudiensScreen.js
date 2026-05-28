@@ -533,6 +533,48 @@ export default function AudiensScreen({
           </div>
 
           <RadiusSlider radius={radius} onChange={setRadius} />
+
+          {/* ── Reach estimate ── */}
+          <div style={{
+            margin:'0 16px 16px',
+            padding:'12px 14px',
+            background: reach > 0 ? 'var(--m-brand-soft)' : '#F4F4F7',
+            borderRadius:'12px',
+            display:'flex', alignItems:'center', gap:'10px',
+          }}>
+            <div style={{
+              width:'34px', height:'34px', borderRadius:'10px',
+              background: reach > 0 ? 'var(--m-brand)' : '#D7D7DE',
+              display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0,
+            }}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{width:'16px',height:'16px'}}>
+                <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
+              </svg>
+            </div>
+            <div style={{flex:1}}>
+              <div style={{fontFamily:'var(--m-font)',fontSize:'11px',color:'var(--m-ink-sub)',fontWeight:'500'}}>
+                Estimasi Jangkauan Iklan
+              </div>
+              <div style={{fontFamily:'var(--m-font)',fontSize:'15px',fontWeight:'800',color: reach > 0 ? 'var(--m-brand)' : 'var(--m-ink-sub)',marginTop:'1px'}}>
+                {reach > 0 ? `~${fmtReach(reach)} orang` : 'Pilih audiens dahulu'}
+              </div>
+            </div>
+            {reach > 0 && (
+              <div style={{
+                background:'var(--m-brand)',
+                color:'#fff',
+                fontFamily:'var(--m-font)',
+                fontSize:'10px',
+                fontWeight:'700',
+                padding:'3px 8px',
+                borderRadius:'99px',
+              }}>
+                {radius.toFixed(1)} KM
+              </div>
+            )}
+          </div>
         </div>
       </main>
 
@@ -567,7 +609,7 @@ export default function AudiensScreen({
             background:'#fff', borderRadius:'20px 20px 0 0',
             height:'80vh', display:'flex', flexDirection:'column', overflow:'hidden',
             transform: animateSheet ? 'translateY(0)' : 'translateY(100%)',
-            transition:'transform 0.3s cubic-bezier(0.32,0.72,0,1)',
+            transition:'transform 0.3s ease-out',
           }}>
             {/* Drag handle */}
             <div style={{display:'flex',justifyContent:'center',paddingTop:'10px',flexShrink:0}}>
@@ -588,9 +630,9 @@ export default function AudiensScreen({
                   <div style={{fontFamily:'var(--m-font)',fontSize:'11px',color:'var(--m-ink-sub)',marginTop:'2px'}}>Radius {radius.toFixed(1)} KM · {locName || 'Lokasiku'}</div>
                 </div>
               </div>
-              <button onClick={e => { e.stopPropagation(); closeSheet(); }} style={{
+              <button type="button" onClick={e => { e.stopPropagation(); e.preventDefault(); closeSheet(); }} style={{
                 width:'32px',height:'32px',borderRadius:'50%',background:'#F4F4F7',
-                border:'none',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',flexShrink:0,
+                border:'none',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',flexShrink:0,zIndex:50,
               }}>
                 <svg viewBox="0 0 24 24" fill="none" stroke="var(--m-ink)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{width:'16px',height:'16px'}}>
                   <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
