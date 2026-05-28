@@ -65,6 +65,13 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
   const [aiPhoto,     setAiPhoto]     = useState(null);
   const [aiStyle,     setAiStyle]     = useState('studio');
 
+  /* ── Edit tampilan sheet ── */
+  const [showEditSheet,    setShowEditSheet]    = useState(false);
+  const [animateEditSheet, setAnimateEditSheet] = useState(false);
+  /* Per-file edit settings keyed by file.url */
+  const [editSettings,     setEditSettings]     = useState({});
+  /* { brightness:100, saturation:100, panX:0 } */
+
   const fileInputRef   = useRef(null);
   const aiPhotoRef     = useRef(null);
 
@@ -254,8 +261,28 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
   };
 
   const previewFile = files[selectedIdx] || null;
-  const isEmpty     = files.length === 0;   /* light-mode flag */
+  const isEmpty     = files.length === 0;
   const handleNext  = () => onNext(detectedPersona);
+
+  /* ── Blur pillarbox: always on for Reel/Story when media present ── */
+  const showPillarbox = (fmtLower === 'reel' || fmtLower === 'story') && !!previewFile;
+
+  /* ── Edit helpers ── */
+  const DEFAULT_EDIT = { brightness: 100, saturation: 100, panX: 0 };
+  const getEdit  = (url) => (url && editSettings[url]) ? editSettings[url] : DEFAULT_EDIT;
+  const setEditKey = (url, key, val) =>
+    setEditSettings(prev => ({ ...prev, [url]: { ...(prev[url] || DEFAULT_EDIT), [key]: val } }));
+
+  const currentEdit = previewFile ? getEdit(previewFile.url) : DEFAULT_EDIT;
+
+  const openEditSheet = () => {
+    setShowEditSheet(true);
+    requestAnimationFrame(() => requestAnimationFrame(() => setAnimateEditSheet(true)));
+  };
+  const closeEditSheet = () => {
+    setAnimateEditSheet(false);
+    setTimeout(() => setShowEditSheet(false), 350);
+  };
 
   /* ════════════════════════════════════════════════════
      RENDER — full-screen overlay layout
@@ -273,14 +300,60 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
       {/* ══════════════════════════════════════════
           1. FULL-SCREEN MEDIA (background layer)
       ══════════════════════════════════════════ */}
-      <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
+      <div style={{ position: 'absolute', inset: 0, zIndex: 0, overflow: 'hidden' }}>
         {previewFile ? (
-          previewFile.type === 'video' ? (
-            <video src={previewFile.url} autoPlay muted loop playsInline
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          showPillarbox ? (
+            /* ── Blur pillarbox for Reel/Story ── */
+            <>
+              {/* Blurred bg — fills frame */}
+              {previewFile.type === 'video' ? (
+                <video src={previewFile.url} autoPlay muted loop playsInline style={{
+                  position: 'absolute', inset: 0, width: '100%', height: '100%',
+                  objectFit: 'cover',
+                  objectPosition: `${50 + currentEdit.panX}% 50%`,
+                  filter: 'blur(22px) brightness(0.52) saturate(1.5)',
+                  transform: 'scale(1.14)',
+                }}/>
+              ) : (
+                <img src={previewFile.url} alt="" style={{
+                  position: 'absolute', inset: 0, width: '100%', height: '100%',
+                  objectFit: 'cover',
+                  objectPosition: `${50 + currentEdit.panX}% 50%`,
+                  filter: 'blur(22px) brightness(0.52) saturate(1.5)',
+                  transform: 'scale(1.14)',
+                }}/>
+              )}
+              {/* Foreground — contained, panning via objectPosition */}
+              {previewFile.type === 'video' ? (
+                <video src={previewFile.url} autoPlay muted loop playsInline style={{
+                  position: 'absolute', inset: 0, width: '100%', height: '100%',
+                  objectFit: 'contain',
+                  objectPosition: `${50 + currentEdit.panX}% 50%`,
+                  filter: `brightness(${currentEdit.brightness/100}) saturate(${currentEdit.saturation/100})`,
+                }}/>
+              ) : (
+                <img src={previewFile.url} alt="preview" style={{
+                  position: 'absolute', inset: 0, width: '100%', height: '100%',
+                  objectFit: 'contain',
+                  objectPosition: `${50 + currentEdit.panX}% 50%`,
+                  filter: `brightness(${currentEdit.brightness/100}) saturate(${currentEdit.saturation/100})`,
+                }}/>
+              )}
+            </>
           ) : (
-            <img src={previewFile.url} alt="preview"
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            /* ── Normal (Post) — cover ── */
+            previewFile.type === 'video' ? (
+              <video src={previewFile.url} autoPlay muted loop playsInline style={{
+                width: '100%', height: '100%', objectFit: 'cover',
+                filter: `brightness(${currentEdit.brightness/100}) saturate(${currentEdit.saturation/100})`,
+              }}/>
+            ) : (
+              <img src={previewFile.url} alt="preview" style={{
+                width: '100%', height: '100%', objectFit: 'cover',
+                objectPosition: `${50 + currentEdit.panX}% 50%`,
+                filter: `brightness(${currentEdit.brightness/100}) saturate(${currentEdit.saturation/100})`,
+              }}/>
+            )
           )
         ) : (
           /* ── Empty state — light bg, dark content ── */
@@ -544,7 +617,7 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
           justifyContent: 'space-between',
           padding: '0 14px',
         }}>
-          {/* Left: + and AI ✨ */}
+          {/* Left: + , Edit (when files present), AI ✨ */}
           <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
 
             {/* + : direct native gallery trigger */}
@@ -564,6 +637,32 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
                 <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
               </svg>
             </button>
+
+            {/* 🎨 Edit tampilan — only when files are present */}
+            {files.length > 0 && (
+              <button
+                onClick={openEditSheet}
+                style={{
+                  width: '52px', height: '48px', borderRadius: '14px',
+                  background: 'rgba(255,255,255,0.18)',
+                  backdropFilter: 'blur(8px)',
+                  border: '1.5px solid rgba(255,255,255,0.28)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  cursor: 'pointer', color: '#fff',
+                  WebkitTapHighlightColor: 'transparent',
+                }}
+              >
+                {/* Sliders / adjust icon */}
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/>
+                  <line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/>
+                  <line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/>
+                  <line x1="1" y1="14" x2="7" y2="14"/>
+                  <line x1="9" y1="8" x2="15" y2="8"/>
+                  <line x1="17" y1="16" x2="23" y2="16"/>
+                </svg>
+              </button>
+            )}
 
             {/* AI ✨ */}
             <button
@@ -725,6 +824,181 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
                   <path d="M12 2L9.5 9.5 2 12l7.5 2.5L12 22l2.5-7.5L22 12l-7.5-2.5z"/>
                 </svg>
                 {aiPhoto ? 'Generate 3 Variasi' : 'Upload foto dulu'}
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* ══ Edit Tampilan Bottom Sheet ══ */}
+      {showEditSheet && previewFile && (
+        <>
+          <div onClick={closeEditSheet} style={{
+            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 9998,
+            opacity: animateEditSheet ? 1 : 0, transition: 'opacity 0.35s ease',
+          }} />
+          <div style={{
+            position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 9999,
+            background: '#fff', borderRadius: '20px 20px 0 0',
+            display: 'flex', flexDirection: 'column',
+            transform: animateEditSheet ? 'translateY(0)' : 'translateY(100%)',
+            transition: 'transform 0.35s cubic-bezier(0.32,0.72,0,1)',
+            paddingBottom: 'calc(env(safe-area-inset-bottom) + 16px)',
+          }}>
+            {/* Handle */}
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 0', flexShrink: 0 }}>
+              <div style={{ width: '36px', height: '4px', borderRadius: '2px', background: '#E4E4EB' }} />
+            </div>
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px 0', flexShrink: 0 }}>
+              <span style={{ fontFamily: 'var(--m-font)', fontSize: '16px', fontWeight: '700', color: 'var(--m-ink)' }}>
+                Edit Tampilan
+              </span>
+              <button onClick={closeEditSheet} style={{
+                width: '30px', height: '30px', borderRadius: '50%',
+                background: '#F0F0F5', border: 'none', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--m-ink)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            </div>
+
+            {/* Mini preview */}
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '16px 16px 4px', flexShrink: 0 }}>
+              <div style={{
+                width: '110px', aspectRatio: '9/16',
+                borderRadius: '12px', overflow: 'hidden',
+                background: '#111', boxShadow: '0 4px 20px rgba(0,0,0,0.25)',
+                position: 'relative',
+              }}>
+                {showPillarbox ? (
+                  <>
+                    {previewFile.type === 'video' ? (
+                      <video src={previewFile.url} muted style={{
+                        position: 'absolute', inset: 0, width: '100%', height: '100%',
+                        objectFit: 'cover',
+                        objectPosition: `${50 + currentEdit.panX}% 50%`,
+                        filter: 'blur(14px) brightness(0.52) saturate(1.5)',
+                        transform: 'scale(1.12)',
+                      }}/>
+                    ) : (
+                      <img src={previewFile.url} alt="" style={{
+                        position: 'absolute', inset: 0, width: '100%', height: '100%',
+                        objectFit: 'cover',
+                        objectPosition: `${50 + currentEdit.panX}% 50%`,
+                        filter: 'blur(14px) brightness(0.52) saturate(1.5)',
+                        transform: 'scale(1.12)',
+                      }}/>
+                    )}
+                    {previewFile.type === 'video' ? (
+                      <video src={previewFile.url} muted style={{
+                        position: 'absolute', inset: 0, width: '100%', height: '100%',
+                        objectFit: 'contain',
+                        objectPosition: `${50 + currentEdit.panX}% 50%`,
+                        filter: `brightness(${currentEdit.brightness/100}) saturate(${currentEdit.saturation/100})`,
+                      }}/>
+                    ) : (
+                      <img src={previewFile.url} alt="preview" style={{
+                        position: 'absolute', inset: 0, width: '100%', height: '100%',
+                        objectFit: 'contain',
+                        objectPosition: `${50 + currentEdit.panX}% 50%`,
+                        filter: `brightness(${currentEdit.brightness/100}) saturate(${currentEdit.saturation/100})`,
+                      }}/>
+                    )}
+                  </>
+                ) : (
+                  previewFile.type === 'video' ? (
+                    <video src={previewFile.url} muted style={{
+                      width: '100%', height: '100%', objectFit: 'cover',
+                      filter: `brightness(${currentEdit.brightness/100}) saturate(${currentEdit.saturation/100})`,
+                    }}/>
+                  ) : (
+                    <img src={previewFile.url} alt="preview" style={{
+                      width: '100%', height: '100%', objectFit: 'cover',
+                      objectPosition: `${50 + currentEdit.panX}% 50%`,
+                      filter: `brightness(${currentEdit.brightness/100}) saturate(${currentEdit.saturation/100})`,
+                    }}/>
+                  )
+                )}
+              </div>
+            </div>
+
+            {/* Sliders */}
+            <div style={{ padding: '16px 20px 8px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+
+              {/* Drag to Pan — only meaningful for pillarbox */}
+              {showPillarbox && (
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                    <span style={{ fontFamily: 'var(--m-font)', fontSize: '13px', fontWeight: '700', color: 'var(--m-ink)' }}>Drag to Pan</span>
+                    <span style={{ fontFamily: 'var(--m-font)', fontSize: '12px', color: 'var(--m-ink-sub)' }}>
+                      {currentEdit.panX > 0 ? `+${currentEdit.panX}` : currentEdit.panX}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <span style={{ fontFamily: 'var(--m-font)', fontSize: '13px', color: 'var(--m-ink-sub)', fontWeight: '600' }}>−</span>
+                    <input type="range" min={-50} max={50} step={1}
+                      value={currentEdit.panX}
+                      onChange={e => setEditKey(previewFile.url, 'panX', Number(e.target.value))}
+                      style={{ flex: 1, accentColor: '#111', height: '4px', cursor: 'pointer' }}
+                    />
+                    <span style={{ fontFamily: 'var(--m-font)', fontSize: '13px', color: 'var(--m-ink-sub)', fontWeight: '600' }}>+</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Terang-Gelap */}
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                  <span style={{ fontFamily: 'var(--m-font)', fontSize: '13px', fontWeight: '700', color: 'var(--m-ink)' }}>Terang–Gelap</span>
+                  <span style={{ fontFamily: 'var(--m-font)', fontSize: '12px', color: 'var(--m-ink-sub)' }}>{currentEdit.brightness}%</span>
+                </div>
+                <input type="range" min={50} max={150} step={1}
+                  value={currentEdit.brightness}
+                  onChange={e => setEditKey(previewFile.url, 'brightness', Number(e.target.value))}
+                  style={{ width: '100%', accentColor: '#111', height: '4px', cursor: 'pointer' }}
+                />
+              </div>
+
+              {/* Ketajaman Warna */}
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                  <span style={{ fontFamily: 'var(--m-font)', fontSize: '13px', fontWeight: '700', color: 'var(--m-ink)' }}>Ketajaman Warna</span>
+                  <span style={{ fontFamily: 'var(--m-font)', fontSize: '12px', color: 'var(--m-ink-sub)' }}>{currentEdit.saturation}%</span>
+                </div>
+                <input type="range" min={0} max={200} step={1}
+                  value={currentEdit.saturation}
+                  onChange={e => setEditKey(previewFile.url, 'saturation', Number(e.target.value))}
+                  style={{ width: '100%', accentColor: '#111', height: '4px', cursor: 'pointer' }}
+                />
+              </div>
+            </div>
+
+            {/* Reset + Selesai */}
+            <div style={{ padding: '12px 16px 0', display: 'flex', gap: '10px', flexShrink: 0 }}>
+              <button
+                onClick={() => setEditSettings(prev => ({ ...prev, [previewFile.url]: DEFAULT_EDIT }))}
+                style={{
+                  padding: '14px 0', borderRadius: '14px', flex: 1,
+                  background: '#F5F5F7', border: '1.5px solid #E4E4EB',
+                  fontFamily: 'var(--m-font)', fontSize: '14px', fontWeight: '600',
+                  color: 'var(--m-ink-sub)', cursor: 'pointer',
+                }}
+              >
+                Reset
+              </button>
+              <button
+                onClick={closeEditSheet}
+                style={{
+                  padding: '14px 0', borderRadius: '14px', flex: 2,
+                  background: 'var(--m-ink)', border: 'none',
+                  fontFamily: 'var(--m-font)', fontSize: '14px', fontWeight: '700',
+                  color: '#fff', cursor: 'pointer',
+                }}
+              >
+                Selesai
               </button>
             </div>
           </div>
