@@ -112,11 +112,10 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
       {/* ── Scrollable content ── */}
       <main style={{
         flex:1, overflowY:'auto', padding:'16px 16px 0',
-        display:'flex', flexDirection:'column', gap:'14px',
       }}>
 
         {/* Format tabs */}
-        <div style={{
+        <div style={{marginBottom:'14px',
           display:'flex', gap:'0', background:'#F0F0F5',
           borderRadius:'12px', padding:'4px',
         }}>
@@ -141,7 +140,7 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
         </div>
 
         {/* ── Phone preview (hero) ── */}
-        <div style={{display:'flex', justifyContent:'center'}}>
+        <div style={{display:'flex', justifyContent:'center', marginBottom:'14px'}}>
           <div style={{
             position:'relative',
             background:'#111',
@@ -189,7 +188,7 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
         </div>
 
         {/* ── Asset selection card ── */}
-        <div className="panel" style={{boxShadow:'none', border:'1px solid #E4E4EB', padding:'14px'}}>
+        <div className="panel" style={{boxShadow:'none', border:'1px solid #E4E4EB', padding:'14px', marginBottom:'14px'}}>
           <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'12px'}}>
             <span style={{fontFamily:'var(--m-font)', fontSize:'14px', fontWeight:'700', color:'var(--m-ink)'}}>
               Pilih foto untuk preview
@@ -258,7 +257,7 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
       <div style={{
         position:'fixed',
         bottom:'calc(60px + env(safe-area-inset-bottom) + 12px)',
-        left:'16px', right:'16px', zIndex:300,
+        left:'16px', right:'16px', zIndex:950,
       }}>
         <button onClick={onNext} style={{
           width:'100%', padding:'16px', borderRadius:'16px',
