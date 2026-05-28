@@ -779,6 +779,7 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
               <button
                 onClick={openEditSheet}
                 style={{
+                  flexShrink: 0,
                   width: '52px', height: '48px', borderRadius: '14px',
                   background: 'rgba(255,255,255,0.18)',
                   backdropFilter: 'blur(8px)',
@@ -804,6 +805,7 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
               <button
                 onClick={toggleVideoMute}
                 style={{
+                  flexShrink: 0,
                   width: '52px', height: '48px', borderRadius: '14px',
                   background: 'rgba(255,255,255,0.18)',
                   backdropFilter: 'blur(8px)',
@@ -835,6 +837,7 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
               <button
                 onClick={toggleVideoPlay}
                 style={{
+                  flexShrink: 0,
                   width: '52px', height: '48px', borderRadius: '14px',
                   background: 'rgba(255,255,255,0.18)',
                   backdropFilter: 'blur(8px)',
