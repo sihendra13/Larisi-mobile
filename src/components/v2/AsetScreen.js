@@ -85,6 +85,7 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
   const editImageAreaRef  = useRef(null);  /* ref ke area gambar di edit modal */
   const touchRef          = useRef(null);  /* state drag aktif */
   const previewVideoRef   = useRef(null);  /* ref ke video preview utama */
+  const panelSwipeRef     = useRef(null);  /* startY saat swipe di drag handle */
 
   /* V1 refs */
   const masterPersonaLockedRef = useRef(false);
@@ -636,34 +637,38 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
           })}
         </div>
 
-        {/* ── Master Persona card — tepat di bawah chips ── */}
+        {/* ── Master Persona card — tepat di bawah chips, ukuran penuh ── */}
         {!isEmpty && !isScanning && detectedPersona && (
           <div style={{ padding: '12px 14px 4px' }}>
             <div style={{
               background: 'rgba(255,255,255,0.08)',
               backdropFilter: 'blur(10px)',
               border: '1px solid rgba(255,255,255,0.15)',
-              borderRadius: '12px',
-              padding: '10px 12px',
-              display: 'flex', alignItems: 'center', gap: '10px',
+              borderRadius: '14px',
+              padding: '14px',
             }}>
-              <div style={{
-                width: '18px', height: '18px', borderRadius: '50%',
-                background: '#22c55e', flexShrink: 0,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ width: '10px', height: '10px' }}>
-                  <polyline points="20 6 9 17 4 12"/>
-                </svg>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '6px' }}>
+                <div style={{
+                  width: '18px', height: '18px', borderRadius: '50%',
+                  background: '#22c55e', flexShrink: 0,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ width: '10px', height: '10px' }}>
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                </div>
+                <span style={{ fontFamily: 'var(--m-font)', fontSize: '11px', fontWeight: '700', color: '#e9d5ff', letterSpacing: '0.3px' }}>
+                  Master Persona
+                </span>
               </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', flexWrap: 'wrap' }}>
-                  <span style={{ fontFamily: 'var(--m-font)', fontSize: '11px', fontWeight: '700', color: '#e9d5ff' }}>Master Persona</span>
-                  <span style={{ fontFamily: 'var(--m-font)', fontSize: '13px', fontWeight: '700', color: '#fff' }}>{detectedPersona.name}</span>
-                </div>
-                <div style={{ fontFamily: 'var(--m-font)', fontSize: '10px', color: 'rgba(255,255,255,0.65)', marginTop: '1px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {detectedPersona.target} · {detectedPersona.age || '18–45'} · {detectedPersona.gender || 'Mixed'}
-                </div>
+              <div style={{ fontFamily: 'var(--m-font)', fontSize: '16px', fontWeight: '700', color: '#fff', marginBottom: '3px', letterSpacing: '-0.01em' }}>
+                {detectedPersona.name}
+              </div>
+              <div style={{ fontFamily: 'var(--m-font)', fontSize: '11px', color: 'rgba(255,255,255,0.75)', marginBottom: '2px' }}>
+                Targeting: {detectedPersona.target}
+              </div>
+              <div style={{ fontFamily: 'var(--m-font)', fontSize: '11px', fontWeight: '600', color: 'rgba(255,255,255,0.75)' }}>
+                Age range: {detectedPersona.age || '18–45'} · {detectedPersona.gender || 'Mixed'}
               </div>
             </div>
           </div>
@@ -741,19 +746,20 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
           </div>
         )}
 
-        {/* ── Action bar: [+][AI✨]  ←→  [Next →] ── */}
+        {/* ── Action bar — horizontal scroll ── */}
         <div style={{
-          display: 'flex', alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '0 14px',
+          display: 'flex', alignItems: 'center', gap: '10px',
+          overflowX: 'auto', padding: '0 14px',
+          scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch',
         }}>
-          {/* Left: + , Edit (when files present), AI ✨ */}
-          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          {/* semua tombol dalam satu baris scrollable */}
+          <div style={{ display: 'contents' }}>
 
             {/* + : direct native gallery trigger */}
             <button
               onClick={() => fileInputRef.current?.click()}
               style={{
+                flexShrink: 0,
                 width: '52px', height: '48px', borderRadius: '14px',
                 background: isEmpty ? '#2d2d36' : 'rgba(255,255,255,0.18)',
                 backdropFilter: isEmpty ? 'none' : 'blur(8px)',
@@ -856,6 +862,7 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
             <button
               onClick={openAISheet}
               style={{
+                flexShrink: 0,
                 width: '52px', height: '48px', borderRadius: '14px',
                 background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
                 border: 'none',
@@ -869,28 +876,30 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
                 <path d="M12 2L9.5 9.5 2 12l7.5 2.5L12 22l2.5-7.5L22 12l-7.5-2.5z"/>
               </svg>
             </button>
-          </div>
 
-          {/* Right: Next → */}
-          <button
-            onClick={handleNext}
-            style={{
-              padding: '11px 26px', borderRadius: '14px',
-              background: isEmpty ? 'var(--m-ink)' : '#fff',
-              color: isEmpty ? '#fff' : '#111',
-              border: 'none',
-              fontFamily: 'var(--m-font)', fontSize: '15px', fontWeight: '700',
-              cursor: 'pointer',
-              display: 'flex', alignItems: 'center', gap: '7px',
-              boxShadow: isEmpty ? '0 2px 12px rgba(0,0,0,0.18)' : '0 2px 12px rgba(0,0,0,0.35)',
-              WebkitTapHighlightColor: 'transparent',
-            }}
-          >
-            Next
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
-            </svg>
-          </button>
+            {/* Lanjut → */}
+            <button
+              onClick={handleNext}
+              style={{
+                flexShrink: 0,
+                padding: '0 22px', height: '48px', borderRadius: '14px',
+                background: isEmpty ? 'var(--m-ink)' : '#fff',
+                color: isEmpty ? '#fff' : '#111',
+                border: 'none',
+                fontFamily: 'var(--m-font)', fontSize: '15px', fontWeight: '700',
+                cursor: 'pointer',
+                display: 'flex', alignItems: 'center', gap: '7px',
+                boxShadow: isEmpty ? '0 2px 12px rgba(0,0,0,0.18)' : '0 2px 12px rgba(0,0,0,0.35)',
+                WebkitTapHighlightColor: 'transparent',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              Lanjut
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -1155,21 +1164,30 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
           {/* ── White controls panel — collapsible bottom sheet ── */}
           <div style={{
             position: 'absolute', left: 0, right: 0, bottom: 0,
-            transform: editPanelCollapsed ? 'translateY(calc(100% - 40px))' : 'translateY(0)',
+            transform: editPanelCollapsed ? 'translateY(calc(100% - 34px))' : 'translateY(0)',
             transition: 'transform 0.3s cubic-bezier(0.32,0.72,0,1)',
           }}>
             <div style={{ background: '#fff', borderRadius: '20px 20px 0 0' }}>
 
-              {/* ── Drag handle: tap to collapse/expand ── */}
+              {/* ── Chevron: tap atau swipe up/down untuk collapse/expand ── */}
               <div
-                onClick={() => setEditPanelCollapsed(p => !p)}
+                onTouchStart={e => { panelSwipeRef.current = e.touches[0].clientY; }}
+                onTouchEnd={e => {
+                  if (panelSwipeRef.current === null) return;
+                  e.preventDefault();
+                  const dy = e.changedTouches[0].clientY - panelSwipeRef.current;
+                  panelSwipeRef.current = null;
+                  if (Math.abs(dy) < 15)   setEditPanelCollapsed(p => !p);   /* tap */
+                  else if (dy >  30)        setEditPanelCollapsed(true);       /* swipe down → collapse */
+                  else if (dy < -30)        setEditPanelCollapsed(false);      /* swipe up  → expand   */
+                }}
+                onClick={() => setEditPanelCollapsed(p => !p)}  /* mouse fallback */
                 style={{
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px',
-                  padding: '10px 0 8px', cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  padding: '12px 0 10px', cursor: 'pointer',
                   WebkitTapHighlightColor: 'transparent', userSelect: 'none',
                 }}
               >
-                <div style={{ width: '40px', height: '4px', borderRadius: '2px', background: '#E4E4EB' }} />
                 <svg width="16" height="9" viewBox="0 0 16 9" fill="none"
                   stroke="#BBBBC8" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"
                   style={{
