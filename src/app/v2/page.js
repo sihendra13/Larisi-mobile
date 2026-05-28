@@ -6,6 +6,7 @@ import AudiensScreen  from '@/components/v2/AudiensScreen';
 import AsetScreen     from '@/components/v2/AsetScreen';
 import CaptionScreen  from '@/components/v2/CaptionScreen';
 import KelolaScreen   from '@/components/v2/KelolaScreen';
+import PerformaScreen from '@/components/v2/PerformaScreen';
 
 export default function DapurV2() {
   const [screen,     setScreen]     = useState('platform');
@@ -85,6 +86,7 @@ export default function DapurV2() {
       </div>
 
       {activeNav === 'monitor' && <KelolaScreen />}
+      {activeNav === 'analytics' && <PerformaScreen />}
 
       <BottomNav activeNav={activeNav} onSwitch={setActiveNav} />
     </div>
