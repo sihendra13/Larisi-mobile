@@ -76,10 +76,15 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
   const [fileRatios,       setFileRatios]       = useState({});
   /* { [url]: { isLandscape: bool, ratio: naturalW/naturalH } } */
 
+  /* ── Video playback controls ── */
+  const [videoMuted,   setVideoMuted]   = useState(true);   /* mulai muted agar autoplay jalan di iOS */
+  const [videoPlaying, setVideoPlaying] = useState(true);
+
   const fileInputRef      = useRef(null);
   const aiPhotoRef        = useRef(null);
   const editImageAreaRef  = useRef(null);  /* ref ke area gambar di edit modal */
   const touchRef          = useRef(null);  /* state drag aktif */
+  const previewVideoRef   = useRef(null);  /* ref ke video preview utama */
 
   /* V1 refs */
   const masterPersonaLockedRef = useRef(false);
@@ -95,6 +100,17 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
       setSelectedIdx(files.length - 1);
     }
   }, [files.length, selectedIdx]);
+
+  /* ── Video play/pause imperative sync ── */
+  useEffect(() => {
+    const v = previewVideoRef.current;
+    if (!v) return;
+    if (videoPlaying) { v.play().catch(() => {}); }
+    else              { v.pause(); }
+  }, [videoPlaying]);
+
+  /* ── Reset ke playing saat ganti file ── */
+  useEffect(() => { setVideoPlaying(true); }, [selectedIdx]);
 
   /* ── Scan text cycling ── */
   useEffect(() => {
@@ -266,9 +282,13 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
     if (selectedIdx >= newFiles.length) setSelectedIdx(Math.max(0, newFiles.length - 1));
   };
 
-  const previewFile = files[selectedIdx] || null;
-  const isEmpty     = files.length === 0;
-  const handleNext  = () => onNext(detectedPersona);
+  const previewFile  = files[selectedIdx] || null;
+  const isEmpty      = files.length === 0;
+  const isVideoFile  = previewFile?.type === 'video';
+  const handleNext   = () => onNext(detectedPersona);
+
+  const toggleVideoPlay = () => setVideoPlaying(p => !p);
+  const toggleVideoMute = () => setVideoMuted(p => !p);
 
   /* ── Blur pillarbox: Reel/Story always; Post when image is landscape ── */
   const isCurrentLandscape = previewFile ? (fileRatios[previewFile.url]?.isLandscape ?? false) : false;
@@ -421,7 +441,7 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
               {/* Foreground — flex wrapper clips zoom; no objectFit (iOS WebKit compat) */}
               {previewFile.type === 'video' ? (
                 <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                  <video src={previewFile.url} autoPlay muted loop playsInline style={{
+                  <video ref={previewVideoRef} src={previewFile.url} autoPlay muted={videoMuted} loop playsInline style={{
                     maxWidth: '100%', maxHeight: '100%', width: 'auto', height: 'auto', display: 'block',
                     transform: `translate(${currentEdit.cropOffsetX}px, ${currentEdit.cropOffsetY}px) scale(${currentEdit.cropScale})`,
                     WebkitTransform: `translate(${currentEdit.cropOffsetX}px, ${currentEdit.cropOffsetY}px) scale(${currentEdit.cropScale})`,
@@ -450,7 +470,7 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
           ) : (
             /* ── Normal (Post portrait/square) — cover, no pillarbox ── */
             previewFile.type === 'video' ? (
-              <video src={previewFile.url} autoPlay muted loop playsInline style={{
+              <video ref={previewVideoRef} src={previewFile.url} autoPlay muted={videoMuted} loop playsInline style={{
                 width: '100%', height: '100%', objectFit: 'cover',
                 filter: `brightness(${currentEdit.brightness/100}) saturate(${currentEdit.saturation/100})`,
               }}/>
@@ -615,6 +635,39 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
             );
           })}
         </div>
+
+        {/* ── Master Persona card — tepat di bawah chips ── */}
+        {!isEmpty && !isScanning && detectedPersona && (
+          <div style={{ padding: '12px 14px 4px' }}>
+            <div style={{
+              background: 'rgba(255,255,255,0.08)',
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(255,255,255,0.15)',
+              borderRadius: '12px',
+              padding: '10px 12px',
+              display: 'flex', alignItems: 'center', gap: '10px',
+            }}>
+              <div style={{
+                width: '18px', height: '18px', borderRadius: '50%',
+                background: '#22c55e', flexShrink: 0,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ width: '10px', height: '10px' }}>
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', flexWrap: 'wrap' }}>
+                  <span style={{ fontFamily: 'var(--m-font)', fontSize: '11px', fontWeight: '700', color: '#e9d5ff' }}>Master Persona</span>
+                  <span style={{ fontFamily: 'var(--m-font)', fontSize: '13px', fontWeight: '700', color: '#fff' }}>{detectedPersona.name}</span>
+                </div>
+                <div style={{ fontFamily: 'var(--m-font)', fontSize: '10px', color: 'rgba(255,255,255,0.65)', marginTop: '1px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {detectedPersona.target} · {detectedPersona.age || '18–45'} · {detectedPersona.gender || 'Mixed'}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ══════════════════════════════════════════
@@ -630,47 +683,6 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
         paddingBottom: 'calc(80px + env(safe-area-inset-bottom))',
       }}>
 
-        {/* ── Master Persona card — V1 glass style ── */}
-        {!isScanning && detectedPersona && (
-          <div style={{ padding: '0 14px 12px' }}>
-            <div style={{
-              background: 'rgba(255,255,255,0.08)',
-              backdropFilter: 'blur(10px)',
-              border: '1px solid rgba(255,255,255,0.15)',
-              borderRadius: '14px',
-              padding: '14px',
-            }}>
-              {/* Top: check + label */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '6px' }}>
-                <div style={{
-                  width: '18px', height: '18px', borderRadius: '50%',
-                  background: '#22c55e', flexShrink: 0,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ width: '10px', height: '10px' }}>
-                    <polyline points="20 6 9 17 4 12"/>
-                  </svg>
-                </div>
-                <span style={{ fontFamily: 'var(--m-font)', fontSize: '11px', fontWeight: '700', color: '#e9d5ff', letterSpacing: '0.3px' }}>
-                  Master Persona
-                </span>
-              </div>
-              {/* Name */}
-              <div style={{ fontFamily: 'var(--m-font)', fontSize: '16px', fontWeight: '700', color: '#fff', marginBottom: '3px', letterSpacing: '-0.01em' }}>
-                {detectedPersona.name}
-              </div>
-              {/* Targeting */}
-              <div style={{ fontFamily: 'var(--m-font)', fontSize: '11px', color: 'rgba(255,255,255,0.75)', marginBottom: '2px' }}>
-                Targeting: {detectedPersona.target}
-              </div>
-              {/* Age range */}
-              <div style={{ fontFamily: 'var(--m-font)', fontSize: '11px', fontWeight: '600', color: 'rgba(255,255,255,0.75)' }}>
-                Age range: {detectedPersona.age || '18–45'} · {detectedPersona.gender || 'Mixed'}
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* ── Thumbnail strip ── */}
         {files.length > 0 && (
           <div style={{
@@ -684,13 +696,20 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
                 style={{
                   position: 'relative', flexShrink: 0,
                   width: '60px', height: '60px', borderRadius: '10px', overflow: 'hidden',
-                  border: i === selectedIdx ? '2.5px solid #fff' : '2px solid rgba(255,255,255,0.2)',
+                  border: i === selectedIdx ? '1.5px solid #fff' : '1px solid rgba(255,255,255,0.2)',
                   cursor: 'pointer',
                   boxShadow: i === selectedIdx ? '0 0 0 1px rgba(0,0,0,0.4)' : 'none',
                 }}
               >
                 {f.type === 'video' ? (
-                  <video src={f.url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} muted />
+                  /* preload="metadata" + seek ke 0.1s → paksa iOS render frame pertama */
+                  <video
+                    src={f.url}
+                    preload="metadata"
+                    playsInline muted
+                    onLoadedMetadata={e => { try { e.target.currentTime = 0.1; } catch(_){} }}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                  />
                 ) : (
                   <img src={f.url} alt={f.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 )}
@@ -763,7 +782,6 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
                   WebkitTapHighlightColor: 'transparent',
                 }}
               >
-                {/* Sliders / adjust icon */}
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/>
                   <line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/>
@@ -772,6 +790,65 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
                   <line x1="9" y1="8" x2="15" y2="8"/>
                   <line x1="17" y1="16" x2="23" y2="16"/>
                 </svg>
+              </button>
+            )}
+
+            {/* 🔊 Mute/unmute — hanya ketika video */}
+            {isVideoFile && (
+              <button
+                onClick={toggleVideoMute}
+                style={{
+                  width: '52px', height: '48px', borderRadius: '14px',
+                  background: 'rgba(255,255,255,0.18)',
+                  backdropFilter: 'blur(8px)',
+                  border: '1.5px solid rgba(255,255,255,0.28)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  cursor: 'pointer', color: '#fff',
+                  WebkitTapHighlightColor: 'transparent',
+                }}
+              >
+                {videoMuted ? (
+                  /* Volume-X (muted) */
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                    <line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>
+                  </svg>
+                ) : (
+                  /* Volume-2 (unmuted) */
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+                    <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                  </svg>
+                )}
+              </button>
+            )}
+
+            {/* ▶/⏸ Play/Pause — hanya ketika video */}
+            {isVideoFile && (
+              <button
+                onClick={toggleVideoPlay}
+                style={{
+                  width: '52px', height: '48px', borderRadius: '14px',
+                  background: 'rgba(255,255,255,0.18)',
+                  backdropFilter: 'blur(8px)',
+                  border: '1.5px solid rgba(255,255,255,0.28)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  cursor: 'pointer', color: '#fff',
+                  WebkitTapHighlightColor: 'transparent',
+                }}
+              >
+                {videoPlaying ? (
+                  /* Pause */
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="6" y1="4" x2="6" y2="20"/><line x1="18" y1="4" x2="18" y2="20"/>
+                  </svg>
+                ) : (
+                  /* Play */
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <polygon points="5 3 19 12 5 21 5 3"/>
+                  </svg>
+                )}
               </button>
             )}
 
