@@ -107,6 +107,7 @@ export default function CaptionScreen({
   const [showEditSheet,   setShowEditSheet]   = useState(false);
   const [animateEditSheet,setAnimateEditSheet]= useState(false);
   const [editDraft,       setEditDraft]       = useState('');
+  const [sheetBottom,     setSheetBottom]     = useState(0);
 
   const reach     = computeReach(locPop, radius, localOn, travelerOn);
   const reachText = fmtReach(reach);
@@ -144,6 +145,24 @@ export default function CaptionScreen({
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [files.length]);
+
+  /* ── Keyboard offset via visualViewport (iOS Safari fix) ── */
+  useEffect(() => {
+    if (!showEditSheet) { setSheetBottom(0); return; }
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const update = () => {
+      const offset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+      setSheetBottom(offset);
+    };
+    vv.addEventListener('resize', update);
+    vv.addEventListener('scroll', update);
+    update();
+    return () => {
+      vv.removeEventListener('resize', update);
+      vv.removeEventListener('scroll', update);
+    };
+  }, [showEditSheet]);
 
   /* ── Edit sheet helpers ── */
   const openEditSheet = () => {
@@ -539,16 +558,15 @@ export default function CaptionScreen({
               transition:'background 0.35s ease',
             }}
           />
-          {/* Sheet */}
+          {/* Sheet — bottom offset tracks keyboard height via visualViewport */}
           <div style={{
-            position:'absolute', bottom:0, left:0, right:0,
+            position:'absolute', bottom: sheetBottom, left:0, right:0,
             background:'#fff',
             borderRadius:'20px 20px 0 0',
             paddingBottom:'calc(env(safe-area-inset-bottom) + 16px)',
             transform: animateEditSheet ? 'translateY(0)' : 'translateY(100%)',
             transition:'transform 0.35s cubic-bezier(0.32,0.72,0,1)',
             display:'flex', flexDirection:'column',
-            maxHeight:'85vh',
           }}>
             {/* Handle */}
             <div style={{padding:'12px 0 4px', display:'flex', justifyContent:'center', flexShrink:0}}>
@@ -587,12 +605,13 @@ export default function CaptionScreen({
                 onChange={e => setEditDraft(e.target.value)}
                 autoFocus
                 style={{
-                  width:'100%', minHeight:'160px', maxHeight:'340px',
+                  width:'100%', height:'130px',
                   background:'#F5F5F7', border:'1.5px solid #E4E4EB',
                   borderRadius:'12px', padding:'12px',
                   fontFamily:'var(--m-font)', fontSize:'14px',
                   color:'var(--m-ink)', lineHeight:'1.65',
-                  resize:'vertical', outline:'none', boxSizing:'border-box',
+                  resize:'none', outline:'none', boxSizing:'border-box',
+                  overflowY:'auto',
                   transition:'border-color .15s',
                 }}
                 onFocus={e => e.target.style.borderColor = 'var(--m-brand)'}

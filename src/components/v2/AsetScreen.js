@@ -71,12 +71,14 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
   /* Per-file edit settings keyed by file.url */
   const [editSettings,     setEditSettings]     = useState({});
   /* { brightness:100, saturation:100, panY:0 } */
-  /* Per-file landscape detection (set via onLoad / onLoadedMetadata) */
+  /* Per-file landscape detection + aspect ratio (onLoad / onLoadedMetadata) */
   const [fileRatios,       setFileRatios]       = useState({});
-  /* { [url]: true if landscape } */
+  /* { [url]: { isLandscape: bool, ratio: naturalW/naturalH } } */
 
-  const fileInputRef   = useRef(null);
-  const aiPhotoRef     = useRef(null);
+  const fileInputRef      = useRef(null);
+  const aiPhotoRef        = useRef(null);
+  const editImageAreaRef  = useRef(null);  /* ref ke area gambar di edit modal */
+  const touchRef          = useRef(null);  /* state drag aktif */
 
   /* V1 refs */
   const masterPersonaLockedRef = useRef(false);
@@ -268,13 +270,13 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
   const handleNext  = () => onNext(detectedPersona);
 
   /* ── Blur pillarbox: Reel/Story always; Post when image is landscape ── */
-  const isCurrentLandscape = previewFile ? (fileRatios[previewFile.url] ?? false) : false;
+  const isCurrentLandscape = previewFile ? (fileRatios[previewFile.url]?.isLandscape ?? false) : false;
   const showPillarbox = !!previewFile && (
     fmtLower === 'reel' || fmtLower === 'story' || isCurrentLandscape
   );
 
-  /* ── Edit helpers — panY controls vertical position within pillarbox bars ── */
-  const DEFAULT_EDIT = { brightness: 100, saturation: 100, panY: 0 };
+  /* ── Edit helpers — cropScale/Offset control zoom+pan within the frame ── */
+  const DEFAULT_EDIT = { brightness: 100, saturation: 100, cropScale: 1.0, cropOffsetX: 0, cropOffsetY: 0 };
   const getEdit  = (url) => (url && editSettings[url]) ? editSettings[url] : DEFAULT_EDIT;
   const setEditKey = (url, key, val) =>
     setEditSettings(prev => ({ ...prev, [url]: { ...(prev[url] || DEFAULT_EDIT), [key]: val } }));
@@ -289,6 +291,79 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
     setAnimateEditSheet(false);
     setTimeout(() => setShowEditSheet(false), 350);
   };
+
+  /* ── Non-passive touchmove on edit image area to prevent page scroll ── */
+  useEffect(() => {
+    const el = editImageAreaRef.current;
+    if (!el || !showEditSheet) return;
+    const prevent = (ev) => { if (touchRef.current) ev.preventDefault(); };
+    el.addEventListener('touchmove', prevent, { passive: false });
+    return () => el.removeEventListener('touchmove', prevent);
+  }, [showEditSheet]);
+
+  /* ── Zoom change: re-clamp existing offset within new bounds ── */
+  const handleZoomChange = (newScale) => {
+    if (!previewFile) return;
+    const info  = fileRatios[previewFile.url];
+    const ratio = info?.ratio ?? (isCurrentLandscape ? 16/9 : 3/4);
+    const el    = editImageAreaRef.current;
+    const W     = el ? el.offsetWidth  : window.innerWidth;
+    const H     = el ? el.offsetHeight : window.innerHeight * 0.65;
+    const cr    = W / H;
+    const imgW  = ratio > cr ? W           : H * ratio;
+    const imgH  = ratio > cr ? W / ratio   : H;
+    const maxX  = Math.max(0, (imgW * newScale - W) / 2);
+    const maxY  = Math.max(0, (imgH * newScale - H) / 2);
+    const cur   = editSettings[previewFile.url] || DEFAULT_EDIT;
+    setEditSettings(prev => ({
+      ...prev,
+      [previewFile.url]: {
+        ...cur,
+        cropScale:   newScale,
+        cropOffsetX: Math.max(-maxX, Math.min(maxX, cur.cropOffsetX)),
+        cropOffsetY: Math.max(-maxY, Math.min(maxY, cur.cropOffsetY)),
+      },
+    }));
+  };
+
+  /* ── Touch drag handlers for crop pan ── */
+  const handleEditTouchStart = (e) => {
+    if (e.touches.length !== 1) return;
+    const t   = e.touches[0];
+    const cur = editSettings[previewFile?.url] || DEFAULT_EDIT;
+    touchRef.current = {
+      startX: t.clientX, startY: t.clientY,
+      startOffsetX: cur.cropOffsetX, startOffsetY: cur.cropOffsetY,
+    };
+  };
+
+  const handleEditTouchMove = (e) => {
+    if (!touchRef.current || !previewFile || e.touches.length !== 1) return;
+    const t     = e.touches[0];
+    const dx    = t.clientX - touchRef.current.startX;
+    const dy    = t.clientY - touchRef.current.startY;
+    const scale = (editSettings[previewFile.url] || DEFAULT_EDIT).cropScale;
+    const info  = fileRatios[previewFile.url];
+    const ratio = info?.ratio ?? (isCurrentLandscape ? 16/9 : 3/4);
+    const el    = editImageAreaRef.current;
+    const W     = el ? el.offsetWidth  : window.innerWidth;
+    const H     = el ? el.offsetHeight : window.innerHeight * 0.65;
+    const cr    = W / H;
+    const imgW  = ratio > cr ? W           : H * ratio;
+    const imgH  = ratio > cr ? W / ratio   : H;
+    const maxX  = Math.max(0, (imgW * scale - W) / 2);
+    const maxY  = Math.max(0, (imgH * scale - H) / 2);
+    setEditSettings(prev => ({
+      ...prev,
+      [previewFile.url]: {
+        ...(prev[previewFile.url] || DEFAULT_EDIT),
+        cropOffsetX: Math.max(-maxX, Math.min(maxX, touchRef.current.startOffsetX + dx)),
+        cropOffsetY: Math.max(-maxY, Math.min(maxY, touchRef.current.startOffsetY + dy)),
+      },
+    }));
+  };
+
+  const handleEditTouchEnd = () => { touchRef.current = null; };
 
   /* ════════════════════════════════════════════════════
      RENDER — full-screen overlay layout
@@ -316,7 +391,7 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
                 <video src={previewFile.url} autoPlay muted loop playsInline
                   onLoadedMetadata={e => {
                     const {videoWidth:w, videoHeight:h} = e.target;
-                    setFileRatios(prev => ({...prev, [previewFile.url]: w > h}));
+                    setFileRatios(prev => ({...prev, [previewFile.url]: {isLandscape: w > h, ratio: w/h}}));
                   }}
                   style={{
                     position: 'absolute', inset: 0, width: '100%', height: '100%',
@@ -337,19 +412,21 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
                 <video src={previewFile.url} autoPlay muted loop playsInline style={{
                   position: 'absolute', inset: 0, width: '100%', height: '100%',
                   objectFit: 'contain',
-                  objectPosition: `50% ${50 + currentEdit.panY}%`,
+                  transform: `translate(${currentEdit.cropOffsetX}px, ${currentEdit.cropOffsetY}px) scale(${currentEdit.cropScale})`,
+                  transformOrigin: 'center',
                   filter: `brightness(${currentEdit.brightness/100}) saturate(${currentEdit.saturation/100})`,
                 }}/>
               ) : (
                 <img src={previewFile.url} alt="preview"
                   onLoad={e => {
                     const {naturalWidth:w, naturalHeight:h} = e.target;
-                    setFileRatios(prev => ({...prev, [previewFile.url]: w > h}));
+                    setFileRatios(prev => ({...prev, [previewFile.url]: {isLandscape: w > h, ratio: w/h}}));
                   }}
                   style={{
                     position: 'absolute', inset: 0, width: '100%', height: '100%',
                     objectFit: 'contain',
-                    objectPosition: `50% ${50 + currentEdit.panY}%`,
+                    transform: `translate(${currentEdit.cropOffsetX}px, ${currentEdit.cropOffsetY}px) scale(${currentEdit.cropScale})`,
+                    transformOrigin: 'center',
                     filter: `brightness(${currentEdit.brightness/100}) saturate(${currentEdit.saturation/100})`,
                   }}/>
               )}
@@ -365,7 +442,7 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
               <img src={previewFile.url} alt="preview"
                 onLoad={e => {
                   const {naturalWidth:w, naturalHeight:h} = e.target;
-                  setFileRatios(prev => ({...prev, [previewFile.url]: w > h}));
+                  setFileRatios(prev => ({...prev, [previewFile.url]: {isLandscape: w > h, ratio: w/h}}));
                 }}
                 style={{
                   width: '100%', height: '100%', objectFit: 'cover',
@@ -858,70 +935,79 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
           transition: 'transform 0.35s cubic-bezier(0.32,0.72,0,1)',
         }}>
 
-          {/* ── Image area — fills all space above the controls panel ── */}
-          <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
-            {showPillarbox ? (
-              <>
-                {/* Blurred bg — centered, decorative fill */}
-                {previewFile.type === 'video' ? (
-                  <video src={previewFile.url} autoPlay muted loop playsInline style={{
-                    position: 'absolute', inset: 0, width: '100%', height: '100%',
-                    objectFit: 'cover', objectPosition: '50% 50%',
-                    filter: 'blur(22px) brightness(0.52) saturate(1.5)',
-                    transform: 'scale(1.14)',
-                  }}/>
-                ) : (
-                  <img src={previewFile.url} alt="" style={{
-                    position: 'absolute', inset: 0, width: '100%', height: '100%',
-                    objectFit: 'cover', objectPosition: '50% 50%',
-                    filter: 'blur(22px) brightness(0.52) saturate(1.5)',
-                    transform: 'scale(1.14)',
-                  }}/>
-                )}
-                {/* Foreground — contain + panY for vertical positioning */}
-                {previewFile.type === 'video' ? (
-                  <video src={previewFile.url} autoPlay muted loop playsInline style={{
-                    position: 'absolute', inset: 0, width: '100%', height: '100%',
-                    objectFit: 'contain',
-                    objectPosition: `50% ${50 + currentEdit.panY}%`,
-                    filter: `brightness(${currentEdit.brightness/100}) saturate(${currentEdit.saturation/100})`,
-                  }}/>
-                ) : (
-                  <img src={previewFile.url} alt="preview" style={{
-                    position: 'absolute', inset: 0, width: '100%', height: '100%',
-                    objectFit: 'contain',
-                    objectPosition: `50% ${50 + currentEdit.panY}%`,
-                    filter: `brightness(${currentEdit.brightness/100}) saturate(${currentEdit.saturation/100})`,
-                  }}/>
-                )}
-              </>
+          {/* ── Image area: touch drag to pan, crop frame overlay ── */}
+          <div
+            ref={editImageAreaRef}
+            onTouchStart={handleEditTouchStart}
+            onTouchMove={handleEditTouchMove}
+            onTouchEnd={handleEditTouchEnd}
+            style={{ flex: 1, position: 'relative', overflow: 'hidden', cursor: 'grab' }}
+          >
+            {/* Blurred background (always cover, decorative) */}
+            {previewFile.type === 'video' ? (
+              <video src={previewFile.url} autoPlay muted loop playsInline style={{
+                position: 'absolute', inset: 0, width: '100%', height: '100%',
+                objectFit: 'cover', objectPosition: '50% 50%',
+                filter: 'blur(22px) brightness(0.52) saturate(1.5)',
+                transform: 'scale(1.14)',
+              }}/>
             ) : (
-              previewFile.type === 'video' ? (
-                <video src={previewFile.url} autoPlay muted loop playsInline style={{
-                  width: '100%', height: '100%', objectFit: 'cover',
-                  filter: `brightness(${currentEdit.brightness/100}) saturate(${currentEdit.saturation/100})`,
-                }}/>
-              ) : (
-                <img src={previewFile.url} alt="preview" style={{
-                  width: '100%', height: '100%', objectFit: 'cover',
-                  filter: `brightness(${currentEdit.brightness/100}) saturate(${currentEdit.saturation/100})`,
-                }}/>
-              )
+              <img src={previewFile.url} alt="" style={{
+                position: 'absolute', inset: 0, width: '100%', height: '100%',
+                objectFit: 'cover', objectPosition: '50% 50%',
+                filter: 'blur(22px) brightness(0.52) saturate(1.5)',
+                transform: 'scale(1.14)',
+              }}/>
             )}
 
-            {/* ── Floating header over the image ── */}
+            {/* Foreground — crop transform (contain for pillarbox, cover for post portrait) */}
+            {previewFile.type === 'video' ? (
+              <video src={previewFile.url} autoPlay muted loop playsInline style={{
+                position: 'absolute', inset: 0, width: '100%', height: '100%',
+                objectFit: showPillarbox ? 'contain' : 'cover',
+                transform: `translate(${currentEdit.cropOffsetX}px, ${currentEdit.cropOffsetY}px) scale(${currentEdit.cropScale})`,
+                transformOrigin: 'center',
+                filter: `brightness(${currentEdit.brightness/100}) saturate(${currentEdit.saturation/100})`,
+              }}/>
+            ) : (
+              <img src={previewFile.url} alt="preview" style={{
+                position: 'absolute', inset: 0, width: '100%', height: '100%',
+                objectFit: showPillarbox ? 'contain' : 'cover',
+                transform: `translate(${currentEdit.cropOffsetX}px, ${currentEdit.cropOffsetY}px) scale(${currentEdit.cropScale})`,
+                transformOrigin: 'center',
+                filter: `brightness(${currentEdit.brightness/100}) saturate(${currentEdit.saturation/100})`,
+              }}/>
+            )}
+
+            {/* ── Crop frame indicator: white border + dim outside ── */}
             <div style={{
-              position: 'absolute', top: 0, left: 0, right: 0,
+              position: 'absolute', inset: 0, zIndex: 1,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              pointerEvents: 'none',
+            }}>
+              <div style={{
+                ...((fmtLower === 'reel' || fmtLower === 'story') ? {
+                  height: '100%', width: 'auto', aspectRatio: '9/16', maxWidth: '100%',
+                } : {
+                  width: '100%', height: 'auto', aspectRatio: '4/5', maxHeight: '100%',
+                }),
+                border: '1.5px solid rgba(255,255,255,0.80)',
+                borderRadius: '3px',
+                boxShadow: '0 0 0 9999px rgba(0,0,0,0.42)',
+              }}/>
+            </div>
+
+            {/* ── Floating header over image ── */}
+            <div style={{
+              position: 'absolute', top: 0, left: 0, right: 0, zIndex: 2,
               padding: 'calc(env(safe-area-inset-top) + 12px) 16px 20px',
               background: 'linear-gradient(to bottom, rgba(0,0,0,0.68) 0%, transparent 100%)',
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
             }}>
-              {/* Close × */}
               <button onClick={closeEditSheet} style={{
                 width: '36px', height: '36px', borderRadius: '50%',
                 background: 'rgba(0,0,0,0.40)', backdropFilter: 'blur(6px)',
-                border: '1px solid rgba(255,255,255,0.18)',
-                cursor: 'pointer',
+                border: '1px solid rgba(255,255,255,0.18)', cursor: 'pointer',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 WebkitTapHighlightColor: 'transparent',
               }}>
@@ -929,16 +1015,9 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
                   <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
                 </svg>
               </button>
-
-              {/* Title */}
-              <span style={{
-                fontFamily: 'var(--m-font)', fontSize: '15px', fontWeight: '700', color: '#fff',
-                textShadow: '0 1px 4px rgba(0,0,0,0.5)',
-              }}>
+              <span style={{ fontFamily: 'var(--m-font)', fontSize: '15px', fontWeight: '700', color: '#fff', textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>
                 Edit Tampilan
               </span>
-
-              {/* Reset */}
               <button
                 onClick={() => setEditSettings(prev => ({ ...prev, [previewFile.url]: DEFAULT_EDIT }))}
                 style={{
@@ -946,8 +1025,7 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
                   background: 'rgba(0,0,0,0.40)', backdropFilter: 'blur(6px)',
                   border: '1px solid rgba(255,255,255,0.22)',
                   fontFamily: 'var(--m-font)', fontSize: '13px', fontWeight: '600',
-                  color: '#fff', cursor: 'pointer',
-                  WebkitTapHighlightColor: 'transparent',
+                  color: '#fff', cursor: 'pointer', WebkitTapHighlightColor: 'transparent',
                 }}
               >
                 Reset
@@ -957,33 +1035,33 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
 
           {/* ── White controls panel ── */}
           <div style={{
-            flexShrink: 0,
-            background: '#fff', borderRadius: '20px 20px 0 0',
+            flexShrink: 0, background: '#fff', borderRadius: '20px 20px 0 0',
             padding: '20px 20px 0',
             paddingBottom: 'calc(16px + env(safe-area-inset-bottom))',
             display: 'flex', flexDirection: 'column', gap: '20px',
           }}>
 
-            {/* Drag to Pan — only when pillarbox bars are present */}
-            {showPillarbox && (
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-                  <span style={{ fontFamily: 'var(--m-font)', fontSize: '13px', fontWeight: '700', color: 'var(--m-ink)' }}>Drag to Pan</span>
-                  <span style={{ fontFamily: 'var(--m-font)', fontSize: '12px', color: 'var(--m-ink-sub)' }}>
-                    {currentEdit.panY > 0 ? `+${currentEdit.panY}` : currentEdit.panY}
-                  </span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <span style={{ fontFamily: 'var(--m-font)', fontSize: '13px', color: 'var(--m-ink-sub)', fontWeight: '600' }}>↑</span>
-                  <input type="range" min={-50} max={50} step={1}
-                    value={currentEdit.panY}
-                    onChange={e => setEditKey(previewFile.url, 'panY', Number(e.target.value))}
-                    style={{ flex: 1, accentColor: '#111', height: '4px', cursor: 'pointer' }}
-                  />
-                  <span style={{ fontFamily: 'var(--m-font)', fontSize: '13px', color: 'var(--m-ink-sub)', fontWeight: '600' }}>↓</span>
-                </div>
+            {/* Zoom — drag gambar untuk pan, slider untuk scale */}
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                <span style={{ fontFamily: 'var(--m-font)', fontSize: '13px', fontWeight: '700', color: 'var(--m-ink)' }}>Zoom & Geser</span>
+                <span style={{ fontFamily: 'var(--m-font)', fontSize: '12px', color: 'var(--m-ink-sub)' }}>
+                  {currentEdit.cropScale <= 1.01 ? 'Original' : `${currentEdit.cropScale.toFixed(1)}×`}
+                </span>
               </div>
-            )}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ fontFamily: 'var(--m-font)', fontSize: '17px', color: 'var(--m-ink-sub)', fontWeight: '400', lineHeight: 1 }}>−</span>
+                <input type="range" min={1} max={4} step={0.05}
+                  value={currentEdit.cropScale}
+                  onChange={e => handleZoomChange(Number(e.target.value))}
+                  style={{ flex: 1, accentColor: '#111', height: '4px', cursor: 'pointer' }}
+                />
+                <span style={{ fontFamily: 'var(--m-font)', fontSize: '17px', color: 'var(--m-ink-sub)', fontWeight: '400', lineHeight: 1 }}>+</span>
+              </div>
+              <div style={{ fontFamily: 'var(--m-font)', fontSize: '11px', color: 'var(--m-ink-sub)', marginTop: '6px', textAlign: 'center' }}>
+                Drag gambar di atas untuk menggeser
+              </div>
+            </div>
 
             {/* Terang-Gelap */}
             <div>
@@ -1018,8 +1096,7 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
                 width: '100%', padding: '15px', borderRadius: '14px', border: 'none',
                 background: 'var(--m-ink)',
                 fontFamily: 'var(--m-font)', fontSize: '15px', fontWeight: '700',
-                color: '#fff', cursor: 'pointer',
-                WebkitTapHighlightColor: 'transparent',
+                color: '#fff', cursor: 'pointer', WebkitTapHighlightColor: 'transparent',
               }}
             >
               Selesai
