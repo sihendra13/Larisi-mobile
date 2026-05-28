@@ -534,63 +534,45 @@ export default function AudiensScreen({
 
           <RadiusSlider radius={radius} onChange={setRadius} />
 
-          {/* ── Reach estimate ── */}
-          <div style={{
-            margin:'0 16px 16px',
-            padding:'12px 14px',
-            background: reach > 0 ? 'var(--m-brand-soft)' : '#F4F4F7',
-            borderRadius:'12px',
-            display:'flex', alignItems:'center', gap:'10px',
-          }}>
-            <div style={{
-              width:'34px', height:'34px', borderRadius:'10px',
-              background: reach > 0 ? 'var(--m-brand)' : '#D7D7DE',
-              display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0,
-            }}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{width:'16px',height:'16px'}}>
-                <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
-                <circle cx="9" cy="7" r="4"/>
-                <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
-              </svg>
-            </div>
-            <div style={{flex:1}}>
-              <div style={{fontFamily:'var(--m-font)',fontSize:'11px',color:'var(--m-ink-sub)',fontWeight:'500'}}>
-                Estimasi Jangkauan Iklan
-              </div>
-              <div style={{fontFamily:'var(--m-font)',fontSize:'15px',fontWeight:'800',color: reach > 0 ? 'var(--m-brand)' : 'var(--m-ink-sub)',marginTop:'1px'}}>
-                {reach > 0 ? `~${fmtReach(reach)} orang` : 'Pilih audiens dahulu'}
-              </div>
-            </div>
-            {reach > 0 && (
-              <div style={{
-                background:'var(--m-brand)',
-                color:'#fff',
-                fontFamily:'var(--m-font)',
-                fontSize:'10px',
-                fontWeight:'700',
-                padding:'3px 8px',
-                borderRadius:'99px',
-              }}>
-                {radius.toFixed(1)} KM
-              </div>
-            )}
-          </div>
+          {/* Reach estimate dipindah ke sticky bar */}
         </div>
       </main>
 
-      {/* ── Sticky CTA ── */}
+      {/* ── Sticky CTA Bar ── */}
       <div style={{
         position:'fixed',
-        bottom:'calc(60px + env(safe-area-inset-bottom) + 12px)',
-        left:'16px', right:'16px', zIndex:950,
+        bottom:'calc(60px + env(safe-area-inset-bottom))',
+        left:0, right:0, zIndex:950,
+        background:'#fff',
+        borderTop:'1px solid #E4E4EB',
+        padding:'12px 16px',
+        display:'flex', alignItems:'center', justifyContent:'space-between',
+        boxShadow:'0 -4px 20px rgba(0,0,0,0.03)',
       }}>
+        {/* Left: Info */}
+        <div style={{display:'flex', flexDirection:'column', gap:'2px'}}>
+          <div style={{fontFamily:'var(--m-font)', fontSize:'10px', fontWeight:'600', color:'var(--m-ink-sub)', textTransform:'uppercase', letterSpacing:'0.5px'}}>
+            Estimasi Jangkauan
+          </div>
+          <div style={{display:'flex', alignItems:'center', gap:'6px'}}>
+            <div style={{fontFamily:'var(--m-font)', fontSize:'16px', fontWeight:'800', color:'var(--m-ink)'}}>
+              {reach > 0 ? `~${fmtReach(reach)}` : '0'} <span style={{fontSize:'13px', fontWeight:'500', color:'var(--m-ink-sub)'}}>orang</span>
+            </div>
+            <div style={{width:'4px', height:'4px', borderRadius:'50%', background:'#D7D7DE'}} />
+            <div style={{fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'700', color:'var(--m-brand)'}}>
+              {reach > 0 ? `${radius.toFixed(1)} KM` : '-'}
+            </div>
+          </div>
+        </div>
+
+        {/* Right: Button */}
         <button onClick={onNext} style={{
-          width:'100%', padding:'16px', borderRadius:'16px',
+          padding:'12px 20px', borderRadius:'12px',
           background:'#1A1A1A', color:'#fff', border:'none',
-          fontFamily:'var(--m-font)', fontSize:'15px', fontWeight:'700',
-          cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:'8px',
+          fontFamily:'var(--m-font)', fontSize:'14px', fontWeight:'700',
+          cursor:'pointer', display:'flex', alignItems:'center', gap:'6px',
         }}>
-          Lanjut ke Konten
+          Lanjut
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
           </svg>
