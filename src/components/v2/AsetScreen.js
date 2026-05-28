@@ -112,7 +112,6 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
       {/* ── Scrollable content ── */}
       <main style={{
         flex:1, overflowY:'auto', padding:'16px 16px 0',
-        paddingBottom:'calc(160px + env(safe-area-inset-bottom) + 60px)',
         display:'flex', flexDirection:'column', gap:'14px',
       }}>
 
@@ -250,6 +249,9 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
             )}
           </div>
         </div>
+        
+        {/* Spacer for sticky CTA */}
+        <div style={{ height: 'calc(160px + env(safe-area-inset-bottom))', flexShrink: 0 }} />
       </main>
 
       {/* ── Sticky CTA ── */}
