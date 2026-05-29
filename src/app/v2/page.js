@@ -1,12 +1,14 @@
 'use client';
 import { useState, useEffect } from 'react';
-import BottomNav      from '@/components/layout/BottomNav';
-import PlatformScreen from '@/components/v2/PlatformScreen';
-import AudiensScreen  from '@/components/v2/AudiensScreen';
-import AsetScreen     from '@/components/v2/AsetScreen';
-import CaptionScreen  from '@/components/v2/CaptionScreen';
-import KelolaScreen   from '@/components/v2/KelolaScreen';
-import PerformaScreen from '@/components/v2/PerformaScreen';
+import BottomNav         from '@/components/layout/BottomNav';
+import PlatformScreen    from '@/components/v2/PlatformScreen';
+import AudiensScreen     from '@/components/v2/AudiensScreen';
+import AsetScreen        from '@/components/v2/AsetScreen';
+import CaptionScreen     from '@/components/v2/CaptionScreen';
+import KelolaScreen      from '@/components/v2/KelolaScreen';
+import PerformaScreen    from '@/components/v2/PerformaScreen';
+import LoginScreen       from '@/components/v2/LoginScreen';
+import OnboardingScreen  from '@/components/v2/OnboardingScreen';
 import { getProfile, getSessionId, getAccessToken } from '@/lib/config';
 
 export default function DapurV2() {
@@ -26,27 +28,43 @@ export default function DapurV2() {
   const [persona,    setPersona]    = useState(null); /* detected master persona */
   const [caption,    setCaption]    = useState('');
 
-  /* ── User data dari Supabase (via localStorage yang diisi V1 login flow) ── */
+  /* ── Auth state: 'loading' | 'login' | 'onboarding' | 'app' ── */
+  const [authState,  setAuthState]  = useState('loading');
   const [profile,    setProfile]    = useState(null);
   const [sessionId,  setSessionId]  = useState(null);
   const [accessToken,setAccessToken]= useState(null);
+  const [userId,     setUserId]     = useState(null);
 
   useEffect(() => {
     const tok = getAccessToken();
-
-    /* ── Auth check: belum login → redirect ke V1 login page ── */
-    if (!tok) {
-      window.location.href = '/login.html';
-      return;
-    }
+    if (!tok) { setAuthState('login'); return; }
 
     const p   = getProfile();
     const sid = getSessionId();
-    if (p)   setProfile(p);
-    if (sid) setSessionId(sid);
-    setAccessToken(tok);
 
-    /* Set lokasi default dari profil bisnis user */
+    /* Parse userId dari JWT token */
+    let uid = null;
+    try {
+      const payload = JSON.parse(atob(tok.split('.')[1]));
+      uid = payload.sub || null;
+    } catch {}
+
+    setAccessToken(tok);
+    setUserId(uid);
+    if (sid) setSessionId(sid);
+
+    if (p) {
+      setProfile(p);
+      applyLocation(p);
+      /* Profil lengkap → langsung ke app */
+      setAuthState(p.business_name ? 'app' : 'onboarding');
+    } else {
+      setAuthState('onboarding');
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function applyLocation(p) {
     if (p?.kecamatan) {
       setLocName(p.kecamatan);
       setLocFull([p.kecamatan, p.kabupaten || p.city].filter(Boolean).join(', '));
@@ -54,11 +72,60 @@ export default function DapurV2() {
       setLocName('Sumbersari');
       setLocFull('Sumbersari, Bantul');
     }
-  }, []);
+  }
+
+  /* Callback setelah login berhasil */
+  const handleLoginSuccess = ({ access_token, user, profile: p }) => {
+    setAccessToken(access_token);
+    setUserId(user?.id || null);
+    if (p) {
+      setProfile(p);
+      applyLocation(p);
+      setAuthState(p.business_name ? 'app' : 'onboarding');
+    } else {
+      setAuthState('onboarding');
+    }
+  };
+
+  /* Callback setelah onboarding selesai */
+  const handleOnboardingComplete = (p) => {
+    setProfile(p);
+    applyLocation(p);
+    setAuthState('app');
+  };
 
   const BACK = { audiens:'platform', aset:'audiens', caption:'aset' };
   const goTo   = (s) => setScreen(s);
   const goBack = () => { if (BACK[screen]) goTo(BACK[screen]); };
+
+  /* ── Loading state ── */
+  if (authState === 'loading') {
+    return (
+      <div style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F9F9FA' }}>
+        <div style={{ textAlign: 'center', fontFamily: 'var(--m-font, sans-serif)' }}>
+          <div style={{ width: '32px', height: '32px', border: '3px solid #E4E4EB', borderTopColor: '#111827', borderRadius: '50%', animation: 'spin 0.7s linear infinite', margin: '0 auto 12px' }} />
+          <div style={{ fontSize: '13px', color: '#9ca3af' }}>Memuat...</div>
+          <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+        </div>
+      </div>
+    );
+  }
+
+  /* ── Login screen ── */
+  if (authState === 'login') {
+    return <LoginScreen onLoginSuccess={handleLoginSuccess} />;
+  }
+
+  /* ── Onboarding screen ── */
+  if (authState === 'onboarding') {
+    return (
+      <OnboardingScreen
+        accessToken={accessToken}
+        userId={userId}
+        onComplete={handleOnboardingComplete}
+      />
+    );
+  }
 
   return (
     <div id="app-root" className="mobile-app-root">
