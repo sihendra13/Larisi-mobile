@@ -177,9 +177,10 @@ export default function KelolaScreen() {
               background: 'var(--m-brand)',
               color: '#fff',
               borderRadius: '999px',
-              padding: isFabExpanded ? '12px 20px 12px 12px' : '12px',
+              padding: isFabExpanded ? '12px 12px 12px 20px' : '12px',
               display: 'flex',
               alignItems: 'center',
+              justifyContent: 'flex-end',
               gap: isFabExpanded ? '10px' : '0px',
               border: 'none',
               boxShadow: '0 4px 16px rgba(108, 92, 231, 0.3)',
@@ -193,15 +194,10 @@ export default function KelolaScreen() {
             }}
           >
             <div style={{
-              width:'40px', height:'40px', borderRadius:'50%', background:'var(--m-brand)', flexShrink:0,
-              display:'flex', alignItems:'center', justifyContent:'center'
-            }}>
-              <img src="/logo-dashboard.png" alt="SiLaris" style={{width:'24px', height:'24px', objectFit:'contain'}} />
-            </div>
-            <div style={{
               display: 'flex',
               flexDirection: 'column',
-              alignItems: 'flex-start',
+              alignItems: 'flex-end',
+              textAlign: 'right',
               opacity: isFabExpanded ? 1 : 0,
               transition: 'opacity 0.2s',
               width: isFabExpanded ? 'auto' : '0px',
@@ -209,6 +205,13 @@ export default function KelolaScreen() {
             }}>
               <span style={{fontFamily:'var(--m-font)', fontSize:'15px', fontWeight:'800', lineHeight:'1.2'}}>Tanya SiLaris</span>
               <span style={{fontFamily:'var(--m-font)', fontSize:'11px', fontWeight:'500', opacity:0.9}}>Performa Insight Iklanmu</span>
+            </div>
+            
+            <div style={{
+              width:'40px', height:'40px', borderRadius:'50%', background:'var(--m-brand)', flexShrink:0,
+              display:'flex', alignItems:'center', justifyContent:'center'
+            }}>
+              <img src="/logo-dashboard.png" alt="SiLaris" style={{width:'36px', height:'36px', objectFit:'contain'}} />
             </div>
           </button>
         )}
