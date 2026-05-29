@@ -641,8 +641,9 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
         {!isEmpty && !isScanning && detectedPersona && (
           <div style={{ padding: '12px 14px 4px' }}>
             <div style={{
-              background: 'rgba(255,255,255,0.08)',
-              backdropFilter: 'blur(10px)',
+              background: 'rgba(0,0,0,0.55)',
+              backdropFilter: 'blur(12px)',
+              WebkitBackdropFilter: 'blur(12px)',
               border: '1px solid rgba(255,255,255,0.15)',
               borderRadius: '14px',
               padding: '14px',
@@ -1170,7 +1171,7 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
             transform: editPanelCollapsed ? 'translateY(calc(100% - 34px))' : 'translateY(0)',
             transition: 'transform 0.3s cubic-bezier(0.32,0.72,0,1)',
           }}>
-            <div style={{ background: '#fff', borderRadius: '20px 20px 0 0' }}>
+            <div style={{ background: 'rgba(18,18,18,0.88)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)', borderRadius: '20px 20px 0 0' }}>
 
               {/* ── Chevron: tap atau swipe up/down untuk collapse/expand ── */}
               <div
@@ -1208,21 +1209,21 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
                 {/* Zoom & Geser */}
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-                    <span style={{ fontFamily: 'var(--m-font)', fontSize: '13px', fontWeight: '700', color: 'var(--m-ink)' }}>Zoom & Geser</span>
-                    <span style={{ fontFamily: 'var(--m-font)', fontSize: '12px', color: 'var(--m-ink-sub)' }}>
+                    <span style={{ fontFamily: 'var(--m-font)', fontSize: '13px', fontWeight: '700', color: '#fff' }}>Zoom & Geser</span>
+                    <span style={{ fontFamily: 'var(--m-font)', fontSize: '12px', color: 'rgba(255,255,255,0.55)' }}>
                       {currentEdit.cropScale <= 1.01 ? 'Original' : `${currentEdit.cropScale.toFixed(1)}×`}
                     </span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <span style={{ fontFamily: 'var(--m-font)', fontSize: '17px', color: 'var(--m-ink-sub)', fontWeight: '400', lineHeight: 1 }}>−</span>
+                    <span style={{ fontFamily: 'var(--m-font)', fontSize: '17px', color: 'rgba(255,255,255,0.50)', fontWeight: '400', lineHeight: 1 }}>−</span>
                     <input type="range" min={1} max={4} step={0.05}
                       value={currentEdit.cropScale}
                       onChange={e => handleZoomChange(Number(e.target.value))}
-                      style={{ flex: 1, accentColor: '#111', height: '4px', cursor: 'pointer' }}
+                      style={{ flex: 1, accentColor: '#fff', height: '4px', cursor: 'pointer' }}
                     />
-                    <span style={{ fontFamily: 'var(--m-font)', fontSize: '17px', color: 'var(--m-ink-sub)', fontWeight: '400', lineHeight: 1 }}>+</span>
+                    <span style={{ fontFamily: 'var(--m-font)', fontSize: '17px', color: 'rgba(255,255,255,0.50)', fontWeight: '400', lineHeight: 1 }}>+</span>
                   </div>
-                  <div style={{ fontFamily: 'var(--m-font)', fontSize: '11px', color: 'var(--m-ink-sub)', marginTop: '6px', textAlign: 'center' }}>
+                  <div style={{ fontFamily: 'var(--m-font)', fontSize: '11px', color: 'rgba(255,255,255,0.40)', marginTop: '6px', textAlign: 'center' }}>
                     Drag gambar di atas untuk menggeser
                   </div>
                 </div>
@@ -1230,26 +1231,26 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
                 {/* Terang-Gelap */}
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-                    <span style={{ fontFamily: 'var(--m-font)', fontSize: '13px', fontWeight: '700', color: 'var(--m-ink)' }}>Terang–Gelap</span>
-                    <span style={{ fontFamily: 'var(--m-font)', fontSize: '12px', color: 'var(--m-ink-sub)' }}>{currentEdit.brightness}%</span>
+                    <span style={{ fontFamily: 'var(--m-font)', fontSize: '13px', fontWeight: '700', color: '#fff' }}>Terang–Gelap</span>
+                    <span style={{ fontFamily: 'var(--m-font)', fontSize: '12px', color: 'rgba(255,255,255,0.55)' }}>{currentEdit.brightness}%</span>
                   </div>
                   <input type="range" min={50} max={150} step={1}
                     value={currentEdit.brightness}
                     onChange={e => setEditKey(previewFile.url, 'brightness', Number(e.target.value))}
-                    style={{ width: '100%', accentColor: '#111', height: '4px', cursor: 'pointer' }}
+                    style={{ width: '100%', accentColor: '#fff', height: '4px', cursor: 'pointer' }}
                   />
                 </div>
 
                 {/* Ketajaman Warna */}
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-                    <span style={{ fontFamily: 'var(--m-font)', fontSize: '13px', fontWeight: '700', color: 'var(--m-ink)' }}>Ketajaman Warna</span>
-                    <span style={{ fontFamily: 'var(--m-font)', fontSize: '12px', color: 'var(--m-ink-sub)' }}>{currentEdit.saturation}%</span>
+                    <span style={{ fontFamily: 'var(--m-font)', fontSize: '13px', fontWeight: '700', color: '#fff' }}>Ketajaman Warna</span>
+                    <span style={{ fontFamily: 'var(--m-font)', fontSize: '12px', color: 'rgba(255,255,255,0.55)' }}>{currentEdit.saturation}%</span>
                   </div>
                   <input type="range" min={0} max={200} step={1}
                     value={currentEdit.saturation}
                     onChange={e => setEditKey(previewFile.url, 'saturation', Number(e.target.value))}
-                    style={{ width: '100%', accentColor: '#111', height: '4px', cursor: 'pointer' }}
+                    style={{ width: '100%', accentColor: '#fff', height: '4px', cursor: 'pointer' }}
                   />
                 </div>
 
@@ -1258,9 +1259,9 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
                   onClick={closeEditSheet}
                   style={{
                     width: '100%', padding: '15px', borderRadius: '14px', border: 'none',
-                    background: 'var(--m-ink)',
+                    background: '#fff',
                     fontFamily: 'var(--m-font)', fontSize: '15px', fontWeight: '700',
-                    color: '#fff', cursor: 'pointer', WebkitTapHighlightColor: 'transparent',
+                    color: '#111', cursor: 'pointer', WebkitTapHighlightColor: 'transparent',
                   }}
                 >
                   Selesai

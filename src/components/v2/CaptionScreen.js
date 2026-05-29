@@ -566,7 +566,6 @@ export default function CaptionScreen({
             paddingBottom:'calc(env(safe-area-inset-bottom) + 16px)',
             transform: animateEditSheet ? 'translateY(0)' : 'translateY(100%)',
             transition:'transform 0.35s cubic-bezier(0.32,0.72,0,1)',
-            display:'flex', flexDirection:'column',
           }}>
             {/* Handle */}
             <div style={{padding:'12px 0 4px', display:'flex', justifyContent:'center', flexShrink:0}}>
@@ -599,7 +598,7 @@ export default function CaptionScreen({
             </div>
 
             {/* Textarea */}
-            <div style={{flex:1, minHeight:0, overflowY:'auto', padding:'0 16px 12px'}}>
+            <div style={{padding:'0 16px 12px'}}>
               <textarea
                 value={editDraft}
                 onChange={e => setEditDraft(e.target.value)}
