@@ -243,8 +243,19 @@ export default function OnboardingScreen({
           const addr       = r.address || {};
           const kec        = addr.suburb || addr.village || addr.quarter || addr.town || addr.hamlet
                              || r.display_name.split(',')[0].trim();
-          const kab        = addr.county || addr.city || addr.state_district || addr.municipality || '';
-          const kabDisplay = kab.replace(/^Kabupaten\s+/i, '').replace(/^Regency\s+/i, '');
+          /* Prioritas kabupaten/kota:
+             county → municipality → city_district → city → state_district
+             Untuk DKI Jakarta: county kadang kembali kecamatan (Tanjung Priok),
+             sementara city atau municipality lebih tepat (Jakarta Utara) */
+          const rawKab = addr.county || addr.municipality || addr.city_district || addr.city || addr.state_district || '';
+          /* Bila rawKab sama persis dengan kec (artinya county = kecamatan), coba city */
+          const kab = (rawKab.toLowerCase() === kec.toLowerCase() && (addr.city || addr.municipality))
+                      ? (addr.city || addr.municipality || rawKab)
+                      : rawKab;
+          const kabDisplay = kab
+            .replace(/^Kabupaten\s+/i, '')
+            .replace(/^Kota\s+Administrasi\s+/i, '')
+            .replace(/^Regency\s+/i, '');
           const prov       = addr.state || '';
 
           const key = (kec + '|' + kabDisplay).toLowerCase();
