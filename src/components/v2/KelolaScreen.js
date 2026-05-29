@@ -183,7 +183,7 @@ export default function KelolaScreen() {
               justifyContent: 'flex-end',
               gap: isFabExpanded ? '10px' : '0px',
               border: 'none',
-              boxShadow: '0 4px 16px rgba(108, 92, 231, 0.3)',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
               cursor: 'pointer',
               zIndex: 310,
               transition: 'all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)',
@@ -336,7 +336,7 @@ export default function KelolaScreen() {
         {/* Dynamic Non-Sticky CTA for Buat Iklan Baru */}
         <div style={{ padding:'0 0 24px 0', marginTop:'-8px' }}>
           <button style={{
-            width:'100%', padding:'16px', borderRadius:'999px', background:'#202434', color:'#fff',
+            width:'100%', padding:'16px', borderRadius:'16px', background:'#202434', color:'#fff',
             border:'none', cursor:'pointer', fontFamily:'var(--m-font)', fontSize:'15px', fontWeight:'800',
             display:'flex', alignItems:'center', justifyContent:'center', gap:'8px',
             boxShadow:'0 4px 14px rgba(32,36,52,0.15)'
