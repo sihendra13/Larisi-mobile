@@ -82,20 +82,82 @@ const ProgressBar = ({ step, total }) => (
   </div>
 );
 
-/* ── Demo captions per platform ── */
-const DEMO_CAPTIONS = {
-  instagram: 'Sugeng rawuh di Nila Craft! Koleksi kerajinan tangan asli Bantul, dijahit satu-satu dengan detail rapi. Hanya minggu ini diskon 50%. Klik link di bio untuk belanja sebelum kehabisan! 🧵✨',
-  facebook:  'Halo Sahabat Nila Craft! 👋 Kami hadir dengan koleksi terbaru kerajinan tangan asli Bantul. Kualitas terjamin, harga bersahabat. Hubungi kami atau kunjungi toko sekarang!',
-  tiktok:    'POV: Nemu kerajinan batik asli Bantul yang aesthetic banget 😍 Kualitas premium, harga terjangkau! Cek link di bio ya bestie 🛍️ #NilaCraft #BatikBantul #UMKM',
-  youtube:   'Temukan koleksi kerajinan tangan eksklusif dari Nila Craft! Setiap produk dibuat dengan penuh cinta oleh pengrajin lokal Bantul. Kunjungi toko kami dan dapatkan penawaran spesial hari ini.',
-};
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/lib/config';
+
+/* ── Build system prompt untuk AI caption ── */
+function buildSystemPrompt(profile, persona, platform, format, locName, locFull) {
+  const bizName     = profile?.business_name || '';
+  const category    = profile?.category      || '';
+  const usp         = (profile?.usp && profile.usp.trim())
+                        ? profile.usp.trim()
+                        : (bizName ? `Kualitas terbaik dari ${bizName}` : 'Kualitas terbaik');
+  const bizKec      = profile?.kecamatan     || '';
+  const bizKab      = profile?.kabupaten     || profile?.city || '';
+  const bizLoc      = [bizKec, bizKab].filter(Boolean).join(', ') || locFull || '';
+  const hasDelivery = profile?.delivery_service || false;
+  const targetArea  = locName || '';
+
+  const personaName   = persona?.name   || category || 'General';
+  const personaTarget = persona?.target || '';
+  const personaAge    = persona?.age    || '18–45';
+
+  const platLabel = {
+    instagram: format === 'reel'  ? 'Instagram Reel — hook kuat di baris pertama, energetik, maks 3–4 baris'
+             : format === 'story' ? 'Instagram Story — sangat singkat, 1–2 kalimat + CTA'
+             :                      'Instagram Post — 3–5 baris, engaging',
+    facebook:  'Facebook/Meta — informatif, langsung ke poin, CTA jelas',
+    tiktok:    'TikTok — casual, fun, maks 3 baris',
+    youtube:   'YouTube — deskripsi 2–3 kalimat + CTA',
+  }[platform] || 'Instagram Post';
+
+  const hooks = [
+    `PERTANYAAN LANGSUNG — hook: "Warga ${targetArea || bizLoc}, belum cobain ${bizName || 'kami'}? Sayang banget kalau dilewatkan!"`,
+    `BOLD USP — hook: "${usp} — itulah yang bikin ${bizName || 'kami'} jadi pilihan di ${targetArea || bizLoc}."`,
+    `CERITA RELATABLE — hook: "Lagi cari yang beda dari biasanya, ${targetArea || 'teman'}? ${bizName || 'Kami'} jawabannya."`,
+    `SOCIAL PROOF — hook: "Sudah banyak yang buktikan — ${bizName || 'kami'} memang beda. Kapan giliranmu?"`,
+  ];
+  /* Rotasi hook berdasarkan jam sekarang supaya tiap generate beda */
+  const hookStyle = hooks[new Date().getMinutes() % 4];
+
+  return [
+    'Kamu adalah copywriter profesional spesialis UMKM lokal Indonesia.',
+    'Buat 1 caption media sosial yang segar, autentik, dan efektif untuk bisnis berikut.',
+    '',
+    'DATA BISNIS:',
+    `- Nama: ${bizName || 'UMKM'}`,
+    `- Kategori: ${category}`,
+    `- Keunggulan utama (USP): ${usp}`,
+    `- Lokasi bisnis: ${bizLoc || 'tidak disebutkan'}`,
+    `- Area target iklan: ${targetArea || bizLoc || 'sekitar lokasi bisnis'}`,
+    `- Layanan antar: ${hasDelivery ? 'ada' : 'tidak ada'}`,
+    '',
+    'MASTER PERSONA (target audiens):',
+    `- Persona: ${personaName}`,
+    `- Target: ${personaTarget}`,
+    `- Usia: ${personaAge}`,
+    '',
+    `PLATFORM: ${platLabel}`,
+    '',
+    'FORMAT OUTPUT: Mulai dengan "Halo", baris kosong, lalu caption.',
+    '',
+    `GAYA HOOK — WAJIB ikuti: ${hookStyle}`,
+    '',
+    'ATURAN WAJIB:',
+    '- Bahasa Indonesia natural, tidak kaku',
+    `- KRITIS: Lokasi bisnis (${bizLoc || 'lokasi bisnis'}) ≠ area target (${targetArea || 'area target'}) — INI DUA HAL BERBEDA`,
+    `- BENAR: ajak warga ${targetArea || 'area target'} untuk datang/memesan ke ${bizName || 'bisnis'} di ${bizLoc || 'lokasi kami'}`,
+    '- Akhiri dengan 3–5 hashtag (mix populer + lokal + niche)',
+    '- JANGAN gunakan markdown (**bold**, *italic*) — plain text saja',
+    '- Output HANYA caption, tanpa penjelasan atau label tambahan',
+  ].join('\n');
+}
 
 const MAX_CHAR = { instagram:2200, facebook:63206, tiktok:2200, youtube:5000 };
 
 export default function CaptionScreen({
   platform, format, files,
   locName, locFull, locPop, radius, localOn, travelerOn,
-  persona,
+  persona, profile,
   caption, setCaption,
   onBack, onUbahAset,
 }) {
@@ -116,22 +178,57 @@ export default function CaptionScreen({
   const reachText = fmtReach(reach);
   const maxChar   = MAX_CHAR[platform] || 2200;
 
-  /* ── Simulate AI generation — only runs when files exist ── */
-  const handleGenerate = () => {
+  /* ── Real AI caption generation via Supabase Edge Function silaris-chat ── */
+  const handleGenerate = async () => {
     if (files.length === 0) return;
     setGenerating(true);
     setCaption('');
-    const base = DEMO_CAPTIONS[platform] || DEMO_CAPTIONS.instagram;
-    let i = 0;
-    const interval = setInterval(() => {
-      i++;
-      setCaption(base.slice(0, i * 3));
-      if (i * 3 >= base.length) {
-        clearInterval(interval);
-        setGenerating(false);
-        setCaption(base);
+
+    const systemPrompt = buildSystemPrompt(profile, persona, platform, format, locName, locFull);
+
+    try {
+      const resp = await fetch(`${SUPABASE_URL}/functions/v1/silaris-chat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          systemPrompt,
+          messages: [{ role: 'user', content: 'Tulis captionnya sekarang. Pastikan gaya hook sesuai instruksi — jangan gunakan pola yang sama dengan caption sebelumnya.' }],
+        }),
+      });
+
+      const data = await resp.json();
+      if (data?.reply?.trim()) {
+        /* Strip markdown kalau AI masih pakai */
+        const clean = data.reply.trim()
+          .replace(/\*\*(.*?)\*\*/g, '$1')
+          .replace(/\*(.*?)\*/g,     '$1')
+          .replace(/_(.*?)_/g,       '$1');
+
+        /* Typewriter effect via React state */
+        let i = 0;
+        const speed = clean.length > 200 ? 12 : 18;
+        const timer = setInterval(() => {
+          i += 3;
+          setCaption(clean.slice(0, i));
+          if (i >= clean.length) {
+            clearInterval(timer);
+            setCaption(clean);
+            setGenerating(false);
+          }
+        }, speed);
+        return;
       }
-    }, 30);
+    } catch (e) {
+      console.warn('[caption] AI error, fallback:', e);
+    }
+
+    /* Fallback sederhana jika Edge Function gagal */
+    const fallback = `Halo\n\n${profile?.business_name || 'Bisnis kami'} hadir untuk kamu di ${locName || 'area sekitar'}.\n${profile?.usp || 'Kualitas terbaik'} untuk pengalaman belanja yang tak terlupakan.\n\n#UMKM #${(profile?.business_name || 'bisnis').replace(/\s+/g, '')} #${locName || 'lokal'}`;
+    setCaption(fallback);
+    setGenerating(false);
   };
 
   /* ── Auto-generate on first mount only when files are present ── */
