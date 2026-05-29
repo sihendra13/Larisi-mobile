@@ -689,7 +689,7 @@ export default function CaptionScreen({
               Simpan Caption
             </button>
           </div>
-        </div>{/* sheet */}
+        </div>
       )}
 
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
