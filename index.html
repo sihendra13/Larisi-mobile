@@ -572,22 +572,14 @@
                 </button>
               </div>
               <div id="connectedAvatarsRow" style="display:flex;gap:10px;align-items:center;">
-                
-                <!-- Dummy Avatar (Hardcoded UI) -->
-                <div style="position:relative;width:44px;height:44px;flex-shrink:0;">
-                  <div style="width:44px;height:44px;border-radius:99px;background:linear-gradient(135deg,#E1306C,#F77737);padding:2px;">
-                    <div style="width:100%;height:100%;border-radius:99px;background:#FFF6E8;display:grid;place-items:center;color:#E1306C;font-weight:700;font-size:16px;">N</div>
-                  </div>
-                  <div style="position:absolute;bottom:-2px;right:-2px;width:16px;height:16px;border-radius:99px;background:#fff;display:grid;place-items:center;color:#E1306C;">
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.8" fill="currentColor"/></svg>
-                  </div>
-                </div>
+
+                <!-- Avatars injected dynamically by renderConnectChannels() in buffer.js -->
 
                 <button id="addChannelBtn" onclick="showConnectAccountsFlow()" class="add-channel-btn" title="Tambah Channel" style="width:44px;height:44px;border-radius:99px;border:1.5px dashed #D7D7DE;background:transparent;color:var(--m-ink-sub);display:grid;place-items:center;padding:0;flex-shrink:0;">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
                 </button>
 
-                <div style="flex:1;font-size:11px;color:var(--m-ink-sub);line-height:1.4;font-family:var(--m-font);">Tambah akun untuk publikasi ke beberapa platform sekaligus.</div>
+                <div id="noChannelHint" style="flex:1;font-size:11px;color:var(--m-ink-sub);line-height:1.4;font-family:var(--m-font);">Tambah akun untuk publikasi ke beberapa platform sekaligus.</div>
               </div>
             </div>
 

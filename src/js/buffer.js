@@ -629,6 +629,10 @@ function renderConnectChannels() {
 
   // Tampilkan/sembunyikan settings icon
   if (settingsBtn) settingsBtn.style.display = accounts.length ? 'flex' : 'none';
+
+  // Sembunyikan hint text jika sudah ada akun terhubung
+  var hint = document.getElementById('noChannelHint');
+  if (hint) hint.style.display = accounts.length ? 'none' : '';
 }
 
 /* ─── Modal Kelola (Disconnect) Akun Terhubung ─────────────── */

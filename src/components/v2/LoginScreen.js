@@ -3,17 +3,22 @@ import { useState } from 'react';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/lib/config';
 
 const LOGO_SVG = (
-  <svg width="36" height="36" viewBox="0 0 40 40" fill="none">
+  <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
     <rect width="40" height="40" rx="12" fill="#111827"/>
     <path d="M10 28L20 12L30 28" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
     <path d="M14 22H26" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
   </svg>
 );
 
+const EyeIcon = ({ crossed }) => crossed
+  ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+  : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>;
+
 export default function LoginScreen({ onLoginSuccess }) {
   const [email,    setEmail]    = useState('');
   const [password, setPassword] = useState('');
   const [showPw,   setShowPw]   = useState(false);
+  const [remember, setRemember] = useState(false);
   const [loading,  setLoading]  = useState(false);
   const [error,    setError]    = useState('');
 
@@ -93,6 +98,14 @@ export default function LoginScreen({ onLoginSuccess }) {
     }
   };
 
+  const inputStyle = {
+    width: '100%', padding: '12px 14px', fontSize: '15px',
+    borderRadius: '10px', border: '1.5px solid #E4E4EB',
+    outline: 'none', background: '#fff', boxSizing: 'border-box',
+    fontFamily: 'inherit', color: '#111827',
+    transition: 'border-color 0.15s',
+  };
+
   return (
     <div style={{
       minHeight: '100dvh', display: 'flex', flexDirection: 'column',
@@ -101,14 +114,11 @@ export default function LoginScreen({ onLoginSuccess }) {
       fontFamily: 'var(--m-font, -apple-system, sans-serif)',
     }}>
 
-      {/* Logo + brand */}
-      <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+      {/* Logo */}
+      <div style={{ marginBottom: '28px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
         {LOGO_SVG}
-        <div style={{ marginTop: '12px', fontSize: '22px', fontWeight: '800', color: '#111827', letterSpacing: '-0.5px' }}>
+        <div style={{ fontSize: '13px', fontWeight: '600', color: '#6b7280', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
           Larisi
-        </div>
-        <div style={{ fontSize: '13px', color: '#6b7280', marginTop: '4px' }}>
-          Masuk ke akun kamu
         </div>
       </div>
 
@@ -116,10 +126,21 @@ export default function LoginScreen({ onLoginSuccess }) {
       <div style={{
         width: '100%', maxWidth: '400px',
         background: '#fff', borderRadius: '20px',
-        padding: '28px 24px',
-        boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
+        padding: '32px 28px',
+        boxShadow: '0 4px 32px rgba(0,0,0,0.07)',
         border: '1px solid #E4E4EB',
       }}>
+
+        {/* Heading */}
+        <div style={{ marginBottom: '24px' }}>
+          <h1 style={{ margin: 0, fontSize: '22px', fontWeight: '800', color: '#111827', letterSpacing: '-0.3px' }}>
+            Selamat Datang Kembali
+          </h1>
+          <p style={{ margin: '6px 0 0', fontSize: '13px', color: '#6b7280' }}>
+            Masuk ke akun Larisi kamu
+          </p>
+        </div>
+
         <form onSubmit={handleLogin}>
 
           {/* Email */}
@@ -131,20 +152,15 @@ export default function LoginScreen({ onLoginSuccess }) {
               type="email"
               value={email}
               onChange={e => setEmail(e.target.value)}
-              placeholder="budi@contoh.com"
+              placeholder="nama@email.com"
               required
               autoComplete="email"
-              style={{
-                width: '100%', padding: '12px 14px', fontSize: '16px',
-                borderRadius: '10px', border: '1.5px solid #E4E4EB',
-                outline: 'none', background: '#fff', boxSizing: 'border-box',
-                fontFamily: 'inherit', color: '#111827',
-              }}
+              style={inputStyle}
             />
           </div>
 
           {/* Password */}
-          <div style={{ marginBottom: '20px' }}>
+          <div style={{ marginBottom: '12px' }}>
             <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#374151', marginBottom: '6px' }}>
               Password
             </label>
@@ -156,12 +172,7 @@ export default function LoginScreen({ onLoginSuccess }) {
                 placeholder="Masukkan password"
                 required
                 autoComplete="current-password"
-                style={{
-                  width: '100%', padding: '12px 44px 12px 14px', fontSize: '16px',
-                  borderRadius: '10px', border: '1.5px solid #E4E4EB',
-                  outline: 'none', background: '#fff', boxSizing: 'border-box',
-                  fontFamily: 'inherit', color: '#111827',
-                }}
+                style={{ ...inputStyle, paddingRight: '44px' }}
               />
               <button
                 type="button"
@@ -169,20 +180,31 @@ export default function LoginScreen({ onLoginSuccess }) {
                 style={{
                   position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)',
                   background: 'none', border: 'none', cursor: 'pointer', padding: '4px',
-                  color: '#9ca3af',
+                  color: '#9ca3af', display: 'flex', alignItems: 'center',
                 }}
               >
-                {showPw
-                  ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-                  : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                }
+                <EyeIcon crossed={showPw} />
               </button>
             </div>
-            <div style={{ textAlign: 'right', marginTop: '6px' }}>
-              <a href="/login.html#forgot" style={{ fontSize: '12px', color: '#7C3AED', textDecoration: 'none' }}>
-                Lupa password?
-              </a>
-            </div>
+          </div>
+
+          {/* Remember me + Lupa password */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px', color: '#374151' }}>
+              <input
+                type="checkbox"
+                checked={remember}
+                onChange={e => setRemember(e.target.checked)}
+                style={{ width: '15px', height: '15px', accentColor: '#111827', cursor: 'pointer' }}
+              />
+              Ingat saya
+            </label>
+            <a
+              href="/login.html#forgot"
+              style={{ fontSize: '13px', color: '#7C3AED', textDecoration: 'none', fontWeight: '500' }}
+            >
+              Lupa password?
+            </a>
           </div>
 
           {/* Error */}
@@ -207,6 +229,7 @@ export default function LoginScreen({ onLoginSuccess }) {
               border: 'none', fontSize: '15px', fontWeight: '700',
               cursor: loading || !email || !password ? 'not-allowed' : 'pointer',
               fontFamily: 'inherit', transition: 'background 0.15s',
+              letterSpacing: '0.01em',
             }}
           >
             {loading ? 'Masuk...' : 'Masuk'}
@@ -216,8 +239,8 @@ export default function LoginScreen({ onLoginSuccess }) {
         {/* Register link */}
         <div style={{ textAlign: 'center', marginTop: '20px', fontSize: '13px', color: '#6b7280' }}>
           Belum punya akun?{' '}
-          <a href="/register.html" style={{ color: '#7C3AED', fontWeight: '600', textDecoration: 'none' }}>
-            Daftar sekarang
+          <a href="/register.html" style={{ color: '#111827', fontWeight: '700', textDecoration: 'none' }}>
+            Daftar di sini
           </a>
         </div>
       </div>
