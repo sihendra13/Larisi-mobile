@@ -34,6 +34,58 @@ const PLATFORM_ICONS = {
 const FORMATS      = ['Post', 'Reel', 'Story'];
 const FORMAT_RATIO = { post: '4/5', reel: '9/16', story: '9/16' };
 
+/* ── Mapping: kategori onboarding → personaDB key (identik dengan desktop persona.js) ── */
+const BIZ_CAT_TO_TILE = {
+  fnb:              'Kuliner',
+  kafe:             'Kafe',
+  fashion_wanita:   'FashionWanita',
+  fashion_pria:     'FashionPria',
+  fashion_muslim:   'FashionMuslim',
+  fashion_muslim_pria: 'FashionMuslimPria',
+  kesehatan:        'Beauty',
+  salon:            'Salon',
+  barber:           'Barber',
+  elektronik:       'Gadget',
+  properti:         'Properti',
+  wisata:           'Wisata',
+  otomotif:         'Otomotif',
+  pendidikan:       'Pendidikan',
+  kerajinan:        'Kerajinan',
+  olahraga:         'Olahraga',
+  laundry:          'KebersihanLaundry',
+  fotografi:        'Fotografi',
+  catering:         'EventCatering',
+  jasa_profesional: 'JasaProfesional',
+  pet:              'Pet',
+  /* jasa, retail, lainnya → tidak ada mapping → catNudge */
+};
+
+/* ── Tiles untuk catNudge manual picker ── */
+const CATNUDGE_TILES = [
+  { key: 'Kuliner',          label: 'Kuliner',          emoji: '🍳' },
+  { key: 'Kafe',             label: 'Kafe',             emoji: '☕' },
+  { key: 'FashionWanita',    label: 'Fashion Wanita',   emoji: '👗' },
+  { key: 'FashionPria',      label: 'Fashion Pria',     emoji: '👔' },
+  { key: 'FashionMuslim',    label: 'Muslimah',         emoji: '🧕' },
+  { key: 'FashionMuslimPria',label: 'Busana Pria',      emoji: '🕌' },
+  { key: 'Beauty',           label: 'Skincare',         emoji: '✨' },
+  { key: 'Salon',            label: 'Salon',            emoji: '💆' },
+  { key: 'Barber',           label: 'Barber',           emoji: '✂️' },
+  { key: 'Gadget',           label: 'Elektronik',       emoji: '📱' },
+  { key: 'Otomotif',         label: 'Otomotif',         emoji: '🔧' },
+  { key: 'Properti',         label: 'Properti',         emoji: '🏠' },
+  { key: 'Wisata',           label: 'Wisata',           emoji: '🗺️' },
+  { key: 'Pendidikan',       label: 'Pendidikan',       emoji: '📚' },
+  { key: 'Kerajinan',        label: 'Kerajinan',        emoji: '🎨' },
+  { key: 'Olahraga',         label: 'Olahraga',         emoji: '💪' },
+  { key: 'Fotografi',        label: 'Fotografi',        emoji: '📷' },
+  { key: 'JasaProfesional',  label: 'Jasa Profesional', emoji: '💼' },
+  { key: 'EventCatering',    label: 'Event & Catering', emoji: '🎉' },
+  { key: 'KebersihanLaundry',label: 'Laundry',          emoji: '🧺' },
+  { key: 'Pet',              label: 'Pet Shop',         emoji: '🐾' },
+  { key: 'General',          label: 'Lainnya',          emoji: '📦' },
+];
+
 const SCAN_MESSAGES = [
   'SiLaris sedang menganalisis kontenmu...',
   'Mendeteksi kategori bisnis...',
@@ -58,6 +110,12 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
   const [isScanning,     setIsScanning]     = useState(false);
   const [scanText,       setScanText]       = useState(SCAN_MESSAGES[0]);
   const [detectedPersona, setDetectedPersona] = useState(null);
+
+  /* ── Konflik card & catNudge ── */
+  const [conflictData,    setConflictData]    = useState(null);   /* { visionKey, visionLabel, bizKey, bizLabel } */
+  const [animateConflict, setAnimateConflict] = useState(false);
+  const [showCatNudge,    setShowCatNudge]    = useState(false);
+  const [animateCatNudge, setAnimateCatNudge] = useState(false);
 
   /* ── AI Kreatif sheet ── */
   const [showAISheet, setShowAISheet] = useState(false);
@@ -136,13 +194,17 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
     setTimeout(() => setIsScanning(false), 2200);
   }, []);
 
-  /* ── startScanWithFile: Groq Vision scan (V1 port) ── */
+  /* ── startScanWithFile: Groq Vision scan + conflict/catNudge (identik dengan desktop persona.js) ── */
   const startScanWithFile = useCallback(async (filename, file) => {
     if (masterPersonaLockedRef.current) { showScanningOnly(); return; }
 
     const startTime = Date.now();
     setIsScanning(true);
     setDetectedPersona(null);
+    setConflictData(null);
+    setAnimateConflict(false);
+    setShowCatNudge(false);
+    setAnimateCatNudge(false);
 
     const isVideo = file && file.type.startsWith('video/');
     if (isVideo) {
@@ -161,14 +223,17 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
       await new Promise(r => setTimeout(r, 100));
     }
 
-    /* Baca kategori bisnis dari profil untuk konteks Vision API (sama dengan desktop) */
+    /* Baca kategori bisnis dari profil */
     let bizCategory = null;
     try {
       const prof = JSON.parse(localStorage.getItem('radar_user_profile') || '{}');
       bizCategory = prof.category || null;
     } catch {}
 
-    /* Groq Vision — pass bizCategory sebagai konteks agar deteksi lebih akurat */
+    /* Map bizCategory → bizTileKey (pakai BIZ_CAT_TO_TILE) */
+    const bizTileKey = bizCategory ? (BIZ_CAT_TO_TILE[bizCategory] ?? null) : null;
+
+    /* Groq Vision — pass bizCategory sebagai konteks */
     let visionKey = null;
     if (base64) {
       try {
@@ -184,7 +249,18 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
 
     setIsScanning(false);
 
+    /* ── Conflict / catNudge decision (identik desktop persona.js) ── */
     if (visionKey) {
+      /* Vision berhasil */
+      if (bizTileKey && bizTileKey !== visionKey) {
+        /* Konflik: Vision bilang X, profil bisnis bilang Y → tampilkan konflik card */
+        const vLabel = personaDB[visionKey]?.name || visionKey;
+        const bLabel = personaDB[bizTileKey]?.name || bizTileKey;
+        setConflictData({ visionKey, visionLabel: vLabel, bizKey: bizTileKey, bizLabel: bLabel });
+        setTimeout(() => setAnimateConflict(true), 10);
+        return;
+      }
+      /* Tidak ada konflik (atau profil tidak punya mapping) → pakai visionKey */
       const p = personaDB[visionKey];
       if (p) {
         setDetectedPersona({ name: p.name, target: p.target, age: p.age || '18–45', gender: p.gender || 'Mixed' });
@@ -192,6 +268,30 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
         return;
       }
     }
+
+    /* Vision gagal atau visionKey tidak ada di personaDB */
+    if (bizTileKey) {
+      /* Pakai kategori profil bisnis langsung */
+      const p = personaDB[bizTileKey];
+      if (p) {
+        setDetectedPersona({ name: p.name, target: p.target, age: p.age || '18–45', gender: p.gender || 'Mixed' });
+        masterPersonaLockedRef.current = true;
+        return;
+      }
+    }
+
+    /* Tidak ada pemetaan → cek apakah nama file generik */
+    const genericPattern = /^(img|image|photo|foto|dsc|vid|video|mov|clip|capture|screenshot|file)[_\-\s]?\d*/i;
+    const isGenericFilename = !filename || genericPattern.test(filename.replace(/\.\w+$/, ''));
+
+    if (!bizCategory || isGenericFilename) {
+      /* Tampilkan catNudge: user pilih kategori manual */
+      setShowCatNudge(true);
+      setTimeout(() => setAnimateCatNudge(true), 10);
+      return;
+    }
+
+    /* Fallback terakhir: deteksi persona dari nama file */
     const p = detectPersona(filename);
     setDetectedPersona(p);
     masterPersonaLockedRef.current = true;
@@ -223,6 +323,10 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
     if (treatAsFirst) {
       masterPersonaLockedRef.current = false;
       uploadedDataURLsRef.current    = [];
+      setConflictData(null);
+      setAnimateConflict(false);
+      setShowCatNudge(false);
+      setAnimateCatNudge(false);
       const reader = new FileReader();
       reader.onload = ev => { uploadedDataURLsRef.current[0] = ev.target.result; };
       reader.readAsDataURL(accepted[0]);
@@ -286,6 +390,10 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
       setDetectedPersona(null);
       setIsScanning(false);
       setUploadMode(null);
+      setConflictData(null);
+      setAnimateConflict(false);
+      setShowCatNudge(false);
+      setAnimateCatNudge(false);
     }
     if (selectedIdx >= newFiles.length) setSelectedIdx(Math.max(0, newFiles.length - 1));
   };
@@ -297,6 +405,54 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
 
   const toggleVideoPlay = () => setVideoPlaying(p => !p);
   const toggleVideoMute = () => setVideoMuted(p => !p);
+
+  /* ── Konflik card handlers ── */
+  const closeConflict = () => {
+    setAnimateConflict(false);
+    setTimeout(() => setConflictData(null), 320);
+  };
+
+  const resolveConflict = (useVision) => {
+    const key = useVision ? conflictData?.visionKey : conflictData?.bizKey;
+    if (key) {
+      const p = personaDB[key];
+      if (p) {
+        setDetectedPersona({ name: p.name, target: p.target, age: p.age || '18–45', gender: p.gender || 'Mixed' });
+        masterPersonaLockedRef.current = true;
+      }
+    }
+    setAnimateConflict(false);
+    setTimeout(() => setConflictData(null), 320);
+  };
+
+  const handleChangePhotoConflict = () => {
+    setAnimateConflict(false);
+    setTimeout(() => {
+      setConflictData(null);
+      setDetectedPersona(null);
+      masterPersonaLockedRef.current = false;
+      uploadedDataURLsRef.current    = [];
+      onFilesChange([]);
+      setUploadMode(null);
+      fileInputRef.current?.click();
+    }, 320);
+  };
+
+  /* ── catNudge handlers ── */
+  const closeCatNudge = () => {
+    setAnimateCatNudge(false);
+    setTimeout(() => setShowCatNudge(false), 320);
+  };
+
+  const handleSelectCat = (key) => {
+    const p = personaDB[key];
+    if (p) {
+      setDetectedPersona({ name: p.name, target: p.target, age: p.age || '18–45', gender: p.gender || 'Mixed' });
+      masterPersonaLockedRef.current = true;
+    }
+    setAnimateCatNudge(false);
+    setTimeout(() => setShowCatNudge(false), 320);
+  };
 
   /* ── Blur pillarbox: Reel/Story always; Post when image is landscape ── */
   const isCurrentLandscape = previewFile ? (fileRatios[previewFile.url]?.isLandscape ?? false) : false;
@@ -1324,6 +1480,158 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
             </div>
           </div>
         </div>
+      )}
+
+      {/* ══ Konflik Card Bottom Sheet ══ */}
+      {conflictData && (
+        <>
+          <div onClick={closeConflict} style={{
+            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9998,
+            opacity: animateConflict ? 1 : 0, transition: 'opacity 0.3s ease-out',
+          }} />
+          <div style={{
+            position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 9999,
+            background: '#fff', borderRadius: '20px 20px 0 0',
+            transform: animateConflict ? 'translateY(0)' : 'translateY(100%)',
+            transition: 'transform 0.32s cubic-bezier(0.32,0.72,0,1)',
+          }}>
+            {/* Drag handle */}
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '10px 0 0' }}>
+              <div style={{ width: '40px', height: '4px', borderRadius: '2px', background: '#E4E4EB' }} />
+            </div>
+
+            <div style={{ padding: '16px 20px', paddingBottom: 'calc(24px + env(safe-area-inset-bottom))' }}>
+              {/* Header */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
+                <div style={{
+                  width: '38px', height: '38px', borderRadius: '10px',
+                  background: '#FEF3C7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                }}>
+                  <span style={{ fontSize: '20px', lineHeight: 1 }}>🤔</span>
+                </div>
+                <div style={{ fontFamily: 'var(--m-font)', fontSize: '15px', fontWeight: '800', color: '#111827' }}>
+                  Konfirmasi Konten
+                </div>
+              </div>
+
+              {/* Question */}
+              <div style={{
+                fontFamily: 'var(--m-font)', fontSize: '14px', color: '#374151',
+                lineHeight: '1.6', marginBottom: '20px',
+                background: '#F9F9FA', borderRadius: '12px', padding: '12px 14px',
+              }}>
+                SiLaris mendeteksi foto ini sebagai{' '}
+                <strong style={{ color: '#7C3AED' }}>{conflictData.visionLabel}</strong>,
+                tapi fokus bisnismu di{' '}
+                <strong style={{ color: '#111827' }}>{conflictData.bizLabel}</strong>.
+                {' '}Apakah foto ini sudah benar?
+              </div>
+
+              {/* Action buttons */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <button
+                  onClick={() => resolveConflict(true)}
+                  style={{
+                    width: '100%', padding: '14px', borderRadius: '12px', border: 'none',
+                    background: '#7C3AED', color: '#fff',
+                    fontFamily: 'var(--m-font)', fontSize: '14px', fontWeight: '700',
+                    cursor: 'pointer', WebkitTapHighlightColor: 'transparent',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                  }}
+                >
+                  <span>✅</span>
+                  <span>Pakai hasil foto ({conflictData.visionLabel})</span>
+                </button>
+                <button
+                  onClick={() => resolveConflict(false)}
+                  style={{
+                    width: '100%', padding: '14px', borderRadius: '12px',
+                    border: '1.5px solid #E4E4EB', background: '#fff', color: '#374151',
+                    fontFamily: 'var(--m-font)', fontSize: '14px', fontWeight: '600',
+                    cursor: 'pointer', WebkitTapHighlightColor: 'transparent',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                  }}
+                >
+                  <span>📋</span>
+                  <span>Pakai profil bisnis ({conflictData.bizLabel})</span>
+                </button>
+                <button
+                  onClick={handleChangePhotoConflict}
+                  style={{
+                    width: '100%', padding: '12px', borderRadius: '12px',
+                    border: 'none', background: 'transparent',
+                    fontFamily: 'var(--m-font)', fontSize: '13px', fontWeight: '600',
+                    color: '#9CA3AF', cursor: 'pointer', WebkitTapHighlightColor: 'transparent',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                  }}
+                >
+                  <span>🔄</span>
+                  <span>Ganti foto</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* ══ catNudge Bottom Sheet ══ */}
+      {showCatNudge && (
+        <>
+          <div onClick={closeCatNudge} style={{
+            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9998,
+            opacity: animateCatNudge ? 1 : 0, transition: 'opacity 0.3s ease-out',
+          }} />
+          <div style={{
+            position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 9999,
+            background: '#fff', borderRadius: '20px 20px 0 0',
+            maxHeight: '82vh', overflow: 'hidden',
+            display: 'flex', flexDirection: 'column',
+            transform: animateCatNudge ? 'translateY(0)' : 'translateY(100%)',
+            transition: 'transform 0.32s cubic-bezier(0.32,0.72,0,1)',
+          }}>
+            {/* Drag handle */}
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '10px 0 0', flexShrink: 0 }}>
+              <div style={{ width: '40px', height: '4px', borderRadius: '2px', background: '#E4E4EB' }} />
+            </div>
+
+            {/* Header */}
+            <div style={{ padding: '12px 20px 6px', flexShrink: 0 }}>
+              <div style={{ fontFamily: 'var(--m-font)', fontSize: '17px', fontWeight: '800', color: '#111827', marginBottom: '4px' }}>
+                Apa jenis konten ini?
+              </div>
+              <div style={{ fontFamily: 'var(--m-font)', fontSize: '13px', color: '#6B7280', lineHeight: '1.45' }}>
+                Pilih kategori agar caption lebih tepat sasaran
+              </div>
+            </div>
+
+            {/* Tile grid — scrollable */}
+            <div style={{ flex: 1, overflowY: 'auto', padding: '10px 14px', paddingBottom: 'calc(14px + env(safe-area-inset-bottom))' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '9px' }}>
+                {CATNUDGE_TILES.map(tile => (
+                  <button
+                    key={tile.key}
+                    onClick={() => handleSelectCat(tile.key)}
+                    style={{
+                      display: 'flex', flexDirection: 'column',
+                      alignItems: 'center', justifyContent: 'center',
+                      gap: '6px', padding: '14px 6px',
+                      borderRadius: '14px', border: '1.5px solid #E4E4EB',
+                      background: '#fff', cursor: 'pointer',
+                      fontFamily: 'var(--m-font)',
+                      WebkitTapHighlightColor: 'transparent',
+                      transition: 'border-color 0.12s, background 0.12s',
+                    }}
+                  >
+                    <span style={{ fontSize: '26px', lineHeight: 1 }}>{tile.emoji}</span>
+                    <span style={{ fontSize: '11px', fontWeight: '700', color: '#374151', textAlign: 'center', lineHeight: '1.3' }}>
+                      {tile.label}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </>
       )}
 
       {/* Hidden file inputs */}
