@@ -8,6 +8,7 @@ import CaptionScreen     from '@/components/v2/CaptionScreen';
 import KelolaScreen      from '@/components/v2/KelolaScreen';
 import PerformaScreen    from '@/components/v2/PerformaScreen';
 import LoginScreen       from '@/components/v2/LoginScreen';
+import RegisterScreen    from '@/components/v2/RegisterScreen';
 import OnboardingScreen  from '@/components/v2/OnboardingScreen';
 import { getProfile, getSessionId, getAccessToken } from '@/lib/config';
 
@@ -28,7 +29,7 @@ export default function DapurV2() {
   const [persona,    setPersona]    = useState(null); /* detected master persona */
   const [caption,    setCaption]    = useState('');
 
-  /* ── Auth state: 'loading' | 'login' | 'onboarding' | 'app' ── */
+  /* ── Auth state: 'loading' | 'login' | 'register' | 'onboarding' | 'app' ── */
   const [authState,  setAuthState]  = useState('loading');
   const [profile,    setProfile]    = useState(null);
   const [sessionId,  setSessionId]  = useState(null);
@@ -87,6 +88,14 @@ export default function DapurV2() {
     }
   };
 
+  /* Callback setelah register berhasil */
+  const handleRegisterSuccess = ({ access_token, user }) => {
+    setAccessToken(access_token);
+    setUserId(user?.id || null);
+    /* Profil belum ada → langsung ke onboarding */
+    setAuthState('onboarding');
+  };
+
   /* Callback setelah onboarding selesai */
   const handleOnboardingComplete = (p) => {
     setProfile(p);
@@ -113,7 +122,22 @@ export default function DapurV2() {
 
   /* ── Login screen ── */
   if (authState === 'login') {
-    return <LoginScreen onLoginSuccess={handleLoginSuccess} />;
+    return (
+      <LoginScreen
+        onLoginSuccess={handleLoginSuccess}
+        onGoRegister={() => setAuthState('register')}
+      />
+    );
+  }
+
+  /* ── Register screen ── */
+  if (authState === 'register') {
+    return (
+      <RegisterScreen
+        onRegisterSuccess={handleRegisterSuccess}
+        onGoLogin={() => setAuthState('login')}
+      />
+    );
   }
 
   /* ── Onboarding screen ── */
