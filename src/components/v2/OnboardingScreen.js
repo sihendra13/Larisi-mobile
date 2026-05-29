@@ -558,28 +558,19 @@ export default function OnboardingScreen({
                 )}
               </div>
 
-              {/* Kabupaten/Kota — auto-fill setelah pilih kecamatan (identik dengan desktop) */}
-              <div>
-                <label style={labelStyle}>
-                  Kota / Kabupaten
-                  {!kabupaten && (
-                    <span style={{ fontSize: '11px', fontWeight: '400', color: '#9CA3AF', marginLeft: '6px' }}>otomatis terisi</span>
-                  )}
-                </label>
-                <input
-                  type="text"
-                  readOnly
-                  value={kabupaten}
-                  placeholder="Otomatis terisi setelah pilih kecamatan"
-                  style={{
-                    ...inputStyle,
-                    background: kabupaten ? '#F5F3FF' : '#F9F9FA',
-                    color: kabupaten ? '#374151' : '#9CA3AF',
-                    cursor: 'default',
-                    border: kabupaten ? '1.5px solid #7C3AED' : '1.5px solid #E4E4EB',
-                  }}
-                />
-              </div>
+              {/* Kabupaten/Kota — readonly, auto-fill setelah pilih kecamatan (identik desktop) */}
+              <input
+                type="text"
+                readOnly
+                value={kabupaten}
+                placeholder="Kabupaten/Kota (terisi otomatis setelah pilih kecamatan)"
+                style={{
+                  ...inputStyle,
+                  background: '#F9F9FA',
+                  color: '#374151',
+                  cursor: 'default',
+                }}
+              />
 
               {/* Delivery */}
               <div>
