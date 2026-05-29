@@ -2,9 +2,177 @@
 import { useState } from 'react';
 import SiLarisScreen from './SiLarisScreen';
 
+// Dummy data for grid
+const dummyAds = [
+  { id: 1, type: 'photo', views: '319', imgColor: '#8C5A41', badge: 'photo' },
+  { id: 2, type: 'video', views: '2.4k', imgColor: '#7A8C5D', badge: 'reel' },
+  { id: 3, type: 'photo', views: '892', imgColor: '#3A2E2A', badge: 'photo' },
+  { id: 4, type: 'video', views: '1.2k', imgColor: '#B83B5E', badge: 'reel' },
+  { id: 5, type: 'photo', views: '540', imgColor: '#8E6E53', badge: 'photo' },
+  { id: 6, type: 'photo', views: '0', imgColor: '#6B6B6B', badge: 'photo' },
+];
+
 export default function KelolaScreen() {
   const [activeTab, setActiveTab] = useState('Semua');
   const [showSiLaris, setShowSiLaris] = useState(false);
+  const [selectedAd, setSelectedAd] = useState(null);
+
+  if (selectedAd) {
+    return (
+      <div style={{position:'fixed', top:0, left:0, right:0, bottom:0, background:'#F9F9FA', zIndex:300, display:'flex', flexDirection:'column', overflow:'hidden'}}>
+        {/* Detail Header */}
+        <header style={{
+          display:'flex', alignItems:'center', justifyContent:'space-between', padding:'16px', background:'#F9F9FA', zIndex:310
+        }}>
+          <button onClick={() => setSelectedAd(null)} style={{width:'40px', height:'40px', borderRadius:'50%', background:'#fff', border:'1px solid #ECECF1', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', boxShadow:'0 2px 8px rgba(0,0,0,0.04)'}}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--m-ink)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          <div style={{fontFamily:'var(--m-font)', fontSize:'16px', fontWeight:'800', color:'var(--m-ink)'}}>Detail Iklan</div>
+          <button style={{width:'40px', height:'40px', borderRadius:'50%', background:'#fff', border:'1px solid #ECECF1', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', boxShadow:'0 2px 8px rgba(0,0,0,0.04)'}}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--m-ink)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+          </button>
+        </header>
+
+        <main style={{flex:1, overflowY:'auto', padding:'0 16px', paddingBottom:'200px'}}>
+          
+          {/* Top Hero Card (Old Kelola Card) */}
+          <div style={{
+            background:'#fff', border:'1px solid #E4E4EB', borderRadius:'20px', padding:'16px', marginBottom:'16px'
+          }}>
+            <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'12px'}}>
+              <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
+                <div style={{position:'relative'}}>
+                  <div style={{
+                    width:'44px', height:'44px', borderRadius:'50%', border:'1.5px solid #E1306C',
+                    display:'flex', alignItems:'center', justifyContent:'center', background:'#FFF0F5'
+                  }}>
+                    <span style={{fontFamily:'var(--m-font)', fontSize:'20px', fontWeight:'700', color:'#E1306C'}}>N</span>
+                  </div>
+                  {/* IG badge */}
+                  <div style={{
+                    position:'absolute', bottom:'-2px', right:'-2px', background:'#fff', borderRadius:'50%', width:'20px', height:'20px', display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 1px 3px rgba(0,0,0,0.12)'
+                  }}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#E1306C" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.8" fill="#E1306C" stroke="none"/></svg>
+                  </div>
+                </div>
+                <div>
+                  <div style={{display:'flex', alignItems:'center', gap:'8px', marginBottom:'2px'}}>
+                    <div style={{fontFamily:'var(--m-font)', fontSize:'15px', fontWeight:'800', color:'var(--m-ink)'}}>Reel Pondok Indah Jakarta</div>
+                    <div style={{background:'#F5F5F7', padding:'2px 6px', borderRadius:'4px', fontFamily:'var(--m-font)', fontSize:'9px', fontWeight:'800', color:'var(--m-ink-sub)'}}>REEL</div>
+                  </div>
+                  <div style={{fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)', lineHeight:'1.4'}}>@tesakunlarisi · Minggu, 24 Mei · 09.37</div>
+                </div>
+              </div>
+              <div style={{background:'#E6F4EA', padding:'4px 10px', borderRadius:'999px', display:'flex', alignItems:'center', gap:'6px', alignSelf:'flex-start'}}>
+                <div style={{width:'6px', height:'6px', borderRadius:'50%', background:'#34A853'}} />
+                <span style={{fontFamily:'var(--m-font)', fontSize:'11px', fontWeight:'700', color:'#34A853'}}>Berjalan</span>
+              </div>
+            </div>
+
+            {/* Thumbnail */}
+            <div style={{
+              width:'100%', aspectRatio:'21/9', background:'linear-gradient(135deg, #6B46C1, #4C1D95)', borderRadius:'12px',
+              position:'relative', overflow:'hidden',
+              backgroundImage:'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.05) 10px, rgba(255,255,255,0.05) 20px)'
+            }}>
+              <div style={{position:'absolute', bottom:'30%', left:'15%', width:'70px', height:'70px', borderRadius:'50%', background:'rgba(0,0,0,0.1)'}} />
+              <div style={{position:'absolute', top:'30%', right:'15%', width:'100px', height:'60px', borderRadius:'8px', background:'rgba(0,0,0,0.1)'}} />
+              <div style={{position:'absolute', bottom:'12px', left:'12px', background:'rgba(0,0,0,0.5)', color:'#fff', fontFamily:'var(--m-font)', fontSize:'10px', padding:'4px 8px', borderRadius:'6px'}}>product<br/>photo</div>
+            </div>
+          </div>
+
+          {/* Metrics Grid */}
+          <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'12px', marginBottom:'16px'}}>
+            <div style={{background:'#fff', borderRadius:'16px', padding:'16px', border:'1px solid #E4E4EB'}}>
+              <div style={{fontFamily:'var(--m-font)', fontSize:'10px', fontWeight:'800', color:'var(--m-ink-sub)', letterSpacing:'0.5px', marginBottom:'4px'}}>ENGAGEMENTS</div>
+              <div style={{fontFamily:'var(--m-font)', fontSize:'24px', fontWeight:'800', color:'var(--m-brand)', marginBottom:'4px'}}>223</div>
+              <div style={{fontFamily:'var(--m-font)', fontSize:'11px', color:'var(--m-ink-sub)'}}>Total interaksi</div>
+            </div>
+            <div style={{background:'#fff', borderRadius:'16px', padding:'16px', border:'1px solid #E4E4EB'}}>
+              <div style={{fontFamily:'var(--m-font)', fontSize:'10px', fontWeight:'800', color:'var(--m-ink-sub)', letterSpacing:'0.5px', marginBottom:'4px'}}>REACH</div>
+              <div style={{fontFamily:'var(--m-font)', fontSize:'24px', fontWeight:'800', color:'var(--m-brand)', marginBottom:'4px'}}>109</div>
+              <div style={{fontFamily:'var(--m-font)', fontSize:'11px', color:'var(--m-ink-sub)'}}>↑ 18% hari ini</div>
+            </div>
+            <div style={{background:'#fff', borderRadius:'16px', padding:'16px', border:'1px solid #E4E4EB'}}>
+              <div style={{fontFamily:'var(--m-font)', fontSize:'10px', fontWeight:'800', color:'var(--m-ink-sub)', letterSpacing:'0.5px', marginBottom:'4px'}}>VIEWS</div>
+              <div style={{fontFamily:'var(--m-font)', fontSize:'18px', fontWeight:'800', color:'var(--m-ink)', marginBottom:'4px'}}>114</div>
+              <div style={{fontFamily:'var(--m-font)', fontSize:'11px', color:'var(--m-ink-sub)'}}>24 jam terakhir</div>
+            </div>
+            <div style={{background:'#fff', borderRadius:'16px', padding:'16px', border:'1px solid #E4E4EB'}}>
+              <div style={{fontFamily:'var(--m-font)', fontSize:'10px', fontWeight:'800', color:'var(--m-ink-sub)', letterSpacing:'0.5px', marginBottom:'4px'}}>REACTIONS</div>
+              <div style={{fontFamily:'var(--m-font)', fontSize:'18px', fontWeight:'800', color:'var(--m-ink)', marginBottom:'4px'}}>0</div>
+              <div style={{fontFamily:'var(--m-font)', fontSize:'11px', color:'var(--m-ink-sub)'}}>Belum ada</div>
+            </div>
+            <div style={{background:'#fff', borderRadius:'16px', padding:'16px', border:'1px solid #E4E4EB'}}>
+              <div style={{fontFamily:'var(--m-font)', fontSize:'10px', fontWeight:'800', color:'var(--m-ink-sub)', letterSpacing:'0.5px', marginBottom:'4px'}}>COMMENTS</div>
+              <div style={{fontFamily:'var(--m-font)', fontSize:'18px', fontWeight:'800', color:'var(--m-ink)', marginBottom:'4px'}}>0</div>
+              <div style={{fontFamily:'var(--m-font)', fontSize:'11px', color:'var(--m-ink-sub)'}}>Belum ada</div>
+            </div>
+            <div style={{background:'#fff', borderRadius:'16px', padding:'16px', border:'1px solid #E4E4EB'}}>
+              <div style={{fontFamily:'var(--m-font)', fontSize:'10px', fontWeight:'800', color:'var(--m-ink-sub)', letterSpacing:'0.5px', marginBottom:'4px'}}>SHARES</div>
+              <div style={{fontFamily:'var(--m-font)', fontSize:'18px', fontWeight:'800', color:'var(--m-ink)', marginBottom:'4px'}}>0</div>
+              <div style={{fontFamily:'var(--m-font)', fontSize:'11px', color:'var(--m-ink-sub)'}}>Belum ada</div>
+            </div>
+          </div>
+
+          {/* Chart Card */}
+          <div style={{background:'#fff', borderRadius:'20px', padding:'20px', border:'1px solid #E4E4EB', marginBottom:'16px'}}>
+            <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'16px'}}>
+              <div style={{fontFamily:'var(--m-font)', fontSize:'14px', fontWeight:'800', color:'var(--m-ink)'}}>Jangkauan 7 Hari</div>
+              <div style={{fontFamily:'var(--m-font)', fontSize:'12px', fontWeight:'800', color:'var(--m-brand)'}}>+62%</div>
+            </div>
+            <div style={{width:'100%', height:'80px', background:'linear-gradient(to top, rgba(107, 70, 193, 0.1), transparent)', position:'relative', borderRadius:'8px', overflow:'hidden'}}>
+              {/* SVG Mock Line Chart */}
+              <svg width="100%" height="100%" preserveAspectRatio="none" viewBox="0 0 100 100">
+                <path d="M0 100 L0 80 L20 85 L40 60 L60 65 L80 40 L100 20 L100 100 Z" fill="rgba(107, 70, 193, 0.1)"/>
+                <path d="M0 80 L20 85 L40 60 L60 65 L80 40 L100 20" fill="none" stroke="var(--m-brand)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <circle cx="100" cy="20" r="3" fill="var(--m-brand)"/>
+              </svg>
+            </div>
+          </div>
+        </main>
+
+        {/* Detail Sticky Bottom CTA */}
+        <div style={{
+          position:'fixed', bottom:0, left:0, right:0, padding:'16px', paddingBottom:'calc(16px + env(safe-area-inset-bottom))',
+          background:'linear-gradient(to top, rgba(249,249,250,1) 70%, rgba(249,249,250,0))', zIndex:320,
+          display:'flex', flexDirection:'column', gap:'12px'
+        }}>
+          {/* Tanya SiLaris */}
+          <button 
+            onClick={() => setShowSiLaris(true)}
+            style={{
+              width:'100%', padding:'16px', borderRadius:'16px', background:'#fff', border:'1px solid #E4E4EB',
+              display:'flex', alignItems:'center', justifyContent:'center', gap:'12px', cursor:'pointer',
+              boxShadow:'0 4px 12px rgba(0,0,0,0.05)'
+            }}>
+            <div style={{width:'40px', height:'40px', borderRadius:'50%', background:'var(--m-brand)', display:'flex', alignItems:'center', justifyContent:'center'}}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            </div>
+            <div style={{textAlign:'left'}}>
+              <div style={{fontFamily:'var(--m-font)', fontSize:'15px', fontWeight:'800', color:'var(--m-ink)', marginBottom:'2px'}}>Tanya SiLaris</div>
+              <div style={{fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)'}}>Dapatkan Performa Insight Iklanmu</div>
+            </div>
+          </button>
+          
+          {/* Boost */}
+          <button style={{
+            width:'100%', padding:'16px', borderRadius:'16px', background:'#1A1A1A', color:'#fff', border:'none',
+            display:'flex', alignItems:'center', justifyContent:'center', gap:'8px', cursor:'pointer', fontFamily:'var(--m-font)', fontSize:'15px', fontWeight:'800',
+            boxShadow:'0 4px 14px rgba(14,14,18,0.20)'
+          }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+            </svg>
+            Boost Iklan
+          </button>
+        </div>
+        
+        {showSiLaris && <SiLarisScreen onBack={() => setShowSiLaris(false)} />}
+      </div>
+    );
+  }
 
   return (
     <>
@@ -39,7 +207,7 @@ export default function KelolaScreen() {
         </div>
       </header>
 
-      <main style={{flex:1, overflowY:'auto', padding:'0 16px', paddingBottom:'calc(80px + env(safe-area-inset-bottom))'}}>
+      <main style={{flex:1, overflowY:'auto', padding:'0 16px', paddingBottom:'calc(100px + env(safe-area-inset-bottom))'}}>
         
         {/* Page title */}
         <div style={{padding:'24px 0 20px'}}>
@@ -47,7 +215,7 @@ export default function KelolaScreen() {
             Kelola Iklan
           </h1>
           <p style={{fontFamily:'var(--m-font)',fontSize:'14px',color:'var(--m-ink-sub)', lineHeight:'1.5'}}>
-            Pantau iklan yang sedang berjalan secara real-time.
+            Pantau performa dan edit konten iklanmu
           </p>
         </div>
 
@@ -82,146 +250,59 @@ export default function KelolaScreen() {
           </div>
         </div>
 
-        {/* ── Ad Card 1 ── */}
-        <div 
-          onClick={() => setShowSiLaris(true)}
-          style={{
-            background:'#fff', border:'1px solid #E4E4EB', borderRadius:'20px',
-            padding:'16px', marginBottom:'16px', cursor:'pointer'
-          }}
-        >
-          {/* Card Header */}
-          <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'12px'}}>
-            <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
-              <div style={{position:'relative'}}>
-                <div style={{
-                  width:'40px', height:'40px', borderRadius:'50%', border:'1.5px solid #E1306C',
-                  display:'flex', alignItems:'center', justifyContent:'center', background:'#FFF0F5'
-                }}>
-                  <span style={{fontFamily:'var(--m-font)', fontSize:'18px', fontWeight:'700', color:'#E1306C'}}>N</span>
-                </div>
-                {/* Small IG badge */}
-                <div style={{
-                  position:'absolute', bottom:'-4px', right:'-4px', background:'#fff',
-                  borderRadius:'50%', width:'20px', height:'20px', display:'flex', alignItems:'center', justifyContent:'center',
-                  boxShadow:'0 1px 3px rgba(0,0,0,0.12)'
-                }}>
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#E1306C" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.8" fill="#E1306C" stroke="none"/>
-                  </svg>
-                </div>
+        {/* ── Ad Grid ── */}
+        <div style={{display:'grid', gridTemplateColumns:'repeat(2, 1fr)', gap:'8px', paddingBottom:'24px'}}>
+          {dummyAds.map((ad, idx) => (
+            <div 
+              key={idx}
+              onClick={() => setSelectedAd(ad)}
+              style={{
+                background: ad.imgColor, aspectRatio:'1/1', borderRadius:'16px', position:'relative', cursor:'pointer', overflow:'hidden',
+                boxShadow:'0 2px 8px rgba(0,0,0,0.06)'
+              }}
+            >
+              {/* Top Right Badge (Reel/Photo) */}
+              <div style={{position:'absolute', top:'8px', right:'8px', background:'rgba(0,0,0,0.4)', borderRadius:'6px', padding:'4px', display:'flex', alignItems:'center', justifyContent:'center'}}>
+                {ad.badge === 'reel' ? (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"/></svg>
+                ) : (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                )}
               </div>
-              <div>
-                <div style={{fontFamily:'var(--m-font)', fontSize:'15px', fontWeight:'800', color:'var(--m-ink)', marginBottom:'2px'}}>Post IG foto</div>
-                <div style={{fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)'}}>@tesakunlarisi</div>
-              </div>
-            </div>
-            
-            <div style={{display:'flex', alignItems:'center', gap:'8px'}}>
+
+              {/* Bottom Gradient overlay */}
               <div style={{
-                background:'#E6F4EA', padding:'4px 10px', borderRadius:'99px',
-                display:'flex', alignItems:'center', gap:'6px'
+                position:'absolute', bottom:0, left:0, right:0, height:'50%',
+                background:'linear-gradient(to top, rgba(0,0,0,0.8), rgba(0,0,0,0))',
+                display:'flex', alignItems:'flex-end', padding:'12px'
               }}>
-                <div style={{width:'6px', height:'6px', borderRadius:'50%', background:'#34A853'}} />
-                <span style={{fontFamily:'var(--m-font)', fontSize:'11px', fontWeight:'700', color:'#34A853'}}>Berjalan</span>
-              </div>
-              <button style={{background:'none', border:'none', cursor:'pointer', color:'var(--m-ink-sub)', display:'flex', alignItems:'center', padding:0}}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="3 6 5 6 21 6"></polyline>
-                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                  <line x1="10" y1="11" x2="10" y2="17"></line>
-                  <line x1="14" y1="11" x2="14" y2="17"></line>
-                </svg>
-              </button>
-            </div>
-          </div>
-
-          <div style={{display:'inline-flex', alignItems:'center', gap:'4px', padding:'4px 8px', background:'#F0E6FF', borderRadius:'6px', cursor:'pointer', marginBottom:'12px'}}>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--m-brand)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-            <span style={{fontFamily:'var(--m-font)', fontSize:'11px', fontWeight:'800', color:'var(--m-brand)'}}>
-              Minggu, 24 Mei 2026 • 10.54
-            </span>
-          </div>
-
-          {/* Thumbnail */}
-          <div style={{
-            width:'100%', aspectRatio:'21/9', background:'#E8C39E', borderRadius:'12px',
-            marginBottom:'16px', position:'relative', overflow:'hidden',
-            backgroundImage:'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0,0,0,0.05) 10px, rgba(0,0,0,0.05) 20px)'
-          }}>
-            {/* Fake mockup circles inside thumb */}
-            <div style={{
-              position:'absolute', bottom:'30%', left:'15%', width:'70px', height:'70px', borderRadius:'50%',
-              background:'rgba(0,0,0,0.1)'
-            }} />
-            <div style={{
-              position:'absolute', top:'30%', right:'15%', width:'100px', height:'60px', borderRadius:'8px',
-              background:'rgba(0,0,0,0.1)'
-            }} />
-            <div style={{
-              position:'absolute', bottom:'12px', left:'12px', background:'rgba(0,0,0,0.5)',
-              color:'#fff', fontFamily:'var(--m-font)', fontSize:'10px', padding:'4px 8px', borderRadius:'6px'
-            }}>
-              product<br/>photo
-            </div>
-          </div>
-
-          {/* Engagements */}
-          <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'12px'}}>
-            <span style={{fontFamily:'var(--m-font)', fontSize:'11px', fontWeight:'800', color:'var(--m-ink)', letterSpacing:'0.5px', textTransform:'uppercase'}}>
-              ENGAGEMENTS
-            </span>
-            <span style={{fontFamily:'var(--m-font)', fontSize:'18px', fontWeight:'800', color:'var(--m-brand)'}}>
-              3
-            </span>
-          </div>
-
-          <div style={{display:'flex', flexDirection:'column', gap:'8px', marginBottom:'16px'}}>
-            {[
-              { label:'Reactions', val:'0' },
-              { label:'Comments', val:'0' },
-              { label:'Shares', val:'0' },
-              { label:'Views', val:'2' },
-              { label:'Reach', val:'1', arrow:true },
-            ].map(row => (
-              <div key={row.label} style={{display:'flex', alignItems:'center', justifyContent:'space-between'}}>
-                <span style={{fontFamily:'var(--m-font)', fontSize:'13px', color:'var(--m-ink-sub)'}}>{row.label}</span>
-                <div style={{display:'flex', alignItems:'center', gap:'4px'}}>
-                  <span style={{fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'700', color:'var(--m-ink)'}}>{row.val}</span>
-                  {row.arrow && (
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#34A853" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="18 15 12 9 6 15"/>
-                    </svg>
-                  )}
+                <div style={{display:'flex', alignItems:'center', gap:'6px', color:'#fff'}}>
+                  {/* Users Icon for Reach */}
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                  <span style={{fontFamily:'var(--m-font)', fontSize:'12px', fontWeight:'800'}}>{ad.views}</span>
                 </div>
               </div>
-            ))}
-          </div>
-
-          <div style={{width:'100%', height:'3px', background:'#F5F5F7', borderRadius:'2px', marginBottom:'16px'}}>
-            <div style={{width:'10%', height:'100%', background:'var(--m-brand)', borderRadius:'2px'}} />
-          </div>
-
-          {/* Boost Button */}
-          <button style={{
-            width:'100%', padding:'14px', borderRadius:'12px', background:'#1A1A1A', color:'#fff',
-            border:'none', cursor:'pointer', fontFamily:'var(--m-font)', fontSize:'14px', fontWeight:'700',
-            display:'flex', alignItems:'center', justifyContent:'center', gap:'8px',
-            boxShadow:'0 4px 14px rgba(14,14,18,0.20)'
-          }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-            </svg>
-            Boost
-          </button>
+            </div>
+          ))}
         </div>
-
-
-
       </main>
+
+      {/* Sticky Bottom CTA for Buat Iklan Baru */}
+      <div style={{
+        position:'fixed', bottom:'80px', left:0, right:0, padding:'16px',
+        background:'linear-gradient(to top, rgba(255,255,255,1) 50%, rgba(255,255,255,0))', zIndex:100
+      }}>
+        <button style={{
+          width:'100%', padding:'16px', borderRadius:'999px', background:'#202434', color:'#fff',
+          border:'none', cursor:'pointer', fontFamily:'var(--m-font)', fontSize:'15px', fontWeight:'800',
+          display:'flex', alignItems:'center', justifyContent:'center', gap:'8px',
+          boxShadow:'0 4px 14px rgba(32,36,52,0.20)'
+        }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg>
+          Buat Iklan Baru
+        </button>
+      </div>
     </div>
-    {showSiLaris && <SiLarisScreen onBack={() => setShowSiLaris(false)} />}
     </>
   );
 }
