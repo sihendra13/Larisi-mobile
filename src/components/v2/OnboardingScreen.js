@@ -150,7 +150,7 @@ export default function OnboardingScreen({
   ───────────────── */
   const handleVerifyOtp = async () => {
     const code = otp.replace(/\D/g, '');
-    if (code.length < 6) { setOtpError('Masukkan 6 digit kode OTP.'); return; }
+    if (code.length < 8) { setOtpError('Masukkan 8 digit kode OTP.'); return; }
     setOtpLoading(true);
     setOtpError('');
 
@@ -372,7 +372,7 @@ export default function OnboardingScreen({
                   Verifikasi Email
                 </h1>
                 <p style={{ margin: '8px 0 0', fontSize: '13px', color: '#6b7280', lineHeight: '1.5' }}>
-                  Kode OTP 6 digit telah dikirim ke{' '}
+                  Kode OTP 8 digit telah dikirim ke{' '}
                   <strong style={{ color: '#111827' }}>{email}</strong>.<br />
                   Cek inbox atau folder spam kamu.
                 </p>
@@ -385,10 +385,10 @@ export default function OnboardingScreen({
                   type="text"
                   inputMode="numeric"
                   pattern="[0-9]*"
-                  maxLength={6}
+                  maxLength={8}
                   value={otp}
                   onChange={e => { setOtp(e.target.value.replace(/\D/g, '')); setOtpError(''); }}
-                  placeholder="000000"
+                  placeholder="00000000"
                   style={{
                     ...inputStyle,
                     fontSize: '24px', fontWeight: '700',
@@ -411,13 +411,13 @@ export default function OnboardingScreen({
               {/* Verify button */}
               <button
                 onClick={handleVerifyOtp}
-                disabled={otpLoading || otp.length < 6}
+                disabled={otpLoading || otp.length < 8}
                 style={{
                   width: '100%', padding: '14px', borderRadius: '12px',
-                  background: otpLoading || otp.length < 6 ? '#E4E4EB' : '#111827',
-                  color:      otpLoading || otp.length < 6 ? '#9ca3af' : '#fff',
+                  background: otpLoading || otp.length < 8 ? '#E4E4EB' : '#111827',
+                  color:      otpLoading || otp.length < 8 ? '#9ca3af' : '#fff',
                   border: 'none', fontSize: '15px', fontWeight: '700',
-                  cursor: otpLoading || otp.length < 6 ? 'not-allowed' : 'pointer',
+                  cursor: otpLoading || otp.length < 8 ? 'not-allowed' : 'pointer',
                   fontFamily: 'inherit',
                 }}
               >
