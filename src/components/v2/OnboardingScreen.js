@@ -72,7 +72,13 @@ const SOCIAL_PLATFORMS = [
 ───────────────────────────────────────── */
 function parseLocation(n) {
   const parts = n.split(', ').map(s => s.trim());
-  return { kecamatan: parts[0] || '', kabupaten: parts[parts.length - 1] || '' };
+  /* Format data: "Kecamatan, Kabupaten/Kota, Provinsi" (3 part)
+     atau "Kecamatan, Kota" (2 part untuk kota besar seperti Jakarta)
+     → kabupaten selalu parts[1], BUKAN parts[last] yang adalah provinsi */
+  return {
+    kecamatan: parts[0] || '',
+    kabupaten: parts[1] || '',
+  };
 }
 
 /* ─────────────────────────────────────────
@@ -514,7 +520,7 @@ export default function OnboardingScreen({
                 <input
                   type="text" value={kecQuery}
                   onChange={e => { setKecQuery(e.target.value); setKecamatan(''); setKabupaten(''); setShowDrop(true); setProfError(''); }}
-                  onFocus={() => setShowDrop(true)}
+                  onFocus={() => { if (kecQuery.length >= 2) setShowDrop(true); }}
                   onBlur={() => setTimeout(() => setShowDrop(false), 200)}
                   placeholder="Ketik nama kecamatan..."
                   autoComplete="off"
@@ -524,29 +530,53 @@ export default function OnboardingScreen({
                   <div style={{
                     position: 'absolute', left: 0, right: 0, top: 'calc(100% + 4px)',
                     background: '#fff', border: '1px solid #E4E4EB', borderRadius: '10px',
-                    zIndex: 200, boxShadow: '0 8px 20px rgba(0,0,0,0.10)',
-                    maxHeight: '200px', overflowY: 'auto',
+                    zIndex: 200, boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                    maxHeight: '220px', overflowY: 'auto',
                   }}>
-                    {kecResults.map((loc, i) => (
-                      <div
-                        key={i}
-                        onMouseDown={() => selectKec(loc)}
-                        style={{
-                          padding: '10px 14px', fontSize: '13px', color: '#111827',
-                          cursor: 'pointer',
-                          borderBottom: i < kecResults.length - 1 ? '1px solid #F3F4F6' : 'none',
-                        }}
-                      >
-                        {loc.n}
-                      </div>
-                    ))}
+                    {kecResults.map((loc, i) => {
+                      const parts = loc.n.split(', ').map(s => s.trim());
+                      const kecLabel  = parts[0];
+                      const restLabel = parts.slice(1).join(' · ');
+                      return (
+                        <div
+                          key={i}
+                          onMouseDown={() => selectKec(loc)}
+                          style={{
+                            padding: '10px 14px', cursor: 'pointer',
+                            borderBottom: i < kecResults.length - 1 ? '1px solid #F3F4F6' : 'none',
+                            display: 'flex', flexDirection: 'column', gap: '2px',
+                          }}
+                        >
+                          <span style={{ fontSize: '13px', fontWeight: '600', color: '#111827' }}>{kecLabel}</span>
+                          {restLabel && (
+                            <span style={{ fontSize: '11px', color: '#9CA3AF' }}>{restLabel}</span>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
-                {kabupaten && (
-                  <div style={{ marginTop: '6px', fontSize: '12px', color: '#6b7280' }}>
-                    📍 {kabupaten}
-                  </div>
-                )}
+              </div>
+
+              {/* Kabupaten/Kota — auto-fill setelah pilih kecamatan (identik dengan desktop) */}
+              <div>
+                <label style={labelStyle}>
+                  Kota / Kabupaten
+                  <span style={{ fontSize: '11px', fontWeight: '400', color: '#9CA3AF', marginLeft: '6px' }}>otomatis terisi</span>
+                </label>
+                <input
+                  type="text"
+                  readOnly
+                  value={kabupaten}
+                  placeholder="Otomatis terisi setelah pilih kecamatan"
+                  style={{
+                    ...inputStyle,
+                    background: kabupaten ? '#F5F3FF' : '#F9F9FA',
+                    color: kabupaten ? '#374151' : '#9CA3AF',
+                    cursor: 'default',
+                    border: kabupaten ? '1.5px solid #7C3AED' : '1.5px solid #E4E4EB',
+                  }}
+                />
               </div>
 
               {/* Delivery */}
