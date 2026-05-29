@@ -1113,29 +1113,38 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
 
           </div>{/* ← tutup image area (overflow:hidden) */}
 
-          {/* ── Crop frame: 3-div approach (no boxShadow, works on all browsers) ── */}
+          {/* ── Crop frame: JS pixel calc + corner brackets (border penuh tidak terlihat di tepi layar) ── */}
           {(() => {
+            if (typeof window === 'undefined') return null;
             const isVert = fmtLower === 'reel' || fmtLower === 'story';
-            /* dim bar height = (100% - frame_height) / 2
-               Post  4/5 → frame_h = 100vw × 5/4 → dim = 50% - 100vw/8×5
-               Reel  9/16 → frame_h = 100vw × 16/9 → dim = 50% - 100vw/9×8 */
-            const dimH = isVert
-              ? 'max(0px, calc(50% - 100vw / 9 * 8))'
-              : 'max(0px, calc(50% - 100vw / 8 * 5))';
-            const frameH = isVert
-              ? 'min(100%, calc(100vw / 9 * 16))'
-              : 'min(100%, calc(100vw / 4 * 5))';
-            const bar = { position:'absolute', left:0, right:0, height:dimH, background:'rgba(0,0,0,0.42)', pointerEvents:'none', zIndex:2 };
+            const W  = window.innerWidth;
+            const H  = window.innerHeight;
+            const fH = Math.min(H, isVert ? W * 16 / 9 : W * 5 / 4);
+            const dH = Math.max(0, (H - fH) / 2);
+            const fT = dH;          /* frame top y  */
+            const fB = dH + fH;     /* frame bottom y */
+            const CL = 24;          /* corner line length px */
+            const CT = 3;           /* corner line thickness px */
+            const DIM = 'rgba(0,0,0,0.48)';
+            const CC  = 'rgba(255,255,255,0.95)';
+            const zp  = { zIndex:2, pointerEvents:'none' };
             return (
               <>
-                <div style={{ ...bar, top:0 }} />
-                <div style={{ ...bar, bottom:0 }} />
-                <div style={{
-                  position:'absolute', zIndex:2, pointerEvents:'none',
-                  left:0, right:0, top:dimH, height:frameH,
-                  border:'2px solid rgba(255,255,255,0.92)',
-                  borderRadius:'3px',
-                }} />
+                {/* dim bars */}
+                <div style={{ position:'absolute', top:0,       left:0, right:0, height:dH,        background:DIM, ...zp }} />
+                <div style={{ position:'absolute', bottom:0,    left:0, right:0, height:dH,        background:DIM, ...zp }} />
+                {/* corner brackets — top-left */}
+                <div style={{ position:'absolute', top:fT,      left:0,  width:CL, height:CT, background:CC, ...zp }} />
+                <div style={{ position:'absolute', top:fT,      left:0,  width:CT, height:CL, background:CC, ...zp }} />
+                {/* corner brackets — top-right */}
+                <div style={{ position:'absolute', top:fT,      right:0, width:CL, height:CT, background:CC, ...zp }} />
+                <div style={{ position:'absolute', top:fT,      right:0, width:CT, height:CL, background:CC, ...zp }} />
+                {/* corner brackets — bottom-left */}
+                <div style={{ position:'absolute', top:fB-CT,   left:0,  width:CL, height:CT, background:CC, ...zp }} />
+                <div style={{ position:'absolute', top:fB-CL,   left:0,  width:CT, height:CL, background:CC, ...zp }} />
+                {/* corner brackets — bottom-right */}
+                <div style={{ position:'absolute', top:fB-CT,   right:0, width:CL, height:CT, background:CC, ...zp }} />
+                <div style={{ position:'absolute', top:fB-CL,   right:0, width:CT, height:CL, background:CC, ...zp }} />
               </>
             );
           })()}

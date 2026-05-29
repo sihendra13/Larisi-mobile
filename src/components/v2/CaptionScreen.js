@@ -581,18 +581,8 @@ export default function CaptionScreen({
           overflowY:'auto',
         }}>
 
-          {/* Handle — tap/swipe toggle expand */}
+          {/* Handle — tap untuk expand/collapse (no swipe agar tidak gantung) */}
           <div
-            onTouchStart={e => { sheetSwipeRef.current = e.touches[0].clientY; }}
-            onTouchEnd={e => {
-              if (sheetSwipeRef.current === null) return;
-              e.preventDefault();
-              const dy = e.changedTouches[0].clientY - sheetSwipeRef.current;
-              sheetSwipeRef.current = null;
-              if (Math.abs(dy) < 10)  setSheetExpanded(p => !p);
-              else if (dy >  30)      setSheetExpanded(false);
-              else if (dy < -30)      setSheetExpanded(true);
-            }}
             onClick={() => setSheetExpanded(p => !p)}
             style={{
               padding:'12px 0 4px', display:'flex', justifyContent:'center',
@@ -644,15 +634,15 @@ export default function CaptionScreen({
               rows={1}
               style={{
                 display:'block', width:'100%', boxSizing:'border-box',
-                minHeight: sheetExpanded ? '200px' : '140px',
+                minHeight: sheetExpanded ? '220px' : '140px',
                 height:'auto',
                 background:'#F5F5F7', border:'1.5px solid #E4E4EB',
                 borderRadius:'12px', padding:'12px',
-                fontFamily:'var(--m-font)', fontSize:'14px',
-                color:'var(--m-ink)', lineHeight:'1.65',
+                fontFamily:'var(--m-font)', fontSize:'16px', /* 16px: cegah iOS auto-zoom saat focus */
+                color:'var(--m-ink)', lineHeight:'1.55',
                 resize:'none', outline:'none',
-                overflowY:'hidden',  /* sembunyikan scrollbar — textarea tumbuh sendiri */
-                transition:'border-color .15s',
+                overflowY:'hidden',
+                transition:'border-color .15s, min-height .3s ease',
               }}
               onFocus={e => {
                 e.target.style.borderColor = 'var(--m-brand)';
