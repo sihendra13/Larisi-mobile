@@ -58,12 +58,11 @@ export default function KelolaScreen() {
                 <div>
                   <div style={{display:'flex', alignItems:'center', gap:'8px', marginBottom:'2px'}}>
                     <div style={{fontFamily:'var(--m-font)', fontSize:'15px', fontWeight:'800', color:'var(--m-ink)'}}>Reel Pondok Indah Jakarta</div>
-                    <div style={{background:'#F5F5F7', padding:'2px 6px', borderRadius:'4px', fontFamily:'var(--m-font)', fontSize:'9px', fontWeight:'800', color:'var(--m-ink-sub)'}}>REEL</div>
                   </div>
                   <div style={{fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)', lineHeight:'1.4'}}>@tesakunlarisi</div>
-                  <div style={{display:'inline-flex', alignItems:'center', gap:'4px', padding:'4px 8px', background:'#F0E6FF', borderRadius:'6px', cursor:'pointer', marginTop:'4px'}}>
+                  <div style={{display:'flex', alignItems:'center', gap:'4px', cursor:'pointer', marginTop:'4px'}}>
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--m-brand)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-                    <span style={{fontFamily:'var(--m-font)', fontSize:'11px', fontWeight:'800', color:'var(--m-brand)'}}>Minggu, 24 Mei 2026 • 09.37</span>
+                    <span style={{fontFamily:'var(--m-font)', fontSize:'12px', fontWeight:'700', color:'var(--m-brand)', textDecoration:'underline', textUnderlineOffset:'2px'}}>Minggu, 24 Mei 2026 • 09.37</span>
                   </div>
                 </div>
               </div>
@@ -154,17 +153,11 @@ export default function KelolaScreen() {
           <button 
             onClick={() => setShowSiLaris(true)}
             style={{
-              width:'100%', padding:'16px', borderRadius:'16px', background:'#fff', border:'1px solid #E4E4EB',
-              display:'flex', alignItems:'center', justifyContent:'center', gap:'12px', cursor:'pointer',
-              boxShadow:'0 4px 12px rgba(0,0,0,0.05)'
+              width:'100%', padding:'16px', borderRadius:'16px', background:'transparent', color:'#1A1A1A', border:'1.5px solid #1A1A1A',
+              display:'flex', alignItems:'center', justifyContent:'center', gap:'8px', cursor:'pointer', fontFamily:'var(--m-font)', fontSize:'15px', fontWeight:'800',
             }}>
-            <div style={{width:'40px', height:'40px', borderRadius:'50%', background:'var(--m-brand)', display:'flex', alignItems:'center', justifyContent:'center'}}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-            </div>
-            <div style={{textAlign:'left'}}>
-              <div style={{fontFamily:'var(--m-font)', fontSize:'15px', fontWeight:'800', color:'var(--m-ink)', marginBottom:'2px'}}>Tanya SiLaris</div>
-              <div style={{fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)'}}>Dapatkan Performa Insight Iklanmu</div>
-            </div>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            Tanya SiLaris
           </button>
           
           {/* Boost */}
