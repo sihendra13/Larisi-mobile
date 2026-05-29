@@ -1111,58 +1111,59 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
               )
             )}
 
-            {/* ── Crop frame indicator: white border + dim outside ── */}
-            <div style={{
-              position: 'absolute', inset: 0, zIndex: 1,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              pointerEvents: 'none',
-            }}>
-              <div style={{
-                ...((fmtLower === 'reel' || fmtLower === 'story') ? {
-                  height: '100%', width: 'auto', aspectRatio: '9/16', maxWidth: '100%',
-                } : {
-                  width: '100%', height: 'auto', aspectRatio: '4/5', maxHeight: '100%',
-                }),
-                border: '1.5px solid rgba(255,255,255,0.80)',
-                borderRadius: '3px',
-                boxShadow: '0 0 0 9999px rgba(0,0,0,0.42)',
-              }}/>
-            </div>
+          </div>{/* ← tutup image area (overflow:hidden) */}
 
-            {/* ── Floating header over image ── */}
+          {/* ── Crop frame indicator — di luar overflow:hidden agar boxShadow tidak ter-clip ── */}
+          <div style={{
+            position: 'absolute', inset: 0, zIndex: 2,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            pointerEvents: 'none',
+          }}>
             <div style={{
-              position: 'absolute', top: 0, left: 0, right: 0, zIndex: 2,
-              padding: 'calc(env(safe-area-inset-top) + 12px) 16px 20px',
-              background: 'linear-gradient(to bottom, rgba(0,0,0,0.68) 0%, transparent 100%)',
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              ...((fmtLower === 'reel' || fmtLower === 'story') ? {
+                height: '100%', width: 'auto', aspectRatio: '9/16', maxWidth: '100%',
+              } : {
+                width: '100%', height: 'auto', aspectRatio: '4/5', maxHeight: '100%',
+              }),
+              border: '2px solid rgba(255,255,255,0.92)',
+              borderRadius: '3px',
+              boxShadow: '0 0 0 9999px rgba(0,0,0,0.42)',
+            }}/>
+          </div>
+
+          {/* ── Floating header over image ── */}
+          <div style={{
+            position: 'absolute', top: 0, left: 0, right: 0, zIndex: 3,
+            padding: 'calc(env(safe-area-inset-top) + 12px) 16px 20px',
+            background: 'linear-gradient(to bottom, rgba(0,0,0,0.68) 0%, transparent 100%)',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          }}>
+            <button onClick={closeEditSheet} style={{
+              width: '36px', height: '36px', borderRadius: '50%',
+              background: 'rgba(0,0,0,0.40)', backdropFilter: 'blur(6px)',
+              border: '1px solid rgba(255,255,255,0.18)', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              WebkitTapHighlightColor: 'transparent',
             }}>
-              <button onClick={closeEditSheet} style={{
-                width: '36px', height: '36px', borderRadius: '50%',
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+            <span style={{ fontFamily: 'var(--m-font)', fontSize: '15px', fontWeight: '700', color: '#fff', textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>
+              Edit Tampilan
+            </span>
+            <button
+              onClick={() => setEditSettings(prev => ({ ...prev, [previewFile.url]: DEFAULT_EDIT }))}
+              style={{
+                padding: '7px 14px', borderRadius: '20px',
                 background: 'rgba(0,0,0,0.40)', backdropFilter: 'blur(6px)',
-                border: '1px solid rgba(255,255,255,0.18)', cursor: 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                WebkitTapHighlightColor: 'transparent',
-              }}>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-                </svg>
-              </button>
-              <span style={{ fontFamily: 'var(--m-font)', fontSize: '15px', fontWeight: '700', color: '#fff', textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>
-                Edit Tampilan
-              </span>
-              <button
-                onClick={() => setEditSettings(prev => ({ ...prev, [previewFile.url]: DEFAULT_EDIT }))}
-                style={{
-                  padding: '7px 14px', borderRadius: '20px',
-                  background: 'rgba(0,0,0,0.40)', backdropFilter: 'blur(6px)',
-                  border: '1px solid rgba(255,255,255,0.22)',
-                  fontFamily: 'var(--m-font)', fontSize: '13px', fontWeight: '600',
-                  color: '#fff', cursor: 'pointer', WebkitTapHighlightColor: 'transparent',
-                }}
-              >
-                Reset
-              </button>
-            </div>
+                border: '1px solid rgba(255,255,255,0.22)',
+                fontFamily: 'var(--m-font)', fontSize: '13px', fontWeight: '600',
+                color: '#fff', cursor: 'pointer', WebkitTapHighlightColor: 'transparent',
+              }}
+            >
+              Reset
+            </button>
           </div>
 
           {/* ── White controls panel — collapsible bottom sheet ── */}
@@ -1171,7 +1172,7 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
             transform: editPanelCollapsed ? 'translateY(calc(100% - 34px))' : 'translateY(0)',
             transition: 'transform 0.3s cubic-bezier(0.32,0.72,0,1)',
           }}>
-            <div style={{ background: 'rgba(18,18,18,0.88)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)', borderRadius: '20px 20px 0 0' }}>
+            <div style={{ background: 'rgba(0,0,0,0.60)', backdropFilter: 'blur(28px)', WebkitBackdropFilter: 'blur(28px)', borderRadius: '20px 20px 0 0' }}>
 
               {/* ── Chevron: tap atau swipe up/down untuk collapse/expand ── */}
               <div

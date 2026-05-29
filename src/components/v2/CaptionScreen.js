@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 const PLATFORM_ICONS = {
   instagram: (
@@ -108,6 +108,8 @@ export default function CaptionScreen({
   const [animateEditSheet,setAnimateEditSheet]= useState(false);
   const [editDraft,       setEditDraft]       = useState('');
   const [sheetBottom,     setSheetBottom]     = useState(0);
+  const [sheetExpanded,   setSheetExpanded]   = useState(false);
+  const sheetSwipeRef = useRef(null);
 
   const reach     = computeReach(locPop, radius, localOn, travelerOn);
   const reachText = fmtReach(reach);
@@ -152,8 +154,9 @@ export default function CaptionScreen({
     const vv = window.visualViewport;
     if (!vv) return;
     const update = () => {
-      const offset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
-      setSheetBottom(offset);
+      /* window.innerHeight stays constant on iOS when keyboard opens;
+         vv.height shrinks by keyboard height → difference = keyboard height */
+      setSheetBottom(Math.max(0, window.innerHeight - vv.height));
     };
     vv.addEventListener('resize', update);
     vv.addEventListener('scroll', update);
@@ -172,6 +175,7 @@ export default function CaptionScreen({
   };
   const closeEditSheet = () => {
     setAnimateEditSheet(false);
+    setSheetExpanded(false);
     setTimeout(() => setShowEditSheet(false), 350);
   };
   const saveEditCaption = () => {
@@ -547,104 +551,132 @@ export default function CaptionScreen({
       </div>
 
       {/* ── Edit Caption Bottom Sheet ── */}
+      {/* Backdrop — terpisah agar tidak wrap sheet, iOS Safari lebih stabil */}
       {showEditSheet && (
-        <div style={{position:'fixed', inset:0, zIndex:1000}}>
-          {/* Backdrop */}
+        <div
+          onClick={closeEditSheet}
+          style={{
+            position:'fixed', inset:0, zIndex:1000,
+            background: animateEditSheet ? 'rgba(0,0,0,0.50)' : 'rgba(0,0,0,0)',
+            transition:'background 0.35s ease',
+          }}
+        />
+      )}
+
+      {/* Sheet — position:fixed langsung, bottom=keyboard offset */}
+      {showEditSheet && (
+        <div style={{
+          position:'fixed',
+          bottom: sheetBottom,
+          left:0, right:0,
+          zIndex:1001,
+          background:'#fff',
+          borderRadius:'20px 20px 0 0',
+          paddingBottom:'calc(env(safe-area-inset-bottom) + 12px)',
+          transform: animateEditSheet ? 'translateY(0)' : 'translateY(100%)',
+          transition:'transform 0.35s cubic-bezier(0.32,0.72,0,1)',
+          /* expanded: max 76vh tapi juga dibatasi agar tidak melewati atas layar saat keyboard buka */
+          maxHeight: sheetExpanded
+            ? `min(76vh, calc(100vh - ${sheetBottom}px - 48px))`
+            : '58vh',
+          display:'flex', flexDirection:'column',
+          overflow:'hidden',
+        }}>
+
+          {/* ── Handle: tap toggle, swipe up/down expand/collapse ── */}
           <div
-            onClick={closeEditSheet}
-            style={{
-              position:'absolute', inset:0,
-              background: animateEditSheet ? 'rgba(0,0,0,0.50)' : 'rgba(0,0,0,0)',
-              transition:'background 0.35s ease',
+            onTouchStart={e => { sheetSwipeRef.current = e.touches[0].clientY; }}
+            onTouchEnd={e => {
+              if (sheetSwipeRef.current === null) return;
+              e.preventDefault();
+              const dy = e.changedTouches[0].clientY - sheetSwipeRef.current;
+              sheetSwipeRef.current = null;
+              if (Math.abs(dy) < 10)   setSheetExpanded(p => !p);   /* tap */
+              else if (dy >  30)       setSheetExpanded(false);       /* swipe down */
+              else if (dy < -30)       setSheetExpanded(true);        /* swipe up */
             }}
-          />
-          {/* Sheet — bottom offset tracks keyboard height via visualViewport */}
+            onClick={() => setSheetExpanded(p => !p)}
+            style={{
+              padding:'12px 0 4px', display:'flex', justifyContent:'center',
+              flexShrink:0, cursor:'pointer', WebkitTapHighlightColor:'transparent',
+            }}
+          >
+            <div style={{width:'36px', height:'4px', borderRadius:'2px', background:'#E4E4EB'}} />
+          </div>
+
+          {/* Sheet header */}
           <div style={{
-            position:'absolute', bottom: sheetBottom, left:0, right:0,
-            background:'#fff',
-            borderRadius:'20px 20px 0 0',
-            paddingBottom:'calc(env(safe-area-inset-bottom) + 16px)',
-            transform: animateEditSheet ? 'translateY(0)' : 'translateY(100%)',
-            transition:'transform 0.35s cubic-bezier(0.32,0.72,0,1)',
+            display:'flex', alignItems:'center', justifyContent:'space-between',
+            padding:'4px 16px 12px', flexShrink:0,
           }}>
-            {/* Handle */}
-            <div style={{padding:'12px 0 4px', display:'flex', justifyContent:'center', flexShrink:0}}>
-              <div style={{width:'36px', height:'4px', borderRadius:'2px', background:'#E4E4EB'}} />
+            <div style={{display:'flex', alignItems:'center', gap:'8px'}}>
+              {PLATFORM_ICONS_SM[platform]}
+              <span style={{fontFamily:'var(--m-font)', fontSize:'16px', fontWeight:'700', color:'var(--m-ink)'}}>
+                Edit Caption {platLabel}
+              </span>
             </div>
+            <button
+              onClick={closeEditSheet}
+              style={{
+                width:'30px', height:'30px', borderRadius:'50%',
+                background:'#F0F0F5', border:'none', cursor:'pointer',
+                display:'flex', alignItems:'center', justifyContent:'center',
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--m-ink)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
 
-            {/* Sheet header */}
+          {/* Textarea — flex:1 agar mengisi sisa ruang sheet */}
+          <div style={{flex:1, minHeight:0, padding:'0 16px 8px', display:'flex', flexDirection:'column'}}>
+            <textarea
+              value={editDraft}
+              onChange={e => setEditDraft(e.target.value)}
+              autoFocus
+              style={{
+                flex:1, minHeight: sheetExpanded ? '180px' : '140px',
+                width:'100%',
+                background:'#F5F5F7', border:'1.5px solid #E4E4EB',
+                borderRadius:'12px', padding:'12px',
+                fontFamily:'var(--m-font)', fontSize:'14px',
+                color:'var(--m-ink)', lineHeight:'1.65',
+                resize:'none', outline:'none', boxSizing:'border-box',
+                overflowY:'auto',
+                transition:'border-color .15s, min-height .3s',
+              }}
+              onFocus={e => e.target.style.borderColor = 'var(--m-brand)'}
+              onBlur={e => e.target.style.borderColor = '#E4E4EB'}
+            />
             <div style={{
-              display:'flex', alignItems:'center', justifyContent:'space-between',
-              padding:'8px 16px 14px', flexShrink:0,
+              textAlign:'right', fontFamily:'var(--m-font)', fontSize:'11px', marginTop:'4px',
+              color: editDraft.length > maxChar * 0.9 ? '#E53E3E' : 'var(--m-ink-sub)',
             }}>
-              <div style={{display:'flex', alignItems:'center', gap:'8px'}}>
-                {PLATFORM_ICONS_SM[platform]}
-                <span style={{fontFamily:'var(--m-font)', fontSize:'16px', fontWeight:'700', color:'var(--m-ink)'}}>
-                  Edit Caption {platLabel}
-                </span>
-              </div>
-              <button
-                onClick={closeEditSheet}
-                style={{
-                  width:'30px', height:'30px', borderRadius:'50%',
-                  background:'#F0F0F5', border:'none', cursor:'pointer',
-                  display:'flex', alignItems:'center', justifyContent:'center',
-                }}
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--m-ink)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-                </svg>
-              </button>
-            </div>
-
-            {/* Textarea */}
-            <div style={{padding:'0 16px 12px'}}>
-              <textarea
-                value={editDraft}
-                onChange={e => setEditDraft(e.target.value)}
-                autoFocus
-                style={{
-                  width:'100%', height:'130px',
-                  background:'#F5F5F7', border:'1.5px solid #E4E4EB',
-                  borderRadius:'12px', padding:'12px',
-                  fontFamily:'var(--m-font)', fontSize:'14px',
-                  color:'var(--m-ink)', lineHeight:'1.65',
-                  resize:'none', outline:'none', boxSizing:'border-box',
-                  overflowY:'auto',
-                  transition:'border-color .15s',
-                }}
-                onFocus={e => e.target.style.borderColor = 'var(--m-brand)'}
-                onBlur={e => e.target.style.borderColor = '#E4E4EB'}
-              />
-              <div style={{
-                textAlign:'right', fontFamily:'var(--m-font)', fontSize:'11px', marginTop:'4px',
-                color: editDraft.length > maxChar * 0.9 ? '#E53E3E' : 'var(--m-ink-sub)',
-              }}>
-                {editDraft.length}/{maxChar}
-              </div>
-            </div>
-
-            {/* Save button */}
-            <div style={{padding:'0 16px 4px', flexShrink:0}}>
-              <button
-                onClick={saveEditCaption}
-                style={{
-                  width:'100%', padding:'15px', borderRadius:'14px',
-                  background:'var(--m-ink)', color:'#fff',
-                  border:'none', cursor:'pointer',
-                  fontFamily:'var(--m-font)', fontSize:'15px', fontWeight:'700',
-                  display:'flex', alignItems:'center', justifyContent:'center', gap:'8px',
-                  boxShadow:'0 4px 14px rgba(14,14,18,0.20)',
-                }}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="20 6 9 17 4 12"/>
-                </svg>
-                Simpan Caption
-              </button>
+              {editDraft.length}/{maxChar}
             </div>
           </div>
-        </div>
+
+          {/* Save button */}
+          <div style={{padding:'0 16px 4px', flexShrink:0}}>
+            <button
+              onClick={saveEditCaption}
+              style={{
+                width:'100%', padding:'15px', borderRadius:'14px',
+                background:'var(--m-ink)', color:'#fff',
+                border:'none', cursor:'pointer',
+                fontFamily:'var(--m-font)', fontSize:'15px', fontWeight:'700',
+                display:'flex', alignItems:'center', justifyContent:'center', gap:'8px',
+                boxShadow:'0 4px 14px rgba(14,14,18,0.20)',
+              }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+              Simpan Caption
+            </button>
+          </div>{/* save button wrapper */}
+        </div>{/* sheet */}
       )}
 
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
