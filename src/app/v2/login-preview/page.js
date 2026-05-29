@@ -1,21 +1,20 @@
 'use client';
 import { useState, useEffect } from 'react';
 
-// Custom SVG Logo component matching the attached image
 const LarisEnergeticLogo = ({ size = 120 }) => (
   <svg width={size} height={size} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
     <rect width="100" height="100" rx="20" fill="var(--m-brand)"/>
     
-    {/* The Chat Bubble / L shape */}
-    <path d="M70 20H30V35H20V65C20 73.2843 26.7157 80 35 80H45V95L60 80H75C83.2843 80 90 73.2843 90 65V40C90 28.9543 81.0457 20 70 20Z" fill="white"/>
+    {/* Thick L with tail */}
+    <path d="M 32 35 L 44 35 L 44 53 L 75 53 L 75 65 L 42 65 L 32 80 Z" fill="white"/>
     
-    {/* Inner L cutout - we can simulate this by drawing the background color inside */}
-    <path d="M45 40V60H75V65H40V40H45Z" fill="var(--m-brand)"/>
-
+    {/* Thin chat bubble outline connecting top to right */}
+    <path d="M 48 20 L 65 20 Q 75 20 75 30 L 75 53" fill="none" stroke="white" strokeWidth="6" strokeLinecap="round" />
+    
     {/* Sparkles */}
-    <path d="M15 15L17.5 22.5L25 25L17.5 27.5L15 35L12.5 27.5L5 25L12.5 22.5L15 15Z" fill="white"/>
-    <path d="M30 5L31.5 9.5L36 11L31.5 12.5L30 17L28.5 12.5L24 11L28.5 9.5L30 5Z" fill="white"/>
-    <path d="M35 25L36 28L39 29L36 30L35 33L34 30L31 29L34 28L35 25Z" fill="white"/>
+    <path d="M 22 10 Q 22 22 10 22 Q 22 22 22 34 Q 22 22 34 22 Q 22 22 22 10 Z" fill="white"/>
+    <path d="M 38 4 Q 38 10 32 10 Q 38 10 38 16 Q 38 10 44 10 Q 38 10 38 4 Z" fill="white"/>
+    <path d="M 38 24 Q 38 30 32 30 Q 38 30 38 36 Q 38 30 44 30 Q 38 30 38 24 Z" fill="white"/>
   </svg>
 );
 
@@ -40,8 +39,7 @@ export default function LoginPreview() {
     <>
       <style dangerouslySetInnerHTML={{__html: `
         :root {
-          --m-brand: #7B3B99;
-          --m-brand-glow: rgba(123, 59, 153, 0.5);
+          --m-brand-glow: rgba(121, 26, 219, 0.5); /* Matching #791ADB */
         }
         @keyframes pulseLogo {
           0% { transform: scale(1); box-shadow: 0 0 0 0 var(--m-brand-glow); }
