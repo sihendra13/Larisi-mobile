@@ -110,6 +110,7 @@ export default function CaptionScreen({
   const [sheetBottom,     setSheetBottom]     = useState(0);
   const [sheetExpanded,   setSheetExpanded]   = useState(false);
   const sheetSwipeRef = useRef(null);
+  const textareaRef   = useRef(null);
 
   const reach     = computeReach(locPop, radius, localOn, travelerOn);
   const reachText = fmtReach(reach);
@@ -563,7 +564,7 @@ export default function CaptionScreen({
         />
       )}
 
-      {/* Sheet — position:fixed langsung, bottom=keyboard offset */}
+      {/* Sheet — position:fixed, bottom=keyboard height via visualViewport */}
       {showEditSheet && (
         <div style={{
           position:'fixed',
@@ -575,15 +576,12 @@ export default function CaptionScreen({
           paddingBottom:'calc(env(safe-area-inset-bottom) + 12px)',
           transform: animateEditSheet ? 'translateY(0)' : 'translateY(100%)',
           transition:'transform 0.35s cubic-bezier(0.32,0.72,0,1)',
-          /* expanded: max 76vh tapi juga dibatasi agar tidak melewati atas layar saat keyboard buka */
-          maxHeight: sheetExpanded
-            ? `min(76vh, calc(100vh - ${sheetBottom}px - 48px))`
-            : '58vh',
-          display:'flex', flexDirection:'column',
-          overflow:'hidden',
+          /* Batas atas sheet: tidak boleh melewati atas layar saat keyboard buka */
+          maxHeight: `min(${sheetExpanded ? '82' : '62'}vh, calc(100vh - ${sheetBottom}px - 44px))`,
+          overflowY:'auto',
         }}>
 
-          {/* ── Handle: tap toggle, swipe up/down expand/collapse ── */}
+          {/* Handle — tap/swipe toggle expand */}
           <div
             onTouchStart={e => { sheetSwipeRef.current = e.touches[0].clientY; }}
             onTouchEnd={e => {
@@ -591,23 +589,24 @@ export default function CaptionScreen({
               e.preventDefault();
               const dy = e.changedTouches[0].clientY - sheetSwipeRef.current;
               sheetSwipeRef.current = null;
-              if (Math.abs(dy) < 10)   setSheetExpanded(p => !p);   /* tap */
-              else if (dy >  30)       setSheetExpanded(false);       /* swipe down */
-              else if (dy < -30)       setSheetExpanded(true);        /* swipe up */
+              if (Math.abs(dy) < 10)  setSheetExpanded(p => !p);
+              else if (dy >  30)      setSheetExpanded(false);
+              else if (dy < -30)      setSheetExpanded(true);
             }}
             onClick={() => setSheetExpanded(p => !p)}
             style={{
               padding:'12px 0 4px', display:'flex', justifyContent:'center',
-              flexShrink:0, cursor:'pointer', WebkitTapHighlightColor:'transparent',
+              cursor:'pointer', WebkitTapHighlightColor:'transparent',
+              position:'sticky', top:0, background:'#fff', zIndex:1,
             }}
           >
             <div style={{width:'36px', height:'4px', borderRadius:'2px', background:'#E4E4EB'}} />
           </div>
 
-          {/* Sheet header */}
+          {/* Header */}
           <div style={{
             display:'flex', alignItems:'center', justifyContent:'space-between',
-            padding:'4px 16px 12px', flexShrink:0,
+            padding:'4px 16px 12px',
           }}>
             <div style={{display:'flex', alignItems:'center', gap:'8px'}}>
               {PLATFORM_ICONS_SM[platform]}
@@ -629,24 +628,38 @@ export default function CaptionScreen({
             </button>
           </div>
 
-          {/* Textarea — flex:1 agar mengisi sisa ruang sheet */}
-          <div style={{flex:1, minHeight:0, padding:'0 16px 8px', display:'flex', flexDirection:'column'}}>
+          {/* Textarea — auto-grow ikut panjang teks */}
+          <div style={{padding:'0 16px 8px'}}>
             <textarea
+              ref={textareaRef}
               value={editDraft}
-              onChange={e => setEditDraft(e.target.value)}
+              onChange={e => {
+                setEditDraft(e.target.value);
+                /* Auto-grow: reset ke auto dulu, lalu set ke scrollHeight */
+                const ta = e.target;
+                ta.style.height = 'auto';
+                ta.style.height = ta.scrollHeight + 'px';
+              }}
               autoFocus
+              rows={1}
               style={{
-                flex:1, minHeight: sheetExpanded ? '180px' : '140px',
-                width:'100%',
+                display:'block', width:'100%', boxSizing:'border-box',
+                minHeight: sheetExpanded ? '200px' : '140px',
+                height:'auto',
                 background:'#F5F5F7', border:'1.5px solid #E4E4EB',
                 borderRadius:'12px', padding:'12px',
                 fontFamily:'var(--m-font)', fontSize:'14px',
                 color:'var(--m-ink)', lineHeight:'1.65',
-                resize:'none', outline:'none', boxSizing:'border-box',
-                overflowY:'auto',
-                transition:'border-color .15s, min-height .3s',
+                resize:'none', outline:'none',
+                overflowY:'hidden',  /* sembunyikan scrollbar — textarea tumbuh sendiri */
+                transition:'border-color .15s',
               }}
-              onFocus={e => e.target.style.borderColor = 'var(--m-brand)'}
+              onFocus={e => {
+                e.target.style.borderColor = 'var(--m-brand)';
+                /* trigger auto-grow on focus juga */
+                e.target.style.height = 'auto';
+                e.target.style.height = e.target.scrollHeight + 'px';
+              }}
               onBlur={e => e.target.style.borderColor = '#E4E4EB'}
             />
             <div style={{
@@ -658,7 +671,7 @@ export default function CaptionScreen({
           </div>
 
           {/* Save button */}
-          <div style={{padding:'0 16px 4px', flexShrink:0}}>
+          <div style={{padding:'0 16px 4px'}}>
             <button
               onClick={saveEditCaption}
               style={{
@@ -675,7 +688,7 @@ export default function CaptionScreen({
               </svg>
               Simpan Caption
             </button>
-          </div>{/* save button wrapper */}
+          </div>
         </div>{/* sheet */}
       )}
 

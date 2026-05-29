@@ -1113,23 +1113,32 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
 
           </div>{/* ← tutup image area (overflow:hidden) */}
 
-          {/* ── Crop frame indicator — di luar overflow:hidden agar boxShadow tidak ter-clip ── */}
-          <div style={{
-            position: 'absolute', inset: 0, zIndex: 2,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            pointerEvents: 'none',
-          }}>
-            <div style={{
-              ...((fmtLower === 'reel' || fmtLower === 'story') ? {
-                height: '100%', width: 'auto', aspectRatio: '9/16', maxWidth: '100%',
-              } : {
-                width: '100%', height: 'auto', aspectRatio: '4/5', maxHeight: '100%',
-              }),
-              border: '2px solid rgba(255,255,255,0.92)',
-              borderRadius: '3px',
-              boxShadow: '0 0 0 9999px rgba(0,0,0,0.42)',
-            }}/>
-          </div>
+          {/* ── Crop frame: 3-div approach (no boxShadow, works on all browsers) ── */}
+          {(() => {
+            const isVert = fmtLower === 'reel' || fmtLower === 'story';
+            /* dim bar height = (100% - frame_height) / 2
+               Post  4/5 → frame_h = 100vw × 5/4 → dim = 50% - 100vw/8×5
+               Reel  9/16 → frame_h = 100vw × 16/9 → dim = 50% - 100vw/9×8 */
+            const dimH = isVert
+              ? 'max(0px, calc(50% - 100vw / 9 * 8))'
+              : 'max(0px, calc(50% - 100vw / 8 * 5))';
+            const frameH = isVert
+              ? 'min(100%, calc(100vw / 9 * 16))'
+              : 'min(100%, calc(100vw / 4 * 5))';
+            const bar = { position:'absolute', left:0, right:0, height:dimH, background:'rgba(0,0,0,0.42)', pointerEvents:'none', zIndex:2 };
+            return (
+              <>
+                <div style={{ ...bar, top:0 }} />
+                <div style={{ ...bar, bottom:0 }} />
+                <div style={{
+                  position:'absolute', zIndex:2, pointerEvents:'none',
+                  left:0, right:0, top:dimH, height:frameH,
+                  border:'2px solid rgba(255,255,255,0.92)',
+                  borderRadius:'3px',
+                }} />
+              </>
+            );
+          })()}
 
           {/* ── Floating header over image ── */}
           <div style={{
