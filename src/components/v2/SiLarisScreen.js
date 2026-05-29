@@ -10,13 +10,13 @@ export default function SiLarisScreen({ onBack }) {
   }, []);
 
   return (
-    <div style={{display:'flex', flexDirection:'column', flex:1, overflow:'hidden', background:'#F9F9FB', height:'100%', position:'absolute', top:0, left:0, right:0, bottom:0, zIndex:99999}}>
+    <div style={{display:'flex', flexDirection:'column', flex:1, overflow:'hidden', background:'#F9F9FB', height:'100%', position:'fixed', top:0, left:0, right:0, bottom:0, zIndex:99999}}>
       
       {/* ── Header ── */}
       <header style={{
         display:'flex', alignItems:'center', justifyContent:'space-between',
         padding:'12px 16px', background:'#fff', borderBottom:'1px solid #ECECF1',
-        position:'sticky', top:0, zIndex:10
+        zIndex:10, flexShrink:0
       }}>
         <div style={{display:'flex', alignItems:'center', gap:'12px'}}>
           <button onClick={onBack} style={{
@@ -232,7 +232,8 @@ export default function SiLarisScreen({ onBack }) {
       {/* ── Bottom Input ── */}
       <footer style={{
         padding:'12px 16px', background:'#fff', borderTop:'1px solid #ECECF1',
-        paddingBottom:'calc(12px + env(safe-area-inset-bottom))'
+        paddingBottom:'calc(12px + env(safe-area-inset-bottom))',
+        flexShrink:0
       }}>
         <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
           <button style={{
