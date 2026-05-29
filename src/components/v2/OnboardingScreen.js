@@ -132,6 +132,7 @@ export default function OnboardingScreen({
   const [kecQuery,     setKecQuery]     = useState('');
   const [kecamatan,    setKecamatan]    = useState('');
   const [kabupaten,    setKabupaten]    = useState('');
+  const [provinsi,     setProvinsi]     = useState('');
   const [kecResults,   setKecResults]   = useState([]);  /* { kec, kabDisplay, kab, prov }[] | [{error}] */
   const [kecLoading,   setKecLoading]   = useState(false);
   const [delivery,     setDelivery]     = useState('');
@@ -277,6 +278,7 @@ export default function OnboardingScreen({
   const selectKec = (result) => {
     setKecamatan(result.kec);
     setKabupaten(result.kabDisplay || result.kab || result.kec);
+    setProvinsi(result.prov || '');
     setKecQuery(result.kec);
     setKecResults([]);
     setShowDrop(false);
@@ -300,6 +302,7 @@ export default function OnboardingScreen({
       category,
       kecamatan,
       kabupaten,
+      provinsi,
       city:             kabupaten || kecamatan,  /* backward compat user lama — identik desktop */
       delivery_service: delivery === 'yes',
       usp:              usp.trim(),

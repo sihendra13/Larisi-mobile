@@ -99,7 +99,15 @@ export default function DapurV2() {
   function applyLocation(p) {
     if (p?.kecamatan) {
       setLocName(p.kecamatan);
-      setLocFull([p.kecamatan, p.kabupaten || p.city].filter(Boolean).join(', '));
+      /* Hindari duplikasi kalau kecamatan == kabupaten (misal: kec. Bantul di kab. Bantul).
+         Kalau sama → pakai provinsi sebagai pengganti kabupaten.
+         Kalau provinsi juga kosong → tetap satu kata saja (lebih baik dari "Bantul, Bantul"). */
+      const kab = (p.kabupaten || p.city || '').toLowerCase();
+      const kec = p.kecamatan.toLowerCase();
+      const second = kab && kab !== kec
+        ? (p.kabupaten || p.city)
+        : (p.provinsi || p.kabupaten || p.city || '');
+      setLocFull([p.kecamatan, second].filter(Boolean).join(', '));
     } else {
       setLocName('Sumbersari');
       setLocFull('Sumbersari, Bantul');
