@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/lib/config';
 import { ID_LOCATIONS } from '@/data/locations';
 
@@ -137,11 +137,15 @@ export default function OnboardingScreen({
   const [usp,          setUsp]          = useState('');
   const [profLoading,  setProfLoading]  = useState(false);
   const [profError,    setProfError]    = useState('');
+  const [uspWarning,   setUspWarning]   = useState(false);
   const [showDrop,     setShowDrop]     = useState(false);
 
   /* ── Social State ── */
   const [connected,    setConnected]    = useState({});
   const [socialBusy,   setSocialBusy]  = useState('');
+
+  /* ── Refs ── */
+  const uspInputRef = useRef(null);
 
   /* ── Countdown OTP ── */
   useEffect(() => {
@@ -219,13 +223,11 @@ export default function OnboardingScreen({
     setKecamatan(k); setKabupaten(kb); setKecQuery(loc.n); setShowDrop(false);
   };
 
-  const handleSaveProfile = async () => {
-    if (!bizName.trim()) { setProfError('Nama bisnis wajib diisi.'); return; }
-    if (!category)       { setProfError('Pilih kategori bisnis.');   return; }
-    if (!kecamatan)      { setProfError('Pilih kecamatan dari dropdown.'); return; }
-
+  /* Fungsi yang benar-benar menyimpan (dipanggil langsung atau via "Lewati" di USP warning) */
+  const doSaveProfile = async () => {
     setProfLoading(true);
     setProfError('');
+    setUspWarning(false);
 
     const tok  = token || accessToken;
     const plan = localStorage.getItem('larisi_selected_plan') || 'freemium';
@@ -238,6 +240,7 @@ export default function OnboardingScreen({
       category,
       kecamatan,
       kabupaten,
+      city:             kabupaten || kecamatan,  /* backward compat user lama — identik desktop */
       delivery_service: delivery === 'yes',
       usp:              usp.trim(),
       selected_plan:    plan,
@@ -268,6 +271,22 @@ export default function OnboardingScreen({
       setProfError('Gagal menyimpan. Coba lagi.');
       setProfLoading(false);
     }
+  };
+
+  const handleSaveProfile = async () => {
+    if (!ownerName.trim()) { setProfError('Nama pemilik wajib diisi.');        return; }
+    if (!bizName.trim())   { setProfError('Nama bisnis wajib diisi.');          return; }
+    if (!category)         { setProfError('Pilih kategori bisnis.');            return; }
+    if (!kecamatan)        { setProfError('Pilih kecamatan dari dropdown.');    return; }
+
+    /* USP semi-wajib: tampilkan warning, user bisa pilih Tambahkan atau Lewati */
+    if (!usp.trim()) {
+      setUspWarning(true);
+      uspInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+
+    await doSaveProfile();
   };
 
   /* ─────────────────
@@ -467,17 +486,17 @@ export default function OnboardingScreen({
 
               {/* Nama Pemilik */}
               <div>
-                <label style={labelStyle}>Nama Pemilik</label>
+                <label style={labelStyle}>Nama Pemilik <span style={{ color: '#DC2626' }}>*</span></label>
                 <input
-                  type="text" value={ownerName} onChange={e => setOwnerName(e.target.value)}
-                  placeholder="Nama lengkap kamu"
+                  type="text" value={ownerName} onChange={e => { setOwnerName(e.target.value); setProfError(''); }}
+                  placeholder="Budi Santoso"
                   style={inputStyle}
                 />
               </div>
 
               {/* WhatsApp */}
               <div>
-                <label style={labelStyle}>Nomor WhatsApp</label>
+                <label style={labelStyle}>Nomor WhatsApp <span style={{ color: '#DC2626' }}>*</span></label>
                 <input
                   type="tel" value={whatsapp} onChange={e => setWhatsapp(e.target.value)}
                   placeholder="08xxxxxxxxxx"
@@ -577,8 +596,8 @@ export default function OnboardingScreen({
                 <label style={labelStyle}>Apakah bisnis kamu melayani pengiriman?</label>
                 <div style={{ display: 'flex', gap: '12px' }}>
                   {[
-                    { value: 'yes', label: 'Ya, melayani' },
-                    { value: 'no',  label: 'Tidak (di tempat)' },
+                    { value: 'yes', label: 'Ya, melayani pengiriman' },
+                    { value: 'no',  label: 'Tidak (Hanya di tempat)' },
                   ].map(opt => (
                     <label
                       key={opt.value}
@@ -608,7 +627,8 @@ export default function OnboardingScreen({
               <div>
                 <label style={labelStyle}>Apa yang bikin bisnis kamu spesial?</label>
                 <input
-                  type="text" value={usp} onChange={e => setUsp(e.target.value)}
+                  ref={uspInputRef}
+                  type="text" value={usp} onChange={e => { setUsp(e.target.value); setUspWarning(false); }}
                   placeholder={USP_PLACEHOLDERS[category] || 'Contoh: Apa yang paling sering dipuji pelanggan kamu?'}
                   maxLength={80}
                   style={inputStyle}
@@ -617,6 +637,42 @@ export default function OnboardingScreen({
                   {usp.length}/80
                 </div>
               </div>
+
+              {/* USP warning semi-wajib — identik dengan desktop */}
+              {uspWarning && (
+                <div style={{
+                  background: '#FFFBEB', border: '1px solid #FCD34D', borderRadius: '10px',
+                  padding: '12px 14px',
+                }}>
+                  <p style={{ margin: '0 0 10px', fontSize: '13px', color: '#92400E', lineHeight: '1.5' }}>
+                    💡 Bisnis dengan USP yang jelas menghasilkan caption jauh lebih tepat sasaran. Yuk isi dulu!
+                  </p>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button
+                      onClick={() => { setUspWarning(false); uspInputRef.current?.focus(); }}
+                      style={{
+                        flex: 1, padding: '9px', borderRadius: '8px',
+                        border: '1.5px solid #92400E', background: '#fff',
+                        color: '#92400E', fontSize: '13px', fontWeight: '600',
+                        cursor: 'pointer', fontFamily: 'inherit',
+                      }}
+                    >
+                      Tambahkan
+                    </button>
+                    <button
+                      onClick={doSaveProfile}
+                      style={{
+                        flex: 1, padding: '9px', borderRadius: '8px',
+                        border: '1.5px solid #D1D5DB', background: '#fff',
+                        color: '#6b7280', fontSize: '13px',
+                        cursor: 'pointer', fontFamily: 'inherit',
+                      }}
+                    >
+                      Lewati
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* Error */}
               {profError && (
