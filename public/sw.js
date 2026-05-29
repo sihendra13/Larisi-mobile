@@ -1,5 +1,5 @@
-const CACHE = 'larisi-v1';
-const PRECACHE = ['/v2', '/logo_larisi.svg', '/icons/icon-192.png', '/icons/icon-512.png'];
+const CACHE = 'larisi-v2';
+const PRECACHE = ['/', '/logo_larisi.svg', '/icons/icon-192.png', '/icons/icon-512.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(

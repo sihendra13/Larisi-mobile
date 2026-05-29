@@ -2,7 +2,7 @@
   "name": "Larisi",
   "short_name": "Larisi",
   "description": "Buat konten sosial media yang tepat sasaran untuk bisnis lokal",
-  "start_url": "/v2",
+  "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
