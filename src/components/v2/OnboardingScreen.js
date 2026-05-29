@@ -228,11 +228,12 @@ export default function OnboardingScreen({
 
     kecTimerRef.current = setTimeout(async () => {
       try {
+        /* User-Agent adalah forbidden header di browser — hapus, cukup Accept */
         const resp = await fetch(
           'https://nominatim.openstreetmap.org/search?q=' +
           encodeURIComponent(val + ' Indonesia') +
           '&format=json&addressdetails=1&limit=7&accept-language=id&countrycodes=ID',
-          { headers: { 'Accept': 'application/json', 'User-Agent': 'Larisi-App/1.0' } }
+          { headers: { 'Accept': 'application/json' } }
         );
         const data = await resp.json();
 
