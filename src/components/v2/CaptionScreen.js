@@ -84,16 +84,62 @@ const ProgressBar = ({ step, total }) => (
 
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/lib/config';
 
-/* ── Build system prompt untuk AI caption ── */
-function buildSystemPrompt(profile, persona, platform, format, locName, locFull) {
-  const bizName     = profile?.business_name || '';
-  const category    = profile?.category      || '';
-  const usp         = (profile?.usp && profile.usp.trim())
-                        ? profile.usp.trim()
-                        : (bizName ? `Kualitas terbaik dari ${bizName}` : 'Kualitas terbaik');
-  const bizKec      = profile?.kecamatan     || '';
-  const bizKab      = profile?.kabupaten     || profile?.city || '';
-  const bizLoc      = [bizKec, bizKab].filter(Boolean).join(', ') || locFull || '';
+/* ── USP fallback per kategori (identik dengan desktop caption.js) ── */
+const USP_FALLBACKS = {
+  fnb:                 'Cita rasa yang bikin balik lagi',
+  kafe:                'Tempat ngopi paling nyaman',
+  fashion_wanita:      'Koleksi fashion wanita terlengkap',
+  fashion_pria:        'Outfit pria yang selalu on point',
+  fashion_muslim:      'Koleksi muslimah syari dan stylish',
+  fashion_muslim_pria: 'Koleksi koko dan gamis terbaik',
+  kesehatan:           'Perawatan kulit yang terbukti',
+  salon:               'Perawatan profesional terpercaya',
+  barber:              'Cukur rapi dan stylish',
+  elektronik:          'Gadget lengkap bergaransi resmi',
+  otomotif:            'Servis terpercaya bersertifikat',
+  properti:            'Hunian impian keluarga',
+  pendidikan:          'Belajar lebih mudah dan menyenangkan',
+  wisata:              'Pengalaman wisata tak terlupakan',
+  kerajinan:           'Kerajinan tangan otentik lokal',
+  retail:              'Kebutuhan sehari-hari lengkap',
+  olahraga:            'Peralatan & komunitas olahraga terlengkap',
+  laundry:             'Bersih sempurna, antar-jemput tersedia',
+  fotografi:           'Foto profesional hasil berkualitas studio',
+  catering:            'Masakan lezat, pelayanan bintang lima',
+  jasa_profesional:    'Solusi profesional cepat dan terpercaya',
+  jasa:                'Layanan profesional terpercaya',
+  pet:                 'Perawatan hewan penuh kasih dan profesional',
+  lainnya:             'Pilihan terbaik untuk kamu',
+};
+
+/* ── Deteksi dialek dari area target (keyword-based untuk mobile) ── */
+function detectGreeting(locFull) {
+  const l = (locFull || '').toLowerCase();
+  if (/yogya|sleman|bantul|gunung.?kidul|kulon.?progo/.test(l)) return { greeting: 'Sugeng rawuh',      cta: 'Mampir yuk!' };
+  if (/solo|surakarta|sukoharjo|klaten|boyolali|wonogiri|karanganyar|sragen/.test(l)) return { greeting: 'Sugeng rawuh', cta: 'Mampir yuk!' };
+  if (/semarang|kendal|demak|salatiga/.test(l))      return { greeting: 'Sugeng rawuh',         cta: 'Mampir yuk!' };
+  if (/jakarta|bekasi|depok|tangerang|bogor/.test(l)) return { greeting: 'Halo Bestie!',        cta: 'Sikat Sekarang!' };
+  if (/surabaya|sidoarjo|gresik/.test(l))             return { greeting: 'Halo Rek!',           cta: 'Budal Saiki!' };
+  if (/malang|batu|pasuruan|probolinggo/.test(l))     return { greeting: 'Halo Rek!',           cta: 'Budal Saiki!' };
+  if (/bandung|cimahi|garut|sumedang/.test(l))        return { greeting: 'Sampurasun',          cta: 'Mangga Mampir!' };
+  if (/makassar|gowa|maros/.test(l))                  return { greeting: 'Ewako, Daeng!',       cta: 'Sikat Mentong!' };
+  if (/bali|denpasar|badung|gianyar|tabanan/.test(l)) return { greeting: 'Rahajeng semeton',    cta: 'Luungan Mai!' };
+  if (/medan|deli|binjai/.test(l))                    return { greeting: 'Horas Ketua!',        cta: 'Gas Sekarang!' };
+  if (/manado|minahasa/.test(l))                      return { greeting: 'Halo Kita Samua!',    cta: 'Ayo Coba!' };
+  if (/palembang/.test(l))                            return { greeting: 'Apo Kabar Kawan!',    cta: 'Ayo Gaskeun!' };
+  return { greeting: 'Halo Sahabat!', cta: 'Cek Sekarang!' };
+}
+
+/* ── Build system prompt untuk AI caption ──
+   aiCallCount: naik tiap klik Generate → rotasi hook style per call, bukan per jam ── */
+function buildSystemPrompt(profile, persona, platform, format, locName, locFull, aiCallCount) {
+  const bizName    = profile?.business_name || '';
+  const category   = profile?.category      || '';
+  const uspRaw     = profile?.usp?.trim()   || '';
+  const usp        = uspRaw || USP_FALLBACKS[category] || 'Pilihan terbaik untuk kamu';
+  const bizKec     = profile?.kecamatan     || '';
+  const bizKab     = profile?.kabupaten     || profile?.city || '';
+  const bizLoc     = [bizKec, bizKab].filter(Boolean).join(', ') || locFull || '';
   const hasDelivery = profile?.delivery_service || false;
   const targetArea  = locName || '';
 
@@ -101,23 +147,55 @@ function buildSystemPrompt(profile, persona, platform, format, locName, locFull)
   const personaTarget = persona?.target || '';
   const personaAge    = persona?.age    || '18–45';
 
+  /* ── Dialek greeting dari area target ── */
+  const dialek   = detectGreeting(locFull || targetArea);
+  const greeting = dialek.greeting;
+
+  /* ── Platform label ── */
   const platLabel = {
-    instagram: format === 'reel'  ? 'Instagram Reel — hook kuat di baris pertama, energetik, maks 3–4 baris'
+    instagram: format === 'reel'  ? 'Instagram Reel — hook kuat di baris pertama, energetik, maks 3 baris'
              : format === 'story' ? 'Instagram Story — sangat singkat, 1–2 kalimat + CTA'
-             :                      'Instagram Post — 3–5 baris, engaging',
-    facebook:  'Facebook/Meta — informatif, langsung ke poin, CTA jelas',
-    tiktok:    'TikTok — casual, fun, maks 3 baris',
+             :                      'Instagram Post — caption bisa 3–5 baris, padat dan engaging',
+    facebook:  'Facebook/Meta Ad — informatif, langsung ke poin, ada CTA jelas',
+    tiktok:    'TikTok — casual, fun, relevan dengan tren, maks 3 baris',
     youtube:   'YouTube — deskripsi 2–3 kalimat + CTA',
   }[platform] || 'Instagram Post';
 
-  const hooks = [
-    `PERTANYAAN LANGSUNG — hook: "Warga ${targetArea || bizLoc}, belum cobain ${bizName || 'kami'}? Sayang banget kalau dilewatkan!"`,
-    `BOLD USP — hook: "${usp} — itulah yang bikin ${bizName || 'kami'} jadi pilihan di ${targetArea || bizLoc}."`,
-    `CERITA RELATABLE — hook: "Lagi cari yang beda dari biasanya, ${targetArea || 'teman'}? ${bizName || 'Kami'} jawabannya."`,
-    `SOCIAL PROOF — hook: "Sudah banyak yang buktikan — ${bizName || 'kami'} memang beda. Kapan giliranmu?"`,
+  /* ── Luxury/premium detection dari USP ── */
+  const uspLower    = usp.toLowerCase();
+  const luxuryWords  = ['luxury','mewah','eksklusif','high-end','high end','branded',
+    'limited edition','premium leather','emas','berlian','platinum',
+    'prestige','prestise','kelas atas','bespoke','artisan premium'];
+  const premiumWords = ['premium','grade a','kualitas tinggi'];
+  const isLuxury   = luxuryWords.some(w  => uspLower.includes(w));
+  const isPremium  = !isLuxury && premiumWords.some(w => uspLower.includes(w));
+  const positioningLine = isLuxury
+    ? '- POSITIONING LUXURY: USP menunjukkan produk/layanan premium-luxury — gunakan tone aspirasional, sophisticated, dan eksklusif. Caption harus terasa prestige, bukan sekadar promosi biasa.'
+    : isPremium
+    ? '- POSITIONING PREMIUM: USP menunjukkan kualitas di atas rata-rata — caption sedikit lebih polished dan quality-focused, hindari kesan murahan.'
+    : null;
+
+  /* ── Hook rotation — per AI call count (bukan per jam) ── */
+  const n    = (aiCallCount || 0) % 4;
+  const biz  = bizName || 'kami';
+  const loc  = bizLoc  || 'lokasi kami';
+  const area = targetArea || 'sekitar';
+  const u    = usp || 'kualitas terbaik';
+  const hookInstructions = [
+    /* 0 — Pertanyaan langsung */
+    `Gunakan PERTANYAAN LANGSUNG ke audiens sebagai hook.\n` +
+    `Contoh baris hook: "Warga ${area}, belum cobain ${biz} di ${loc}? Sayang banget kalau dilewatkan!"`,
+    /* 1 — Pernyataan bold USP */
+    `Mulai dengan PERNYATAAN BOLD tentang USP — sebut keunggulan dulu, baru nama bisnis dan lokasi.\n` +
+    `Contoh baris hook: "${u} — itulah yang bikin ${biz} di ${loc} jadi pilihan warga ${area}."`,
+    /* 2 — Cerita/situasi relatable */
+    `Mulai dengan CERITA SINGKAT atau situasi yang relate — bayangkan kondisi audiens sebelum tahu bisnis ini.\n` +
+    `Contoh baris hook: "Lagi cari yang beda dari biasanya, ${area}? ${biz} di ${loc} jawabannya."`,
+    /* 3 — Social proof */
+    `Mulai dengan SOCIAL PROOF atau fakta menarik — sebut pelanggan setia, reaksi nyata, atau keunikan bisnis.\n` +
+    `Contoh baris hook: "Sudah ribuan orang buktikan — ${biz} di ${loc} memang beda. Warga ${area}, kapan giliranmu?"`,
   ];
-  /* Rotasi hook berdasarkan jam sekarang supaya tiap generate beda */
-  const hookStyle = hooks[new Date().getMinutes() % 4];
+  const hookStyle = hookInstructions[n];
 
   return [
     'Kamu adalah copywriter profesional spesialis UMKM lokal Indonesia.',
@@ -138,18 +216,29 @@ function buildSystemPrompt(profile, persona, platform, format, locName, locFull)
     '',
     `PLATFORM: ${platLabel}`,
     '',
-    'FORMAT OUTPUT: Mulai dengan "Halo", baris kosong, lalu caption.',
+    'FORMAT SAPAAN:',
+    `- Baris pertama: sapaan saja → "${greeting}"`,
+    '- Baris kedua: kosong',
+    '- Baris ketiga: langsung hook (JANGAN selalu mulai dengan "Warga [area]..." — sesuaikan dengan gaya hook di bawah)',
     '',
-    `GAYA HOOK — WAJIB ikuti: ${hookStyle}`,
+    'GAYA HOOK — WAJIB ikuti instruksi berikut:',
+    hookStyle,
     '',
     'ATURAN WAJIB:',
-    '- Bahasa Indonesia natural, tidak kaku',
-    `- KRITIS: Lokasi bisnis (${bizLoc || 'lokasi bisnis'}) ≠ area target (${targetArea || 'area target'}) — INI DUA HAL BERBEDA`,
-    `- BENAR: ajak warga ${targetArea || 'area target'} untuk datang/memesan ke ${bizName || 'bisnis'} di ${bizLoc || 'lokasi kami'}`,
-    '- Akhiri dengan 3–5 hashtag (mix populer + lokal + niche)',
-    '- JANGAN gunakan markdown (**bold**, *italic*) — plain text saja',
+    '- Bahasa Indonesia natural, tidak kaku, tidak terkesan iklan murahan',
+    '- Sesuaikan gaya bahasa dengan persona — foodie/anak muda = santai & seru, profesional = informatif & hangat',
+    positioningLine,
+    '- USP harus jadi kekuatan utama caption, bukan sekadar disebut',
+    `- KRITIS — Lokasi bisnis (${bizLoc || 'tidak diketahui'}) dan area target iklan (${targetArea || 'sekitar lokasi'}) adalah DUA HAL BERBEDA.`,
+    `- DILARANG KERAS: menulis seolah bisnis berada di area target. Bisnis SELALU di lokasi aslinya (${bizLoc || 'lokasi bisnis'}).`,
+    `- Yang benar: ajak audiens di area target (${targetArea || 'sekitar'}) untuk datang/memesan ke ${bizName || 'bisnis ini'} di ${bizLoc || 'lokasi kami'}.`,
+    `- Contoh hook yang SALAH: "Ada tempat makan baru di ${targetArea || 'area target'}!" — ini SALAH karena bisnis tidak ada di sana.`,
+    '- Struktur: hook menarik → nilai/cerita → CTA',
+    '- Akhiri dengan 3–5 hashtag (mix populer + lokal + niche, termasuk hashtag area target)',
+    '- JANGAN mengarang fakta bisnis yang tidak ada di data',
+    '- JANGAN gunakan simbol markdown (**bold**, *italic*, _underline_) — Instagram tidak render ini, tulis plain text saja',
     '- Output HANYA caption, tanpa penjelasan atau label tambahan',
-  ].join('\n');
+  ].filter(l => l !== null && l !== undefined).join('\n');
 }
 
 const MAX_CHAR = { instagram:2200, facebook:63206, tiktok:2200, youtube:5000 };
@@ -164,6 +253,9 @@ export default function CaptionScreen({
   const [stitchOn,        setStitchOn]        = useState(true);
   const [generating,      setGenerating]      = useState(false);
   const [hasGenerated,    setHasGenerated]    = useState(false);
+
+  /* ── AI call counter — naik tiap Generate, untuk rotasi hook style ── */
+  const aiCallCountRef = useRef(0);
 
   /* ── Edit bottom sheet ── */
   const [showEditSheet,   setShowEditSheet]   = useState(false);
@@ -184,7 +276,9 @@ export default function CaptionScreen({
     setGenerating(true);
     setCaption('');
 
-    const systemPrompt = buildSystemPrompt(profile, persona, platform, format, locName, locFull);
+    /* Naikkan counter setiap kali Generate diklik — hook style berganti tiap call */
+    aiCallCountRef.current += 1;
+    const systemPrompt = buildSystemPrompt(profile, persona, platform, format, locName, locFull, aiCallCountRef.current);
 
     try {
       const resp = await fetch(`${SUPABASE_URL}/functions/v1/silaris-chat`, {

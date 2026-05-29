@@ -161,11 +161,18 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
       await new Promise(r => setTimeout(r, 100));
     }
 
-    /* Groq Vision */
+    /* Baca kategori bisnis dari profil untuk konteks Vision API (sama dengan desktop) */
+    let bizCategory = null;
+    try {
+      const prof = JSON.parse(localStorage.getItem('radar_user_profile') || '{}');
+      bizCategory = prof.category || null;
+    } catch {}
+
+    /* Groq Vision — pass bizCategory sebagai konteks agar deteksi lebih akurat */
     let visionKey = null;
     if (base64) {
       try {
-        const vResult = await analyzeImageCategory(base64, null);
+        const vResult = await analyzeImageCategory(base64, bizCategory);
         if (vResult.key) visionKey = vResult.key;
       } catch (e) { console.warn('[persona] vision error:', e); }
     }
