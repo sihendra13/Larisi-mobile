@@ -19,7 +19,7 @@ export default function KelolaScreen() {
 
   if (selectedAd) {
     return (
-      <div style={{position:'fixed', top:0, left:0, right:0, bottom:0, background:'#F9F9FA', zIndex:300, display:'flex', flexDirection:'column', overflow:'hidden'}}>
+      <div style={{position:'fixed', top:0, left:0, right:0, bottom:0, background:'#F9F9FA', zIndex:9999, display:'flex', flexDirection:'column', overflow:'hidden'}}>
         {/* Detail Header */}
         <header style={{
           display:'flex', alignItems:'center', justifyContent:'space-between', padding:'16px', background:'#F9F9FA', zIndex:310
@@ -60,12 +60,21 @@ export default function KelolaScreen() {
                     <div style={{fontFamily:'var(--m-font)', fontSize:'15px', fontWeight:'800', color:'var(--m-ink)'}}>Reel Pondok Indah Jakarta</div>
                     <div style={{background:'#F5F5F7', padding:'2px 6px', borderRadius:'4px', fontFamily:'var(--m-font)', fontSize:'9px', fontWeight:'800', color:'var(--m-ink-sub)'}}>REEL</div>
                   </div>
-                  <div style={{fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)', lineHeight:'1.4'}}>@tesakunlarisi · Minggu, 24 Mei · 09.37</div>
+                  <div style={{fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)', lineHeight:'1.4'}}>@tesakunlarisi</div>
+                  <div style={{display:'inline-flex', alignItems:'center', gap:'4px', padding:'4px 8px', background:'#F0E6FF', borderRadius:'6px', cursor:'pointer', marginTop:'4px'}}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--m-brand)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                    <span style={{fontFamily:'var(--m-font)', fontSize:'11px', fontWeight:'800', color:'var(--m-brand)'}}>Minggu, 24 Mei 2026 • 09.37</span>
+                  </div>
                 </div>
               </div>
-              <div style={{background:'#E6F4EA', padding:'4px 10px', borderRadius:'999px', display:'flex', alignItems:'center', gap:'6px', alignSelf:'flex-start'}}>
-                <div style={{width:'6px', height:'6px', borderRadius:'50%', background:'#34A853'}} />
-                <span style={{fontFamily:'var(--m-font)', fontSize:'11px', fontWeight:'700', color:'#34A853'}}>Berjalan</span>
+              <div style={{display:'flex', alignItems:'center', gap:'8px', alignSelf:'flex-start'}}>
+                <div style={{background:'#E6F4EA', padding:'4px 10px', borderRadius:'999px', display:'flex', alignItems:'center', gap:'6px'}}>
+                  <div style={{width:'6px', height:'6px', borderRadius:'50%', background:'#34A853'}} />
+                  <span style={{fontFamily:'var(--m-font)', fontSize:'11px', fontWeight:'700', color:'#34A853'}}>Berjalan</span>
+                </div>
+                <button style={{background:'none', border:'none', cursor:'pointer', color:'var(--m-ink-sub)', padding:0, display:'flex', alignItems:'center'}}>
+                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                </button>
               </div>
             </div>
 
@@ -77,7 +86,10 @@ export default function KelolaScreen() {
             }}>
               <div style={{position:'absolute', bottom:'30%', left:'15%', width:'70px', height:'70px', borderRadius:'50%', background:'rgba(0,0,0,0.1)'}} />
               <div style={{position:'absolute', top:'30%', right:'15%', width:'100px', height:'60px', borderRadius:'8px', background:'rgba(0,0,0,0.1)'}} />
-              <div style={{position:'absolute', bottom:'12px', left:'12px', background:'rgba(0,0,0,0.5)', color:'#fff', fontFamily:'var(--m-font)', fontSize:'10px', padding:'4px 8px', borderRadius:'6px'}}>product<br/>photo</div>
+              <div style={{position:'absolute', bottom:'12px', left:'12px', display:'flex', alignItems:'center', gap:'4px', background:'rgba(0,0,0,0.5)', color:'#fff', padding:'4px 8px', borderRadius:'6px'}}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"/></svg>
+                <span style={{fontFamily:'var(--m-font)', fontSize:'10px', fontWeight:'700'}}>REEL</span>
+              </div>
             </div>
           </div>
 
@@ -135,7 +147,7 @@ export default function KelolaScreen() {
         {/* Detail Sticky Bottom CTA */}
         <div style={{
           position:'fixed', bottom:0, left:0, right:0, padding:'16px', paddingBottom:'calc(16px + env(safe-area-inset-bottom))',
-          background:'linear-gradient(to top, rgba(249,249,250,1) 70%, rgba(249,249,250,0))', zIndex:320,
+          background:'linear-gradient(to top, rgba(249,249,250,1) 70%, rgba(249,249,250,0))', zIndex:10000,
           display:'flex', flexDirection:'column', gap:'12px'
         }}>
           {/* Tanya SiLaris */}
