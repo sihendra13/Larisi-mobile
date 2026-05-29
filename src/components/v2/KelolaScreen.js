@@ -156,8 +156,7 @@ export default function KelolaScreen() {
                 display:'flex', alignItems:'center', justifyContent:'center', gap:'12px', cursor:'pointer'
               }}>
               <div style={{width:'40px', height:'40px', borderRadius:'50%', background:'var(--m-brand)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0}}>
-                {/* AI Sparkles / Chat Icon */}
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                <img src="/logo-dashboard.png" alt="SiLaris" style={{width:'24px', height:'24px', objectFit:'contain'}} />
               </div>
               <div style={{textAlign:'left', flex:1}}>
                 <div style={{fontFamily:'var(--m-font)', fontSize:'15px', fontWeight:'800', color:'#1A1A1A', marginBottom:'2px'}}>Tanya SiLaris</div>

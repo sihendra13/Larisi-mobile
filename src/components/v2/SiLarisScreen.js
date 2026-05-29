@@ -30,12 +30,10 @@ export default function SiLarisScreen({ onBack }) {
           
           <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
             <div style={{
-              width:'40px', height:'40px', borderRadius:'50%', background:'#F0EBFF',
+              width:'40px', height:'40px', borderRadius:'50%', background:'var(--m-brand)',
               display:'flex', alignItems:'center', justifyContent:'center', overflow:'hidden'
             }}>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--m-brand)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="12" y1="3" x2="12" y2="7"/><line x1="12" y1="17" x2="12" y2="21"/><line x1="5.6" y1="5.6" x2="8.4" y2="8.4"/><line x1="15.6" y1="15.6" x2="18.4" y2="18.4"/><line x1="3" y1="12" x2="7" y2="12"/><line x1="17" y1="12" x2="21" y2="12"/><line x1="5.6" y1="18.4" x2="8.4" y2="15.6"/><line x1="15.6" y1="8.4" x2="18.4" y2="5.6"/>
-              </svg>
+              <img src="/logo-dashboard.png" alt="SiLaris" style={{width:'24px', height:'24px', objectFit:'contain'}} />
             </div>
             <div style={{display:'flex', flexDirection:'column'}}>
               <div style={{display:'flex', alignItems:'center', gap:'6px'}}>
@@ -63,12 +61,10 @@ export default function SiLarisScreen({ onBack }) {
         {/* SiLaris Greeting */}
         <div style={{display:'flex', gap:'10px', alignItems:'flex-start'}}>
           <div style={{
-            width:'28px', height:'28px', borderRadius:'50%', background:'#F0EBFF', flexShrink:0,
+            width:'28px', height:'28px', borderRadius:'50%', background:'var(--m-brand)', flexShrink:0,
             display:'flex', alignItems:'center', justifyContent:'center', marginTop:'4px', overflow:'hidden'
           }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--m-brand)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="12" y1="3" x2="12" y2="7"/><line x1="12" y1="17" x2="12" y2="21"/><line x1="5.6" y1="5.6" x2="8.4" y2="8.4"/><line x1="15.6" y1="15.6" x2="18.4" y2="18.4"/><line x1="3" y1="12" x2="7" y2="12"/><line x1="17" y1="12" x2="21" y2="12"/><line x1="5.6" y1="18.4" x2="8.4" y2="15.6"/><line x1="15.6" y1="8.4" x2="18.4" y2="5.6"/>
-            </svg>
+            <img src="/logo-dashboard.png" alt="SiLaris" style={{width:'18px', height:'18px', objectFit:'contain'}} />
           </div>
           <div style={{
             background:'#fff', borderRadius:'16px', borderTopLeftRadius:'4px',
@@ -156,12 +152,10 @@ export default function SiLarisScreen({ onBack }) {
         {/* SiLaris Reply */}
         <div style={{display:'flex', gap:'10px', alignItems:'flex-start'}}>
           <div style={{
-            width:'28px', height:'28px', borderRadius:'50%', background:'#F0EBFF', flexShrink:0,
+            width:'28px', height:'28px', borderRadius:'50%', background:'var(--m-brand)', flexShrink:0,
             display:'flex', alignItems:'center', justifyContent:'center', marginTop:'4px', overflow:'hidden'
           }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--m-brand)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="12" y1="3" x2="12" y2="7"/><line x1="12" y1="17" x2="12" y2="21"/><line x1="5.6" y1="5.6" x2="8.4" y2="8.4"/><line x1="15.6" y1="15.6" x2="18.4" y2="18.4"/><line x1="3" y1="12" x2="7" y2="12"/><line x1="17" y1="12" x2="21" y2="12"/><line x1="5.6" y1="18.4" x2="8.4" y2="15.6"/><line x1="15.6" y1="8.4" x2="18.4" y2="5.6"/>
-            </svg>
+            <img src="/logo-dashboard.png" alt="SiLaris" style={{width:'18px', height:'18px', objectFit:'contain'}} />
           </div>
           <div style={{
             background:'#fff', borderRadius:'16px', borderTopLeftRadius:'4px',
