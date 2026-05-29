@@ -62,7 +62,7 @@ export default function KelolaScreen() {
                   <div style={{fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)', lineHeight:'1.4'}}>@tesakunlarisi</div>
                   <div style={{display:'flex', alignItems:'center', gap:'4px', cursor:'pointer', marginTop:'4px'}}>
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--m-brand)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-                    <span style={{fontFamily:'var(--m-font)', fontSize:'12px', fontWeight:'700', color:'var(--m-brand)', textDecoration:'underline', textUnderlineOffset:'2px'}}>Minggu, 24 Mei 2026 • 09.37</span>
+                    <span style={{fontFamily:'var(--m-font)', fontSize:'12px', fontWeight:'700', color:'var(--m-brand)', textDecoration:'underline', textUnderlineOffset:'2px', whiteSpace:'nowrap'}}>Minggu, 24 Mei 2026 • 09.37</span>
                   </div>
                 </div>
               </div>
