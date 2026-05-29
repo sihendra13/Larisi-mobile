@@ -29,6 +29,35 @@ export default function DapurV2() {
   const [persona,    setPersona]    = useState(null); /* detected master persona */
   const [caption,    setCaption]    = useState('');
 
+  /* ── PWA install prompt ── */
+  const [installPrompt,  setInstallPrompt]  = useState(null);
+  const [showInstallBar, setShowInstallBar] = useState(false);
+
+  useEffect(() => {
+    const handler = (e) => {
+      e.preventDefault();
+      setInstallPrompt(e);
+      /* Tampilkan hanya kalau belum pernah dismiss */
+      const dismissed = localStorage.getItem('pwa_install_dismissed');
+      if (!dismissed) setShowInstallBar(true);
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  const handleInstall = async () => {
+    if (!installPrompt) return;
+    installPrompt.prompt();
+    const { outcome } = await installPrompt.userChoice;
+    if (outcome === 'accepted') setShowInstallBar(false);
+    setInstallPrompt(null);
+  };
+
+  const dismissInstall = () => {
+    setShowInstallBar(false);
+    localStorage.setItem('pwa_install_dismissed', '1');
+  };
+
   /* ── Auth state: 'loading' | 'login' | 'register' | 'onboarding' | 'app' ── */
   const [authState,  setAuthState]  = useState('loading');
   const [profile,    setProfile]    = useState(null);
