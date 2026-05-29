@@ -70,7 +70,7 @@ export default function KelolaScreen() {
                   onClick={() => setActiveTab(tab)}
                   style={{
                     flex:1, padding:'8px 0', borderRadius:'999px', border:'none',
-                    background: active ? 'var(--m-brand)' : 'transparent',
+                    background: active ? 'var(--m-brand)' : '#fff',
                     color: active ? '#fff' : 'var(--m-ink-sub)',
                     fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'700',
                     cursor:'pointer', transition:'all 0.2s',

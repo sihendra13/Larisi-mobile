@@ -71,28 +71,30 @@ export default function PerformaScreen() {
         {/* ── Tabs ── */}
         <div style={{
           position: 'sticky', top: 0, zIndex: 190, background: 'var(--m-bg)',
-          display:'flex', alignItems:'center', gap:'8px', overflowX:'auto',
           paddingTop:'12px', paddingBottom:'16px', margin:'0 -16px', paddingLeft:'16px', paddingRight:'16px',
-          scrollbarWidth:'none'
         }}>
-          {tabs.map(tab => {
-            const active = tab === activeTab;
-            return (
-              <button 
-                key={tab} 
-                onClick={() => setActiveTab(tab)}
-                style={{
-                  padding:'10px 16px', borderRadius:'12px', flexShrink:0,
-                  border: active ? '1px solid #1A1A1A' : '1px solid #E4E4EB',
-                  background: active ? '#1A1A1A' : '#fff',
-                  color: active ? '#fff' : 'var(--m-ink-sub)',
-                  fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'700',
-                  cursor:'pointer', transition:'all 0.2s',
-                }}>
-                {tab}
-              </button>
-            );
-          })}
+          <div style={{
+            display:'flex', alignItems:'center', background:'#F5F5F7',
+            borderRadius:'999px', padding:'4px', overflowX:'auto', scrollbarWidth:'none', gap:'4px'
+          }}>
+            {tabs.map(tab => {
+              const active = tab === activeTab;
+              return (
+                <button 
+                  key={tab} 
+                  onClick={() => setActiveTab(tab)}
+                  style={{
+                    padding:'8px 16px', borderRadius:'999px', border:'none', flexShrink:0,
+                    background: active ? '#1A1A1A' : '#fff',
+                    color: active ? '#fff' : 'var(--m-ink-sub)',
+                    fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'700',
+                    cursor:'pointer', transition:'all 0.2s',
+                  }}>
+                  {tab}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* ── TAB CONTENT ── */}
@@ -287,7 +289,7 @@ export default function PerformaScreen() {
                 border:'none', cursor:'pointer', fontFamily:'var(--m-font)', fontSize:'14px', fontWeight:'700',
                 display:'flex', alignItems:'center', justifyContent:'center', gap:'8px'
               }}>
-                🚀 Buat Iklan Sekarang →
+                Buat Iklan Sekarang →
               </button>
             </div>
 
@@ -480,28 +482,10 @@ export default function PerformaScreen() {
               </div>
             </div>
 
-            <div style={{height:'80px'}} /> {/* spacer for sticky CTA */}
           </div>
         )}
 
       </main>
-      
-      {/* Sticky Bottom CTA for Tab 3/4 */}
-      {(activeTab === 'Strategi' || activeTab === 'Rekomendasi') && (
-        <div style={{
-          position:'fixed', bottom:'80px', left:0, right:0, padding:'16px',
-          background:'linear-gradient(to top, rgba(255,255,255,1) 50%, rgba(255,255,255,0))', zIndex:100
-        }}>
-          <button style={{
-            width:'100%', padding:'16px', borderRadius:'16px', background:'#1A1A1A', color:'#fff',
-            border:'none', cursor:'pointer', fontFamily:'var(--m-font)', fontSize:'15px', fontWeight:'800',
-            display:'flex', alignItems:'center', justifyContent:'center', gap:'8px',
-            boxShadow:'0 4px 14px rgba(14,14,18,0.20)'
-          }}>
-            🚀 Buat Iklan Sekarang
-          </button>
-        </div>
-      )}
     </div>
   );
 }
