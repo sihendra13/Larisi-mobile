@@ -85,7 +85,7 @@ export default function PerformaScreen() {
                   onClick={() => setActiveTab(tab)}
                   style={{
                     padding:'8px 16px', borderRadius:'999px', border:'none', flexShrink:0,
-                    background: active ? '#1A1A1A' : '#fff',
+                    background: active ? 'var(--m-brand)' : '#fff',
                     color: active ? '#fff' : 'var(--m-ink-sub)',
                     fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'700',
                     cursor:'pointer', transition:'all 0.2s',
