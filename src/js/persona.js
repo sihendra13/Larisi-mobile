@@ -49,6 +49,19 @@ function showPersonaDirect(p, detected) {
 /* ── Vision conflict state ── */
 var _visionConflictData = null;
 
+/** Tutup conflict modal + overlay dengan animasi. */
+function _closeConflictModal() {
+  var vc      = document.getElementById('visionConflict');
+  var overlay = document.getElementById('vcModalOverlay');
+  if (vc)      vc.classList.remove('open');
+  if (overlay) {
+    overlay.classList.remove('open');
+    setTimeout(function(){ overlay.style.display = 'none'; }, 300);
+  }
+  document.body.style.overflow = '';
+}
+window._closeConflictModal = _closeConflictModal;
+
 /**
  * _showVisionConflict(visionKey, visionLabel, bizKey, bizLabel)
  * Tampilkan nudge pilihan ketika AI mendeteksi kategori berbeda dari profil bisnis.
@@ -78,7 +91,11 @@ function _showVisionConflict(visionKey, visionLabel, bizKey, bizLabel) {
       'Apakah foto ini sudah benar?';
   }
 
-  vc.classList.add('visible');
+  /* Tampilkan sebagai modal */
+  var overlay = document.getElementById('vcModalOverlay');
+  if (overlay) { overlay.style.display = 'block'; setTimeout(function(){ overlay.classList.add('open'); }, 10); }
+  setTimeout(function(){ vc.classList.add('open'); }, 10);
+  document.body.style.overflow = 'hidden';
 }
 
 /**
@@ -115,8 +132,7 @@ function _applyVisionPersona(key, showEditBtn) {
  * useVision=false → pakai profil bisnis
  */
 function _resolveConflict(useVision) {
-  var vc = document.getElementById('visionConflict');
-  if (vc) vc.classList.remove('visible');
+  _closeConflictModal();
 
   if (!_visionConflictData) return;
 
@@ -135,9 +151,8 @@ window._resolveConflict = _resolveConflict;
  * sehingga AI scan berjalan lagi dan conflict card bisa muncul ulang bila perlu.
  */
 function _changePhotoConflict() {
-  /* Tutup conflict panel */
-  var vc = document.getElementById('visionConflict');
-  if (vc) vc.classList.remove('visible');
+  /* Tutup conflict modal */
+  _closeConflictModal();
   _visionConflictData = null;
   masterPersonaLocked = false;
 
@@ -181,8 +196,7 @@ async function startScanWithFile(filename, fileCount) {
   document.getElementById('scanning').classList.add('visible');
   document.getElementById('personaCard').classList.remove('visible');
   document.getElementById('catNudge').classList.remove('visible');
-  var vc = document.getElementById('visionConflict');
-  if (vc) vc.classList.remove('visible');
+  _closeConflictModal();
 
   /* ── VIDEO: tidak bisa dianalisis Groq — cek filename dulu, fallback ke profil bisnis ── */
   var isVideo = (typeof uploadMode !== 'undefined' && uploadMode === 'video');

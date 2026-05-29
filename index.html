@@ -389,14 +389,6 @@
             </div>
           </div>
 
-          <!-- Vision Conflict Nudge: muncul ketika AI mendeteksi kategori berbeda dari profil bisnis -->
-          <div class="vision-conflict" id="visionConflict">
-            <div class="vc-question" id="conflictQuestion">SiLaris mendeteksi foto ini sebagai <strong>Makanan</strong>, tapi fokus bisnismu di <strong>Properti</strong>. Apakah foto ini sudah benar?</div>
-            <div class="vc-actions">
-              <button class="vc-btn vc-btn-biz" onclick="_resolveConflict(false)">Ya, lanjutkan</button>
-              <button class="vc-btn vc-btn-ai"  onclick="_changePhotoConflict()">Ganti foto</button>
-            </div>
-          </div>
 
           <div class="persona-card" id="personaCard">
             <div class="persona-top">
@@ -1450,6 +1442,19 @@
     <button class="mobile-silaris-send-btn" onclick="mobileSendSiLarisMessage()">
       <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
     </button>
+  </div>
+</div>
+
+<!-- Vision Conflict Modal -->
+<div id="vcModalOverlay" class="vc-modal-overlay" style="display:none"></div>
+<div id="visionConflict" class="vc-modal">
+  <div class="vc-modal-handle"></div>
+  <div class="vc-modal-icon">🔍</div>
+  <div class="vc-modal-title">Foto Berbeda dari Profil Bisnis</div>
+  <div class="vc-question" id="conflictQuestion">SiLaris mendeteksi foto ini sebagai <strong>Makanan</strong>, tapi fokus bisnismu di <strong>Properti</strong>. Apakah foto ini sudah benar?</div>
+  <div class="vc-actions">
+    <button class="vc-btn vc-btn-biz" onclick="_resolveConflict(false)">Ya, lanjutkan</button>
+    <button class="vc-btn vc-btn-ai"  onclick="_changePhotoConflict()">Ganti foto</button>
   </div>
 </div>
 
