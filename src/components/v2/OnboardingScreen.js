@@ -160,25 +160,31 @@ export default function OnboardingScreen({ accessToken, userId, onComplete }) {
       minHeight: '100dvh', background: '#F9F9FA',
       fontFamily: 'var(--m-font, -apple-system, sans-serif)',
       overflowY: 'auto',
+      display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
     }}>
-      <div style={{ maxWidth: '440px', margin: '0 auto', padding: '32px 20px 80px' }}>
-
-        {/* Header */}
-        <div style={{ marginBottom: '28px' }}>
-          <div style={{ fontSize: '22px', fontWeight: '800', color: '#111827', marginBottom: '6px' }}>
-            Profil Bisnis
-          </div>
-          <div style={{ fontSize: '13px', color: '#6b7280', lineHeight: '1.5' }}>
-            Lengkapi info bisnis kamu agar SiLaris bisa buat konten yang tepat sasaran.
-          </div>
-        </div>
+      <div style={{ width: '100%', maxWidth: '440px', padding: '32px 20px 80px' }}>
 
         {/* Card */}
         <div style={{
-          background: '#fff', borderRadius: '20px', padding: '24px',
-          border: '1px solid #E4E4EB', boxShadow: '0 4px 24px rgba(0,0,0,0.05)',
+          background: '#fff', borderRadius: '20px', padding: '32px 28px',
+          border: '1px solid #E4E4EB', boxShadow: '0 4px 32px rgba(0,0,0,0.07)',
           display: 'flex', flexDirection: 'column', gap: '20px',
         }}>
+
+          {/* Logo */}
+          <div style={{ textAlign: 'center' }}>
+            <img src="/logo_larisi.svg" alt="Larisi" style={{ height: '32px', width: 'auto' }} />
+          </div>
+
+          {/* Heading */}
+          <div>
+            <h1 style={{ margin: 0, fontSize: '22px', fontWeight: '800', color: '#111827', letterSpacing: '-0.3px' }}>
+              Profil Bisnis
+            </h1>
+            <p style={{ margin: '6px 0 0', fontSize: '13px', color: '#6b7280', lineHeight: '1.5' }}>
+              Lengkapi info bisnis kamu agar SiLaris bisa buat konten yang tepat sasaran.
+            </p>
+          </div>
 
           {/* Nama Bisnis */}
           <div>
