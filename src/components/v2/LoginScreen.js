@@ -229,7 +229,7 @@ export default function LoginScreen({ onLoginSuccess }) {
         {/* Register link */}
         <div style={{ textAlign: 'center', marginTop: '20px', fontSize: '13px', color: '#6b7280' }}>
           Belum punya akun?{' '}
-          <a href="/register.html" style={{ color: '#111827', fontWeight: '700', textDecoration: 'none' }}>
+          <a href="/register.html" style={{ color: '#7C3AED', fontWeight: '700', textDecoration: 'none' }}>
             Daftar di sini
           </a>
         </div>
