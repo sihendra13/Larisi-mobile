@@ -183,6 +183,30 @@ export default function DapurV2() {
   return (
     <div id="app-root" className="mobile-app-root">
 
+      {/* ── PWA Install Banner ── */}
+      {showInstallBar && (
+        <div style={{
+          position: 'fixed', bottom: '72px', left: '12px', right: '12px', zIndex: 1000,
+          background: '#111827', borderRadius: '14px',
+          padding: '12px 14px', display: 'flex', alignItems: 'center', gap: '10px',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.25)',
+        }}>
+          <img src="/icons/icon-192.png" alt="" style={{ width: '36px', height: '36px', borderRadius: '8px', flexShrink: 0 }} />
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: '13px', fontWeight: '700', color: '#fff' }}>Install Larisi</div>
+            <div style={{ fontSize: '11px', color: '#9ca3af' }}>Akses lebih cepat dari home screen</div>
+          </div>
+          <button onClick={handleInstall} style={{
+            background: '#7C3AED', color: '#fff', border: 'none', borderRadius: '8px',
+            padding: '7px 12px', fontSize: '12px', fontWeight: '700', cursor: 'pointer', flexShrink: 0,
+          }}>Install</button>
+          <button onClick={dismissInstall} style={{
+            background: 'none', border: 'none', color: '#6b7280', cursor: 'pointer',
+            padding: '4px', fontSize: '16px', flexShrink: 0, lineHeight: 1,
+          }}>✕</button>
+        </div>
+      )}
+
       <div style={{ display: activeNav === 'command' ? 'contents' : 'none' }}>
         {screen === 'platform' && (
           <PlatformScreen
