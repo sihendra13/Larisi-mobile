@@ -1,7 +1,6 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/lib/config';
-import { ID_LOCATIONS } from '@/data/locations';
 
 /* ─────────────────────────────────────────
    Data
@@ -133,6 +132,8 @@ export default function OnboardingScreen({
   const [kecQuery,     setKecQuery]     = useState('');
   const [kecamatan,    setKecamatan]    = useState('');
   const [kabupaten,    setKabupaten]    = useState('');
+  const [kecResults,   setKecResults]   = useState([]);  /* { kec, kabDisplay, kab, prov }[] | [{error}] */
+  const [kecLoading,   setKecLoading]   = useState(false);
   const [delivery,     setDelivery]     = useState('');
   const [usp,          setUsp]          = useState('');
   const [profLoading,  setProfLoading]  = useState(false);
@@ -145,7 +146,8 @@ export default function OnboardingScreen({
   const [socialBusy,   setSocialBusy]  = useState('');
 
   /* ── Refs ── */
-  const uspInputRef = useRef(null);
+  const uspInputRef  = useRef(null);
+  const kecTimerRef  = useRef(null);
 
   /* ── Countdown OTP ── */
   useEffect(() => {
@@ -214,13 +216,59 @@ export default function OnboardingScreen({
   /* ─────────────────
      STEP 1 — PROFIL
   ───────────────── */
-  const kecResults = kecQuery.length >= 2
-    ? ID_LOCATIONS.filter(l => l.n.toLowerCase().includes(kecQuery.toLowerCase())).slice(0, 8)
-    : [];
 
-  const selectKec = (loc) => {
-    const { kecamatan: k, kabupaten: kb } = parseLocation(loc.n);
-    setKecamatan(k); setKabupaten(kb); setKecQuery(loc.n); setShowDrop(false);
+  /* Nominatim search — identik dengan desktop onboarding.html */
+  const searchKecamatan = (val) => {
+    setKecamatan(''); setKabupaten('');
+    if (kecTimerRef.current) clearTimeout(kecTimerRef.current);
+    if (!val || val.length < 2) { setKecResults([]); setKecLoading(false); setShowDrop(false); return; }
+
+    setKecLoading(true);
+    setShowDrop(true);
+
+    kecTimerRef.current = setTimeout(async () => {
+      try {
+        const resp = await fetch(
+          'https://nominatim.openstreetmap.org/search?q=' +
+          encodeURIComponent(val + ' Indonesia') +
+          '&format=json&addressdetails=1&limit=7&accept-language=id&countrycodes=ID',
+          { headers: { 'Accept': 'application/json', 'User-Agent': 'Larisi-App/1.0' } }
+        );
+        const data = await resp.json();
+
+        const seen    = {};
+        const results = [];
+        (data || []).forEach(r => {
+          const addr       = r.address || {};
+          const kec        = addr.suburb || addr.village || addr.quarter || addr.town || addr.hamlet
+                             || r.display_name.split(',')[0].trim();
+          const kab        = addr.county || addr.city || addr.state_district || addr.municipality || '';
+          const kabDisplay = kab.replace(/^Kabupaten\s+/i, '').replace(/^Regency\s+/i, '');
+          const prov       = addr.state || '';
+
+          const key = (kec + '|' + kabDisplay).toLowerCase();
+          if (seen[key]) return;
+          seen[key] = true;
+
+          results.push({ kec, kabDisplay, kab, prov });
+        });
+
+        setKecResults(results.length ? results : [{ empty: true }]);
+      } catch {
+        setKecResults([{ error: true }]);
+      } finally {
+        setKecLoading(false);
+      }
+    }, 450);
+  };
+
+  const selectKec = (result) => {
+    setKecamatan(result.kec);
+    setKabupaten(result.kabDisplay || result.kab || result.kec);
+    setKecQuery(result.kec);
+    setKecResults([]);
+    setShowDrop(false);
+    setProfError('');
   };
 
   /* Fungsi yang benar-benar menyimpan (dipanggil langsung atau via "Lewati" di USP warning) */
@@ -275,6 +323,7 @@ export default function OnboardingScreen({
 
   const handleSaveProfile = async () => {
     if (!ownerName.trim()) { setProfError('Nama pemilik wajib diisi.');        return; }
+    if (!whatsapp.trim())  { setProfError('Nomor WhatsApp wajib diisi.');       return; }
     if (!bizName.trim())   { setProfError('Nama bisnis wajib diisi.');          return; }
     if (!category)         { setProfError('Pilih kategori bisnis.');            return; }
     if (!kecamatan)        { setProfError('Pilih kecamatan dari dropdown.');    return; }
@@ -538,38 +587,51 @@ export default function OnboardingScreen({
                 <label style={labelStyle}>Kecamatan Lokasi Bisnis <span style={{ color: '#DC2626' }}>*</span></label>
                 <input
                   type="text" value={kecQuery}
-                  onChange={e => { setKecQuery(e.target.value); setKecamatan(''); setKabupaten(''); setShowDrop(true); setProfError(''); }}
-                  onFocus={() => { if (kecQuery.length >= 2) setShowDrop(true); }}
+                  onChange={e => { setKecQuery(e.target.value); searchKecamatan(e.target.value); }}
+                  onFocus={() => { if (kecQuery.length >= 2 && kecResults.length) setShowDrop(true); }}
                   onBlur={() => setTimeout(() => setShowDrop(false), 200)}
-                  placeholder="Ketik nama kecamatan..."
+                  placeholder="Ketik nama kecamatan atau daerah..."
                   autoComplete="off"
                   style={inputStyle}
                 />
-                {showDrop && kecResults.length > 0 && (
+                {showDrop && (kecLoading || kecResults.length > 0) && (
                   <div style={{
                     position: 'absolute', left: 0, right: 0, top: 'calc(100% + 4px)',
                     background: '#fff', border: '1px solid #E4E4EB', borderRadius: '10px',
                     zIndex: 200, boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
                     maxHeight: '220px', overflowY: 'auto',
                   }}>
-                    {kecResults.map((loc, i) => {
-                      const parts = loc.n.split(', ').map(s => s.trim());
-                      const kecLabel  = parts[0];
-                      const restLabel = parts.slice(1).join(' · ');
+                    {/* Loading */}
+                    {kecLoading && (
+                      <div style={{ padding: '10px 14px', fontSize: '12px', color: '#6b7280' }}>
+                        Mencari...
+                      </div>
+                    )}
+                    {/* Results */}
+                    {!kecLoading && kecResults.map((r, i) => {
+                      if (r.error) return (
+                        <div key="err" style={{ padding: '10px 14px', fontSize: '12px', color: '#DC2626' }}>
+                          Gagal memuat. Periksa koneksi internet.
+                        </div>
+                      );
+                      if (r.empty) return (
+                        <div key="empty" style={{ padding: '10px 14px', fontSize: '12px', color: '#6b7280' }}>
+                          Tidak ditemukan, coba kata lain
+                        </div>
+                      );
+                      const sub = [r.kabDisplay, r.prov].filter(Boolean).join(' — ');
                       return (
                         <div
                           key={i}
-                          onMouseDown={() => selectKec(loc)}
+                          onMouseDown={() => selectKec(r)}
                           style={{
                             padding: '10px 14px', cursor: 'pointer',
                             borderBottom: i < kecResults.length - 1 ? '1px solid #F3F4F6' : 'none',
                             display: 'flex', flexDirection: 'column', gap: '2px',
                           }}
                         >
-                          <span style={{ fontSize: '13px', fontWeight: '600', color: '#111827' }}>{kecLabel}</span>
-                          {restLabel && (
-                            <span style={{ fontSize: '11px', color: '#9CA3AF' }}>{restLabel}</span>
-                          )}
+                          <span style={{ fontSize: '13px', fontWeight: '600', color: '#111827' }}>{r.kec}</span>
+                          {sub && <span style={{ fontSize: '11px', color: '#9CA3AF' }}>{sub}</span>}
                         </div>
                       );
                     })}
