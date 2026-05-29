@@ -106,10 +106,12 @@ export default function RegisterScreen({ onRegisterSuccess, onGoLogin }) {
         return;
       }
 
-      /* Email confirmation aktif, belum ada session → masuk ke OTP step */
+      /* Email confirmation aktif, belum ada session → masuk ke OTP step
+         Supabase mengembalikan user object langsung (bukan di dalam data.user) */
       setError('');
       setLoading(false);
-      onRegisterSuccess({ access_token: null, user: data.user, email: email.trim(), needsOtp: true });
+      const userObj = data.user || (data.id ? data : null);
+      onRegisterSuccess({ access_token: null, user: userObj, email: email.trim(), needsOtp: true });
 
     } catch (err) {
       console.error('[register] error:', err);
