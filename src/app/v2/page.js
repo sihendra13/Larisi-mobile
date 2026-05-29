@@ -64,6 +64,8 @@ export default function DapurV2() {
   const [sessionId,  setSessionId]  = useState(null);
   const [accessToken,setAccessToken]= useState(null);
   const [userId,     setUserId]     = useState(null);
+  const [otpEmail,   setOtpEmail]   = useState('');
+  const [needsOtp,   setNeedsOtp]   = useState(false);
 
   useEffect(() => {
     const tok = getAccessToken();
@@ -118,11 +120,18 @@ export default function DapurV2() {
   };
 
   /* Callback setelah register berhasil */
-  const handleRegisterSuccess = ({ access_token, user }) => {
-    setAccessToken(access_token);
+  const handleRegisterSuccess = ({ access_token, user, email, needsOtp: otp }) => {
+    if (access_token) setAccessToken(access_token);
     setUserId(user?.id || null);
-    /* Profil belum ada → langsung ke onboarding */
+    setOtpEmail(email || '');
+    setNeedsOtp(!!otp);
+    /* Profil belum ada → ke onboarding (OTP di step 1 jika diperlukan) */
     setAuthState('onboarding');
+  };
+
+  /* Callback ketika OTP berhasil diverifikasi → dapat access_token baru */
+  const handleOtpVerified = (tok) => {
+    setAccessToken(tok);
   };
 
   /* Callback setelah onboarding selesai */
@@ -175,7 +184,10 @@ export default function DapurV2() {
       <OnboardingScreen
         accessToken={accessToken}
         userId={userId}
+        email={otpEmail}
+        needsOtp={needsOtp}
         onComplete={handleOnboardingComplete}
+        onTokenReceived={handleOtpVerified}
       />
     );
   }

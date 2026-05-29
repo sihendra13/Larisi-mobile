@@ -87,7 +87,7 @@ export default function RegisterScreen({ onRegisterSuccess, onGoLogin }) {
           user:          data.user,
         };
         localStorage.setItem('sb-mojzmlrdihenvfhrwopd-auth-token', JSON.stringify(session));
-        onRegisterSuccess({ access_token: data.access_token, user: data.user });
+        onRegisterSuccess({ access_token: data.access_token, user: data.user, email: email.trim(), needsOtp: false });
         return;
       }
 
@@ -102,15 +102,14 @@ export default function RegisterScreen({ onRegisterSuccess, onGoLogin }) {
           user:          data.user,
         };
         localStorage.setItem('sb-mojzmlrdihenvfhrwopd-auth-token', JSON.stringify(session));
-        onRegisterSuccess({ access_token: data.session.access_token, user: data.user });
+        onRegisterSuccess({ access_token: data.session.access_token, user: data.user, email: email.trim(), needsOtp: false });
         return;
       }
 
-      /* Email confirmation aktif, belum ada session → minta cek email */
+      /* Email confirmation aktif, belum ada session → masuk ke OTP step */
       setError('');
       setLoading(false);
-      alert('Pendaftaran berhasil! Cek email kamu untuk konfirmasi, lalu masuk.');
-      onGoLogin();
+      onRegisterSuccess({ access_token: null, user: data.user, email: email.trim(), needsOtp: true });
 
     } catch (err) {
       console.error('[register] error:', err);
