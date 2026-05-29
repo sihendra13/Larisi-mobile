@@ -40,8 +40,8 @@ export default function KelolaScreen() {
             background:'#fff', border:'1px solid #E4E4EB', borderRadius:'20px', padding:'16px', marginBottom:'16px'
           }}>
             <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'12px'}}>
-              <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
-                <div style={{position:'relative'}}>
+              <div style={{display:'flex', alignItems:'center', gap:'10px', flex: 1, minWidth: 0}}>
+                <div style={{position:'relative', flexShrink: 0}}>
                   <div style={{
                     width:'44px', height:'44px', borderRadius:'50%', border:'1.5px solid #E1306C',
                     display:'flex', alignItems:'center', justifyContent:'center', background:'#FFF0F5'
@@ -66,7 +66,7 @@ export default function KelolaScreen() {
                   </div>
                 </div>
               </div>
-              <div style={{display:'flex', alignItems:'center', gap:'12px'}}>
+              <div style={{display:'flex', alignItems:'center', gap:'12px', flexShrink: 0}}>
                 <div style={{background:'#E6F4EA', padding:'4px 10px', borderRadius:'999px', display:'flex', alignItems:'center', gap:'6px'}}>
                   <div style={{width:'6px', height:'6px', borderRadius:'50%', background:'#34A853'}} />
                   <span style={{fontFamily:'var(--m-font)', fontSize:'11px', fontWeight:'700', color:'#34A853'}}>Berjalan</span>
