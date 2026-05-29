@@ -562,7 +562,9 @@ export default function OnboardingScreen({
               <div>
                 <label style={labelStyle}>
                   Kota / Kabupaten
-                  <span style={{ fontSize: '11px', fontWeight: '400', color: '#9CA3AF', marginLeft: '6px' }}>otomatis terisi</span>
+                  {!kabupaten && (
+                    <span style={{ fontSize: '11px', fontWeight: '400', color: '#9CA3AF', marginLeft: '6px' }}>otomatis terisi</span>
+                  )}
                 </label>
                 <input
                   type="text"
