@@ -102,6 +102,14 @@ export default function DapurV2() {
         const isStandalone = window.matchMedia('(display-mode: standalone)').matches
                           || window.navigator.standalone;
         const goToRegister = planParam || intent === 'register' || isStandalone;
+
+        /* iOS PWA: localStorage Safari & PWA terpisah — plan hilang setelah install.
+           Kalau standalone & plan belum ada → set default 'pro' agar badge tetap muncul
+           di Register (asumsi user datang dari tombol Coba Gratis landing page). */
+        if (isStandalone && !localStorage.getItem('larisi_selected_plan')) {
+          localStorage.setItem('larisi_selected_plan', planParam || 'pro');
+        }
+
         setAuthState(goToRegister ? 'register' : 'login');
         return;
       }

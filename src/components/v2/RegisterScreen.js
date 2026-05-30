@@ -25,7 +25,9 @@ export default function RegisterScreen({ onRegisterSuccess, onGoLogin }) {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
-      const p = params.get('plan') || '';
+      /* Baca dari URL param dulu, fallback ke localStorage
+         (iOS PWA: localStorage terpisah dari Safari, sudah diset di page.js) */
+      const p = params.get('plan') || localStorage.getItem('larisi_selected_plan') || '';
       if (p) {
         setPlan(p);
         localStorage.setItem('larisi_selected_plan', p);
