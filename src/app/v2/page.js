@@ -38,10 +38,14 @@ export default function DapurV2() {
   const [showInstallBar, setShowInstallBar] = useState(false);
 
   useEffect(() => {
+    /* Ambil dari global jika event sudah firing sebelum React mount */
+    if (window.__pwaInstallPrompt) {
+      setInstallPrompt(window.__pwaInstallPrompt);
+    }
     const handler = (e) => {
       e.preventDefault();
+      window.__pwaInstallPrompt = e;
       setInstallPrompt(e);
-      /* Tampilkan hanya kalau belum pernah dismiss */
       const dismissed = localStorage.getItem('pwa_install_dismissed');
       if (!dismissed) setShowInstallBar(true);
     };
@@ -123,6 +127,7 @@ export default function DapurV2() {
         setShowSplash(false);
         sessionStorage.setItem('larisi_splash_shown', '1');
 
+
         if (!tok) {
           const installDismissed = localStorage.getItem('larisi_install_dismissed');
           const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
@@ -134,7 +139,7 @@ export default function DapurV2() {
         } else {
            continueToAuth();
         }
-      }, 3000);
+      }, 4500);
     } else {
       setShowSplash(false);
       continueToAuth();

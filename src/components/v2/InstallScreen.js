@@ -18,12 +18,22 @@ export default function InstallScreen({ onSkip, installPrompt }) {
   }, []);
 
   const handleInstallClick = async () => {
-    if (installPrompt) {
-      installPrompt.prompt();
-      const { outcome } = await installPrompt.userChoice;
-      if (outcome === 'accepted') {
-        onSkip(); // Move to next screen after install
+    /* Coba ambil dari global jika prop belum terupdate */
+    const prompt = installPrompt || window.__pwaInstallPrompt;
+    if (prompt) {
+      try {
+        prompt.prompt();
+        const { outcome } = await prompt.userChoice;
+        if (outcome === 'accepted') {
+          onSkip();
+        }
+      } catch (err) {
+        console.warn('[PWA] install prompt error:', err);
+        onSkip(); /* fallback: lanjut saja */
       }
+    } else {
+      /* Chrome belum siap — instruksikan manual */
+      alert('Tap menu browser (⋮) → "Tambah ke layar utama" untuk install.');
     }
   };
 
