@@ -224,7 +224,11 @@ export default function DapurV2() {
         onSkip={() => { 
           setShowInstall(false); 
           localStorage.setItem('larisi_install_dismissed', '1');
-          setAuthState('register'); // Go to register after skip/install
+          
+          /* Cek apakah user datang dari landing page (tombol Coba Gratis) */
+          const urlParams = new URLSearchParams(window.location.search);
+          const planParam = urlParams.get('plan');
+          setAuthState(planParam ? 'register' : 'login');
         }} 
         installPrompt={installPrompt} 
       />
