@@ -1,6 +1,7 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import MobileHeader from '@/components/layout/MobileHeader';
+import { connectSocial, getStoredAccounts } from '@/lib/connectSocial';
 
 /* ── Platform config ── */
 const PLATFORMS = [
@@ -117,12 +118,12 @@ const PLATFORMS = [
   },
 ];
 
-/* ── Mock akun ── */
-const MOCK_ACCOUNTS = {
-  instagram: { connected:true,  handle:'@dapurkonten_id', sub:'Instagram Business', initials:'N', avatarBg:'linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)' },
-  facebook:  { connected:false, handle:'Facebook',        sub:'Facebook Page',      initials:null, avatarBg:null },
-  tiktok:    { connected:false, handle:'TikTok',          sub:'TikTok Account',     initials:null, avatarBg:null },
-  youtube:   { connected:false, handle:'YouTube',         sub:'YouTube Channel',    initials:null, avatarBg:null },
+/* Label sub-akun per platform */
+const PLATFORM_SUBS = {
+  instagram: 'Instagram Business',
+  facebook:  'Facebook Page',
+  tiktok:    'TikTok Account',
+  youtube:   'YouTube Channel',
 };
 
 /* ── Soft icon card (light bg + colored icon, gaya gambar 3) ── */
@@ -142,21 +143,48 @@ function SoftIcon({ platform, size = 44 }) {
   );
 }
 
-export default function PlatformScreen({ platform, onSelectPlatform, onNext, profile, onAvatarClick }) {
-  const [showManage, setShowManage] = useState(false);
-  const [animateManage, setAnimateManage] = useState(false);
-  
-  const openManage = () => {
-    setShowManage(true);
-    setTimeout(() => setAnimateManage(true), 10);
+export default function PlatformScreen({ platform, onSelectPlatform, onNext, profile, accessToken, userId, onAvatarClick }) {
+  const [showManage,     setShowManage]     = useState(false);
+  const [animateManage,  setAnimateManage]  = useState(false);
+  const [accounts,       setAccounts]       = useState(() => getStoredAccounts());
+  const [socialBusy,     setSocialBusy]     = useState('');
+  /* Modal "belum terhubung" */
+  const [warnPlatform,   setWarnPlatform]   = useState(''); /* platform yang diklik tapi belum connect */
+  const [showWarn,       setShowWarn]       = useState(false);
+  const [animateWarn,    setAnimateWarn]    = useState(false);
+
+  /* Refresh akun dari localStorage setiap kali layar aktif */
+  useEffect(() => {
+    const refresh = () => setAccounts(getStoredAccounts());
+    window.addEventListener('focus', refresh);
+    return () => window.removeEventListener('focus', refresh);
+  }, []);
+
+  const openManage = () => { setShowManage(true);  setTimeout(() => setAnimateManage(true), 10); };
+  const closeManage = () => { setAnimateManage(false); setTimeout(() => setShowManage(false), 300); };
+
+  const openWarn = (plt) => { setWarnPlatform(plt); setShowWarn(true); setTimeout(() => setAnimateWarn(true), 10); };
+  const closeWarn = () => { setAnimateWarn(false); setTimeout(() => { setShowWarn(false); setWarnPlatform(''); }, 300); };
+
+  const handleSelectPlatform = (pid) => {
+    const isConn = accounts.some(a => a.platform === pid);
+    if (!isConn) { openWarn(pid); return; }
+    onSelectPlatform(pid);
+    onNext();
   };
 
-  const closeManage = () => {
-    setAnimateManage(false);
-    setTimeout(() => setShowManage(false), 300);
+  const handleConnect = (pid) => {
+    connectSocial({
+      platform: pid,
+      accessToken: accessToken || '',
+      userId: userId || '',
+      onStart:  (p) => setSocialBusy(p),
+      onDone:   ()  => { setAccounts(getStoredAccounts()); setSocialBusy(''); },
+      onCancel: ()  => setSocialBusy(''),
+    });
   };
 
-  const connectedPlatforms = PLATFORMS.filter(p => MOCK_ACCOUNTS[p.id].connected);
+  const connectedPlatforms = PLATFORMS.filter(p => accounts.some(a => a.platform === p.id));
 
   return (
     <div style={{display:'flex', flexDirection:'column', flex:1, overflow:'hidden', background:'var(--m-bg)'}}>
@@ -188,27 +216,27 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext, pro
           </div>
           <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'10px'}}>
             {PLATFORMS.map(p => {
-              const active = platform === p.id;
+              const isConn = accounts.some(a => a.platform === p.id);
               return (
                 <button
                   key={p.id}
-                  onClick={() => { onSelectPlatform(p.id); onNext(); }}
+                  onClick={() => handleSelectPlatform(p.id)}
                   style={{
                     display:'flex', flexDirection:'column', alignItems:'center',
                     gap:'8px', padding:'14px 6px',
                     borderRadius:'12px', cursor:'pointer',
-                    background:'#FAFAFA',
-                    border:'1.5px solid #EBEBF0',
-                    transition:'all .15s',
+                    background: isConn ? '#F0FDF4' : '#FAFAFA',
+                    border:`1.5px solid ${isConn ? '#10B981' : '#EBEBF0'}`,
+                    transition:'all .15s', position:'relative',
                   }}
                 >
                   {p.icon}
-                  <span style={{
-                    fontFamily:'var(--m-font)', fontSize:'11px', fontWeight:'600',
-                    color:'var(--m-ink-sub)',
-                  }}>
+                  <span style={{fontFamily:'var(--m-font)',fontSize:'11px',fontWeight:'600',color: isConn ? '#10B981' : 'var(--m-ink-sub)'}}>
                     {p.label}
                   </span>
+                  {!isConn && (
+                    <div style={{position:'absolute',top:'6px',right:'6px',width:'8px',height:'8px',borderRadius:'50%',background:'#E4E4EB'}} />
+                  )}
                 </button>
               );
             })}
@@ -234,39 +262,47 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext, pro
 
           <div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
             {PLATFORMS.map(p => {
-              const acc = MOCK_ACCOUNTS[p.id];
+              const acc    = accounts.find(a => a.platform === p.id);
+              const isConn = !!acc;
+              const isBusy = socialBusy === p.id;
               return (
-                <div key={p.id} style={{display:'flex',alignItems:'center',gap:'12px',padding:'12px',borderRadius:'12px',background:'#fff',border:'1.5px solid #EBEBF0'}}>
+                <div key={p.id} style={{display:'flex',alignItems:'center',gap:'12px',padding:'12px',borderRadius:'12px',background:'#fff',border:`1.5px solid ${isConn ? '#D1FAE5' : '#EBEBF0'}`}}>
 
                   {/* Avatar */}
-                  {acc.connected ? (
-                    /* Connected: gradient kotak + badge platform di pojok */
+                  {isConn ? (
                     <div style={{position:'relative',width:'44px',height:'44px',flexShrink:0}}>
-                      <div style={{width:'44px',height:'44px',borderRadius:'12px',background:acc.avatarBg,display:'flex',alignItems:'center',justifyContent:'center'}}>
-                        <span style={{color:'#fff',fontFamily:'var(--m-font)',fontSize:'17px',fontWeight:'700'}}>{acc.initials}</span>
-                      </div>
+                      {acc.avatar_url ? (
+                        <img src={acc.avatar_url} alt={acc.username || p.label}
+                          style={{width:'44px',height:'44px',borderRadius:'12px',objectFit:'cover'}}
+                          onError={e => { e.target.style.display='none'; }}
+                        />
+                      ) : (
+                        <div style={{width:'44px',height:'44px',borderRadius:'12px',background:p.badgeBg,display:'flex',alignItems:'center',justifyContent:'center'}}>
+                          <span style={{color:'#fff',fontFamily:'var(--m-font)',fontSize:'16px',fontWeight:'700'}}>
+                            {(acc.username || p.label).charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                      )}
                       <div style={{position:'absolute',bottom:'-3px',right:'-3px',width:'18px',height:'18px',borderRadius:'50%',background:p.badgeBg,border:'2px solid #fff',display:'flex',alignItems:'center',justifyContent:'center'}}>
                         {p.iconBadge}
                       </div>
                     </div>
                   ) : (
-                    /* Disconnected: soft icon (light bg + colored icon) */
                     <SoftIcon platform={p} size={44} />
                   )}
 
                   {/* Info */}
                   <div style={{flex:1,minWidth:0}}>
                     <div style={{fontFamily:'var(--m-font)',fontSize:'13px',fontWeight:'700',color:'var(--m-ink)',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
-                      {acc.connected ? acc.handle : p.label}
+                      {isConn && acc.username ? `@${acc.username}` : p.label}
                     </div>
                     <div style={{fontFamily:'var(--m-font)',fontSize:'11px',color:'var(--m-ink-sub)'}}>
-                      {acc.sub}
+                      {PLATFORM_SUBS[p.id]}
                     </div>
                   </div>
 
-                  {/* Status */}
-                  {acc.connected ? (
-                    /* Chip: checkmark + Terhubung */
+                  {/* Status / Action */}
+                  {isConn ? (
                     <div style={{display:'flex',alignItems:'center',gap:'4px',flexShrink:0,background:'#DCFCE7',borderRadius:'999px',padding:'4px 10px 4px 7px'}}>
                       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#16A34A" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                         <polyline points="20 6 9 17 4 12"/>
@@ -274,8 +310,17 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext, pro
                       <span style={{fontFamily:'var(--m-font)',fontSize:'12px',fontWeight:'600',color:'#16A34A'}}>Terhubung</span>
                     </div>
                   ) : (
-                    <button style={{flexShrink:0,padding:'7px 14px',borderRadius:'8px',border:'1.5px solid #1A1A1A',background:'transparent',cursor:'pointer',fontFamily:'var(--m-font)',fontSize:'12px',fontWeight:'700',color:'#1A1A1A'}}>
-                      Hubungkan
+                    <button
+                      onClick={() => handleConnect(p.id)}
+                      disabled={!!socialBusy}
+                      style={{flexShrink:0,padding:'7px 14px',borderRadius:'8px',
+                        border:`1.5px solid ${isBusy ? '#E4E4EB' : '#1A1A1A'}`,
+                        background:'transparent',cursor: isBusy ? 'not-allowed' : 'pointer',
+                        fontFamily:'var(--m-font)',fontSize:'12px',fontWeight:'700',
+                        color: isBusy ? '#9ca3af' : '#1A1A1A',
+                      }}
+                    >
+                      {isBusy ? '...' : 'Hubungkan'}
                     </button>
                   )}
                 </div>
@@ -323,21 +368,66 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext, pro
               {connectedPlatforms.length === 0 ? (
                 <p style={{fontFamily:'var(--m-font)',fontSize:'14px',color:'var(--m-ink-sub)',textAlign:'center',padding:'24px 0'}}>Belum ada akun terhubung</p>
               ) : connectedPlatforms.map(p => {
-                const acc = MOCK_ACCOUNTS[p.id];
+                const acc = accounts.find(a => a.platform === p.id);
                 return (
                   <div key={p.id} style={{display:'flex',alignItems:'center',gap:'12px',padding:'12px',borderRadius:'14px',background:'#F9F9FB',border:'1.5px solid #EBEBF0'}}>
                     <SoftIcon platform={p} size={48} />
                     <div style={{flex:1,minWidth:0}}>
                       <div style={{fontFamily:'var(--m-font)',fontSize:'14px',fontWeight:'700',color:'var(--m-ink)'}}>{p.label}</div>
-                      <div style={{fontFamily:'var(--m-font)',fontSize:'12px',color:'var(--m-ink-sub)'}}>{acc.handle}</div>
+                      <div style={{fontFamily:'var(--m-font)',fontSize:'12px',color:'var(--m-ink-sub)'}}>
+                        {acc?.username ? `@${acc.username}` : 'Terhubung'}
+                      </div>
                     </div>
-                    <button style={{flexShrink:0,padding:'7px 14px',borderRadius:'8px',border:'1.5px solid #EF4444',background:'transparent',cursor:'pointer',fontFamily:'var(--m-font)',fontSize:'12px',fontWeight:'700',color:'#EF4444'}}>
-                      Disconnect
+                    <button
+                      onClick={() => {
+                        const updated = getStoredAccounts().filter(a => a.platform !== p.id);
+                        localStorage.setItem('radar_social_accounts', JSON.stringify(updated));
+                        setAccounts(updated);
+                      }}
+                      style={{flexShrink:0,padding:'7px 14px',borderRadius:'8px',border:'1.5px solid #EF4444',background:'transparent',cursor:'pointer',fontFamily:'var(--m-font)',fontSize:'12px',fontWeight:'700',color:'#EF4444'}}>
+                      Putuskan
                     </button>
                   </div>
                 );
               })}
             </div>
+          </div>
+        </>
+      )}
+
+      {/* ── Modal: Akun Belum Terhubung ── */}
+      {showWarn && (
+        <>
+          <div onClick={closeWarn} style={{position:'fixed',inset:0,zIndex:9998,background:'rgba(0,0,0,0.45)',opacity:animateWarn?1:0,transition:'opacity 0.25s'}} />
+          <div style={{
+            position:'fixed',left:'50%',top:'50%',zIndex:9999,
+            transform: animateWarn ? 'translate(-50%,-50%) scale(1)' : 'translate(-50%,-48%) scale(0.97)',
+            opacity: animateWarn ? 1 : 0,
+            transition:'transform 0.25s cubic-bezier(0.34,1.56,0.64,1),opacity 0.25s',
+            width:'min(320px,88vw)',
+            background:'#fff',borderRadius:'20px',padding:'24px 20px 20px',
+            boxShadow:'0 20px 60px rgba(0,0,0,0.2)',
+            fontFamily:'var(--m-font)',
+          }}>
+            <div style={{textAlign:'center',marginBottom:'12px',fontSize:'36px'}}>🔗</div>
+            <div style={{fontSize:'17px',fontWeight:'800',color:'#111827',textAlign:'center',marginBottom:'8px'}}>
+              Hubungkan akun dulu, yuk!
+            </div>
+            <div style={{fontSize:'13px',color:'#6b7280',textAlign:'center',lineHeight:'1.6',marginBottom:'18px'}}>
+              Untuk posting ke <strong>{PLATFORMS.find(p=>p.id===warnPlatform)?.label}</strong>, kamu perlu hubungkan akun terlebih dahulu.
+            </div>
+            <button
+              onClick={() => { closeWarn(); handleConnect(warnPlatform); }}
+              style={{width:'100%',padding:'13px',borderRadius:'12px',background:'#111827',color:'#fff',border:'none',fontSize:'14px',fontWeight:'700',cursor:'pointer',fontFamily:'inherit',marginBottom:'8px'}}
+            >
+              Hubungkan Sekarang →
+            </button>
+            <button
+              onClick={closeWarn}
+              style={{width:'100%',padding:'11px',borderRadius:'12px',background:'none',color:'#9ca3af',border:'1.5px solid #E4E4EB',fontSize:'13px',cursor:'pointer',fontFamily:'inherit'}}
+            >
+              Nanti saja
+            </button>
           </div>
         </>
       )}

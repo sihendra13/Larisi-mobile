@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/lib/config';
+import { connectSocial, getStoredAccounts } from '@/lib/connectSocial';
 
 /* ─────────────────────────────────────────
    Data
@@ -143,7 +144,7 @@ export default function OnboardingScreen({
   const [showDrop,     setShowDrop]     = useState(false);
 
   /* ── Social State ── */
-  const [connected,    setConnected]    = useState({});
+  const [accounts,     setAccounts]     = useState(() => getStoredAccounts());
   const [socialBusy,   setSocialBusy]  = useState('');
 
   /* ── Refs ── */
@@ -357,33 +358,17 @@ export default function OnboardingScreen({
      STEP 2 — SOCIAL
   ───────────────── */
   const handleConnectSocial = (platform) => {
-    const tok       = token || accessToken;
-    const sessionId = localStorage.getItem('radar_session_id') || userId || '';
-    const url       = `${SUPABASE_URL}/functions/v1/postforme-auth?platform=${platform}&session_id=${sessionId}&token=${tok}`;
-
-    const popup = window.open(url, 'postforme-auth', 'width=520,height=640,left=100,top=100');
-    setSocialBusy(platform);
-
-    const onMsg = (e) => {
-      if (e.data?.type !== 'postforme_connected') return;
-      const accounts = JSON.parse(localStorage.getItem('radar_social_accounts') || '{}');
-      accounts[platform] = e.data.account || { platform, connected: true };
-      localStorage.setItem('radar_social_accounts', JSON.stringify(accounts));
-      setConnected(prev => ({ ...prev, [platform]: true }));
-      setSocialBusy('');
-      popup?.close();
-      window.removeEventListener('message', onMsg);
-    };
-    window.addEventListener('message', onMsg);
-
-    /* Bersihkan listener jika popup ditutup manual */
-    const checkClosed = setInterval(() => {
-      if (popup?.closed) {
-        clearInterval(checkClosed);
+    connectSocial({
+      platform,
+      accessToken: token || accessToken,
+      userId,
+      onStart:  (plt) => setSocialBusy(plt),
+      onDone:   (plt, accData) => {
+        setAccounts(getStoredAccounts());
         setSocialBusy('');
-        window.removeEventListener('message', onMsg);
-      }
-    }, 1000);
+      },
+      onCancel: () => setSocialBusy(''),
+    });
   };
 
   const handleFinish = async () => {
@@ -794,27 +779,38 @@ export default function OnboardingScreen({
               {/* Platform tiles */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 {SOCIAL_PLATFORMS.map(p => {
-                  const isConnected = !!connected[p.key];
-                  const isBusy     = socialBusy === p.key;
+                  const acc         = accounts.find(a => a.platform === p.key);
+                  const isConn      = !!acc;
+                  const isBusy      = socialBusy === p.key;
                   return (
                     <div
                       key={p.key}
                       style={{
                         display: 'flex', alignItems: 'center', gap: '12px',
                         padding: '14px 16px', borderRadius: '12px',
-                        border: `1.5px solid ${isConnected ? '#10B981' : '#E4E4EB'}`,
-                        background: isConnected ? '#F0FDF4' : '#fff',
+                        border: `1.5px solid ${isConn ? '#10B981' : '#E4E4EB'}`,
+                        background: isConn ? '#F0FDF4' : '#fff',
                         transition: 'all 0.2s',
                       }}
                     >
-                      <span style={{ fontSize: '22px', lineHeight: 1, flexShrink: 0 }}>{p.icon}</span>
-                      <div style={{ flex: 1 }}>
+                      {/* Avatar: foto atau icon */}
+                      {isConn && acc.avatar_url ? (
+                        <img src={acc.avatar_url} alt={acc.username || p.label}
+                          style={{ width: '36px', height: '36px', borderRadius: '10px', objectFit: 'cover', flexShrink: 0 }}
+                          onError={e => { e.target.style.display = 'none'; }}
+                        />
+                      ) : (
+                        <span style={{ fontSize: '22px', lineHeight: 1, flexShrink: 0 }}>{p.icon}</span>
+                      )}
+                      <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: '14px', fontWeight: '700', color: '#111827' }}>{p.label}</div>
-                        {isConnected && (
-                          <div style={{ fontSize: '12px', color: '#10B981', marginTop: '2px' }}>Terhubung ✓</div>
+                        {isConn && (
+                          <div style={{ fontSize: '12px', color: '#10B981', marginTop: '2px' }}>
+                            {acc.username ? `@${acc.username} · Terhubung ✓` : 'Terhubung ✓'}
+                          </div>
                         )}
                       </div>
-                      {!isConnected && (
+                      {!isConn && (
                         <button
                           onClick={() => handleConnectSocial(p.key)}
                           disabled={!!socialBusy}
@@ -852,7 +848,7 @@ export default function OnboardingScreen({
                   cursor: 'pointer', fontFamily: 'inherit',
                 }}
               >
-                {Object.keys(connected).length > 0 ? 'Mulai Gunakan Larisi' : 'Lewati untuk Sekarang'}
+                {accounts.length > 0 ? 'Mulai Gunakan Larisi' : 'Lewati untuk Sekarang'}
               </button>
             </div>
           )}

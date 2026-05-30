@@ -265,6 +265,8 @@ export default function DapurV2() {
             onSelectPlatform={setPlatform}
             onNext={() => goTo('audiens')}
             profile={profile}
+            accessToken={accessToken}
+            userId={userId}
             onAvatarClick={() => setShowPanel(true)}
           />
         )}
