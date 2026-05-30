@@ -374,8 +374,20 @@ export default function OnboardingScreen({
   const handleFinish = async () => {
     const tok  = token || accessToken;
     const plan = localStorage.getItem('larisi_selected_plan') || 'freemium';
+
+    /* Save ALL profile fields to database */
     const updates = {
-      onboarding_completed: true,
+      full_name:               ownerName.trim(),
+      business_name:           bizName.trim(),
+      phone_number:            whatsapp.replace(/\D/g, ''),
+      kategori:                category || null,
+      kecamatan:               kecamatan.trim(),
+      kabupaten:               kabupaten.trim(),
+      city:                    kabupaten.trim(), /* alias untuk compatibility */
+      provinsi:                provinsi.trim(),
+      delivery:                delivery === 'ya' ? true : false,
+      business_description:    usp.trim(),
+      onboarding_completed:    true,
       ...(plan !== 'freemium' ? { trial_start: new Date().toISOString() } : {}),
     };
 
@@ -389,7 +401,9 @@ export default function OnboardingScreen({
         },
         body: JSON.stringify(updates),
       });
-    } catch {}
+    } catch (err) {
+      console.error('[onboarding] save profile error:', err);
+    }
 
     const profile = JSON.parse(localStorage.getItem('radar_user_profile') || '{}');
     const final   = { ...profile, ...updates };
