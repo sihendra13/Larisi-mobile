@@ -493,11 +493,11 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext, pro
             {(() => {
               const disconnectAcc = accounts.find(a => a.platform === disconnectPlatform);
               const disconnectPlat = PLATFORMS.find(p => p.id === disconnectPlatform);
-              const canDisconnect = disconnectConfirmText.toLowerCase() === 'disconnect';
+              const canDisconnect = disconnectConfirmText.toLowerCase() === 'putuskan';
               return (
                 <>
                   <div style={{fontSize:'18px',fontWeight:'700',color:'#111827',marginBottom:'20px'}}>
-                    Disconnect {disconnectAcc?.username ? `@${disconnectAcc.username}` : disconnectPlat?.label || disconnectPlatform}
+                    Putuskan {disconnectAcc?.username ? `@${disconnectAcc.username}` : disconnectPlat?.label || disconnectPlatform}
                   </div>
 
                   {/* Account info card */}
@@ -523,13 +523,13 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext, pro
                   {/* Confirmation input */}
                   <div style={{marginBottom:'16px'}}>
                     <div style={{fontSize:'12px',fontWeight:'600',color:'#111827',marginBottom:'8px'}}>
-                      Ketik "<strong>disconnect</strong>" untuk konfirmasi
+                      Ketik "<strong>putuskan</strong>" untuk konfirmasi
                     </div>
                     <input
                       type="text"
                       value={disconnectConfirmText}
                       onChange={(e) => setDisconnectConfirmText(e.target.value)}
-                      placeholder="disconnect"
+                      placeholder="putuskan"
                       style={{
                         width:'100%',
                         padding:'12px 14px',
@@ -545,6 +545,17 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext, pro
                   {/* Buttons */}
                   <div style={{display:'flex',gap:'12px'}}>
                     <button
+                      onClick={closeDisconnectConfirm}
+                      style={{
+                        flex:1,padding:'13px',borderRadius:'12px',
+                        background:'none',color:'#111827',
+                        border:'1.5px solid #E4E4EB',fontSize:'14px',fontWeight:'600',
+                        cursor:'pointer',fontFamily:'inherit',
+                      }}
+                    >
+                      Batal
+                    </button>
+                    <button
                       onClick={() => confirmDisconnect(disconnectPlatform)}
                       disabled={!canDisconnect}
                       style={{
@@ -557,17 +568,6 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext, pro
                       }}
                     >
                       Putuskan Akun
-                    </button>
-                    <button
-                      onClick={closeDisconnectConfirm}
-                      style={{
-                        flex:1,padding:'13px',borderRadius:'12px',
-                        background:'none',color:'#111827',
-                        border:'1.5px solid #E4E4EB',fontSize:'14px',fontWeight:'600',
-                        cursor:'pointer',fontFamily:'inherit',
-                      }}
-                    >
-                      Batal
                     </button>
                   </div>
                 </>
