@@ -10,6 +10,8 @@ import PerformaScreen    from '@/components/v2/PerformaScreen';
 import LoginScreen       from '@/components/v2/LoginScreen';
 import RegisterScreen    from '@/components/v2/RegisterScreen';
 import OnboardingScreen  from '@/components/v2/OnboardingScreen';
+import ProfilePanel      from '@/components/v2/ProfilePanel';
+import ReminderModal     from '@/components/v2/ReminderModal';
 import { getProfile, getSessionId, getAccessToken } from '@/lib/config';
 
 export default function DapurV2() {
@@ -66,6 +68,7 @@ export default function DapurV2() {
   const [userId,     setUserId]     = useState(null);
   const [otpEmail,   setOtpEmail]   = useState('');
   const [needsOtp,   setNeedsOtp]   = useState(false);
+  const [showPanel,  setShowPanel]  = useState(false);
 
   useEffect(() => {
     const tok = getAccessToken();
@@ -147,6 +150,22 @@ export default function DapurV2() {
     setProfile(p);
     applyLocation(p);
     setAuthState('app');
+  };
+
+  /* Callback setelah profil di-edit dari ProfilePanel */
+  const handleProfileSaved = (p) => {
+    setProfile(p);
+    applyLocation(p);
+    localStorage.setItem('radar_user_profile', JSON.stringify(p));
+  };
+
+  /* Logout */
+  const handleLogout = () => {
+    setAuthState('login');
+    setProfile(null);
+    setAccessToken(null);
+    setUserId(null);
+    setShowPanel(false);
   };
 
   const BACK = { audiens:'platform', aset:'audiens', caption:'aset' };
@@ -233,6 +252,8 @@ export default function DapurV2() {
             platform={platform}
             onSelectPlatform={setPlatform}
             onNext={() => goTo('audiens')}
+            profile={profile}
+            onAvatarClick={() => setShowPanel(true)}
           />
         )}
 
@@ -247,6 +268,8 @@ export default function DapurV2() {
             radius={radius}     setRadius={setRadius}
             localOn={localOn}   setLocalOn={setLocalOn}
             travelerOn={travelerOn} setTravelerOn={setTravelerOn}
+            profile={profile}
+            onAvatarClick={() => setShowPanel(true)}
           />
         )}
 
@@ -281,8 +304,37 @@ export default function DapurV2() {
         )}
       </div>
 
-      {activeNav === 'monitor' && <KelolaScreen sessionId={sessionId} accessToken={accessToken} />}
-      {activeNav === 'analytics' && <PerformaScreen />}
+      {activeNav === 'monitor' && (
+        <KelolaScreen
+          sessionId={sessionId}
+          accessToken={accessToken}
+          profile={profile}
+          onAvatarClick={() => setShowPanel(true)}
+        />
+      )}
+      {activeNav === 'analytics' && (
+        <PerformaScreen
+          profile={profile}
+          onAvatarClick={() => setShowPanel(true)}
+        />
+      )}
+
+      {/* ── Profile Panel (slide dari kanan) ── */}
+      <ProfilePanel
+        open={showPanel}
+        onClose={() => setShowPanel(false)}
+        onLogout={handleLogout}
+        onSaved={handleProfileSaved}
+        profile={profile}
+        accessToken={accessToken}
+        userId={userId}
+      />
+
+      {/* ── Reminder Modal (muncul setelah 7 detik untuk profil tidak lengkap) ── */}
+      <ReminderModal
+        profile={profile}
+        onOpenProfile={() => { setShowPanel(true); }}
+      />
 
       <BottomNav activeNav={activeNav} onSwitch={setActiveNav} />
     </div>
