@@ -225,8 +225,8 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext, pro
                     display:'flex', flexDirection:'column', alignItems:'center',
                     gap:'8px', padding:'14px 6px',
                     borderRadius:'12px', cursor:'pointer',
-                    background: isConn ? '#F0FDF4' : '#FAFAFA',
-                    border:`1.5px solid ${isConn ? '#10B981' : '#EBEBF0'}`,
+                    background:'#FAFAFA',
+                    border:'1.5px solid #EBEBF0',
                     transition:'all .15s', position:'relative',
                   }}
                 >
