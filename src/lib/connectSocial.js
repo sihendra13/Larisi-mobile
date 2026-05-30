@@ -109,7 +109,9 @@ export function connectSocial({ platform, accessToken, userId, onStart, onDone, 
             id:         match.id || accountData.id,
             platform,
             username:   match.username || match.name || match.handle || '',
-            avatar_url: match.avatar_url || match.picture || match.profile_image || '',
+            /* Avatar field — sama dengan desktop onboarding.html */
+            avatar_url: match.avatar_url || match.profile_photo_url || match.profile_picture_url
+                     || match.picture || match.avatar || match.image_url || '',
           };
         }
       }
