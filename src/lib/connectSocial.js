@@ -87,7 +87,9 @@ export function connectSocial({ platform, accessToken, userId, onStart, onDone, 
     let accountData = { id: (accountIds || [])[0] || `pfm_${platform}_${Date.now()}`, platform, username: '', avatar_url: '' };
 
     try {
-      const pfResp = await fetch(`${SUPABASE_URL}/functions/v1/postforme-proxy`, {
+      const pfUrl = `${SUPABASE_URL}/functions/v1/postforme-proxy`;
+      console.log('[connectSocial] fetching avatar from:', pfUrl);
+      const pfResp = await fetch(pfUrl, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
