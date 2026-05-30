@@ -107,6 +107,8 @@ export function connectSocial({ platform, accessToken, userId, onStart, onDone, 
           (a.platform || a.provider || '').toLowerCase().startsWith(platform)
         );
         if (match) {
+          console.log('[connectSocial] match object keys:', Object.keys(match));
+          console.log('[connectSocial] match object:', match);
           accountData = {
             id:         match.id || accountData.id,
             platform,
@@ -115,6 +117,8 @@ export function connectSocial({ platform, accessToken, userId, onStart, onDone, 
             avatar_url: match.avatar_url || match.profile_photo_url || match.profile_picture_url
                      || match.picture || match.avatar || match.image_url || '',
           };
+        } else {
+          console.log('[connectSocial] no match found in list:', list);
         }
       }
     } catch (e) {
