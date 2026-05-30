@@ -91,108 +91,81 @@ export default function LoginScreen({ onLoginSuccess, onGoRegister }) {
     }
   };
 
-  const inputStyle = {
-    width: '100%', padding: '12px 14px', fontSize: '15px',
-    borderRadius: '10px', border: '1.5px solid #E4E4EB',
-    outline: 'none', background: '#fff', boxSizing: 'border-box',
-    fontFamily: 'inherit', color: '#111827',
-    transition: 'border-color 0.15s',
-  };
-
   return (
-    <div style={{
-      minHeight: '100dvh', display: 'flex', flexDirection: 'column',
-      alignItems: 'center', justifyContent: 'center',
-      background: '#F9F9FA', padding: '24px 20px',
-      fontFamily: 'var(--m-font, -apple-system, sans-serif)',
+    <div className="bg-animated" style={{
+      minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
+      padding: '24px', position: 'relative', overflow: 'hidden', fontFamily: '-apple-system, sans-serif'
     }}>
-
-      {/* Card */}
+      
+      {/* Background Blobs for extra energy */}
       <div style={{
-        width: '100%', maxWidth: '400px',
-        background: '#fff', borderRadius: '20px',
-        padding: '32px 28px',
-        boxShadow: '0 4px 32px rgba(0,0,0,0.07)',
-        border: '1px solid #E4E4EB',
-      }}>
+        position: 'absolute', top: '5%', left: '-5%', width: '300px', height: '300px',
+        background: 'var(--m-brand)', filter: 'blur(100px)', opacity: 0.15, borderRadius: '50%',
+        animation: 'float 8s ease-in-out infinite'
+      }} />
+      <div style={{
+        position: 'absolute', bottom: '5%', right: '-5%', width: '250px', height: '250px',
+        background: '#FF007A', filter: 'blur(120px)', opacity: 0.1, borderRadius: '50%',
+        animation: 'float 6s ease-in-out infinite reverse'
+      }} />
 
+      {/* Login Card */}
+      <div className="glass-card stagger-1" style={{
+        width: '100%', maxWidth: '440px', borderRadius: '32px', padding: '40px 32px',
+        display: 'flex', flexDirection: 'column', position: 'relative', zIndex: 10
+      }}>
+        
         {/* Logo */}
-        <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-          <img src="/logo_larisi.svg" alt="Larisi" style={{ height: '32px', width: 'auto' }} />
+        <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '32px'}}>
+          <img src="/logo_larisi.svg" alt="Larisi" style={{height: '36px', objectFit: 'contain'}} />
         </div>
 
         {/* Heading */}
-        <div style={{ marginBottom: '24px' }}>
-          <h1 style={{ margin: 0, fontSize: '22px', fontWeight: '800', color: '#111827', letterSpacing: '-0.3px' }}>
+        <div style={{marginBottom: '28px', textAlign: 'left'}}>
+          <h1 style={{fontSize: '26px', fontWeight: '800', color: 'var(--m-ink)', marginBottom: '8px', letterSpacing: '-0.5px', margin: 0}}>
             Selamat Datang Kembali
           </h1>
-          <p style={{ margin: '6px 0 0', fontSize: '13px', color: '#6b7280' }}>
+          <p style={{fontSize: '15px', color: 'var(--m-ink-sub)', margin: '8px 0 0'}}>
             Masuk ke akun Larisi kamu
           </p>
         </div>
 
-        <form onSubmit={handleLogin}>
-
+        <form onSubmit={handleLogin} style={{display: 'flex', flexDirection: 'column', gap: '20px'}}>
+          
           {/* Email */}
-          <div style={{ marginBottom: '16px' }}>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#374151', marginBottom: '6px' }}>
+          <div className="stagger-2">
+            <label style={{display: 'block', fontSize: '13px', fontWeight: '700', color: 'var(--m-ink)', marginBottom: '8px'}}>
               Alamat Email
             </label>
-            <input
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              placeholder="nama@email.com"
-              required
-              autoComplete="email"
-              style={inputStyle}
-            />
+            <div className="input-glow">
+              <input type="email" placeholder="nama@email.com" className="input-field"
+                value={email} onChange={e => setEmail(e.target.value)} required autoComplete="email" />
+            </div>
           </div>
 
           {/* Password */}
-          <div style={{ marginBottom: '12px' }}>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#374151', marginBottom: '6px' }}>
+          <div className="stagger-3">
+            <label style={{display: 'block', fontSize: '13px', fontWeight: '700', color: 'var(--m-ink)', marginBottom: '8px'}}>
               Password
             </label>
-            <div style={{ position: 'relative' }}>
-              <input
-                type={showPw ? 'text' : 'password'}
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                placeholder="Masukkan password"
-                required
-                autoComplete="current-password"
-                style={{ ...inputStyle, paddingRight: '44px' }}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPw(p => !p)}
-                style={{
-                  position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)',
-                  background: 'none', border: 'none', cursor: 'pointer', padding: '4px',
-                  color: '#9ca3af', display: 'flex', alignItems: 'center',
-                }}
-              >
+            <div className="input-glow" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <input type={showPw ? 'text' : 'password'} placeholder="Masukkan password" className="input-field"
+                value={password} onChange={e => setPassword(e.target.value)} required autoComplete="current-password" />
+              <button type="button" onClick={() => setShowPw(p => !p)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: '#A0A0AB', display: 'flex', alignItems: 'center' }}>
                 <EyeIcon crossed={showPw} />
               </button>
             </div>
           </div>
 
-          {/* Remember me + Lupa password */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px', color: '#374151' }}>
-              <input
-                type="checkbox"
-                checked={remember}
-                onChange={e => setRemember(e.target.checked)}
-                style={{ width: '15px', height: '15px', accentColor: '#111827', cursor: 'pointer' }}
-              />
+          {/* Remember me & Forgot Password */}
+          <div className="stagger-4" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '4px' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px', color: 'var(--m-ink-sub)', fontWeight: '500' }}>
+              <input type="checkbox" checked={remember} onChange={e => setRemember(e.target.checked)}
+                style={{ width: '16px', height: '16px', accentColor: 'var(--m-brand)', cursor: 'pointer', borderRadius: '4px' }} />
               Ingat saya
             </label>
-            <a
-              href="/login.html#forgot"
-              style={{ fontSize: '13px', color: '#7C3AED', textDecoration: 'none', fontWeight: '500' }}
-            >
+            <a href="/login.html#forgot" style={{ fontSize: '13px', color: 'var(--m-brand)', textDecoration: 'none', fontWeight: '700' }}>
               Lupa password?
             </a>
           </div>
@@ -200,46 +173,43 @@ export default function LoginScreen({ onLoginSuccess, onGoRegister }) {
           {/* Error */}
           {error && (
             <div style={{
-              background: '#FEF2F2', border: '1px solid #FCA5A5', borderRadius: '8px',
-              padding: '10px 12px', marginBottom: '16px',
-              fontSize: '13px', color: '#DC2626', lineHeight: '1.4',
+              background: '#FEF2F2', border: '1px solid #FCA5A5', borderRadius: '12px',
+              padding: '12px 16px', marginTop: '8px',
+              fontSize: '13px', color: '#DC2626', lineHeight: '1.5', fontWeight: '500'
             }}>
               {error}
             </div>
           )}
 
-          {/* Submit */}
-          <button
-            type="submit"
-            disabled={loading || !email || !password}
-            style={{
-              width: '100%', padding: '14px', borderRadius: '12px',
-              background: loading || !email || !password ? '#E4E4EB' : '#111827',
-              color: loading || !email || !password ? '#9ca3af' : '#fff',
-              border: 'none', fontSize: '15px', fontWeight: '700',
-              cursor: loading || !email || !password ? 'not-allowed' : 'pointer',
-              fontFamily: 'inherit', transition: 'background 0.15s',
-              letterSpacing: '0.01em',
+          {/* Submit Button */}
+          <div className="stagger-5" style={{ marginTop: '12px' }}>
+            <button type="submit" disabled={loading || !email || !password} style={{
+              width: '100%', padding: '16px', borderRadius: '16px', background: loading || !email || !password ? '#E4E4EB' : '#111827', color: loading || !email || !password ? '#9ca3af' : '#fff',
+              border: 'none', fontFamily: 'inherit', fontSize: '15px', fontWeight: '800',
+              cursor: loading || !email || !password ? 'not-allowed' : 'pointer', boxShadow: loading || !email || !password ? 'none' : '0 8px 24px rgba(0, 0, 0, 0.15)',
+              transition: 'all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1)', transform: 'translateY(0)'
             }}
-          >
-            {loading ? 'Masuk...' : 'Masuk'}
-          </button>
+            onMouseDown={(e) => !(loading || !email || !password) && (e.currentTarget.style.transform = 'translateY(2px)')}
+            onMouseUp={(e) => !(loading || !email || !password) && (e.currentTarget.style.transform = 'translateY(0)')}
+            onMouseLeave={(e) => !(loading || !email || !password) && (e.currentTarget.style.transform = 'translateY(0)')}
+            >
+              {loading ? 'Masuk...' : 'Masuk'}
+            </button>
+          </div>
+
         </form>
 
-        {/* Register link */}
-        <div style={{ textAlign: 'center', marginTop: '20px', fontSize: '13px', color: '#6b7280' }}>
-          Belum punya akun?{' '}
-          <button
-            onClick={onGoRegister}
-            style={{
-              background: 'none', border: 'none', padding: 0,
-              color: '#7C3AED', fontWeight: '700', fontSize: '13px',
-              cursor: 'pointer', fontFamily: 'inherit',
-            }}
-          >
+        {/* Register Link */}
+        <div className="stagger-6" style={{textAlign: 'center', marginTop: '24px'}}>
+          <span style={{fontSize: '14px', color: 'var(--m-ink-sub)', fontWeight: '500'}}>Belum punya akun? </span>
+          <button onClick={onGoRegister} style={{
+            fontSize: '14px', fontWeight: '800', color: 'var(--m-brand)', textDecoration: 'none',
+            background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0
+          }}>
             Daftar di sini
           </button>
         </div>
+
       </div>
     </div>
   );

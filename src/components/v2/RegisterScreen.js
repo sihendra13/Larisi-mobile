@@ -127,148 +127,144 @@ export default function RegisterScreen({ onRegisterSuccess, onGoLogin }) {
   const canSubmit = terms && email.trim() && password.length >= 8;
 
   return (
-    <div style={{
-      minHeight: '100dvh', background: '#F9F9FA',
-      fontFamily: 'var(--m-font, -apple-system, sans-serif)',
-      overflowY: 'auto', display: 'flex',
-      alignItems: 'flex-start', justifyContent: 'center',
+    <div className="bg-animated" style={{
+      minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
+      padding: '24px', position: 'relative', overflow: 'hidden', fontFamily: '-apple-system, sans-serif'
     }}>
-      <div style={{ width: '100%', maxWidth: '440px', padding: '32px 20px 80px' }}>
+      
+      {/* Background Blobs for extra energy */}
+      <div style={{
+        position: 'absolute', top: '5%', left: '-5%', width: '300px', height: '300px',
+        background: 'var(--m-brand)', filter: 'blur(100px)', opacity: 0.15, borderRadius: '50%',
+        animation: 'float 8s ease-in-out infinite'
+      }} />
+      <div style={{
+        position: 'absolute', bottom: '5%', right: '-5%', width: '250px', height: '250px',
+        background: '#FF007A', filter: 'blur(120px)', opacity: 0.1, borderRadius: '50%',
+        animation: 'float 6s ease-in-out infinite reverse'
+      }} />
 
-        <div style={{
-          background: '#fff', borderRadius: '20px', padding: '32px 28px',
-          border: '1px solid #E4E4EB', boxShadow: '0 4px 32px rgba(0,0,0,0.07)',
-          display: 'flex', flexDirection: 'column', gap: '0',
-        }}>
+      {/* Register Card */}
+      <div className="glass-card stagger-1" style={{
+        width: '100%', maxWidth: '440px', borderRadius: '32px', padding: '40px 32px',
+        display: 'flex', flexDirection: 'column', position: 'relative', zIndex: 10
+      }}>
+        
+        {/* Logo */}
+        <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '32px'}}>
+          <img src="/logo_larisi.svg" alt="Larisi" style={{height: '36px', objectFit: 'contain'}} />
+        </div>
 
-          {/* Logo */}
-          <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-            <img src="/logo_larisi.svg" alt="Larisi" style={{ height: '32px', width: 'auto' }} />
+        {/* Heading */}
+        <div style={{marginBottom: '28px', textAlign: 'left'}}>
+          <h1 style={{fontSize: '26px', fontWeight: '800', color: 'var(--m-ink)', marginBottom: '8px', letterSpacing: '-0.5px', margin: 0}}>
+            Mulai Uji Coba Gratis
+          </h1>
+          <p style={{ margin: '8px 0 0', fontSize: '14px', color: 'var(--m-ink-sub)', lineHeight: '1.5' }}>
+            Daftar sekarang, gratis. Nama dan info bisnis diisi di langkah berikutnya.
+          </p>
+        </div>
+
+        {/* Plan badge */}
+        {plan && PLAN_LABELS[plan] && (
+          <div className="stagger-2" style={{
+            background: 'linear-gradient(90deg, rgba(121,26,219,0.1) 0%, rgba(121,26,219,0.05) 100%)', 
+            border: '1px solid rgba(121,26,219,0.2)', 
+            borderRadius: '16px', padding: '12px 16px', marginBottom: '24px',
+            fontSize: '14px', color: 'var(--m-brand)', fontWeight: '600',
+            display: 'flex', alignItems: 'center', gap: '10px',
+          }}>
+            <span style={{ fontSize: '18px' }}>🎯</span>
+            <span>Paket dipilih: {PLAN_LABELS[plan]}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+
+          {/* Email */}
+          <div className="stagger-3">
+            <label style={{display: 'block', fontSize: '13px', fontWeight: '700', color: 'var(--m-ink)', marginBottom: '8px'}}>
+              Alamat Email
+            </label>
+            <div className="input-glow">
+              <input type="email" placeholder="nama@email.com" className="input-field"
+                value={email} onChange={e => setEmail(e.target.value)} required autoComplete="email" />
+            </div>
           </div>
 
-          {/* Heading */}
-          <div style={{ marginBottom: '20px' }}>
-            <h1 style={{ margin: 0, fontSize: '22px', fontWeight: '800', color: '#111827', letterSpacing: '-0.3px' }}>
-              Mulai Uji Coba Gratis
-            </h1>
-            <p style={{ margin: '6px 0 0', fontSize: '13px', color: '#6b7280', lineHeight: '1.5' }}>
-              Daftar sekarang, gratis. Nama dan info bisnis diisi di langkah berikutnya.
-            </p>
+          {/* Password */}
+          <div className="stagger-4">
+            <label style={{display: 'block', fontSize: '13px', fontWeight: '700', color: 'var(--m-ink)', marginBottom: '8px'}}>
+              Password
+            </label>
+            <div className="input-glow" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <input type={showPw ? 'text' : 'password'} placeholder="Minimal 8 karakter" className="input-field"
+                value={password} onChange={e => setPassword(e.target.value)} required autoComplete="new-password" />
+              <button type="button" onClick={() => setShowPw(p => !p)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: '#A0A0AB', display: 'flex', alignItems: 'center' }}>
+                <EyeIcon crossed={showPw} />
+              </button>
+            </div>
           </div>
 
-          {/* Plan badge */}
-          {plan && PLAN_LABELS[plan] && (
+          {/* Terms */}
+          <div className="stagger-5" style={{ marginTop: '4px' }}>
+            <label style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', cursor: 'pointer' }}>
+              <div style={{ position: 'relative', width: '20px', height: '20px', flexShrink: 0, marginTop: '2px' }}>
+                <input type="checkbox" checked={terms} onChange={e => setTerms(e.target.checked)}
+                  style={{ width: '100%', height: '100%', accentColor: 'var(--m-brand)', cursor: 'pointer', borderRadius: '6px', border: '1.5px solid #E4E4EB' }} />
+              </div>
+              <span style={{ fontSize: '13px', color: 'var(--m-ink-sub)', lineHeight: '1.6', fontWeight: '500' }}>
+                Dengan mendaftar, Anda menyetujui{' '}
+                <a href="https://larisi.id/syarat-ketentuan" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--m-brand)', textDecoration: 'none', fontWeight: '700' }}>Syarat dan Ketentuan</a>
+                {' '}serta{' '}
+                <a href="https://larisi.id/kebijakan-privasi" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--m-brand)', textDecoration: 'none', fontWeight: '700' }}>Kebijakan Privasi</a> kami.
+              </span>
+            </label>
+          </div>
+
+          {/* Error */}
+          {error && (
             <div style={{
-              background: '#f4f0ff', border: '1px solid #7c3aed', borderRadius: '10px',
-              padding: '10px 14px', marginBottom: '20px',
-              fontSize: '13px', color: '#5b17b7',
-              display: 'flex', alignItems: 'center', gap: '8px',
+              background: '#FEF2F2', border: '1px solid #FCA5A5', borderRadius: '12px',
+              padding: '12px 16px', fontSize: '13px', color: '#DC2626', lineHeight: '1.5', fontWeight: '500'
             }}>
-              <span>🎯</span>
-              <span>Paket dipilih: {PLAN_LABELS[plan]}</span>
+              {error}
             </div>
           )}
 
-          <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-
-            {/* Email */}
-            <div>
-              <label style={labelStyle}>Alamat Email</label>
-              <input
-                type="email" value={email} onChange={e => setEmail(e.target.value)}
-                placeholder="budi@contoh.com" required autoComplete="email" style={inputStyle}
-              />
-            </div>
-
-            {/* Password */}
-            <div>
-              <label style={labelStyle}>Password</label>
-              <div style={{ position: 'relative' }}>
-                <input
-                  type={showPw ? 'text' : 'password'}
-                  value={password} onChange={e => setPassword(e.target.value)}
-                  placeholder="Minimal 8 karakter" required
-                  autoComplete="new-password"
-                  style={{ ...inputStyle, paddingRight: '44px' }}
-                />
-                <button
-                  type="button" onClick={() => setShowPw(p => !p)}
-                  style={{
-                    position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)',
-                    background: 'none', border: 'none', cursor: 'pointer', padding: '4px',
-                    color: '#9ca3af', display: 'flex', alignItems: 'center',
-                  }}
-                >
-                  <EyeIcon crossed={showPw} />
-                </button>
-              </div>
-            </div>
-
-            {/* Terms */}
-            <label style={{
-              display: 'flex', alignItems: 'flex-start', gap: '8px',
-              fontSize: '13px', color: '#6b7280', lineHeight: '1.5', cursor: 'pointer',
-            }}>
-              <input
-                type="checkbox" checked={terms} onChange={e => setTerms(e.target.checked)}
-                style={{ width: '15px', height: '15px', marginTop: '2px', accentColor: '#7C3AED', cursor: 'pointer', flexShrink: 0 }}
-              />
-              <span>
-                Dengan mendaftar, Anda menyetujui{' '}
-                <a href="https://larisi.id/syarat-ketentuan" target="_blank" rel="noopener noreferrer"
-                  style={{ color: '#7C3AED', textDecoration: 'none', fontWeight: '500' }}>
-                  Syarat dan Ketentuan
-                </a>{' '}serta{' '}
-                <a href="https://larisi.id/kebijakan-privasi" target="_blank" rel="noopener noreferrer"
-                  style={{ color: '#7C3AED', textDecoration: 'none', fontWeight: '500' }}>
-                  Kebijakan Privasi
-                </a>{' '}kami.
-              </span>
-            </label>
-
-            {/* Error */}
-            {error && (
-              <div style={{
-                background: '#FEF2F2', border: '1px solid #FCA5A5', borderRadius: '8px',
-                padding: '10px 12px', fontSize: '13px', color: '#DC2626', lineHeight: '1.4',
-              }}>
-                {error}
-              </div>
-            )}
-
-            {/* Submit */}
-            <button
-              type="submit"
-              disabled={loading || !canSubmit}
-              style={{
-                width: '100%', padding: '14px', borderRadius: '12px',
-                background: loading || !canSubmit ? '#E4E4EB' : '#111827',
-                color: loading || !canSubmit ? '#9ca3af' : '#fff',
-                border: 'none', fontSize: '15px', fontWeight: '700',
-                cursor: loading || !canSubmit ? 'not-allowed' : 'pointer',
-                fontFamily: 'inherit', transition: 'background 0.15s',
-              }}
+          {/* Submit Button */}
+          <div className="stagger-6" style={{ marginTop: '8px' }}>
+            <button type="submit" disabled={loading || !canSubmit} style={{
+              width: '100%', padding: '16px', borderRadius: '16px', 
+              background: loading || !canSubmit ? '#E4E4EB' : '#111827', 
+              color: loading || !canSubmit ? '#9ca3af' : '#fff',
+              border: 'none', fontSize: '15px', fontWeight: '800', fontFamily: 'inherit',
+              cursor: loading || !canSubmit ? 'not-allowed' : 'pointer', 
+              boxShadow: loading || !canSubmit ? 'none' : '0 8px 24px rgba(0, 0, 0, 0.15)',
+              transition: 'all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)', transform: 'translateY(0)'
+            }}
+            onMouseDown={(e) => !(loading || !canSubmit) && (e.currentTarget.style.transform = 'translateY(2px)')}
+            onMouseUp={(e) => !(loading || !canSubmit) && (e.currentTarget.style.transform = 'translateY(0)')}
+            onMouseLeave={(e) => !(loading || !canSubmit) && (e.currentTarget.style.transform = 'translateY(0)')}
             >
               {loading ? 'Memproses...' : 'Buat Akun'}
             </button>
-          </form>
-
-          {/* Login link */}
-          <div style={{ textAlign: 'center', marginTop: '20px', fontSize: '13px', color: '#6b7280' }}>
-            Sudah punya akun?{' '}
-            <button
-              onClick={onGoLogin}
-              style={{
-                background: 'none', border: 'none', padding: 0,
-                color: '#7C3AED', fontWeight: '700', fontSize: '13px',
-                cursor: 'pointer', fontFamily: 'inherit',
-              }}
-            >
-              Masuk di sini
-            </button>
           </div>
 
+        </form>
+
+        {/* Login Link */}
+        <div className="stagger-6" style={{textAlign: 'center', marginTop: '24px'}}>
+          <span style={{fontSize: '14px', color: 'var(--m-ink-sub)', fontWeight: '500'}}>Sudah punya akun? </span>
+          <button onClick={onGoLogin} style={{
+            fontSize: '14px', fontWeight: '800', color: 'var(--m-brand)', textDecoration: 'none',
+            background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0
+          }}>
+            Masuk di sini
+          </button>
         </div>
+
       </div>
     </div>
   );

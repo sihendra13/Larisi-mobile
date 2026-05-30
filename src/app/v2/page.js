@@ -10,6 +10,8 @@ import PerformaScreen    from '@/components/v2/PerformaScreen';
 import LoginScreen       from '@/components/v2/LoginScreen';
 import RegisterScreen    from '@/components/v2/RegisterScreen';
 import OnboardingScreen  from '@/components/v2/OnboardingScreen';
+import SplashScreen      from '@/components/v2/SplashScreen';
+import InstallScreen     from '@/components/v2/InstallScreen';
 import ProfilePanel      from '@/components/v2/ProfilePanel';
 import ReminderModal     from '@/components/v2/ReminderModal';
 import { getProfile, getSessionId, getAccessToken } from '@/lib/config';
@@ -70,8 +72,14 @@ export default function DapurV2() {
   const [needsOtp,   setNeedsOtp]   = useState(false);
   const [showPanel,  setShowPanel]  = useState(false);
 
+  /* ── Flow State: Splash -> Install -> Auth ── */
+  const [showSplash, setShowSplash] = useState(true); // Start with splash active or checking
+  const [showInstall, setShowInstall] = useState(false);
+
   useEffect(() => {
-    /* Simpan plan dari URL param jika ada (dari landing page) */
+    const splashShown = sessionStorage.getItem('larisi_splash_shown');
+    const tok = getAccessToken();
+
     const urlParams = new URLSearchParams(window.location.search);
     const planParam = urlParams.get('plan');
     if (planParam) {
@@ -79,34 +87,54 @@ export default function DapurV2() {
       localStorage.removeItem('larisi_trial_start');
     }
 
-    const tok = getAccessToken();
-    if (!tok) {
-      /* Ada ?plan= → user datang dari landing page → langsung register */
-      setAuthState(planParam ? 'register' : 'login');
-      return;
-    }
+    const continueToAuth = () => {
+      if (!tok) {
+        setAuthState(planParam ? 'register' : 'login');
+        return;
+      }
+      const p   = getProfile();
+      const sid = getSessionId();
 
-    const p   = getProfile();
-    const sid = getSessionId();
+      let uid = null;
+      try {
+        const payload = JSON.parse(atob(tok.split('.')[1]));
+        uid = payload.sub || null;
+      } catch {}
 
-    /* Parse userId dari JWT token */
-    let uid = null;
-    try {
-      const payload = JSON.parse(atob(tok.split('.')[1]));
-      uid = payload.sub || null;
-    } catch {}
+      setAccessToken(tok);
+      setUserId(uid);
+      if (sid) setSessionId(sid);
 
-    setAccessToken(tok);
-    setUserId(uid);
-    if (sid) setSessionId(sid);
+      if (p) {
+        setProfile(p);
+        applyLocation(p);
+        setAuthState(p.business_name ? 'app' : 'onboarding');
+      } else {
+        setAuthState('onboarding');
+      }
+    };
 
-    if (p) {
-      setProfile(p);
-      applyLocation(p);
-      /* Profil lengkap → langsung ke app */
-      setAuthState(p.business_name ? 'app' : 'onboarding');
+    if (!splashShown) {
+      setShowSplash(true);
+      setTimeout(() => {
+        setShowSplash(false);
+        sessionStorage.setItem('larisi_splash_shown', '1');
+
+        if (!tok) {
+          const installDismissed = localStorage.getItem('larisi_install_dismissed');
+          const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+          if (!isStandalone && !installDismissed) {
+             setShowInstall(true);
+          } else {
+             continueToAuth();
+          }
+        } else {
+           continueToAuth();
+        }
+      }, 3000);
     } else {
-      setAuthState('onboarding');
+      setShowSplash(false);
+      continueToAuth();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -183,6 +211,25 @@ export default function DapurV2() {
   const BACK = { audiens:'platform', aset:'audiens', caption:'aset' };
   const goTo   = (s) => setScreen(s);
   const goBack = () => { if (BACK[screen]) goTo(BACK[screen]); };
+
+  /* ── Initial Splash Screen ── */
+  if (showSplash) {
+    return <SplashScreen />;
+  }
+
+  /* ── PWA Install Screen ── */
+  if (showInstall) {
+    return (
+      <InstallScreen 
+        onSkip={() => { 
+          setShowInstall(false); 
+          localStorage.setItem('larisi_install_dismissed', '1');
+          setAuthState('register'); // Go to register after skip/install
+        }} 
+        installPrompt={installPrompt} 
+      />
+    );
+  }
 
   /* ── Loading state ── */
   if (authState === 'loading') {
