@@ -174,10 +174,14 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext, pro
   const [disconnectConfirmText, setDisconnectConfirmText] = useState('');
 
   const openDisconnectConfirm = (plt) => {
-    setDisconnectPlatform(plt);
-    setDisconnectConfirmText('');
-    setShowDisconnectConfirm(true);
-    setTimeout(() => setAnimateDisconnectConfirm(true), 10);
+    /* Close manage sheet dulu, baru buka confirmation modal */
+    closeManage();
+    setTimeout(() => {
+      setDisconnectPlatform(plt);
+      setDisconnectConfirmText('');
+      setShowDisconnectConfirm(true);
+      setTimeout(() => setAnimateDisconnectConfirm(true), 10);
+    }, 300);
   };
   const closeDisconnectConfirm = () => {
     setAnimateDisconnectConfirm(false);
@@ -277,7 +281,7 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext, pro
                     )}
                   </div>
                   {p.icon}
-                  <span style={{fontFamily:'var(--m-font)',fontSize:'11px',fontWeight:'600',color: isConn ? '#10B981' : 'var(--m-ink-sub)'}}>
+                  <span style={{fontFamily:'var(--m-font)',fontSize:'11px',fontWeight:'600',color:'var(--m-ink-sub)'}}>
                     {p.label}
                   </span>
                 </button>
