@@ -42,39 +42,38 @@ export function connectSocial({ platform, accessToken, userId, onStart, onDone, 
     window.removeEventListener('message', msgHandler);
   };
 
-  /* Fetch OAuth URL dari Supabase function — async IIFE (identik desktop) */
-  (async () => {
-    try {
-      const resp = await fetch(`${SUPABASE_URL}/functions/v1/postforme-auth`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          platform,
-          redirect_uri: REDIRECT_URI,
-          external_id:  externalId,
-          ...(platform === 'instagram' ? { scopes: INSTAGRAM_SCOPES } : {}),
-        }),
-      });
-      if (!resp.ok) throw new Error('Server error ' + resp.status);
-
-      const data = await resp.json();
-      const authUrl = data.url || data.auth_url || data.redirect_url || data.authorization_url;
-      if (!authUrl) throw new Error('URL OAuth tidak tersedia');
-
-      if (popup) popup.location.href = authUrl;
-      else {
-        /* Fallback kalau popup diblokir */
-        window.open(authUrl, 'postforme_oauth', 'width=520,height=700,left=100,top=80');
-      }
-    } catch (err) {
-      console.error('[connectSocial] error:', err);
-      if (popup) popup.close();
-      onCancel?.();
+  /* Fetch OAuth URL dari Supabase function */
+  fetch(`${SUPABASE_URL}/functions/v1/postforme-auth`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      platform,
+      redirect_uri: REDIRECT_URI,
+      external_id:  externalId,
+      ...(platform === 'instagram' ? { scopes: INSTAGRAM_SCOPES } : {}),
+    }),
+  })
+  .then(resp => {
+    if (!resp.ok) throw new Error('Server error ' + resp.status);
+    return resp.json();
+  })
+  .then(data => {
+    const authUrl = data.url || data.auth_url || data.redirect_url || data.authorization_url;
+    if (!authUrl) throw new Error('URL OAuth tidak tersedia');
+    if (popup) popup.location.href = authUrl;
+    else {
+      /* Fallback kalau popup diblokir */
+      window.open(authUrl, 'postforme_oauth', 'width=520,height=700,left=100,top=80');
     }
-  })();
+  })
+  .catch(err => {
+    console.error('[connectSocial] error:', err);
+    if (popup) popup.close();
+    onCancel?.();
+  });
 
   /* Dengarkan callback dari postforme-callback.html */
   const msgHandler = async (event) => {
