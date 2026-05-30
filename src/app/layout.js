@@ -1,4 +1,5 @@
 import "./globals.css";
+import "../css/auth-premium.css";
 
 export const metadata = {
   title: "Larisi",
