@@ -81,7 +81,8 @@ export default function DapurV2() {
   const [showInstall, setShowInstall] = useState(false);
 
   useEffect(() => {
-    const splashShown = sessionStorage.getItem('larisi_splash_shown');
+    /* localStorage agar splash hanya muncul sekali seumur install, bukan tiap buka app */
+    const splashShown = localStorage.getItem('larisi_splash_shown');
     const tok = getAccessToken();
 
     const urlParams = new URLSearchParams(window.location.search);
@@ -139,7 +140,7 @@ export default function DapurV2() {
       setShowSplash(true);
       setTimeout(() => {
         setShowSplash(false);
-        sessionStorage.setItem('larisi_splash_shown', '1');
+        localStorage.setItem('larisi_splash_shown', '1');
 
 
         if (!tok) {
