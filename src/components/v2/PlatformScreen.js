@@ -212,7 +212,7 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext, pro
         {/* ── Card: Posting ke Platform ── */}
         <div style={{marginBottom:'12px',padding:'16px',background:'#fff',borderRadius:'16px',border:'1.5px solid #EBEBF0'}}>
           <div style={{fontFamily:'var(--m-font)',fontSize:'15px',fontWeight:'700',color:'var(--m-ink)',marginBottom:'14px'}}>
-            Posting ke Platform
+            Pilih Platform
           </div>
           <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'10px'}}>
             {PLATFORMS.map(p => {
@@ -234,9 +234,6 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext, pro
                   <span style={{fontFamily:'var(--m-font)',fontSize:'11px',fontWeight:'600',color: isConn ? '#10B981' : 'var(--m-ink-sub)'}}>
                     {p.label}
                   </span>
-                  {!isConn && (
-                    <div style={{position:'absolute',top:'6px',right:'6px',width:'8px',height:'8px',borderRadius:'50%',background:'#E4E4EB'}} />
-                  )}
                 </button>
               );
             })}
