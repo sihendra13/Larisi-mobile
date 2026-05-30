@@ -61,10 +61,47 @@ const USP_PLACEHOLDERS = {
 };
 
 const SOCIAL_PLATFORMS = [
-  { key: 'instagram', label: 'Instagram',  icon: '📷', color: '#E1306C' },
-  { key: 'facebook',  label: 'Facebook',   icon: '📘', color: '#1877F2' },
-  { key: 'tiktok',    label: 'TikTok',     icon: '🎵', color: '#010101' },
-  { key: 'youtube',   label: 'YouTube',    icon: '▶️', color: '#FF0000' },
+  {
+    id: 'instagram', label: 'Instagram',
+    icon: (
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+        <defs>
+          <linearGradient id="ig-icon" x1="0%" y1="100%" x2="100%" y2="0%">
+            <stop offset="0%"   stopColor="#f09433"/>
+            <stop offset="55%"  stopColor="#dc2743"/>
+            <stop offset="100%" stopColor="#bc1888"/>
+          </linearGradient>
+        </defs>
+        <rect x="3" y="3" width="18" height="18" rx="5" stroke="url(#ig-icon)" strokeWidth="1.5"/>
+        <circle cx="12" cy="12" r="4" stroke="url(#ig-icon)" strokeWidth="1.5"/>
+      </svg>
+    ),
+  },
+  {
+    id: 'facebook', label: 'Facebook',
+    icon: (
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+        <path d="M13.5 8h2V5.5h-2C11.57 5.5 10 7.07 10 9v1.5H8V13h2v7h3v-7h2l.5-2.5H13V9c0-.28.22-.5.5-.5z" fill="#1877F2"/>
+      </svg>
+    ),
+  },
+  {
+    id: 'tiktok', label: 'TikTok',
+    icon: (
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+        <path d="M16 8c.55.73 1.4 1.2 2.35 1.25v2.1a4.55 4.55 0 01-2.35-.65v5.8a4.1 4.1 0 11-4.1-4.1h.27v2.1H12a2 2 0 102 2V8z" fill="#0E0E12"/>
+      </svg>
+    ),
+  },
+  {
+    id: 'youtube', label: 'YouTube',
+    icon: (
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+        <path d="M21.8 8s-.2-1.4-.8-2c-.8-.8-1.6-.8-2-.9C16.8 5 12 5 12 5s-4.8 0-7 .1c-.4.1-1.2.1-2 .9-.6.6-.8 2-.8 2S2 9.6 2 11.2v1.5c0 1.6.2 3.2.2 3.2s.2 1.4.8 2c.8.8 1.8.8 2.3.9C6.8 19 12 19 12 19s4.8 0 7-.2c.4-.1 1.2-.1 2-.9.6-.6.8-2 .8-2s.2-1.6.2-3.2v-1.5C22 9.6 21.8 8 21.8 8z" fill="#FF0000"/>
+        <path d="M9.5 8.5l6 3.5-6 3.5V8.5z" fill="white"/>
+      </svg>
+    ),
+  },
 ];
 
 /* ─────────────────────────────────────────
