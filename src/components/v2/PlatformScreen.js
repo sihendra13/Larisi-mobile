@@ -171,8 +171,22 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext, pro
   const closeWarn = () => { setAnimateWarn(false); setTimeout(() => { setShowWarn(false); setWarnPlatform(''); }, 300); };
 
   /* Disconnect confirmation — matching desktop behavior */
-  const openDisconnectConfirm = (plt) => { setDisconnectPlatform(plt); setShowDisconnectConfirm(true); setTimeout(() => setAnimateDisconnectConfirm(true), 10); };
-  const closeDisconnectConfirm = () => { setAnimateDisconnectConfirm(false); setTimeout(() => { setShowDisconnectConfirm(false); setDisconnectPlatform(''); }, 300); };
+  const [disconnectConfirmText, setDisconnectConfirmText] = useState('');
+
+  const openDisconnectConfirm = (plt) => {
+    setDisconnectPlatform(plt);
+    setDisconnectConfirmText('');
+    setShowDisconnectConfirm(true);
+    setTimeout(() => setAnimateDisconnectConfirm(true), 10);
+  };
+  const closeDisconnectConfirm = () => {
+    setAnimateDisconnectConfirm(false);
+    setTimeout(() => {
+      setShowDisconnectConfirm(false);
+      setDisconnectPlatform('');
+      setDisconnectConfirmText('');
+    }, 300);
+  };
 
   const confirmDisconnect = (plt) => {
     const updated = getStoredAccounts().filter(a => a.platform !== plt);
@@ -466,7 +480,8 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext, pro
             transform: animateDisconnectConfirm ? 'translate(-50%,-50%) scale(1)' : 'translate(-50%,-48%) scale(0.97)',
             opacity: animateDisconnectConfirm ? 1 : 0,
             transition:'transform 0.25s cubic-bezier(0.34,1.56,0.64,1),opacity 0.25s',
-            width:'min(360px,88vw)',
+            width:'min(400px,88vw)',
+            maxHeight:'80vh',overflowY:'auto',
             background:'#fff',borderRadius:'20px',padding:'28px 24px',
             boxShadow:'0 20px 60px rgba(0,0,0,0.2)',
             fontFamily:'var(--m-font)',
@@ -474,12 +489,15 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext, pro
             {(() => {
               const disconnectAcc = accounts.find(a => a.platform === disconnectPlatform);
               const disconnectPlat = PLATFORMS.find(p => p.id === disconnectPlatform);
+              const canDisconnect = disconnectConfirmText.toLowerCase() === 'disconnect';
               return (
                 <>
-                  <div style={{fontSize:'16px',fontWeight:'700',color:'#111827',marginBottom:'20px'}}>
-                    Disconnect {disconnectAcc?.username ? `@${disconnectAcc.username}` : disconnectPlat?.label || disconnectPlatform}?
+                  <div style={{fontSize:'18px',fontWeight:'700',color:'#111827',marginBottom:'20px'}}>
+                    Disconnect {disconnectAcc?.username ? `@${disconnectAcc.username}` : disconnectPlat?.label || disconnectPlatform}
                   </div>
-                  <div style={{display:'flex',alignItems:'center',gap:'14px',padding:'14px 16px',marginBottom:'20px',border:'1.5px solid #e5e7eb',borderRadius:'12px',background:'#f9fafb'}}>
+
+                  {/* Account info card */}
+                  <div style={{display:'flex',alignItems:'center',gap:'14px',padding:'14px 16px',marginBottom:'16px',border:'1.5px solid #e5e7eb',borderRadius:'12px',background:'#f9fafb'}}>
                     {disconnectPlat && (
                       <>
                         <SoftIcon platform={disconnectPlat} size={48} />
@@ -492,18 +510,62 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext, pro
                       </>
                     )}
                   </div>
-                  <button
-                    onClick={() => confirmDisconnect(disconnectPlatform)}
-                    style={{width:'100%',padding:'13px',borderRadius:'12px',background:'#EF4444',color:'#fff',border:'none',fontSize:'14px',fontWeight:'700',cursor:'pointer',fontFamily:'inherit',marginBottom:'8px'}}
-                  >
-                    Ya, putuskan akun
-                  </button>
-                  <button
-                    onClick={closeDisconnectConfirm}
-                    style={{width:'100%',padding:'11px',borderRadius:'12px',background:'none',color:'#9ca3af',border:'1.5px solid #E4E4EB',fontSize:'13px',cursor:'pointer',fontFamily:'inherit'}}
-                  >
-                    Batal
-                  </button>
+
+                  {/* Warning message */}
+                  <div style={{fontSize:'13px',color:'#6b7280',lineHeight:'1.6',marginBottom:'16px'}}>
+                    Kamu tidak akan bisa lagi memposting ke akun ini. Semua postingan, analitik, tag, dan data yang terkait akan dihapus secara permanen. <strong>Tindakan ini tidak bisa dibatalkan.</strong>
+                  </div>
+
+                  {/* Confirmation input */}
+                  <div style={{marginBottom:'16px'}}>
+                    <div style={{fontSize:'12px',fontWeight:'600',color:'#111827',marginBottom:'8px'}}>
+                      Ketik "<strong>disconnect</strong>" untuk konfirmasi
+                    </div>
+                    <input
+                      type="text"
+                      value={disconnectConfirmText}
+                      onChange={(e) => setDisconnectConfirmText(e.target.value)}
+                      placeholder="disconnect"
+                      style={{
+                        width:'100%',
+                        padding:'12px 14px',
+                        borderRadius:'8px',
+                        border:'1.5px solid #e5e7eb',
+                        fontSize:'14px',
+                        fontFamily:'inherit',
+                        boxSizing:'border-box',
+                      }}
+                    />
+                  </div>
+
+                  {/* Buttons */}
+                  <div style={{display:'flex',gap:'12px'}}>
+                    <button
+                      onClick={() => confirmDisconnect(disconnectPlatform)}
+                      disabled={!canDisconnect}
+                      style={{
+                        flex:1,padding:'13px',borderRadius:'12px',
+                        background: canDisconnect ? '#EF4444' : '#F3F4F6',
+                        color: canDisconnect ? '#fff' : '#9ca3af',
+                        border:'none',fontSize:'14px',fontWeight:'700',
+                        cursor: canDisconnect ? 'pointer' : 'not-allowed',
+                        fontFamily:'inherit',
+                      }}
+                    >
+                      Putuskan Akun
+                    </button>
+                    <button
+                      onClick={closeDisconnectConfirm}
+                      style={{
+                        flex:1,padding:'13px',borderRadius:'12px',
+                        background:'none',color:'#111827',
+                        border:'1.5px solid #E4E4EB',fontSize:'14px',fontWeight:'600',
+                        cursor:'pointer',fontFamily:'inherit',
+                      }}
+                    >
+                      Batal
+                    </button>
+                  </div>
                 </>
               );
             })()}
