@@ -156,6 +156,8 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext, pro
   const [disconnectPlatform, setDisconnectPlatform] = useState('');
   const [showDisconnectConfirm, setShowDisconnectConfirm] = useState(false);
   const [animateDisconnectConfirm, setAnimateDisconnectConfirm] = useState(false);
+  /* Toast notification */
+  const [toast, setToast] = useState({ show: false, message: '' });
 
   /* Refresh akun dari localStorage setiap kali layar aktif */
   useEffect(() => {
@@ -197,6 +199,11 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext, pro
     localStorage.setItem('radar_social_accounts', JSON.stringify(updated));
     setAccounts(updated);
     closeDisconnectConfirm();
+
+    /* Show toast notification */
+    const platLabel = PLATFORMS.find(p => p.id === plt)?.label || plt;
+    setToast({ show: true, message: `Akun ${platLabel}mu sudah tidak terhubung` });
+    setTimeout(() => setToast({ show: false, message: '' }), 3500);
   };
 
   const handleSelectPlatform = (pid) => {
@@ -576,6 +583,37 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext, pro
           </div>
         </>
       )}
+
+      {/* ── Toast Notification ── */}
+      {toast.show && (
+        <div style={{
+          position:'fixed',bottom:'80px',left:'50%',transform:'translateX(-50%)',
+          zIndex:10000,
+          background:'#111827',color:'#fff',
+          padding:'12px 16px',borderRadius:'12px',
+          fontSize:'14px',fontWeight:'600',
+          fontFamily:'var(--m-font)',
+          boxShadow:'0 4px 20px rgba(0,0,0,0.2)',
+          opacity:1,
+          animation:'slideUp 0.3s ease-out forwards',
+          maxWidth:'80vw',whiteSpace:'nowrap',textOverflow:'ellipsis',overflow:'hidden',
+        }}>
+          {toast.message}
+        </div>
+      )}
+
+      <style>{`
+        @keyframes slideUp {
+          from {
+            opacity: 0;
+            transform: translateX(-50%) translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+          }
+        }
+      `}</style>
     </div>
   );
 }
