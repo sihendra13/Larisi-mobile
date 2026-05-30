@@ -71,8 +71,20 @@ export default function DapurV2() {
   const [showPanel,  setShowPanel]  = useState(false);
 
   useEffect(() => {
+    /* Simpan plan dari URL param jika ada (dari landing page) */
+    const urlParams = new URLSearchParams(window.location.search);
+    const planParam = urlParams.get('plan');
+    if (planParam) {
+      localStorage.setItem('larisi_selected_plan', planParam);
+      localStorage.removeItem('larisi_trial_start');
+    }
+
     const tok = getAccessToken();
-    if (!tok) { setAuthState('login'); return; }
+    if (!tok) {
+      /* Ada ?plan= → user datang dari landing page → langsung register */
+      setAuthState(planParam ? 'register' : 'login');
+      return;
+    }
 
     const p   = getProfile();
     const sid = getSessionId();
