@@ -84,12 +84,15 @@ export default function DapurV2() {
     const planParam = urlParams.get('plan');
     if (planParam) {
       localStorage.setItem('larisi_selected_plan', planParam);
+      localStorage.setItem('larisi_intent', 'register'); /* simpan niat register — tetap ada setelah install */
       localStorage.removeItem('larisi_trial_start');
     }
 
     const continueToAuth = () => {
       if (!tok) {
-        setAuthState(planParam ? 'register' : 'login');
+        /* Cek intent register dari localStorage — tetap ada walau URL sudah tidak punya ?plan= */
+        const intent = localStorage.getItem('larisi_intent');
+        setAuthState((planParam || intent === 'register') ? 'register' : 'login');
         return;
       }
       const p   = getProfile();
@@ -176,7 +179,7 @@ export default function DapurV2() {
     setUserId(user?.id || null);
     setOtpEmail(email || '');
     setNeedsOtp(!!otp);
-    /* Profil belum ada → ke onboarding (OTP di step 1 jika diperlukan) */
+    localStorage.removeItem('larisi_intent'); /* hapus intent — sudah selesai register */
     setAuthState('onboarding');
   };
 
@@ -221,14 +224,13 @@ export default function DapurV2() {
   if (showInstall) {
     return (
       <InstallScreen 
-        onSkip={() => { 
-          setShowInstall(false); 
+        onSkip={() => {
+          setShowInstall(false);
           localStorage.setItem('larisi_install_dismissed', '1');
-          
-          /* Cek apakah user datang dari landing page (tombol Coba Gratis) */
           const urlParams = new URLSearchParams(window.location.search);
           const planParam = urlParams.get('plan');
-          setAuthState(planParam ? 'register' : 'login');
+          const intent    = localStorage.getItem('larisi_intent');
+          setAuthState((planParam || intent === 'register') ? 'register' : 'login');
         }} 
         installPrompt={installPrompt} 
       />
