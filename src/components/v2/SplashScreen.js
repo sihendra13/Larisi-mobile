@@ -67,12 +67,12 @@ export default function SplashScreen() {
         {/* Social Media Connection Theme */}
         <div style={{ position: 'absolute', width: '100vw', height: '100vh', zIndex: -1, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           
-          {/* Animated Connecting Lines */}
-          <svg width="100%" height="100%" style={{ position: 'absolute' }}>
-            <line x1="calc(50% - 110px)" y1="calc(50% - 130px)" x2="50%" y2="50%" stroke="rgba(255, 255, 255, 0.9)" strokeWidth="2" className="splash-flowing-line" opacity="0.9" />
-            <line x1="calc(50% + 120px)" y1="calc(50% - 110px)" x2="50%" y2="50%" stroke="rgba(255, 255, 255, 0.9)" strokeWidth="2" className="splash-flowing-line" opacity="0.9" />
-            <line x1="calc(50% - 100px)" y1="calc(50% + 140px)" x2="50%" y2="50%" stroke="rgba(255, 255, 255, 0.9)" strokeWidth="2" className="splash-flowing-line" opacity="0.9" />
-            <line x1="calc(50% + 110px)" y1="calc(50% + 130px)" x2="50%" y2="50%" stroke="rgba(255, 255, 255, 0.9)" strokeWidth="2" className="splash-flowing-line" opacity="0.9" />
+          {/* Animated Connecting Lines — pakai % bukan calc() agar kompatibel iOS Safari */}
+          <svg width="100%" height="100%" style={{ position: 'absolute' }} viewBox="0 0 100 100" preserveAspectRatio="none">
+            <line x1="22" y1="35" x2="50" y2="50" stroke="rgba(255,255,255,0.9)" strokeWidth="0.4" className="splash-flowing-line" opacity="0.9" />
+            <line x1="79" y1="37" x2="50" y2="50" stroke="rgba(255,255,255,0.9)" strokeWidth="0.4" className="splash-flowing-line" opacity="0.9" />
+            <line x1="24" y1="67" x2="50" y2="50" stroke="rgba(255,255,255,0.9)" strokeWidth="0.4" className="splash-flowing-line" opacity="0.9" />
+            <line x1="78" y1="65" x2="50" y2="50" stroke="rgba(255,255,255,0.9)" strokeWidth="0.4" className="splash-flowing-line" opacity="0.9" />
           </svg>
 
           {/* Social Media Nodes */}

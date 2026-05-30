@@ -117,8 +117,8 @@ export default function InstallScreen({ onSkip, installPrompt }) {
                 Install di iPhone / iPad:
               </p>
               <div style={{ display:'flex', flexDirection:'column', gap:'12px' }}>
-                <Step num="1" text={<>Tap ikon <strong>Share ⬆️</strong> di bawah layar Safari</>} />
-                <Step num="2" text={<>Pilih <strong style={{color:'var(--m-brand)'}}>Tambah ke Layar Utama</strong></>} />
+                <Step num="1" text={<>Buka di <strong>Safari</strong> (bukan Chrome), tap ikon <strong>Share ⬆️</strong> di bawah layar</>} />
+                <Step num="2" text={<>Scroll ke bawah di menu Share, cari <strong style={{color:'var(--m-brand)'}}>Tambah ke Layar Utama</strong></>} />
                 <Step num="3" text={<>Tap <strong>Tambah</strong> di pojok kanan atas</>} />
               </div>
             </div>
