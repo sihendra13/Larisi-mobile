@@ -46,7 +46,7 @@ export default function DapurV2() {
       e.preventDefault();
       window.__pwaInstallPrompt = e;
       setInstallPrompt(e);
-      const dismissed = localStorage.getItem('pwa_install_dismissed');
+      const dismissed = localStorage.getItem('larisi_install_dismissed');
       if (!dismissed) setShowInstallBar(true);
     };
     window.addEventListener('beforeinstallprompt', handler);
@@ -63,7 +63,7 @@ export default function DapurV2() {
 
   const dismissInstall = () => {
     setShowInstallBar(false);
-    localStorage.setItem('pwa_install_dismissed', '1');
+    localStorage.setItem('larisi_install_dismissed', '1');
   };
 
   /* ── Auth state: 'loading' | 'login' | 'register' | 'onboarding' | 'app' ── */
