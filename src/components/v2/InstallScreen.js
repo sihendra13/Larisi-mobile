@@ -2,18 +2,14 @@
 import React, { useEffect, useState } from 'react';
 
 export default function InstallScreen({ onSkip, installPrompt }) {
-  const [isIOS,       setIsIOS]       = useState(false);
-  const [hasPrompt,   setHasPrompt]   = useState(false);
-  const [mounted,     setMounted]     = useState(false);
+  const [isIOS,      setIsIOS]      = useState(false);
+  const [mounted,    setMounted]    = useState(false);
+  const [showManual, setShowManual] = useState(false); /* tampilkan instruksi manual setelah klik gagal */
 
   useEffect(() => {
     setMounted(true);
-    const ua = window.navigator.userAgent;
-    const isIOSDevice = /iPad|iPhone|iPod/.test(ua);
-    setIsIOS(isIOSDevice);
-    /* Cek apakah native prompt tersedia */
-    setHasPrompt(!isIOSDevice && !!(installPrompt || window.__pwaInstallPrompt));
-  }, [installPrompt]);
+    setIsIOS(/iPad|iPhone|iPod/.test(window.navigator.userAgent));
+  }, []);
 
   const handleInstallClick = async () => {
     const prompt = installPrompt || window.__pwaInstallPrompt;
@@ -24,14 +20,14 @@ export default function InstallScreen({ onSkip, installPrompt }) {
         if (outcome === 'accepted') onSkip();
       } catch (err) {
         console.warn('[PWA] install prompt error:', err);
+        setShowManual(true); /* fallback ke instruksi manual */
       }
+    } else {
+      setShowManual(true); /* Chrome tidak kooperatif → tampilkan instruksi */
     }
   };
 
   if (!mounted) return null;
-
-  /* ── Instruksi manual (Android tanpa native prompt, atau iOS) ── */
-  const isManual = isIOS || !hasPrompt;
 
   return (
     <div className="bg-animated" style={{
@@ -67,8 +63,8 @@ export default function InstallScreen({ onSkip, installPrompt }) {
           Akses lebih cepat langsung dari layar utama HP kamu.
         </p>
 
-        {/* ── ANDROID native prompt tersedia ── */}
-        {!isManual && (
+        {/* ── STATE: Default (belum klik install) ── */}
+        {!showManual && !isIOS && (
           <>
             <p style={{ fontSize:'15px', color:'var(--m-ink-sub)', marginBottom:'28px', lineHeight:'1.6' }}>
               Dapatkan pengalaman terbaik — akses super cepat, tanpa buka browser dulu.
@@ -91,28 +87,41 @@ export default function InstallScreen({ onSkip, installPrompt }) {
           </>
         )}
 
-        {/* ── MANUAL (iOS atau Android tanpa native prompt) ── */}
-        {isManual && (
+        {/* ── STATE: Chrome tidak kooperatif → instruksi manual Android ── */}
+        {showManual && !isIOS && (
           <>
             <div style={{ background:'#f9fafb', borderRadius:'16px', padding:'20px', marginBottom:'24px', border:'1px solid #e5e7eb', textAlign:'left' }}>
-
-              {isIOS ? (
-                /* iOS: Share → Add to Home Screen */
-                <div style={{ display:'flex', flexDirection:'column', gap:'12px' }}>
-                  <Step num="1" text={<>Tap ikon <strong>Share</strong> <span style={{fontSize:'16px'}}>⬆️</span> di bawah layar Safari</>} />
-                  <Step num="2" text={<>Pilih <strong style={{color:'var(--m-brand)'}}>Tambah ke Layar Utama</strong></>} />
-                  <Step num="3" text={<>Tap <strong>Tambah</strong> di pojok kanan atas</>} />
-                </div>
-              ) : (
-                /* Android manual: ⋮ menu */
-                <div style={{ display:'flex', flexDirection:'column', gap:'12px' }}>
-                  <Step num="1" text={<>Tap menu <strong>⋮</strong> di pojok kanan atas Chrome</>} />
-                  <Step num="2" text={<>Pilih <strong style={{color:'var(--m-brand)'}}>Tambah ke layar utama</strong> atau <strong style={{color:'var(--m-brand)'}}>Install app</strong></>} />
-                  <Step num="3" text={<>Tap <strong>Tambah</strong> untuk konfirmasi</>} />
-                </div>
-              )}
+              <p style={{ fontSize:'13px', color:'#6b7280', marginBottom:'14px', fontWeight:'600' }}>
+                Install manual lewat Chrome:
+              </p>
+              <div style={{ display:'flex', flexDirection:'column', gap:'12px' }}>
+                <Step num="1" text={<>Tap menu <strong>⋮</strong> di pojok kanan atas Chrome</>} />
+                <Step num="2" text={<>Pilih <strong style={{color:'var(--m-brand)'}}>Tambah ke layar utama</strong> atau <strong style={{color:'var(--m-brand)'}}>Install app</strong></>} />
+                <Step num="3" text={<>Tap <strong>Tambah</strong> untuk konfirmasi</>} />
+              </div>
             </div>
+            <button onClick={onSkip} style={{
+              width:'100%', padding:'16px', borderRadius:'16px', background:'transparent',
+              color:'var(--m-ink-sub)', border:'none', fontSize:'14px', fontWeight:'600', cursor:'pointer'
+            }}>
+              Lanjut Tanpa Install
+            </button>
+          </>
+        )}
 
+        {/* ── iOS: langsung instruksi manual ── */}
+        {isIOS && (
+          <>
+            <div style={{ background:'#f9fafb', borderRadius:'16px', padding:'20px', marginBottom:'24px', border:'1px solid #e5e7eb', textAlign:'left' }}>
+              <p style={{ fontSize:'13px', color:'#6b7280', marginBottom:'14px', fontWeight:'600' }}>
+                Install di iPhone / iPad:
+              </p>
+              <div style={{ display:'flex', flexDirection:'column', gap:'12px' }}>
+                <Step num="1" text={<>Tap ikon <strong>Share ⬆️</strong> di bawah layar Safari</>} />
+                <Step num="2" text={<>Pilih <strong style={{color:'var(--m-brand)'}}>Tambah ke Layar Utama</strong></>} />
+                <Step num="3" text={<>Tap <strong>Tambah</strong> di pojok kanan atas</>} />
+              </div>
+            </div>
             <div style={{ display:'flex', flexDirection:'column', gap:'12px' }}>
               <button onClick={onSkip} style={{
                 width:'100%', padding:'16px', borderRadius:'16px', background:'#111827', color:'#fff',
@@ -136,7 +145,6 @@ export default function InstallScreen({ onSkip, installPrompt }) {
   );
 }
 
-/* Helper: step item */
 function Step({ num, text }) {
   return (
     <div style={{ display:'flex', alignItems:'flex-start', gap:'12px' }}>
