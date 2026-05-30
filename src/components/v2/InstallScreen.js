@@ -2,145 +2,150 @@
 import React, { useEffect, useState } from 'react';
 
 export default function InstallScreen({ onSkip, installPrompt }) {
-  const [isIOS, setIsIOS] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  const [isIOS,       setIsIOS]       = useState(false);
+  const [hasPrompt,   setHasPrompt]   = useState(false);
+  const [mounted,     setMounted]     = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    // Detect iOS
     const ua = window.navigator.userAgent;
-    const webkit = !!ua.match(/WebKit/i);
-    const isIPad = !!ua.match(/iPad/i);
-    const isIPhone = !!ua.match(/iPhone/i);
-    const isIOSDevice = isIPad || isIPhone;
-    const isSafari = isIOSDevice && webkit && !ua.match(/CriOS/i);
+    const isIOSDevice = /iPad|iPhone|iPod/.test(ua);
     setIsIOS(isIOSDevice);
-  }, []);
+    /* Cek apakah native prompt tersedia */
+    setHasPrompt(!isIOSDevice && !!(installPrompt || window.__pwaInstallPrompt));
+  }, [installPrompt]);
 
   const handleInstallClick = async () => {
-    /* Coba ambil dari global jika prop belum terupdate */
     const prompt = installPrompt || window.__pwaInstallPrompt;
     if (prompt) {
       try {
         prompt.prompt();
         const { outcome } = await prompt.userChoice;
-        if (outcome === 'accepted') {
-          onSkip();
-        }
+        if (outcome === 'accepted') onSkip();
       } catch (err) {
         console.warn('[PWA] install prompt error:', err);
-        onSkip(); /* fallback: lanjut saja */
       }
-    } else {
-      /* Chrome belum siap — instruksikan manual */
-      alert('Tap menu browser (⋮) → "Tambah ke layar utama" untuk install.');
     }
   };
 
   if (!mounted) return null;
+
+  /* ── Instruksi manual (Android tanpa native prompt, atau iOS) ── */
+  const isManual = isIOS || !hasPrompt;
 
   return (
     <div className="bg-animated" style={{
       minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
       padding: '24px', position: 'relative', overflow: 'hidden', fontFamily: '-apple-system, sans-serif'
     }}>
-      {/* Background Blobs for extra energy */}
-      <div style={{
-        position: 'absolute', top: '5%', left: '-5%', width: '300px', height: '300px',
-        background: 'var(--m-brand)', filter: 'blur(100px)', opacity: 0.15, borderRadius: '50%',
-        animation: 'float 8s ease-in-out infinite'
-      }} />
-      <div style={{
-        position: 'absolute', bottom: '5%', right: '-5%', width: '250px', height: '250px',
-        background: '#FF007A', filter: 'blur(120px)', opacity: 0.1, borderRadius: '50%',
-        animation: 'float 6s ease-in-out infinite reverse'
-      }} />
+      {/* Background blobs */}
+      <div style={{ position:'absolute', top:'5%', left:'-5%', width:'300px', height:'300px', background:'var(--m-brand)', filter:'blur(100px)', opacity:0.15, borderRadius:'50%', animation:'float 8s ease-in-out infinite' }} />
+      <div style={{ position:'absolute', bottom:'5%', right:'-5%', width:'250px', height:'250px', background:'#FF007A', filter:'blur(120px)', opacity:0.1, borderRadius:'50%', animation:'float 6s ease-in-out infinite reverse' }} />
 
-      {/* Install Card */}
       <div className="glass-card stagger-1" style={{
-        width: '100%', maxWidth: '440px', borderRadius: '32px', padding: '40px 32px',
-        display: 'flex', flexDirection: 'column', position: 'relative', zIndex: 10,
-        textAlign: 'center'
+        width:'100%', maxWidth:'440px', borderRadius:'32px', padding:'40px 32px',
+        display:'flex', flexDirection:'column', position:'relative', zIndex:10, textAlign:'center'
       }}>
-        
-        {/* Header Icon */}
+
+        {/* Icon */}
         <div style={{
-          width: '64px', height: '64px', background: 'var(--m-brand)', borderRadius: '20px',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px',
-          boxShadow: '0 12px 24px rgba(121, 26, 219, 0.3)'
+          width:'64px', height:'64px', background:'var(--m-brand)', borderRadius:'20px',
+          display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 20px',
+          boxShadow:'0 12px 24px rgba(121,26,219,0.3)'
         }}>
           <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-            <polyline points="7 10 12 15 17 10" />
-            <line x1="12" y1="15" x2="12" y2="3" />
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
           </svg>
         </div>
 
-        <h1 style={{fontSize: '24px', fontWeight: '800', color: 'var(--m-ink)', marginBottom: '16px', letterSpacing: '-0.5px'}}>
+        <h1 style={{ fontSize:'24px', fontWeight:'800', color:'var(--m-ink)', marginBottom:'8px', letterSpacing:'-0.5px' }}>
           Install Larisi di HP kamu
         </h1>
+        <p style={{ fontSize:'14px', color:'var(--m-ink-sub)', marginBottom:'24px', lineHeight:'1.5' }}>
+          Akses lebih cepat langsung dari layar utama HP kamu.
+        </p>
 
-        {isIOS ? (
-          // iOS Instructions
-          <div style={{ background: '#f9fafb', borderRadius: '16px', padding: '24px', marginBottom: '32px', border: '1px solid #e5e7eb' }}>
-            <p style={{ fontSize: '15px', color: 'var(--m-ink)', fontWeight: '600', marginBottom: '16px', lineHeight: '1.5' }}>
-              Tap ikon <span style={{ display: 'inline-block', padding: '4px 8px', background: '#fff', borderRadius: '6px', border: '1px solid #e5e7eb', margin: '0 4px' }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: 'text-bottom' }}><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
-                <span style={{ fontSize: '12px', marginLeft: '4px' }}>Share</span>
-              </span> di bawah layar, lalu pilih <br/><strong style={{ color: 'var(--m-brand)' }}>"Tambah ke Layar Utama"</strong>
+        {/* ── ANDROID native prompt tersedia ── */}
+        {!isManual && (
+          <>
+            <p style={{ fontSize:'15px', color:'var(--m-ink-sub)', marginBottom:'28px', lineHeight:'1.6' }}>
+              Dapatkan pengalaman terbaik — akses super cepat, tanpa buka browser dulu.
             </p>
-            {/* Simple Animated Guide for iOS */}
-            <div style={{ 
-              width: '100%', height: '120px', background: '#e5e7eb', borderRadius: '12px', 
-              display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', position: 'relative'
-            }}>
-               <div style={{ animation: 'float 2s ease-in-out infinite' }}>
-                 <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                   <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
-                   <line x1="12" y1="18" x2="12.01" y2="18"/>
-                 </svg>
-                 <div style={{ position: 'absolute', bottom: '10px', right: '10px', color: 'var(--m-brand)', transform: 'rotate(-45deg)' }}>
-                   ⬆️
-                 </div>
-               </div>
+            <div style={{ display:'flex', flexDirection:'column', gap:'12px' }}>
+              <button onClick={handleInstallClick} style={{
+                width:'100%', padding:'16px', borderRadius:'16px', background:'#111827', color:'#fff',
+                border:'none', fontSize:'15px', fontWeight:'800', cursor:'pointer',
+                boxShadow:'0 8px 24px rgba(0,0,0,0.15)'
+              }}>
+                Install Sekarang
+              </button>
+              <button onClick={onSkip} style={{
+                width:'100%', padding:'16px', borderRadius:'16px', background:'transparent',
+                color:'var(--m-ink-sub)', border:'none', fontSize:'14px', fontWeight:'600', cursor:'pointer'
+              }}>
+                Lanjut Tanpa Install
+              </button>
             </div>
-          </div>
-        ) : (
-          // Android / Desktop Instructions
-          <p style={{ fontSize: '15px', color: 'var(--m-ink-sub)', marginBottom: '32px', lineHeight: '1.6' }}>
-            Dapatkan pengalaman terbaik, akses super cepat, dan notifikasi langsung dari layar utama HP Anda.
-          </p>
+          </>
         )}
 
-        {/* Buttons */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {isIOS ? (
-            <button onClick={onSkip} style={{
-              width: '100%', padding: '16px', borderRadius: '16px', background: '#111827', color: '#fff',
-              border: 'none', fontSize: '15px', fontWeight: '800', cursor: 'pointer', 
-              boxShadow: '0 8px 24px rgba(0, 0, 0, 0.15)', transition: 'all 0.2s'
-            }}>
-              Sudah Install, Lanjut →
-            </button>
-          ) : (
-            <button onClick={handleInstallClick} style={{
-              width: '100%', padding: '16px', borderRadius: '16px', background: '#111827', color: '#fff',
-              border: 'none', fontSize: '15px', fontWeight: '800', cursor: 'pointer', 
-              boxShadow: '0 8px 24px rgba(0, 0, 0, 0.15)', transition: 'all 0.2s'
-            }}>
-              Install Sekarang
-            </button>
-          )}
+        {/* ── MANUAL (iOS atau Android tanpa native prompt) ── */}
+        {isManual && (
+          <>
+            <div style={{ background:'#f9fafb', borderRadius:'16px', padding:'20px', marginBottom:'24px', border:'1px solid #e5e7eb', textAlign:'left' }}>
 
-          <button onClick={onSkip} style={{
-            width: '100%', padding: '16px', borderRadius: '16px', background: 'transparent', color: 'var(--m-ink-sub)',
-            border: 'none', fontSize: '14px', fontWeight: '600', cursor: 'pointer', transition: 'all 0.2s'
-          }}>
-            Lanjut Tanpa Install
-          </button>
-        </div>
+              {isIOS ? (
+                /* iOS: Share → Add to Home Screen */
+                <div style={{ display:'flex', flexDirection:'column', gap:'12px' }}>
+                  <Step num="1" text={<>Tap ikon <strong>Share</strong> <span style={{fontSize:'16px'}}>⬆️</span> di bawah layar Safari</>} />
+                  <Step num="2" text={<>Pilih <strong style={{color:'var(--m-brand)'}}>Tambah ke Layar Utama</strong></>} />
+                  <Step num="3" text={<>Tap <strong>Tambah</strong> di pojok kanan atas</>} />
+                </div>
+              ) : (
+                /* Android manual: ⋮ menu */
+                <div style={{ display:'flex', flexDirection:'column', gap:'12px' }}>
+                  <Step num="1" text={<>Tap menu <strong>⋮</strong> di pojok kanan atas Chrome</>} />
+                  <Step num="2" text={<>Pilih <strong style={{color:'var(--m-brand)'}}>Tambah ke layar utama</strong> atau <strong style={{color:'var(--m-brand)'}}>Install app</strong></>} />
+                  <Step num="3" text={<>Tap <strong>Tambah</strong> untuk konfirmasi</>} />
+                </div>
+              )}
+            </div>
+
+            <div style={{ display:'flex', flexDirection:'column', gap:'12px' }}>
+              <button onClick={onSkip} style={{
+                width:'100%', padding:'16px', borderRadius:'16px', background:'#111827', color:'#fff',
+                border:'none', fontSize:'15px', fontWeight:'800', cursor:'pointer',
+                boxShadow:'0 8px 24px rgba(0,0,0,0.15)'
+              }}>
+                Sudah Install, Lanjut →
+              </button>
+              <button onClick={onSkip} style={{
+                width:'100%', padding:'16px', borderRadius:'16px', background:'transparent',
+                color:'var(--m-ink-sub)', border:'none', fontSize:'14px', fontWeight:'600', cursor:'pointer'
+              }}>
+                Lanjut Tanpa Install
+              </button>
+            </div>
+          </>
+        )}
 
       </div>
+    </div>
+  );
+}
+
+/* Helper: step item */
+function Step({ num, text }) {
+  return (
+    <div style={{ display:'flex', alignItems:'flex-start', gap:'12px' }}>
+      <div style={{
+        width:'24px', height:'24px', borderRadius:'50%', background:'var(--m-brand)',
+        color:'#fff', fontSize:'12px', fontWeight:'800', flexShrink:0,
+        display:'flex', alignItems:'center', justifyContent:'center'
+      }}>{num}</div>
+      <span style={{ fontSize:'14px', color:'var(--m-ink)', lineHeight:'1.5', paddingTop:'2px' }}>{text}</span>
     </div>
   );
 }
