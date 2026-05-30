@@ -1,5 +1,5 @@
-const CACHE = 'larisi-v2';
-const PRECACHE = ['/', '/logo_larisi.svg', '/icons/icon-192.png', '/icons/icon-512.png'];
+const CACHE = 'larisi-v4';
+const PRECACHE = ['/logo_larisi.svg', '/icons/icon-192.png', '/icons/icon-512.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(
@@ -16,11 +16,21 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-  /* Hanya cache GET, skip API / Supabase */
   if (e.request.method !== 'GET') return;
   const url = new URL(e.request.url);
-  if (url.hostname.includes('supabase') || url.hostname.includes('functions')) return;
 
+  /* Skip API calls */
+  if (url.hostname.includes('supabase') || url.hostname.includes('nominatim')) return;
+
+  /* Network-first untuk HTML — pastikan selalu dapat JS terbaru */
+  if (e.request.mode === 'navigate' || e.request.destination === 'document') {
+    e.respondWith(
+      fetch(e.request).catch(() => caches.match(e.request))
+    );
+    return;
+  }
+
+  /* Cache-first untuk assets (gambar, font, dll) */
   e.respondWith(
     caches.match(e.request).then(cached => cached || fetch(e.request))
   );
