@@ -94,9 +94,15 @@ export default function DapurV2() {
 
     const continueToAuth = () => {
       if (!tok) {
-        /* Cek intent register dari localStorage — tetap ada walau URL sudah tidak punya ?plan= */
+        /* Cek intent register dari localStorage */
         const intent = localStorage.getItem('larisi_intent');
-        setAuthState((planParam || intent === 'register') ? 'register' : 'login');
+        /* iOS PWA: localStorage Safari & PWA terpisah — intent tidak terbaca.
+           Solusi: kalau standalone (buka dari home screen) & tidak ada token
+           → asumsikan new user → Register. Returning user bisa tap "Masuk di sini". */
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+                          || window.navigator.standalone;
+        const goToRegister = planParam || intent === 'register' || isStandalone;
+        setAuthState(goToRegister ? 'register' : 'login');
         return;
       }
       const p   = getProfile();
