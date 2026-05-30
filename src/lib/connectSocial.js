@@ -120,10 +120,12 @@ export function connectSocial({ platform, accessToken, userId, onStart, onDone, 
     }
 
     /* Simpan ke localStorage sebagai array (kompatibel desktop) */
+    console.log('[connectSocial] accountData before save:', accountData);
     const existing = JSON.parse(localStorage.getItem('radar_social_accounts') || '[]');
     const filtered = existing.filter(a => a.platform !== platform);
     filtered.push(accountData);
     localStorage.setItem('radar_social_accounts', JSON.stringify(filtered));
+    console.log('[connectSocial] saved to localStorage:', filtered);
 
     popup?.close();
     onDone?.(platform, accountData);
