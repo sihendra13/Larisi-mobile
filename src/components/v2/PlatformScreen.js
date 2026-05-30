@@ -230,18 +230,23 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext, pro
                     transition:'all .15s', position:'relative',
                   }}
                 >
-                  {/* Gembok kecil di pojok kanan atas kalau belum terhubung */}
-                  {!isConn && (
-                    <div style={{position:'absolute',top:'6px',right:'6px',
-                      width:'16px',height:'16px',borderRadius:'50%',
-                      background:'#F3F4F6',border:'1px solid #E4E4EB',
-                      display:'flex',alignItems:'center',justifyContent:'center'}}>
+                  {/* Indikator pojok kanan atas: centang hijau = terhubung, gembok = belum */}
+                  <div style={{position:'absolute',top:'6px',right:'6px',
+                    width:'16px',height:'16px',borderRadius:'50%',
+                    background: isConn ? '#10B981' : '#F3F4F6',
+                    border: `1px solid ${isConn ? '#10B981' : '#E4E4EB'}`,
+                    display:'flex',alignItems:'center',justifyContent:'center'}}>
+                    {isConn ? (
+                      <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="20 6 9 17 4 12"/>
+                      </svg>
+                    ) : (
                       <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                         <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
                         <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
                       </svg>
-                    </div>
-                  )}
+                    )}
+                  </div>
                   {p.icon}
                   <span style={{fontFamily:'var(--m-font)',fontSize:'11px',fontWeight:'600',color: isConn ? '#10B981' : 'var(--m-ink-sub)'}}>
                     {p.label}
