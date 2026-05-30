@@ -14,15 +14,13 @@ const PLAN_LABELS = {
 };
 
 export default function RegisterScreen({ onRegisterSuccess, onGoLogin }) {
-  const [firstName, setFirstName] = useState('');
-  const [lastName,  setLastName]  = useState('');
-  const [email,     setEmail]     = useState('');
-  const [password,  setPassword]  = useState('');
-  const [showPw,    setShowPw]    = useState(false);
-  const [terms,     setTerms]     = useState(false);
-  const [loading,   setLoading]   = useState(false);
-  const [error,     setError]     = useState('');
-  const [plan,      setPlan]      = useState('');
+  const [email,    setEmail]    = useState('');
+  const [password, setPassword] = useState('');
+  const [showPw,   setShowPw]   = useState(false);
+  const [terms,    setTerms]    = useState(false);
+  const [loading,  setLoading]  = useState(false);
+  const [error,    setError]    = useState('');
+  const [plan,     setPlan]     = useState('');
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -54,11 +52,6 @@ export default function RegisterScreen({ onRegisterSuccess, onGoLogin }) {
         body: JSON.stringify({
           email: email.trim(),
           password,
-          data: {
-            first_name: firstName.trim(),
-            last_name:  lastName.trim(),
-            full_name:  `${firstName.trim()} ${lastName.trim()}`,
-          },
         }),
       });
 
@@ -76,7 +69,7 @@ export default function RegisterScreen({ onRegisterSuccess, onGoLogin }) {
         return;
       }
 
-      /* Jika email confirmation OFF → session langsung ada */
+      /* Email confirmation OFF → session langsung ada */
       if (data.access_token) {
         const session = {
           access_token:  data.access_token,
@@ -106,8 +99,7 @@ export default function RegisterScreen({ onRegisterSuccess, onGoLogin }) {
         return;
       }
 
-      /* Email confirmation aktif, belum ada session → masuk ke OTP step
-         Supabase mengembalikan user object langsung (bukan di dalam data.user) */
+      /* Email confirmation aktif, belum ada session → OTP step */
       setError('');
       setLoading(false);
       const userObj = data.user || (data.id ? data : null);
@@ -132,7 +124,7 @@ export default function RegisterScreen({ onRegisterSuccess, onGoLogin }) {
     color: '#374151', marginBottom: '6px',
   };
 
-  const canSubmit = terms && firstName.trim() && lastName.trim() && email.trim() && password.length >= 8;
+  const canSubmit = terms && email.trim() && password.length >= 8;
 
   return (
     <div style={{
@@ -143,7 +135,6 @@ export default function RegisterScreen({ onRegisterSuccess, onGoLogin }) {
     }}>
       <div style={{ width: '100%', maxWidth: '440px', padding: '32px 20px 80px' }}>
 
-        {/* Card */}
         <div style={{
           background: '#fff', borderRadius: '20px', padding: '32px 28px',
           border: '1px solid #E4E4EB', boxShadow: '0 4px 32px rgba(0,0,0,0.07)',
@@ -160,6 +151,9 @@ export default function RegisterScreen({ onRegisterSuccess, onGoLogin }) {
             <h1 style={{ margin: 0, fontSize: '22px', fontWeight: '800', color: '#111827', letterSpacing: '-0.3px' }}>
               Mulai Uji Coba Gratis
             </h1>
+            <p style={{ margin: '6px 0 0', fontSize: '13px', color: '#6b7280', lineHeight: '1.5' }}>
+              Daftar sekarang, gratis. Nama dan info bisnis diisi di langkah berikutnya.
+            </p>
           </div>
 
           {/* Plan badge */}
@@ -176,24 +170,6 @@ export default function RegisterScreen({ onRegisterSuccess, onGoLogin }) {
           )}
 
           <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-
-            {/* Nama Depan + Belakang */}
-            <div style={{ display: 'flex', gap: '12px' }}>
-              <div style={{ flex: 1 }}>
-                <label style={labelStyle}>Nama Depan</label>
-                <input
-                  type="text" value={firstName} onChange={e => setFirstName(e.target.value)}
-                  placeholder="Misal: Budi" required style={inputStyle}
-                />
-              </div>
-              <div style={{ flex: 1 }}>
-                <label style={labelStyle}>Nama Belakang</label>
-                <input
-                  type="text" value={lastName} onChange={e => setLastName(e.target.value)}
-                  placeholder="Misal: Santoso" required style={inputStyle}
-                />
-              </div>
-            </div>
 
             {/* Email */}
             <div>
@@ -273,7 +249,7 @@ export default function RegisterScreen({ onRegisterSuccess, onGoLogin }) {
                 fontFamily: 'inherit', transition: 'background 0.15s',
               }}
             >
-              {loading ? 'Memproses...' : 'Create Account'}
+              {loading ? 'Memproses...' : 'Buat Akun'}
             </button>
           </form>
 
