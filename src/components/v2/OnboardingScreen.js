@@ -461,17 +461,25 @@ export default function OnboardingScreen({
     };
 
     try {
-      await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}`, {
-        method:  'PATCH',
+      const resp = await fetch(`${SUPABASE_URL}/rest/v1/profiles?on_conflict=id`, {
+        method:  'POST',
         headers: {
           'apikey':        SUPABASE_ANON_KEY,
           'Authorization': `Bearer ${tok}`,
           'Content-Type':  'application/json',
         },
-        body: JSON.stringify(updates),
+        body: JSON.stringify({
+          id: userId,
+          ...updates
+        }),
       });
+      if (!resp.ok) {
+        const errData = await resp.text();
+        throw new Error(`UPSERT failed: ${resp.status} ${errData}`);
+      }
     } catch (err) {
       console.error('[onboarding] save profile error:', err);
+      addDebugLog(`❌ [ERROR] Save profile failed: ${err.message}`);
     }
 
     const profile = JSON.parse(localStorage.getItem('radar_user_profile') || '{}');
