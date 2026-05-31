@@ -421,47 +421,8 @@ export default function AudiensScreen({
         paddingBottom:'calc(100px + env(safe-area-inset-bottom) + 60px)',
       }}>
 
-        {/* Card 1: Target Audiens */}
-        <div style={{marginBottom:'12px'}}>
-        <div style={{
-          background:'#fff', borderRadius:'16px',
-          border:'1px solid #E4E4EB', overflow:'hidden',
-        }}>
-          <div style={{display:'flex',alignItems:'center',gap:'12px',padding:'16px 16px 0'}}>
-            <div style={{
-              width:'36px',height:'36px',borderRadius:'10px',
-              background:'var(--m-brand-soft)',
-              display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,
-            }}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="var(--m-brand)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{width:'18px',height:'18px'}}>
-                <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>
-              </svg>
-            </div>
-            <div>
-              <div style={{fontFamily:'var(--m-font)',fontSize:'15px',fontWeight:'700',color:'var(--m-ink)'}}>Siapa Target Audiens Kamu?</div>
-              <div style={{fontFamily:'var(--m-font)',fontSize:'12px',color:'var(--m-ink-sub)',marginTop:'2px'}}>Pilih siapa yang akan lihat iklanmu</div>
-            </div>
-          </div>
-          <div style={{padding:'0 16px 16px'}}>
-            <div style={{display:'flex',alignItems:'center',padding:'14px 0',borderBottom:'1px solid #F0F0F5'}}>
-              <div style={{flex:1}}>
-                <div style={{fontFamily:'var(--m-font)',fontSize:'14px',fontWeight:'600',color:'var(--m-ink)'}}>Warga Sekitar</div>
-                <div style={{fontFamily:'var(--m-font)',fontSize:'12px',color:'var(--m-ink-sub)',marginTop:'2px'}}>Orang yang tinggal di area ini</div>
-              </div>
-              <Toggle on={localOn} onToggle={() => setLocalOn(v => !v)} />
-            </div>
-            <div style={{display:'flex',alignItems:'center',padding:'14px 0 0'}}>
-              <div style={{flex:1}}>
-                <div style={{fontFamily:'var(--m-font)',fontSize:'14px',fontWeight:'600',color:'var(--m-ink)'}}>Pengunjung</div>
-                <div style={{fontFamily:'var(--m-font)',fontSize:'12px',color:'var(--m-ink-sub)',marginTop:'2px'}}>Orang yang sedang berada di sini</div>
-              </div>
-              <Toggle on={travelerOn} onToggle={() => setTravelerOn(v => !v)} />
-            </div>
-          </div>
-        </div>
-        </div>{/* end card-1 wrapper */}
-
         {/* Card 2: Tentukan Titik Target */}
+        <div style={{marginBottom:'12px'}}>
         <div style={{
           background:'#fff', borderRadius:'16px',
           border:'1px solid #E4E4EB',
@@ -515,6 +476,45 @@ export default function AudiensScreen({
           <RadiusSlider radius={radius} onChange={setRadius} />
 
           {/* Reach estimate dipindah ke sticky bar */}
+        </div>
+        </div>
+
+        {/* Card 1: Target Audiens */}
+        <div style={{
+          background:'#fff', borderRadius:'16px',
+          border:'1px solid #E4E4EB', overflow:'hidden',
+        }}>
+          <div style={{display:'flex',alignItems:'center',gap:'12px',padding:'16px 16px 0'}}>
+            <div style={{
+              width:'36px',height:'36px',borderRadius:'10px',
+              background:'var(--m-brand-soft)',
+              display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,
+            }}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--m-brand)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{width:'18px',height:'18px'}}>
+                <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>
+              </svg>
+            </div>
+            <div>
+              <div style={{fontFamily:'var(--m-font)',fontSize:'15px',fontWeight:'700',color:'var(--m-ink)'}}>Siapa Target Audiens Kamu?</div>
+              <div style={{fontFamily:'var(--m-font)',fontSize:'12px',color:'var(--m-ink-sub)',marginTop:'2px'}}>Pilih siapa yang akan lihat iklanmu</div>
+            </div>
+          </div>
+          <div style={{padding:'0 16px 16px'}}>
+            <div style={{display:'flex',alignItems:'center',padding:'14px 0',borderBottom:'1px solid #F0F0F5'}}>
+              <div style={{flex:1}}>
+                <div style={{fontFamily:'var(--m-font)',fontSize:'14px',fontWeight:'600',color:'var(--m-ink)'}}>Warga Sekitar</div>
+                <div style={{fontFamily:'var(--m-font)',fontSize:'12px',color:'var(--m-ink-sub)',marginTop:'2px'}}>Orang yang tinggal di area ini</div>
+              </div>
+              <Toggle on={localOn} onToggle={() => setLocalOn(v => !v)} />
+            </div>
+            <div style={{display:'flex',alignItems:'center',padding:'14px 0 0'}}>
+              <div style={{flex:1}}>
+                <div style={{fontFamily:'var(--m-font)',fontSize:'14px',fontWeight:'600',color:'var(--m-ink)'}}>Pengunjung</div>
+                <div style={{fontFamily:'var(--m-font)',fontSize:'12px',color:'var(--m-ink-sub)',marginTop:'2px'}}>Orang yang sedang berada di sini</div>
+              </div>
+              <Toggle on={travelerOn} onToggle={() => setTravelerOn(v => !v)} />
+            </div>
+          </div>
         </div>
       </main>
 
