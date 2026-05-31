@@ -524,31 +524,19 @@ export default function CaptionScreen({
       const postId  = data?.id || data?.post_id || data?.posts?.[0]?.id || null;
       const postUrl = data?.post_url || data?.platform_url || data?.permalink || data?.posts?.[0]?.post_url || null;
 
-      // Generate thumbnail dari file pertama (foto atau video)
-      let thumbDataUrl = null;
-      if (files.length > 0) {
-        const firstFile = files[0];
-        if (firstFile.type === 'video') {
-          thumbDataUrl = await captureVideoThumb(firstFile.url);
-        } else {
-          thumbDataUrl = await createThumbFromUrl(firstFile.url);
-        }
-      }
-
       // Simpan campaign ke Supabase
-      // Fallback ke localStorage kalau sessionId prop belum di-set (timing issue)
+      // thumb_url = allMediaUrls[0] (URL PostForMe CDN) — sama seperti desktop
       const effectiveSessionId = sessionId || localStorage.getItem('radar_session_id');
       const effectiveUserId    = userId    || (() => {
         try { return JSON.parse(atob((accessToken||'').split('.')[1]))?.sub || null; } catch { return null; }
       })();
 
       if (effectiveSessionId && accessToken) {
-        // Pakai reach yang sama dengan yang ditampilkan di bottom bar
-        const reachVal = computeReach(locPop, radius, localOn, travelerOn);
+        const reachVal  = computeReach(locPop, radius, localOn, travelerOn);
         const finalName = (overrideName && overrideName.trim()) ? overrideName.trim() : campName;
-        const saveResp = await fetch(`${SUPABASE_URL}/rest/v1/campaigns`, {
+        await fetch(`${SUPABASE_URL}/rest/v1/campaigns`, {
           method: 'POST',
-          headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' },
+          headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
           body: JSON.stringify({
             user_id:             effectiveUserId,
             session_id:          effectiveSessionId,
@@ -558,28 +546,12 @@ export default function CaptionScreen({
             status:              'active',
             estimated_reach_min: reachVal,
             estimated_reach_max: Math.round(reachVal * 1.5),
-            post_id:             postId || null,
-            post_url:            postUrl || null,
+            post_id:             postId          || null,
+            post_url:            postUrl         || null,
+            thumb_url:           allMediaUrls[0] || null,
             caption,
           }),
         });
-
-        // Upload thumbnail ke Supabase Storage setelah dapat campaign ID
-        if (saveResp.ok && thumbDataUrl) {
-          const saved = await saveResp.json();
-          const campId = Array.isArray(saved) ? saved[0]?.id : saved?.id;
-          if (campId) {
-            const thumbUrl = await uploadThumbToStorage(campId, thumbDataUrl, accessToken);
-            if (thumbUrl) {
-              // Update thumb_url di record campaign
-              fetch(`${SUPABASE_URL}/rest/v1/campaigns?id=eq.${campId}`, {
-                method: 'PATCH',
-                headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ thumb_url: thumbUrl }),
-              }).catch(() => {});
-            }
-          }
-        }
       }
 
       // Toast sukses spesifik platform+format (sama seperti desktop)
