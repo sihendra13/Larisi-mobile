@@ -1,4 +1,4 @@
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config';
+import { SUPABASE_URL, SUPABASE_ANON_KEY, getValidAccessToken } from './config';
 
 /* redirect_uri harus ke callback yang sudah support cross-origin ('*') */
 const REDIRECT_URI = 'https://larisi.id/postforme-callback';
@@ -323,11 +323,14 @@ export async function syncSocialAccountsToSupabase(userId, accessToken) {
     const accounts = JSON.parse(accountsRaw);
     console.log('[connectSocial] Syncing', accounts.length, 'social accounts to Supabase...');
 
+    /* Auto-refresh token kalau expired */
+    const validToken = await getValidAccessToken() || accessToken;
+
     const resp = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}`, {
       method: 'PATCH',
       headers: {
         'apikey': SUPABASE_ANON_KEY,
-        'Authorization': `Bearer ${accessToken}`,
+        'Authorization': `Bearer ${validToken}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
