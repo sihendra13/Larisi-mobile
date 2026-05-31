@@ -198,6 +198,14 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext, pro
     const updated = getStoredAccounts().filter(a => a.platform !== plt);
     localStorage.setItem('radar_social_accounts', JSON.stringify(updated));
     setAccounts(updated);
+
+    /* Update juga profile di localStorage agar saat app dibuka kembali tidak restore akun lama */
+    try {
+      const profile = JSON.parse(localStorage.getItem('radar_user_profile') || '{}');
+      profile.social_accounts = updated;
+      localStorage.setItem('radar_user_profile', JSON.stringify(profile));
+    } catch (e) {}
+
     closeDisconnectConfirm();
 
     /* Sync ke Supabase agar disconnect persist setelah logout/login */
