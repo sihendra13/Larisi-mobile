@@ -220,7 +220,6 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
         const acc = accounts.find(a => a.platform === sp);
         if (!acc?.id) continue;
 
-        // Fetch feed sekali per akun, cache untuk campaign lain di akun sama
         if (!feedCache[acc.id]) {
           try {
             feedCache[acc.id] = await fetchAnalytics(acc.id, accessToken);
@@ -232,6 +231,16 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
           const m = extractMetrics(post, camp.platforms[0]);
           if (m.reach > 0) {
             setRealReach(prev => ({ ...prev, [camp.id]: m.reach }));
+          }
+          // Retroactive thumbnail dari PostForMe feed
+          if (!camp.thumbUrl) {
+            const feedThumb = post.thumbnail_url || post.media_url || post.thumb_url
+              || post.media?.[0]?.url || null;
+            if (feedThumb) {
+              setCampaigns(prev => prev.map(c =>
+                c.id === camp.id ? { ...c, thumbUrl: feedThumb } : c
+              ));
+            }
           }
         }
       }
@@ -252,11 +261,11 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
     setLoadingAn(true);
 
     const accounts = (() => {
-      try { return JSON.parse(localStorage.getItem('larisi_social_accounts') || '[]'); } catch { return []; }
+      try { return JSON.parse(localStorage.getItem('radar_social_accounts') || '[]'); } catch { return []; }
     })();
 
     const platApiMap = { ig: 'instagram', meta: 'facebook', tiktok: 'tiktok', youtube: 'youtube' };
-    const sp = platApiMap[camp.platforms[0]] || camp.platforms[0];
+    const sp  = platApiMap[camp.platforms[0]] || camp.platforms[0];
     const acc = accounts.find(a => a.platform === sp);
 
     if (!acc?.id) { setLoadingAn(false); return; }
@@ -265,8 +274,32 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
     const post  = matchPost(posts, camp);
     if (post) {
       setAnalytics(extractMetrics(post, camp.platforms[0]));
+
+      // Retroactive thumbnail dari PostForMe feed kalau thumb_url null
+      if (!camp.thumbUrl) {
+        const feedThumb = post.thumbnail_url || post.media_url || post.thumb_url
+          || post.media?.[0]?.url || null;
+        if (feedThumb) {
+          setSelectedCamp(prev => ({ ...prev, thumbUrl: feedThumb }));
+        }
+      }
+
+      // Retroactive post_url dari feed kalau belum ada
+      if (!camp.post_url) {
+        const feedUrl = post.post_url || post.platform_url || post.permalink || post.url || null;
+        if (feedUrl) {
+          setSelectedCamp(prev => ({ ...prev, post_url: feedUrl }));
+        }
+      }
     }
     setLoadingAn(false);
+
+    // Simpan avatar + username dari akun IG ke camp untuk ditampilkan di detail
+    setSelectedCamp(prev => ({
+      ...prev,
+      avatarUrl: acc.avatar_url || null,
+      username:  acc.username   || null,
+    }));
   }, [accessToken]);
 
   /* ── Archive ── */
@@ -324,12 +357,15 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
           {/* Campaign Card */}
           <div style={{ background:'#fff', border:'1px solid #E4E4EB', borderRadius:'20px', padding:'16px', marginBottom:'16px' }}>
             <div style={{ display:'flex', alignItems:'flex-start', gap:'10px', marginBottom:'12px' }}>
-              {/* Avatar */}
+              {/* Avatar akun IG — sama seperti desktop (avatar_url dari social account) */}
               <div style={{ position:'relative', flexShrink:0 }}>
-                <div style={{ width:'44px', height:'44px', borderRadius:'50%', border:'1.5px solid var(--m-brand)', display:'flex', alignItems:'center', justifyContent:'center', background:'#F3E8FF' }}>
-                  <span style={{ fontFamily:'var(--m-font)', fontSize:'18px', fontWeight:'700', color:'var(--m-brand)' }}>
-                    {(profile?.business_name || profile?.full_name || 'L').charAt(0).toUpperCase()}
-                  </span>
+                <div style={{ width:'44px', height:'44px', borderRadius:'50%', border:'1.5px solid #E4E4EB', overflow:'hidden', background:'#F3E8FF', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                  {c.avatarUrl
+                    ? <img src={c.avatarUrl} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} onError={e => { e.target.style.display='none'; }} />
+                    : <span style={{ fontFamily:'var(--m-font)', fontSize:'18px', fontWeight:'700', color:'var(--m-brand)' }}>
+                        {(profile?.business_name || profile?.full_name || 'L').charAt(0).toUpperCase()}
+                      </span>
+                  }
                 </div>
                 <div style={{ position:'absolute', bottom:'-2px', right:'-2px', background:'#fff', borderRadius:'50%', width:'20px', height:'20px', display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 1px 3px rgba(0,0,0,0.12)' }}>
                   <PlatIcon plat={plat} />
@@ -337,29 +373,29 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
               </div>
 
               <div style={{ flex:1, minWidth:0 }}>
+                {/* Judul + status badge */}
                 <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:'8px', marginBottom:'2px' }}>
                   <div style={{ fontFamily:'var(--m-font)', fontSize:'15px', fontWeight:'800', color:'var(--m-ink)', lineHeight:'1.3' }}>{c.name}</div>
-                  <div style={{ display:'flex', alignItems:'center', gap:'8px', flexShrink:0 }}>
-                    <div style={{ background: c.status === 'running' ? '#E6F4EA' : '#FEF3C7', padding:'4px 10px', borderRadius:'999px', display:'flex', alignItems:'center', gap:'5px' }}>
-                      <div style={{ width:'6px', height:'6px', borderRadius:'50%', background: statusColor }} />
-                      <span style={{ fontFamily:'var(--m-font)', fontSize:'11px', fontWeight:'700', color: statusColor }}>{statusLbl}</span>
-                    </div>
+                  <div style={{ background: c.status === 'running' ? '#E6F4EA' : '#FEF3C7', padding:'4px 10px', borderRadius:'999px', display:'flex', alignItems:'center', gap:'5px', flexShrink:0 }}>
+                    <div style={{ width:'6px', height:'6px', borderRadius:'50%', background: statusColor }} />
+                    <span style={{ fontFamily:'var(--m-font)', fontSize:'11px', fontWeight:'700', color: statusColor }}>{statusLbl}</span>
                   </div>
                 </div>
-                <div style={{ fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)' }}>
+                {/* Username akun + platform · format */}
+                <div style={{ fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)', marginBottom:'2px' }}>
+                  {c.username ? `@${c.username}` : platformLabel(c.platforms)}
+                </div>
+                <div style={{ fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)', marginBottom:'4px' }}>
                   {platformLabel(c.platforms)} · {c.format?.toUpperCase() || 'POST'}
                 </div>
-                {c.post_url && (
-                  <a href={c.post_url} target="_blank" rel="noopener noreferrer" style={{ display:'flex', alignItems:'center', gap:'4px', marginTop:'4px', textDecoration:'none' }}>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--m-brand)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-                    <span style={{ fontFamily:'var(--m-font)', fontSize:'12px', fontWeight:'700', color:'var(--m-brand)', textDecoration:'underline', textUnderlineOffset:'2px' }}>
-                      {fmtDate(c.created_at)}
-                    </span>
-                  </a>
-                )}
-                {!c.post_url && c.created_at && (
-                  <div style={{ fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)', marginTop:'4px' }}>{fmtDate(c.created_at)}</div>
-                )}
+                {/* Timestamp — link ke postingan kalau ada post_url */}
+                {c.post_url
+                  ? <a href={c.post_url} target="_blank" rel="noopener noreferrer" style={{ display:'inline-flex', alignItems:'center', gap:'4px', textDecoration:'none' }}>
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--m-brand)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                      <span style={{ fontFamily:'var(--m-font)', fontSize:'12px', fontWeight:'700', color:'var(--m-brand)', textDecoration:'underline', textUnderlineOffset:'2px' }}>{fmtDate(c.created_at)}</span>
+                    </a>
+                  : <div style={{ fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)' }}>{fmtDate(c.created_at)}</div>
+                }
               </div>
             </div>
 
