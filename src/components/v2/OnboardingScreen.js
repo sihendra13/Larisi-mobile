@@ -467,6 +467,7 @@ export default function OnboardingScreen({
           'apikey':        SUPABASE_ANON_KEY,
           'Authorization': `Bearer ${tok}`,
           'Content-Type':  'application/json',
+          'Prefer':        'resolution=merge-duplicates',
         },
         body: JSON.stringify({
           id: userId,
