@@ -200,6 +200,11 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext, pro
     setAccounts(updated);
     closeDisconnectConfirm();
 
+    /* Sync ke Supabase agar disconnect persist setelah logout/login */
+    if (userId && accessToken) {
+      syncSocialAccountsToSupabase(userId, accessToken);
+    }
+
     /* Show toast notification */
     const platLabel = PLATFORMS.find(p => p.id === plt)?.label || plt;
     setToast({ show: true, message: `Akun ${platLabel}mu sudah tidak terhubung` });
