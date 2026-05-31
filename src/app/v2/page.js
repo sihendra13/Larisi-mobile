@@ -14,7 +14,7 @@ import SplashScreen      from '@/components/v2/SplashScreen';
 import InstallScreen     from '@/components/v2/InstallScreen';
 import ProfilePanel      from '@/components/v2/ProfilePanel';
 import ReminderModal     from '@/components/v2/ReminderModal';
-import { getProfile, getSessionId, getAccessToken } from '@/lib/config';
+import { getProfile, getSessionId, getAccessToken, SUPABASE_URL, SUPABASE_ANON_KEY } from '@/lib/config';
 import { handleOAuthRedirectCallback, syncSocialAccountsToSupabase, getStoredAccounts } from '@/lib/connectSocial';
 
 export default function DapurV2() {
@@ -148,6 +148,26 @@ export default function DapurV2() {
         restoreSocialAccounts(p); // ← Restore social accounts dari profile
         setProfile(p);
         applyLocation(p);
+
+        /* Sync postforme_external_id — sama seperti desktop supabase.js */
+        if (p.postforme_external_id) {
+          localStorage.setItem('radar_session_id', p.postforme_external_id);
+        } else if (uid && tok) {
+          let extId = localStorage.getItem('radar_session_id');
+          if (!extId || extId === uid) {
+            extId = 'radar_user_' + Math.random().toString(36).slice(2, 10);
+            localStorage.setItem('radar_session_id', extId);
+          }
+          /* Simpan ke Supabase */
+          fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${uid}`, {
+            method: 'PATCH',
+            headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${tok}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ postforme_external_id: extId }),
+          }).catch(() => {});
+          p.postforme_external_id = extId;
+          localStorage.setItem('radar_user_profile', JSON.stringify(p));
+        }
+
         setAuthState(p.business_name ? 'app' : 'onboarding');
       } else {
         setAuthState('onboarding');
