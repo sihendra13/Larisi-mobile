@@ -330,6 +330,8 @@ export default function CaptionScreen({
   const [hasGenerated,    setHasGenerated]    = useState(false);
   const [posting,         setPosting]         = useState(false);
   const [launchPhase,     setLaunchPhase]     = useState(null); // null | 'loading' | 'success'
+  const [showConfirm,     setShowConfirm]     = useState(false);
+  const [campName,        setCampName]        = useState('');
 
   /* ── AI call counter — naik tiap Generate, untuk rotasi hook style ── */
   const aiCallCountRef = useRef(0);
@@ -457,9 +459,19 @@ export default function CaptionScreen({
     }, 3500);
   };
 
-  /* ── Posting via PostForMe ── */
-  const handleTayangkan = async () => {
+  /* ── Buka confirm modal saat Tayangkan diklik ── */
+  const handleTayangkan = () => {
     if (!caption || posting) return;
+    // Pre-fill nama campaign: personaName · locShort (sama seperti desktop)
+    const personaName = persona?.name || profile?.category || 'Iklan Baru';
+    const locShort    = locName ? locName.split(',')[0].trim() : '';
+    setCampName(personaName + (locShort ? ' · ' + locShort : ''));
+    setShowConfirm(true);
+  };
+
+  /* ── Actual posting setelah confirm ── */
+  const handleDoLaunch = async (overrideName) => {
+    setShowConfirm(false);
 
     const accounts = (() => {
       try { return JSON.parse(localStorage.getItem('radar_social_accounts') || '[]'); } catch { return []; }
@@ -531,19 +543,21 @@ export default function CaptionScreen({
       })();
 
       if (effectiveSessionId && accessToken) {
-        const reach = Math.round(Math.PI * radius * radius * ((locPop || 50000) / (Math.PI * 25)));
+        // Pakai reach yang sama dengan yang ditampilkan di bottom bar
+        const reachVal = computeReach(locPop, radius, localOn, travelerOn);
+        const finalName = (overrideName && overrideName.trim()) ? overrideName.trim() : campName;
         const saveResp = await fetch(`${SUPABASE_URL}/rest/v1/campaigns`, {
           method: 'POST',
           headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' },
           body: JSON.stringify({
             user_id:             effectiveUserId,
             session_id:          effectiveSessionId,
-            nama_campaign:       caption.slice(0, 60),
+            nama_campaign:       finalName || caption.slice(0, 60),
             platforms:           [sp],
             format:              format || 'post',
             status:              'active',
-            estimated_reach_min: reach,
-            estimated_reach_max: Math.round(reach * 1.5),
+            estimated_reach_min: reachVal,
+            estimated_reach_max: Math.round(reachVal * 1.5),
             post_id:             postId || null,
             post_url:            postUrl || null,
             caption,
@@ -982,6 +996,68 @@ export default function CaptionScreen({
           {posting ? 'Memposting…' : 'Tayangkan'}
         </button>
       </div>
+
+      {/* ── Confirm Modal sebelum posting (sama seperti desktop launchConfirmModal) ── */}
+      {showConfirm && (() => {
+        const platLabels = { instagram:'Instagram', facebook:'Facebook', tiktok:'TikTok', youtube:'YouTube' };
+        const platColors = { instagram:'#E1306C', facebook:'#1877F2', tiktok:'#010101', youtube:'#FF0000' };
+        const fmtLabels  = { post:'Post', reel:'Reel', story:'Story' };
+        const sp       = { ig:'instagram', tiktok:'tiktok', meta:'facebook', youtube:'youtube' }[platform] || platform;
+        const platName = platLabels[sp] || sp;
+        const platColor= platColors[sp] || 'var(--m-brand)';
+        const fmtName  = sp === 'youtube' ? 'Shorts' : (fmtLabels[format] || format || '');
+        return (
+          <div style={{position:'fixed', inset:0, zIndex:2000, background:'rgba(0,0,0,0.5)', display:'flex', alignItems:'flex-end', justifyContent:'center'}}>
+            <div style={{background:'#fff', borderRadius:'24px 24px 0 0', padding:'24px 20px', width:'100%', maxWidth:'480px', paddingBottom:'calc(24px + env(safe-area-inset-bottom))'}}>
+              {/* Handle */}
+              <div style={{width:'40px', height:'4px', borderRadius:'2px', background:'#E4E4EB', margin:'0 auto 20px'}} />
+
+              <div style={{fontFamily:'var(--m-font)', fontSize:'17px', fontWeight:'800', color:'var(--m-ink)', marginBottom:'4px'}}>Tayangkan Iklan</div>
+              <div style={{fontFamily:'var(--m-font)', fontSize:'13px', color:'var(--m-ink-sub)', marginBottom:'20px'}}>Pastikan detail iklanmu sudah benar</div>
+
+              {/* Platform + Format summary */}
+              <div style={{display:'flex', alignItems:'center', gap:'8px', marginBottom:'20px'}}>
+                <div style={{background:`${platColor}15`, border:`1.5px solid ${platColor}40`, borderRadius:'10px', padding:'8px 14px', display:'flex', alignItems:'center', gap:'8px'}}>
+                  <span style={{fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'700', color:platColor}}>{platName}</span>
+                </div>
+                {fmtName && (
+                  <div style={{background:'var(--m-brand-soft,#F3E8FF)', border:'1.5px solid #DDD6FE', borderRadius:'10px', padding:'8px 14px'}}>
+                    <span style={{fontFamily:'var(--m-font)', fontSize:'12px', fontWeight:'700', color:'var(--m-brand)'}}>📐 {fmtName}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Nama iklan editable */}
+              <div style={{marginBottom:'24px'}}>
+                <label style={{fontFamily:'var(--m-font)', fontSize:'12px', fontWeight:'700', color:'var(--m-ink-sub)', display:'block', marginBottom:'8px', textTransform:'uppercase', letterSpacing:'0.5px'}}>Nama Iklan</label>
+                <input
+                  type="text"
+                  value={campName}
+                  onChange={e => setCampName(e.target.value)}
+                  style={{width:'100%', padding:'12px 14px', borderRadius:'12px', border:'1.5px solid #E4E4EB', fontFamily:'var(--m-font)', fontSize:'14px', fontWeight:'600', color:'var(--m-ink)', outline:'none', background:'#F9F9FA', boxSizing:'border-box'}}
+                  onFocus={e => { e.target.style.borderColor='var(--m-brand)'; e.target.style.background='#fff'; }}
+                  onBlur={e => { e.target.style.borderColor='#E4E4EB'; e.target.style.background='#F9F9FA'; }}
+                />
+              </div>
+
+              {/* Tombol */}
+              <button
+                onClick={() => handleDoLaunch(campName)}
+                style={{width:'100%', padding:'15px', borderRadius:'14px', background:'#1A1A1A', color:'#fff', border:'none', cursor:'pointer', fontFamily:'var(--m-font)', fontSize:'15px', fontWeight:'800', display:'flex', alignItems:'center', justifyContent:'center', gap:'8px', marginBottom:'10px'}}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                Launch Sekarang
+              </button>
+              <button
+                onClick={() => setShowConfirm(false)}
+                style={{width:'100%', padding:'13px', borderRadius:'14px', background:'transparent', color:'var(--m-ink-sub)', border:'none', cursor:'pointer', fontFamily:'var(--m-font)', fontSize:'14px', fontWeight:'600'}}
+              >
+                Batal
+              </button>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* ── Launching Modal (2 phase: loading → success → redirect ke Kelola) ── */}
       {launchPhase && (

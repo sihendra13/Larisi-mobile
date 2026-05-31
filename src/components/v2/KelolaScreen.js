@@ -452,18 +452,12 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
                   <span style={{ fontFamily:'var(--m-font)', fontSize:'9px', fontWeight:'800', color:'#fff' }}>{(camp.format || 'POST').toUpperCase()}</span>
                 </div>
 
-                {/* Status dot top-left */}
-                {camp.status === 'running' && (
-                  <div style={{ position:'absolute', top:'10px', left:'10px', width:'8px', height:'8px', borderRadius:'50%', background:'#22c55e', boxShadow:'0 0 0 2px rgba(255,255,255,0.6)' }} />
-                )}
-
-                {/* Bottom gradient — reach */}
-                <div style={{ position:'absolute', bottom:0, left:0, right:0, height:'55%', background:'linear-gradient(to top, rgba(0,0,0,0.85), rgba(0,0,0,0))', display:'flex', flexDirection:'column', justifyContent:'flex-end', padding:'10px 10px 12px' }}>
-                  <div style={{ display:'flex', alignItems:'center', gap:'4px', marginBottom:'2px' }}>
+                {/* Bottom gradient — reach only, no name */}
+                <div style={{ position:'absolute', bottom:0, left:0, right:0, height:'40%', background:'linear-gradient(to top, rgba(0,0,0,0.75), rgba(0,0,0,0))', display:'flex', alignItems:'flex-end', padding:'10px 10px 12px' }}>
+                  <div style={{ display:'flex', alignItems:'center', gap:'4px' }}>
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                     <span style={{ fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'800', color:'#fff' }}>{fmtViews(camp.reach)}</span>
                   </div>
-                  <div style={{ fontFamily:'var(--m-font)', fontSize:'10px', color:'rgba(255,255,255,0.7)', lineHeight:'1.3', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{camp.name}</div>
                 </div>
               </div>
             ))}

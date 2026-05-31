@@ -270,8 +270,32 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
     }
 
     /* Vision gagal atau visionKey tidak ada di personaDB */
-    if (bizTileKey) {
-      /* Pakai kategori profil bisnis langsung */
+
+    /* Tidak ada pemetaan → cek apakah nama file generik */
+    const genericPattern = /^(img|image|photo|foto|dsc|vid|video|mov|clip|capture|screenshot|file)[_\-\s]?\d*/i;
+    const isGenericFilename = !filename || genericPattern.test(filename.replace(/\.\w+$/, ''));
+
+    if (bizTileKey && !isGenericFilename) {
+      /* Cek konflik: nama file menunjukkan kategori berbeda dari profil bisnis */
+      const filenamePersona = detectPersona(filename);
+      let filenameKey = null;
+      if (filenamePersona) {
+        const keys = Object.keys(personaDB);
+        for (let k = 0; k < keys.length; k++) {
+          if (personaDB[keys[k]].name === filenamePersona.name) { filenameKey = keys[k]; break; }
+        }
+      }
+
+      if (filenameKey && filenameKey !== bizTileKey) {
+        /* Konflik: nama file VS profil bisnis — tampilkan conflict card */
+        const vLabel = personaDB[filenameKey]?.name  || filenameKey;
+        const bLabel = personaDB[bizTileKey]?.name   || bizTileKey;
+        setConflictData({ visionKey: filenameKey, visionLabel: vLabel, bizKey: bizTileKey, bizLabel: bLabel });
+        setTimeout(() => setAnimateConflict(true), 10);
+        return;
+      }
+
+      /* Tidak ada konflik → pakai profil bisnis */
       const p = personaDB[bizTileKey];
       if (p) {
         setDetectedPersona({ name: p.name, target: p.target, age: p.age || '18–45', gender: p.gender || 'Mixed' });
@@ -279,10 +303,6 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
         return;
       }
     }
-
-    /* Tidak ada pemetaan → cek apakah nama file generik */
-    const genericPattern = /^(img|image|photo|foto|dsc|vid|video|mov|clip|capture|screenshot|file)[_\-\s]?\d*/i;
-    const isGenericFilename = !filename || genericPattern.test(filename.replace(/\.\w+$/, ''));
 
     if (!bizCategory || isGenericFilename) {
       /* Tampilkan catNudge: user pilih kategori manual */
