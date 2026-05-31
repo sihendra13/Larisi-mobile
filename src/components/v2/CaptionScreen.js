@@ -497,18 +497,66 @@ export default function CaptionScreen({
     try {
       // Upload media — files berisi { url: 'blob:...', type: 'photo'|'video', name }
       const allMediaUrls = [];
+      let thumbUrl = null; // URL thumbnail dari PostForMe CDN
+
       for (const file of files) {
-        // Fetch blob URL → dapat Blob yang bisa di-upload (sama seperti desktop konversi dataUrl → Blob)
         const blobResp = await fetch(file.url);
         if (!blobResp.ok) throw new Error('Gagal membaca file media');
         const blob = await blobResp.blob();
+
+        // Konversi foto ke JPEG via canvas (sama seperti desktop yang selalu pakai JPEG)
+        // Ini memastikan format konsisten dan media_url selalu dikembalikan PostForMe
+        let uploadBlob = blob;
+        if (file.type !== 'video') {
+          const jpegDataUrl = await createThumbFromUrl(file.url);
+          if (jpegDataUrl) {
+            const arr = jpegDataUrl.split(',');
+            const bstr = atob(arr[1]);
+            const u8 = new Uint8Array(bstr.length);
+            for (let i = 0; i < bstr.length; i++) u8[i] = bstr.charCodeAt(i);
+            uploadBlob = new Blob([u8], { type: 'image/jpeg' });
+          }
+        }
         const mime = file.type === 'video' ? (blob.type || 'video/mp4') : 'image/jpeg';
 
         const uploadMeta = await pfmProxy('/v1/media/create-upload-url', 'POST', { content_type: mime }, accessToken);
         if (!uploadMeta?.upload_url) throw new Error('Gagal mendapatkan URL upload');
-        const upResp = await fetch(uploadMeta.upload_url, { method: 'PUT', body: blob, headers: { 'Content-Type': mime } });
+        const upResp = await fetch(uploadMeta.upload_url, { method: 'PUT', body: uploadBlob, headers: { 'Content-Type': mime } });
         if (!upResp.ok) throw new Error('Upload media gagal: ' + upResp.status);
-        allMediaUrls.push(uploadMeta.media_url || uploadMeta.url);
+
+        // Coba semua kemungkinan field nama URL dari PostForMe response
+        const mediaUrl = uploadMeta.media_url || uploadMeta.url || uploadMeta.file_url
+          || uploadMeta.public_url || uploadMeta.cdn_url
+          || (uploadMeta.media && (uploadMeta.media.url || uploadMeta.media.media_url))
+          || null;
+
+        allMediaUrls.push(mediaUrl);
+
+        // Thumbnail = media pertama (foto). Video: generate dari frame canvas
+        if (!thumbUrl) {
+          if (file.type === 'video') {
+            // Capture frame video sebagai thumbnail JPEG — upload terpisah ke PostForMe
+            const frameDataUrl = await captureVideoThumb(file.url);
+            if (frameDataUrl) {
+              const arr2 = frameDataUrl.split(',');
+              const bstr2 = atob(arr2[1]);
+              const u82 = new Uint8Array(bstr2.length);
+              for (let i = 0; i < bstr2.length; i++) u82[i] = bstr2.charCodeAt(i);
+              const frameBlob = new Blob([u82], { type: 'image/jpeg' });
+              try {
+                const thumbMeta = await pfmProxy('/v1/media/create-upload-url', 'POST', { content_type: 'image/jpeg' }, accessToken);
+                if (thumbMeta?.upload_url) {
+                  const tResp = await fetch(thumbMeta.upload_url, { method: 'PUT', body: frameBlob, headers: { 'Content-Type': 'image/jpeg' } });
+                  if (tResp.ok) {
+                    thumbUrl = thumbMeta.media_url || thumbMeta.url || thumbMeta.file_url || thumbMeta.public_url || null;
+                  }
+                }
+              } catch {}
+            }
+          } else {
+            thumbUrl = mediaUrl; // Foto: gunakan URL yang sama
+          }
+        }
       }
 
       const placementMap = { post: 'timeline', reel: 'reels', story: 'stories' };
@@ -548,7 +596,7 @@ export default function CaptionScreen({
             estimated_reach_max: Math.round(reachVal * 1.5),
             post_id:             postId          || null,
             post_url:            postUrl         || null,
-            thumb_url:           allMediaUrls[0] || null,
+            thumb_url:           thumbUrl || null,
             caption,
           }),
         });
