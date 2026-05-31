@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/lib/config';
-import { connectSocial, getStoredAccounts } from '@/lib/connectSocial';
+import { connectSocial, getStoredAccounts, syncSocialAccountsToSupabase } from '@/lib/connectSocial';
 
 /* ─────────────────────────────────────────
    Data
@@ -103,6 +103,14 @@ const SOCIAL_PLATFORMS = [
     ),
   },
 ];
+
+/* Platform brand colors (untuk outline button) */
+const PLATFORM_COLORS = {
+  instagram: '#E1306C',  /* Pink */
+  facebook:  '#1877F2',  /* Blue */
+  tiktok:    '#000000',  /* Black */
+  youtube:   '#FF0000',  /* Red */
+};
 
 /* ─────────────────────────────────────────
    Helpers
@@ -400,9 +408,16 @@ export default function OnboardingScreen({
       accessToken: token || accessToken,
       userId,
       onStart:  (plt) => setSocialBusy(plt),
-      onDone:   (plt, accData) => {
+      onDone:   async (plt, accData) => {
+        // Update local state
         setAccounts(getStoredAccounts());
         setSocialBusy('');
+
+        // Sync to Supabase untuk persistent storage
+        const tok = token || accessToken;
+        if (userId && tok) {
+          await syncSocialAccountsToSupabase(userId, tok);
+        }
       },
       onCancel: () => setSocialBusy(''),
     });
@@ -414,6 +429,7 @@ export default function OnboardingScreen({
 
     /* Save ALL profile fields to database */
     const updates = {
+      email:                   email.trim(), /* ← Copy email dari register ke profiles */
       full_name:               ownerName.trim(),
       business_name:           bizName.trim(),
       phone_number:            whatsapp.replace(/\D/g, ''),
@@ -823,19 +839,20 @@ export default function OnboardingScreen({
                   Hubungkan Akun Media Sosial
                 </h1>
                 <p style={{ margin: '8px 0 0', fontSize: '13px', color: '#6b7280', lineHeight: '1.5' }}>
-                  Hubungkan akun agar Larisi bisa bantu kamu posting langsung dari dashboard. Bisa dilewati dulu.
+                  Hubungkan minimal 1 akun sosial media bisnismu untuk mulai membuat konten.
                 </p>
               </div>
 
               {/* Platform tiles */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 {SOCIAL_PLATFORMS.map(p => {
-                  const acc         = accounts.find(a => a.platform === p.key);
+                  const acc         = accounts.find(a => a.platform === p.id);
                   const isConn      = !!acc;
-                  const isBusy      = socialBusy === p.key;
+                  const isBusy      = socialBusy === p.id;
+                  const platformColor = PLATFORM_COLORS[p.id] || '#000';
                   return (
                     <div
-                      key={p.key}
+                      key={p.id}
                       style={{
                         display: 'flex', alignItems: 'center', gap: '12px',
                         padding: '14px 16px', borderRadius: '12px',
@@ -844,12 +861,16 @@ export default function OnboardingScreen({
                         transition: 'all 0.2s',
                       }}
                     >
-                      {/* Avatar: foto atau icon */}
-                      {isConn && acc.avatar_url ? (
-                        <img src={acc.avatar_url} alt={acc.username || p.label}
-                          style={{ width: '36px', height: '36px', borderRadius: '10px', objectFit: 'cover', flexShrink: 0 }}
-                          onError={e => { e.target.style.display = 'none'; }}
-                        />
+                      {/* Avatar: profile photo jika connected, icon jika belum */}
+                      {isConn ? (
+                        acc.avatar_url ? (
+                          <img src={acc.avatar_url} alt={acc.username || p.label}
+                            style={{ width: '36px', height: '36px', borderRadius: '10px', objectFit: 'cover', flexShrink: 0 }}
+                            onError={e => { e.target.style.display = 'none'; }}
+                          />
+                        ) : (
+                          <span style={{ fontSize: '22px', lineHeight: 1, flexShrink: 0 }}>{p.icon}</span>
+                        )
                       ) : (
                         <span style={{ fontSize: '22px', lineHeight: 1, flexShrink: 0 }}>{p.icon}</span>
                       )}
@@ -863,13 +884,14 @@ export default function OnboardingScreen({
                       </div>
                       {!isConn && (
                         <button
-                          onClick={() => handleConnectSocial(p.key)}
+                          onClick={() => handleConnectSocial(p.id)}
                           disabled={!!socialBusy}
                           style={{
-                            padding: '8px 16px', borderRadius: '8px', fontSize: '12px', fontWeight: '700',
-                            border: 'none', cursor: socialBusy ? 'not-allowed' : 'pointer',
-                            background: isBusy ? '#E4E4EB' : '#7C3AED',
-                            color:      isBusy ? '#9ca3af' : '#fff',
+                            padding: '12px', borderRadius: '8px', fontSize: '12px', fontWeight: '700',
+                            border: `1.5px solid ${isBusy ? '#E4E4EB' : platformColor}`,
+                            background: '#fff',
+                            color: isBusy ? '#9ca3af' : platformColor,
+                            cursor: isBusy ? 'not-allowed' : 'pointer',
                             flexShrink: 0, fontFamily: 'inherit',
                           }}
                         >
@@ -881,26 +903,38 @@ export default function OnboardingScreen({
                 })}
               </div>
 
-              {/* Info */}
-              <div style={{
-                background: '#F3F4F6', borderRadius: '10px', padding: '12px 14px',
-                fontSize: '12px', color: '#6b7280', lineHeight: '1.5',
-              }}>
-                💡 Minimal 1 akun terhubung untuk bisa posting langsung. Kamu tetap bisa buat konten tanpa menghubungkan akun.
-              </div>
-
-              {/* Finish */}
+              {/* Finish Button (disabled sampai 1 akun terhubung) */}
               <button
                 onClick={handleFinish}
+                disabled={accounts.length === 0}
                 style={{
                   width: '100%', padding: '14px', borderRadius: '12px',
-                  background: '#111827', color: '#fff',
+                  background: accounts.length > 0 ? '#111827' : '#E4E4EB',
+                  color: accounts.length > 0 ? '#fff' : '#9ca3af',
                   border: 'none', fontSize: '15px', fontWeight: '700',
-                  cursor: 'pointer', fontFamily: 'inherit',
+                  cursor: accounts.length > 0 ? 'pointer' : 'not-allowed',
+                  fontFamily: 'inherit',
+                  transition: 'all 0.2s',
                 }}
               >
-                {accounts.length > 0 ? 'Mulai Gunakan Larisi' : 'Lewati untuk Sekarang'}
+                Mulai Gunakan Larisi
               </button>
+
+              {/* Skip link - hanya tampil jika belum ada akun */}
+              {accounts.length === 0 && (
+                <button
+                  onClick={handleFinish}
+                  style={{
+                    width: '100%', padding: '12px', borderRadius: '12px',
+                    background: 'transparent', color: '#7C3AED',
+                    border: 'none', fontSize: '13px', fontWeight: '700',
+                    cursor: 'pointer', fontFamily: 'inherit',
+                    textDecoration: 'underline', marginTop: '-4px',
+                  }}
+                >
+                  Hubungkan Nanti
+                </button>
+              )}
             </div>
           )}
 

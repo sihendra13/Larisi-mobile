@@ -21,7 +21,7 @@ const INSTAGRAM_SCOPES = [
  * 4. Dengarkan postMessage dari postforme-callback.html
  * 5. Setelah berhasil, fetch detail akun dari postforme-proxy
  */
-export function connectSocial({ platform, accessToken, userId, onStart, onDone, onCancel }) {
+export function connectSocial({ platform, accessToken, userId, onStart, onDone, onCancel, onLog }) {
   /* Ambil atau buat external_id (identik desktop) */
   let externalId = localStorage.getItem('radar_session_id');
   if (!externalId) {
@@ -165,4 +165,37 @@ export function getStoredAccounts() {
 /** Cek apakah platform sudah terhubung */
 export function isConnected(platform) {
   return getStoredAccounts().some(a => a.platform === platform);
+}
+
+/** Sync social accounts dari localStorage ke Supabase (profiles.social_accounts) */
+export async function syncSocialAccountsToSupabase(userId, accessToken) {
+  try {
+    const accountsRaw = localStorage.getItem('radar_social_accounts');
+    if (!accountsRaw) return { success: true, message: 'No accounts to sync' };
+
+    const accounts = JSON.parse(accountsRaw);
+    console.log('[connectSocial] Syncing', accounts.length, 'social accounts to Supabase...');
+
+    const resp = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}`, {
+      method: 'PATCH',
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        social_accounts: accounts,
+      }),
+    });
+
+    if (!resp.ok) {
+      throw new Error(`Server error ${resp.status}`);
+    }
+
+    console.log('[connectSocial] Successfully synced social accounts to Supabase');
+    return { success: true };
+  } catch (err) {
+    console.error('[connectSocial] Sync to Supabase error:', err);
+    return { success: false, error: err.message };
+  }
 }

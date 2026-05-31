@@ -128,6 +128,7 @@ export default function DapurV2() {
       if (sid) setSessionId(sid);
 
       if (p) {
+        restoreSocialAccounts(p); // ← Restore social accounts dari profile
         setProfile(p);
         applyLocation(p);
         setAuthState(p.business_name ? 'app' : 'onboarding');
@@ -180,11 +181,28 @@ export default function DapurV2() {
     }
   }
 
+  /* Helper: restore social_accounts dari profile ke localStorage */
+  const restoreSocialAccounts = (profile) => {
+    if (profile?.social_accounts) {
+      try {
+        localStorage.setItem('radar_social_accounts',
+          typeof profile.social_accounts === 'string'
+            ? profile.social_accounts
+            : JSON.stringify(profile.social_accounts)
+        );
+        console.log('[app] Restored social accounts from profile');
+      } catch (e) {
+        console.warn('[app] Error restoring social accounts:', e);
+      }
+    }
+  };
+
   /* Callback setelah login berhasil */
   const handleLoginSuccess = ({ access_token, user, profile: p }) => {
     setAccessToken(access_token);
     setUserId(user?.id || null);
     if (p) {
+      restoreSocialAccounts(p); // ← Restore social accounts dari profile
       setProfile(p);
       applyLocation(p);
       setAuthState(p.business_name ? 'app' : 'onboarding');
@@ -210,6 +228,7 @@ export default function DapurV2() {
 
   /* Callback setelah onboarding selesai */
   const handleOnboardingComplete = (p) => {
+    restoreSocialAccounts(p); // ← Restore social accounts
     setProfile(p);
     applyLocation(p);
     setAuthState('app');
@@ -217,6 +236,7 @@ export default function DapurV2() {
 
   /* Callback setelah profil di-edit dari ProfilePanel */
   const handleProfileSaved = (p) => {
+    restoreSocialAccounts(p); // ← Restore social accounts
     setProfile(p);
     applyLocation(p);
     localStorage.setItem('radar_user_profile', JSON.stringify(p));
