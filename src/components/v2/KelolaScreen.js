@@ -18,24 +18,17 @@ function platformLabel(platforms) {
 }
 
 /* ─── Fetch campaigns dari Supabase ─── */
+// Sama seperti desktop: query by session_id dengan anon key (session_id = access control)
 async function fetchCampaigns(sessionId, accessToken) {
-  if (!accessToken) return [];
   const sid = sessionId || localStorage.getItem('radar_session_id');
-
-  // Ekstrak user_id dari JWT sebagai fallback
-  let uid = null;
-  try {
-    uid = JSON.parse(atob(accessToken.split('.')[1]))?.sub || null;
-  } catch {}
-
-  if (!sid && !uid) return [];
+  if (!sid && !accessToken) return [];
 
   try {
-    // Primary: query by session_id
+    // Primary: session_id + anon key (sama seperti desktop getCampaigns)
     if (sid) {
       const resp = await fetch(
         `${SUPABASE_URL}/rest/v1/campaigns?session_id=eq.${sid}&order=created_at.desc&limit=20`,
-        { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${accessToken}` } }
+        { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` } }
       );
       if (resp.ok) {
         const rows = await resp.json();
@@ -43,13 +36,17 @@ async function fetchCampaigns(sessionId, accessToken) {
       }
     }
 
-    // Fallback: query by user_id kalau session_id tidak return hasil
-    if (uid) {
-      const resp2 = await fetch(
-        `${SUPABASE_URL}/rest/v1/campaigns?user_id=eq.${uid}&order=created_at.desc&limit=20`,
-        { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${accessToken}` } }
-      );
-      if (resp2.ok) return await resp2.json();
+    // Fallback: user JWT + user_id (untuk campaign yang disimpan dengan auth)
+    if (accessToken) {
+      let uid = null;
+      try { uid = JSON.parse(atob(accessToken.split('.')[1]))?.sub || null; } catch {}
+      if (uid) {
+        const resp2 = await fetch(
+          `${SUPABASE_URL}/rest/v1/campaigns?user_id=eq.${uid}&order=created_at.desc&limit=20`,
+          { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${accessToken}` } }
+        );
+        if (resp2.ok) return await resp2.json();
+      }
     }
     return [];
   } catch { return []; }
