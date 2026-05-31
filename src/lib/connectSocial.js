@@ -22,11 +22,11 @@ const INSTAGRAM_SCOPES = [
  * 5. Setelah berhasil, fetch detail akun dari postforme-proxy
  */
 export function connectSocial({ platform, accessToken, userId, onStart, onDone, onCancel, onLog }) {
-  /* Detect iOS PWA standalone — pakai redirect flow, bukan popup */
+  /* Detect iOS PWA standalone — pakai polling approach */
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
-  const useRedirect = isIOS && isStandalone;
-  onLog?.(`[connectSocial] Starting ${platform} connect on iOS=${isIOS}, Standalone=${isStandalone}, useRedirect=${useRedirect}`);
+  const useRedirect = false; // Disabled — redirect tidak bisa kembali ke PWA context
+  onLog?.(`[connectSocial] Starting ${platform} connect on iOS=${isIOS}, Standalone=${isStandalone}`);
 
   /* Ambil atau buat external_id */
   let externalId = localStorage.getItem('radar_session_id');
@@ -39,25 +39,19 @@ export function connectSocial({ platform, accessToken, userId, onStart, onDone, 
 
   onStart?.(platform);
 
-  /* Redirect flow: simpan state ke localStorage sebelum redirect */
-  if (useRedirect) {
-    const returnUrl = window.location.href.split('?')[0];
-    localStorage.setItem('larisi_oauth_return_url', returnUrl);
-    localStorage.setItem('larisi_oauth_pending_platform', platform);
-    localStorage.setItem('larisi_oauth_external_id', externalId);
-    onLog?.(`[connectSocial] iOS PWA: saving state for redirect flow`);
-  }
-
   let done = false;
   let popup = null;
+  let pollInterval = null;
+  let closedCheck = null;
 
   const cleanup = () => {
     if (closedCheck) clearInterval(closedCheck);
+    if (pollInterval) clearInterval(pollInterval);
     window.removeEventListener('message', msgHandler);
   };
 
-  /* Helper: fetch detail akun & simpan ke localStorage */
-  const processAccount = async (accountIds) => {
+  /* Helper: fetch detail akun dari PostForMe & simpan ke localStorage */
+  const fetchAndSaveAccount = async (accountIds) => {
     let accountData = { id: (accountIds || [])[0] || `pfm_${platform}_${Date.now()}`, platform, username: '', avatar_url: '' };
     try {
       const pfResp = await fetch(`${SUPABASE_URL}/functions/v1/postforme-proxy`, {
@@ -85,12 +79,78 @@ export function connectSocial({ platform, accessToken, userId, onStart, onDone, 
     const filtered = existing.filter(a => a.platform !== platform);
     filtered.push(accountData);
     localStorage.setItem('radar_social_accounts', JSON.stringify(filtered));
-
     popup?.close();
     onDone?.(platform, accountData);
   };
 
-  /* Fetch OAuth URL */
+  /* Polling: check PostForMe setiap 3 detik apakah akun baru muncul */
+  const startPolling = (existingIds) => {
+    onLog?.(`[connectSocial] Starting polling for ${platform} account...`);
+    let attempts = 0;
+    const maxAttempts = 60; // max 3 menit
+    pollInterval = setInterval(async () => {
+      if (done) { clearInterval(pollInterval); return; }
+      attempts++;
+      if (attempts > maxAttempts) {
+        clearInterval(pollInterval);
+        if (!done) { cleanup(); onCancel?.(); }
+        return;
+      }
+      try {
+        const pfResp = await fetch(`${SUPABASE_URL}/functions/v1/postforme-proxy`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ endpoint: `/v1/social-accounts?external_id=${encodeURIComponent(externalId)}`, method: 'GET' }),
+        });
+        if (!pfResp.ok) return;
+        const pfData = await pfResp.json();
+        const list = pfData.data || pfData.accounts || (Array.isArray(pfData) ? pfData : []);
+        const match = list.find(a => {
+          const plt = (a.platform || a.provider || '').toLowerCase();
+          const isNewPlatform = plt.startsWith(platform);
+          const isNew = !existingIds.includes(String(a.id));
+          return isNewPlatform && isNew;
+        });
+        if (match) {
+          if (done) return;
+          done = true;
+          cleanup();
+          onLog?.(`[connectSocial] Poll found new account: ${match.username || match.name}`);
+          const accountData = {
+            id: match.id,
+            platform,
+            username: match.username || match.name || match.handle || '',
+            avatar_url: match.avatar_url || match.profile_photo_url || match.profile_picture_url
+                     || match.picture || match.avatar || match.image_url || '',
+          };
+          const existing2 = JSON.parse(localStorage.getItem('radar_social_accounts') || '[]');
+          const filtered2 = existing2.filter(a => a.platform !== platform);
+          filtered2.push(accountData);
+          localStorage.setItem('radar_social_accounts', JSON.stringify(filtered2));
+          popup?.close();
+          onDone?.(platform, accountData);
+        }
+      } catch (e) { /* ignore poll errors */ }
+    }, 3000);
+  };
+
+  /* Fetch daftar akun existing sebelum OAuth (untuk detect akun baru) */
+  let existingAccountIds = [];
+  fetch(`${SUPABASE_URL}/functions/v1/postforme-proxy`, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ endpoint: `/v1/social-accounts?external_id=${encodeURIComponent(externalId)}`, method: 'GET' }),
+  })
+  .then(r => r.ok ? r.json() : null)
+  .then(d => {
+    if (d) {
+      const list = d.data || d.accounts || (Array.isArray(d) ? d : []);
+      existingAccountIds = list.map(a => String(a.id));
+    }
+  })
+  .catch(() => {});
+
+  /* Fetch OAuth URL lalu buka popup */
   fetch(`${SUPABASE_URL}/functions/v1/postforme-auth`, {
     method: 'POST',
     headers: { 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
@@ -105,21 +165,17 @@ export function connectSocial({ platform, accessToken, userId, onStart, onDone, 
     if (!authUrl) throw new Error('URL OAuth tidak tersedia');
     onLog?.(`[connectSocial] Auth URL: ${authUrl?.substring(0, 50)}...`);
 
-    if (useRedirect) {
-      /* iOS PWA: redirect full page */
-      onLog?.(`[connectSocial] iOS PWA: redirecting full page to OAuth`);
-      window.location.href = authUrl;
+    popup = window.open('about:blank', 'postforme_oauth', 'width=520,height=700,left=100,top=80');
+    onLog?.(`[connectSocial] Popup opened: ${popup ? 'SUCCESS' : 'NULL (BLOCKED)'}`);
+    if (popup) {
+      popup.location.href = authUrl;
+      onLog?.(`[connectSocial] Redirecting popup to OAuth`);
     } else {
-      /* Desktop: popup */
-      popup = window.open('about:blank', 'postforme_oauth', 'width=520,height=700,left=100,top=80');
-      onLog?.(`[connectSocial] Popup opened: ${popup ? 'SUCCESS' : 'NULL (BLOCKED)'}`);
-      if (popup) {
-        popup.location.href = authUrl;
-        onLog?.(`[connectSocial] Redirecting popup to OAuth`);
-      } else {
-        window.open(authUrl, 'postforme_oauth', 'width=520,height=700,left=100,top=80');
-      }
+      window.open(authUrl, 'postforme_oauth', 'width=520,height=700,left=100,top=80');
     }
+
+    /* Mulai polling untuk iOS PWA (postMessage mungkin tidak sampai) */
+    startPolling(existingAccountIds);
   })
   .catch(err => {
     console.error('[connectSocial] error:', err);
@@ -127,23 +183,25 @@ export function connectSocial({ platform, accessToken, userId, onStart, onDone, 
     onCancel?.();
   });
 
-  /* Popup flow: dengarkan postMessage dari postforme-callback.html */
+  /* Dengarkan postMessage dari postforme-callback.html (desktop/non-iOS) */
   const msgHandler = async (event) => {
     const { type, accountIds } = event.data || {};
     if (type !== 'postforme_oauth_success' && type !== 'postforme_oauth_resync') return;
     if (done) return;
     done = true;
     cleanup();
-    await processAccount(accountIds || []);
+    onLog?.(`[connectSocial] postMessage received: ${type}`);
+    await fetchAndSaveAccount(accountIds || []);
   };
+  window.addEventListener('message', msgHandler);
 
-  if (!useRedirect) {
-    window.addEventListener('message', msgHandler);
-  }
-
-  /* Pantau popup ditutup manual (hanya popup flow) */
-  const closedCheck = useRedirect ? null : setInterval(() => {
-    if (popup?.closed && !done) { cleanup(); onCancel?.(); }
+  /* Pantau popup ditutup manual */
+  closedCheck = setInterval(() => {
+    if (popup?.closed && !done) {
+      onLog?.(`[connectSocial] Popup closed by user, stopping poll`);
+      cleanup();
+      onCancel?.();
+    }
   }, 800);
 }
 
