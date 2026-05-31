@@ -606,6 +606,48 @@ export default function CaptionScreen({
       const toastLabel = fmtName ? `${fmtName} ${platName}` : platName;
       showToast(`✓ ${toastLabel} berhasil dipublish!`, 'success');
 
+      // Polling background: ambil thumb_url dari /v1/social-posts/{postId} — sama seperti desktop monitor.js
+      // Dijalankan SETELAH modal success, tidak blocking UX
+      if (postId && effectiveSessionId && accessToken) {
+        (async () => {
+          const maxTry = 10;
+          const delay  = 5000;
+          for (let t = 0; t < maxTry; t++) {
+            await new Promise(r => setTimeout(r, delay));
+            try {
+              const statusData = await pfmProxy(`/v1/social-posts/${postId}`, 'GET', null, accessToken);
+              // Sama persis dengan desktop monitor.js line 576-579
+              let mediaUrl = null;
+              if (statusData?.media?.length) {
+                mediaUrl = statusData.media[0].thumb_url || statusData.media[0].media_url || statusData.media[0].url || null;
+              }
+              if (!mediaUrl) mediaUrl = statusData?.media_url || statusData?.thumb_url || null;
+
+              const resolvedUrl = statusData?.post_url || statusData?.platform_url || statusData?.permalink
+                || statusData?.social_accounts?.[0]?.post_url || null;
+              const platformPostId = statusData?.social_accounts?.[0]?.platform_post_id || null;
+
+              if (mediaUrl || resolvedUrl || platformPostId) {
+                // Update thumb_url + post_url + platform_post_id di DB
+                const updates = {};
+                if (mediaUrl)       updates.thumb_url          = mediaUrl;
+                if (resolvedUrl)    updates.post_url           = resolvedUrl;
+                if (platformPostId) updates.platform_post_id   = platformPostId;
+                fetch(
+                  `${SUPABASE_URL}/rest/v1/campaigns?session_id=eq.${effectiveSessionId}&post_id=eq.${postId}`,
+                  {
+                    method: 'PATCH',
+                    headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updates),
+                  }
+                ).catch(() => {});
+                break; // Berhasil, stop polling
+              }
+            } catch {}
+          }
+        })();
+      }
+
       // Phase 2: success state (setelah 1.6 detik, sama seperti desktop)
       setTimeout(() => {
         setLaunchPhase('success');
