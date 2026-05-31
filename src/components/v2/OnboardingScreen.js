@@ -502,7 +502,7 @@ export default function OnboardingScreen({
   ───────────────────────────────────────── */
   return (
     <div className="bg-animated" style={{
-      minHeight: '100vh', display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
+      minHeight: '100vh', display: 'flex', flexDirection: 'column',
       padding: '24px', position: 'relative', overflowY: 'auto', fontFamily: '-apple-system, sans-serif'
     }}>
       
@@ -518,7 +518,7 @@ export default function OnboardingScreen({
         animation: 'float 6s ease-in-out infinite reverse', zIndex: 0, pointerEvents: 'none'
       }} />
 
-      <div style={{ width: '100%', maxWidth: '440px', position: 'relative', zIndex: 10, paddingBottom: '40px' }}>
+      <div style={{ width: '100%', maxWidth: '440px', margin: 'auto', position: 'relative', zIndex: 10 }}>
         <div className="glass-card stagger-1" style={{
           borderRadius: '32px', padding: '40px 32px',
           display: 'flex', flexDirection: 'column', gap: '0',
