@@ -84,6 +84,17 @@ const ProgressBar = ({ step, total }) => (
 
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/lib/config';
 
+/* ── PostForMe proxy helper ── */
+async function pfmProxy(endpoint, method, body, accessToken) {
+  const resp = await fetch(`${SUPABASE_URL}/functions/v1/postforme-proxy`, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${accessToken || SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ endpoint, method: method || 'GET', body }),
+  });
+  if (!resp.ok) { const t = await resp.text(); throw new Error('Proxy ' + resp.status + ': ' + t); }
+  return resp.json();
+}
+
 /* ── USP fallback per kategori (identik dengan desktop caption.js) ── */
 const USP_FALLBACKS = {
   fnb:                 'Cita rasa yang bikin balik lagi',
@@ -248,11 +259,15 @@ export default function CaptionScreen({
   locName, locFull, locPop, radius, localOn, travelerOn,
   persona, profile,
   caption, setCaption,
+  accessToken, sessionId, userId,
   onBack, onUbahAset,
 }) {
   const [stitchOn,        setStitchOn]        = useState(true);
   const [generating,      setGenerating]      = useState(false);
   const [hasGenerated,    setHasGenerated]    = useState(false);
+  const [posting,         setPosting]         = useState(false);
+  const [postResult,      setPostResult]      = useState(null); // null | 'success' | 'error'
+  const [postError,       setPostError]       = useState('');
 
   /* ── AI call counter — naik tiap Generate, untuk rotasi hook style ── */
   const aiCallCountRef = useRef(0);
@@ -358,6 +373,88 @@ export default function CaptionScreen({
       vv.removeEventListener('scroll', update);
     };
   }, [showEditSheet]);
+
+  /* ── Posting via PostForMe ── */
+  const handleTayangkan = async () => {
+    if (!caption || posting) return;
+
+    const accounts = (() => {
+      try { return JSON.parse(localStorage.getItem('radar_social_accounts') || '[]'); } catch { return []; }
+    })();
+
+    const platMap = { ig: 'instagram', tiktok: 'tiktok', meta: 'facebook', youtube: 'youtube' };
+    const sp = platMap[platform] || platform;
+    const acc = accounts.find(a => a.platform === sp);
+
+    if (!acc?.id) {
+      setPostError(`Akun ${platform === 'instagram' ? 'Instagram' : platform} belum terhubung. Hubungkan dulu di Dapur Konten → Platform.`);
+      setPostResult('error');
+      return;
+    }
+
+    setPosting(true);
+    setPostResult(null);
+    setPostError('');
+
+    try {
+      // Upload media
+      const allMediaUrls = [];
+      for (const file of files) {
+        const uploadMeta = await pfmProxy('/v1/media/create-upload-url', 'POST', { content_type: file.type || 'image/jpeg' }, accessToken);
+        if (!uploadMeta?.upload_url) throw new Error('Gagal mendapatkan URL upload');
+        const upResp = await fetch(uploadMeta.upload_url, { method: 'PUT', body: file, headers: { 'Content-Type': file.type || 'image/jpeg' } });
+        if (!upResp.ok) throw new Error('Upload media gagal: ' + upResp.status);
+        allMediaUrls.push(uploadMeta.media_url || uploadMeta.url);
+      }
+
+      const placementMap = { post: 'timeline', reel: 'reels', story: 'stories' };
+      const payload = {
+        caption,
+        social_accounts: [acc.id],
+        platform_configurations: { [sp]: { placement: placementMap[format] || 'timeline' } },
+      };
+      if (allMediaUrls.length) payload.media = allMediaUrls.map(u => ({ url: u }));
+
+      const data = await pfmProxy('/v1/social-posts', 'POST', payload, accessToken);
+
+      const postId = data?.id || data?.post_id || data?.posts?.[0]?.id || null;
+      const postUrl = data?.post_url || data?.platform_url || data?.permalink || data?.posts?.[0]?.post_url || null;
+
+      // Simpan campaign ke Supabase
+      if (sessionId && accessToken) {
+        const reach = Math.round(Math.PI * radius * radius * ((locPop || 50000) / (Math.PI * 25)));
+        await fetch(`${SUPABASE_URL}/rest/v1/campaigns`, {
+          method: 'POST',
+          headers: {
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=minimal',
+          },
+          body: JSON.stringify({
+            user_id:             userId || null,
+            session_id:          sessionId,
+            nama_campaign:       caption.slice(0, 60),
+            platforms:           [sp],
+            format:              format || 'post',
+            status:              'active',
+            estimated_reach_min: reach,
+            estimated_reach_max: Math.round(reach * 1.5),
+            post_id:             postId || null,
+            post_url:            postUrl || null,
+            caption:             caption,
+          }),
+        });
+      }
+
+      setPostResult('success');
+    } catch (e) {
+      setPostError(e.message || 'Terjadi kesalahan saat posting.');
+      setPostResult('error');
+    } finally {
+      setPosting(false);
+    }
+  };
 
   /* ── Edit sheet helpers ── */
   const openEditSheet = () => {
@@ -729,18 +826,62 @@ export default function CaptionScreen({
         </div>
 
         {/* Right: Button */}
-        <button style={{
-          padding:'10px 16px', borderRadius:'12px', flexShrink:0,
-          background:'#1A1A1A', color:'#fff', border:'none', cursor:'pointer',
-          fontFamily:'var(--m-font)', fontSize:'14px', fontWeight:'700',
-          display:'flex', alignItems:'center', gap:'6px',
-        }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none">
-            <polygon points="5 3 19 12 5 21 5 3"/>
-          </svg>
-          Tayangkan
+        <button
+          onClick={handleTayangkan}
+          disabled={!caption || posting}
+          style={{
+            padding:'10px 16px', borderRadius:'12px', flexShrink:0,
+            background: (!caption || posting) ? '#9CA3AF' : '#1A1A1A',
+            color:'#fff', border:'none', cursor: (!caption || posting) ? 'not-allowed' : 'pointer',
+            fontFamily:'var(--m-font)', fontSize:'14px', fontWeight:'700',
+            display:'flex', alignItems:'center', gap:'6px',
+            transition:'background 0.2s',
+          }}
+        >
+          {posting ? (
+            <div style={{width:'14px', height:'14px', border:'2px solid rgba(255,255,255,0.4)', borderTopColor:'#fff', borderRadius:'50%', animation:'spin 0.7s linear infinite'}} />
+          ) : (
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+              <polygon points="5 3 19 12 5 21 5 3"/>
+            </svg>
+          )}
+          {posting ? 'Memposting…' : 'Tayangkan'}
         </button>
       </div>
+
+      {/* ── Post Success Modal ── */}
+      {postResult === 'success' && (
+        <div style={{position:'fixed', inset:0, zIndex:2000, background:'rgba(0,0,0,0.5)', display:'flex', alignItems:'center', justifyContent:'center', padding:'24px'}}>
+          <div style={{background:'#fff', borderRadius:'24px', padding:'32px 24px', textAlign:'center', maxWidth:'320px', width:'100%'}}>
+            <div style={{fontSize:'48px', marginBottom:'16px'}}>🎉</div>
+            <div style={{fontFamily:'var(--m-font)', fontSize:'18px', fontWeight:'800', color:'var(--m-ink)', marginBottom:'8px'}}>Berhasil Ditayangkan!</div>
+            <div style={{fontFamily:'var(--m-font)', fontSize:'13px', color:'var(--m-ink-sub)', lineHeight:'1.5', marginBottom:'24px'}}>Kontenmu sedang diproses dan akan muncul di akun Instagram dalam beberapa menit.</div>
+            <button
+              onClick={() => setPostResult(null)}
+              style={{width:'100%', padding:'14px', borderRadius:'12px', background:'#1A1A1A', color:'#fff', border:'none', cursor:'pointer', fontFamily:'var(--m-font)', fontSize:'15px', fontWeight:'700'}}
+            >
+              Oke
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Post Error Modal ── */}
+      {postResult === 'error' && (
+        <div style={{position:'fixed', inset:0, zIndex:2000, background:'rgba(0,0,0,0.5)', display:'flex', alignItems:'center', justifyContent:'center', padding:'24px'}}>
+          <div style={{background:'#fff', borderRadius:'24px', padding:'32px 24px', textAlign:'center', maxWidth:'320px', width:'100%'}}>
+            <div style={{fontSize:'48px', marginBottom:'16px'}}>⚠️</div>
+            <div style={{fontFamily:'var(--m-font)', fontSize:'18px', fontWeight:'800', color:'var(--m-ink)', marginBottom:'8px'}}>Gagal Memposting</div>
+            <div style={{fontFamily:'var(--m-font)', fontSize:'13px', color:'var(--m-ink-sub)', lineHeight:'1.5', marginBottom:'24px'}}>{postError}</div>
+            <button
+              onClick={() => setPostResult(null)}
+              style={{width:'100%', padding:'14px', borderRadius:'12px', background:'#1A1A1A', color:'#fff', border:'none', cursor:'pointer', fontFamily:'var(--m-font)', fontSize:'15px', fontWeight:'700'}}
+            >
+              Tutup
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ── Edit Caption Bottom Sheet ── */}
       {/* Backdrop — terpisah agar tidak wrap sheet, iOS Safari lebih stabil */}

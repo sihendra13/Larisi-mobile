@@ -473,6 +473,9 @@ export default function DapurV2() {
             profile={profile}
             caption={caption}
             setCaption={setCaption}
+            accessToken={accessToken}
+            sessionId={sessionId}
+            userId={userId}
             onBack={goBack}
             onUbahAset={() => goTo('aset')}
           />
