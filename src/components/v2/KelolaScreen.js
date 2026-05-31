@@ -19,10 +19,13 @@ function platformLabel(platforms) {
 
 /* ─── Fetch campaigns dari Supabase ─── */
 async function fetchCampaigns(sessionId, accessToken) {
-  if (!sessionId || !accessToken) return [];
+  if (!accessToken) return [];
+  // Fallback ke localStorage kalau sessionId prop belum di-set
+  const sid = sessionId || localStorage.getItem('radar_session_id');
+  if (!sid) return [];
   try {
     const resp = await fetch(
-      `${SUPABASE_URL}/rest/v1/campaigns?session_id=eq.${sessionId}&order=created_at.desc&limit=20`,
+      `${SUPABASE_URL}/rest/v1/campaigns?session_id=eq.${sid}&order=created_at.desc&limit=20`,
       { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${accessToken}` } }
     );
     if (!resp.ok) return [];

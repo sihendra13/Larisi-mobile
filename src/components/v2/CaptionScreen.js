@@ -524,14 +524,20 @@ export default function CaptionScreen({
       }
 
       // Simpan campaign ke Supabase
-      if (sessionId && accessToken) {
+      // Fallback ke localStorage kalau sessionId prop belum di-set (timing issue)
+      const effectiveSessionId = sessionId || localStorage.getItem('radar_session_id');
+      const effectiveUserId    = userId    || (() => {
+        try { return JSON.parse(atob((accessToken||'').split('.')[1]))?.sub || null; } catch { return null; }
+      })();
+
+      if (effectiveSessionId && accessToken) {
         const reach = Math.round(Math.PI * radius * radius * ((locPop || 50000) / (Math.PI * 25)));
         const saveResp = await fetch(`${SUPABASE_URL}/rest/v1/campaigns`, {
           method: 'POST',
           headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' },
           body: JSON.stringify({
-            user_id:             userId || null,
-            session_id:          sessionId,
+            user_id:             effectiveUserId,
+            session_id:          effectiveSessionId,
             nama_campaign:       caption.slice(0, 60),
             platforms:           [sp],
             format:              format || 'post',

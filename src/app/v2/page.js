@@ -131,8 +131,8 @@ export default function DapurV2() {
         setAuthState(goToRegister ? 'register' : 'login');
         return;
       }
-      const p   = getProfile();
-      const sid = getSessionId();
+      const pCached = getProfile();
+      const sid     = getSessionId();
 
       let uid = null;
       try {
@@ -144,32 +144,47 @@ export default function DapurV2() {
       setUserId(uid);
       if (sid) setSessionId(sid);
 
-      if (p) {
-        restoreSocialAccounts(p); // ← Restore social accounts dari profile
-        setProfile(p);
-        applyLocation(p);
+      // Tampilkan dari cache dulu agar UI tidak blank
+      if (pCached) {
+        restoreSocialAccounts(pCached);
+        setProfile(pCached);
+        applyLocation(pCached);
+        setAuthState(pCached.business_name ? 'app' : 'onboarding');
+      }
 
-        /* Sync postforme_external_id — sama seperti desktop supabase.js */
-        if (p.postforme_external_id) {
-          localStorage.setItem('radar_session_id', p.postforme_external_id);
-        } else if (uid && tok) {
-          let extId = localStorage.getItem('radar_session_id');
-          if (!extId || extId === uid) {
-            extId = 'radar_user_' + Math.random().toString(36).slice(2, 10);
-            localStorage.setItem('radar_session_id', extId);
+      // Fetch fresh profile dari Supabase — social_accounts selalu up-to-date
+      // (localStorage bisa stale saat app di-kill di Android)
+      if (uid && tok) {
+        fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${uid}`, {
+          headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${tok}` },
+        }).then(r => r.ok ? r.json() : null).then(rows => {
+          const fresh = rows?.[0];
+          if (!fresh) { if (!pCached) setAuthState('onboarding'); return; }
+
+          localStorage.setItem('radar_user_profile', JSON.stringify(fresh));
+          restoreSocialAccounts(fresh); // ← social_accounts dari Supabase, bukan cache
+          setProfile(fresh);
+          applyLocation(fresh);
+
+          if (fresh.postforme_external_id) {
+            localStorage.setItem('radar_session_id', fresh.postforme_external_id);
+            setSessionId(fresh.postforme_external_id);
+          } else {
+            let extId = localStorage.getItem('radar_session_id');
+            if (!extId || extId === uid) {
+              extId = 'radar_user_' + Math.random().toString(36).slice(2, 10);
+              localStorage.setItem('radar_session_id', extId);
+            }
+            fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${uid}`, {
+              method: 'PATCH',
+              headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${tok}`, 'Content-Type': 'application/json' },
+              body: JSON.stringify({ postforme_external_id: extId }),
+            }).catch(() => {});
           }
-          /* Simpan ke Supabase */
-          fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${uid}`, {
-            method: 'PATCH',
-            headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${tok}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ postforme_external_id: extId }),
-          }).catch(() => {});
-          p.postforme_external_id = extId;
-          localStorage.setItem('radar_user_profile', JSON.stringify(p));
-        }
 
-        setAuthState(p.business_name ? 'app' : 'onboarding');
-      } else {
+          setAuthState(fresh.business_name ? 'app' : 'onboarding');
+        }).catch(() => { if (!pCached) setAuthState('onboarding'); });
+      } else if (!pCached) {
         setAuthState('onboarding');
       }
     };
