@@ -195,14 +195,18 @@ export function connectSocial({ platform, accessToken, userId, onStart, onDone, 
   };
   window.addEventListener('message', msgHandler);
 
-  /* Pantau popup ditutup manual */
-  closedCheck = setInterval(() => {
-    if (popup?.closed && !done) {
-      onLog?.(`[connectSocial] Popup closed by user, stopping poll`);
-      cleanup();
-      onCancel?.();
-    }
-  }, 800);
+  /* Pantau popup ditutup manual — HANYA di non-iOS
+     Di iOS popup.closed langsung true karena dibuka di Safari terpisah,
+     jadi jangan cancel di iOS, biarkan poll jalan terus */
+  if (!isIOS) {
+    closedCheck = setInterval(() => {
+      if (popup?.closed && !done) {
+        onLog?.(`[connectSocial] Popup closed by user, stopping poll`);
+        cleanup();
+        onCancel?.();
+      }
+    }, 800);
+  }
 }
 
 /**
