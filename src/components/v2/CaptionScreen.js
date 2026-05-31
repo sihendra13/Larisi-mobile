@@ -420,12 +420,18 @@ export default function CaptionScreen({
     setLaunchPhase('loading');
 
     try {
-      // Upload media
+      // Upload media — files berisi { url: 'blob:...', type: 'photo'|'video', name }
       const allMediaUrls = [];
       for (const file of files) {
-        const uploadMeta = await pfmProxy('/v1/media/create-upload-url', 'POST', { content_type: file.type || 'image/jpeg' }, accessToken);
+        // Fetch blob URL → dapat Blob yang bisa di-upload (sama seperti desktop konversi dataUrl → Blob)
+        const blobResp = await fetch(file.url);
+        if (!blobResp.ok) throw new Error('Gagal membaca file media');
+        const blob = await blobResp.blob();
+        const mime = file.type === 'video' ? (blob.type || 'video/mp4') : 'image/jpeg';
+
+        const uploadMeta = await pfmProxy('/v1/media/create-upload-url', 'POST', { content_type: mime }, accessToken);
         if (!uploadMeta?.upload_url) throw new Error('Gagal mendapatkan URL upload');
-        const upResp = await fetch(uploadMeta.upload_url, { method: 'PUT', body: file, headers: { 'Content-Type': file.type || 'image/jpeg' } });
+        const upResp = await fetch(uploadMeta.upload_url, { method: 'PUT', body: blob, headers: { 'Content-Type': mime } });
         if (!upResp.ok) throw new Error('Upload media gagal: ' + upResp.status);
         allMediaUrls.push(uploadMeta.media_url || uploadMeta.url);
       }
