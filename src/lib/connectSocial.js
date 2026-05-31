@@ -12,6 +12,28 @@ const INSTAGRAM_SCOPES = [
 ];
 
 /**
+ * Pre-fetch OAuth URL untuk platform tertentu — panggil saat component mount.
+ * Return auth URL string atau null kalau gagal.
+ */
+export async function prefetchAuthUrl(platform, externalId) {
+  try {
+    const resp = await fetch(`${SUPABASE_URL}/functions/v1/postforme-auth`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        platform,
+        redirect_uri: REDIRECT_URI,
+        external_id: externalId,
+        ...(platform === 'instagram' ? { scopes: INSTAGRAM_SCOPES } : {}),
+      }),
+    });
+    if (!resp.ok) return null;
+    const data = await resp.json();
+    return data.url || data.auth_url || data.redirect_url || data.authorization_url || null;
+  } catch { return null; }
+}
+
+/**
  * Hubungkan akun sosial via PostForMe OAuth — identik dengan desktop onboarding.html
  *
  * Flow:
@@ -21,7 +43,7 @@ const INSTAGRAM_SCOPES = [
  * 4. Dengarkan postMessage dari postforme-callback.html
  * 5. Setelah berhasil, fetch detail akun dari postforme-proxy
  */
-export function connectSocial({ platform, accessToken, userId, onStart, onDone, onCancel, onLog }) {
+export function connectSocial({ platform, accessToken, userId, onStart, onDone, onCancel, onLog, preloadedUrl }) {
   /* Detect iOS PWA standalone — pakai polling approach */
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
@@ -174,49 +196,46 @@ export function connectSocial({ platform, accessToken, userId, onStart, onDone, 
   /* Tidak perlu fetch existing IDs — langsung cari akun platform setelah OAuth selesai */
   let existingAccountIds = [];
 
-  /* Buka popup SEBELUM fetch — harus synchronous dari user gesture
-     iOS: pakai _blank agar Safari buka sebagai tab baru yang visible
-     Desktop: pakai named window dengan size */
-  popup = isIOS
-    ? window.open('about:blank', '_blank')
-    : window.open('about:blank', 'postforme_oauth', 'width=520,height=700,left=100,top=80');
-  onLog?.(`[connectSocial] Popup pre-opened: ${popup ? 'SUCCESS' : 'BLOCKED'}`);
+  if (isIOS && preloadedUrl) {
+    /* iOS: buka langsung ke auth URL yang sudah di-prefetch — synchronous dari user gesture */
+    onLog?.(`[connectSocial] iOS: opening preloaded URL directly`);
+    popup = window.open(preloadedUrl, '_blank');
+    onLog?.(`[connectSocial] iOS popup: ${popup ? 'SUCCESS' : 'BLOCKED'}`);
+    if (disconnectPromise) disconnectPromise.finally(() => startPolling(existingAccountIds));
+    else startPolling(existingAccountIds);
+  } else {
+    /* Desktop / non-iOS: buka about:blank dulu synchronous, fetch URL, lalu navigate */
+    popup = window.open('about:blank', 'postforme_oauth', 'width=520,height=700,left=100,top=80');
+    onLog?.(`[connectSocial] Popup pre-opened: ${popup ? 'SUCCESS' : 'BLOCKED'}`);
 
-  /* Fetch OAuth URL lalu arahkan popup */
-  fetch(`${SUPABASE_URL}/functions/v1/postforme-auth`, {
-    method: 'POST',
-    headers: { 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      platform, redirect_uri: REDIRECT_URI, external_id: externalId,
-      ...(platform === 'instagram' ? { scopes: INSTAGRAM_SCOPES } : {}),
-    }),
-  })
-  .then(resp => { if (!resp.ok) throw new Error('Server error ' + resp.status); return resp.json(); })
-  .then(async data => {
-    const authUrl = data.url || data.auth_url || data.redirect_url || data.authorization_url;
-    if (!authUrl) throw new Error('URL OAuth tidak tersedia');
-    onLog?.(`[connectSocial] Auth URL: ${authUrl?.substring(0, 50)}...`);
-
-    /* Tunggu disconnect selesai */
-    if (disconnectPromise) await disconnectPromise;
-
-    if (popup && !popup.closed) {
-      popup.location.href = authUrl;
-      onLog?.(`[connectSocial] Navigating popup to OAuth`);
-    } else {
-      /* Fallback kalau popup blocked */
-      onLog?.(`[connectSocial] Popup blocked, fallback window.open`);
-      popup = window.open(authUrl, '_blank');
-    }
-
-    /* Mulai polling untuk iOS PWA (postMessage mungkin tidak sampai) */
-    startPolling(existingAccountIds);
-  })
-  .catch(err => {
-    console.error('[connectSocial] error:', err);
-    popup?.close();
-    onCancel?.();
-  });
+    fetch(`${SUPABASE_URL}/functions/v1/postforme-auth`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        platform, redirect_uri: REDIRECT_URI, external_id: externalId,
+        ...(platform === 'instagram' ? { scopes: INSTAGRAM_SCOPES } : {}),
+      }),
+    })
+    .then(resp => { if (!resp.ok) throw new Error('Server error ' + resp.status); return resp.json(); })
+    .then(async data => {
+      const authUrl = data.url || data.auth_url || data.redirect_url || data.authorization_url;
+      if (!authUrl) throw new Error('URL OAuth tidak tersedia');
+      onLog?.(`[connectSocial] Auth URL: ${authUrl?.substring(0, 50)}...`);
+      if (disconnectPromise) await disconnectPromise;
+      if (popup && !popup.closed) {
+        popup.location.href = authUrl;
+        onLog?.(`[connectSocial] Navigating popup to OAuth`);
+      } else {
+        popup = window.open(authUrl, '_blank');
+      }
+      startPolling(existingAccountIds);
+    })
+    .catch(err => {
+      console.error('[connectSocial] error:', err);
+      popup?.close();
+      onCancel?.();
+    });
+  }
 
   /* Dengarkan postMessage dari postforme-callback.html (desktop/non-iOS) */
   const msgHandler = async (event) => {

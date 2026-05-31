@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import MobileHeader from '@/components/layout/MobileHeader';
-import { connectSocial, getStoredAccounts, syncSocialAccountsToSupabase } from '@/lib/connectSocial';
+import { connectSocial, getStoredAccounts, syncSocialAccountsToSupabase, prefetchAuthUrl } from '@/lib/connectSocial';
 
 /* ── Platform config ── */
 const PLATFORMS = [
@@ -158,12 +158,26 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext, pro
   const [animateDisconnectConfirm, setAnimateDisconnectConfirm] = useState(false);
   /* Toast notification */
   const [toast, setToast] = useState({ show: false, message: '' });
+  const [preloadedUrls, setPreloadedUrls] = useState({});
 
   /* Refresh akun dari localStorage setiap kali layar aktif */
   useEffect(() => {
     const refresh = () => setAccounts(getStoredAccounts());
     window.addEventListener('focus', refresh);
     return () => window.removeEventListener('focus', refresh);
+  }, []);
+
+  /* iOS: pre-fetch OAuth URL untuk semua platform saat mount */
+  useEffect(() => {
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    if (!isIOS) return;
+    const externalId = localStorage.getItem('radar_session_id');
+    if (!externalId) return;
+    const unconnected = PLATFORMS.filter(p => !accounts.some(a => a.platform === p.id));
+    unconnected.forEach(async (p) => {
+      const url = await prefetchAuthUrl(p.id, externalId);
+      if (url) setPreloadedUrls(prev => ({ ...prev, [p.id]: url }));
+    });
   }, []);
 
   const openManage = () => { setShowManage(true);  setTimeout(() => setAnimateManage(true), 10); };
@@ -231,6 +245,7 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext, pro
       platform: pid,
       accessToken: accessToken || '',
       userId: userId || '',
+      preloadedUrl: preloadedUrls[pid] || null,
       onStart:  (p) => setSocialBusy(p),
       onDone:   async (plt, accData) => {
         // Update local state
