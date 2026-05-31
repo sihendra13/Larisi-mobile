@@ -20,7 +20,12 @@ export function getProfile() {
  */
 export function getSessionId() {
   if (typeof window === 'undefined') return null;
-  return localStorage.getItem('radar_session_id') || null;
+  let sid = localStorage.getItem('radar_session_id');
+  if (!sid) {
+    sid = crypto.randomUUID();
+    localStorage.setItem('radar_session_id', sid);
+  }
+  return sid;
 }
 
 /**

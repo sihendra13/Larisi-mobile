@@ -612,12 +612,12 @@ export default function CaptionScreen({
         try { return JSON.parse(atob((accessToken||'').split('.')[1]))?.sub || null; } catch { return null; }
       })();
 
-      if (effectiveSessionId && accessToken) {
+      if (effectiveSessionId) {
         const reachVal  = computeReach(locPop, radius, localOn, travelerOn);
         const finalName = (overrideName && overrideName.trim()) ? overrideName.trim() : campName;
         await fetch(`${SUPABASE_URL}/rest/v1/campaigns`, {
           method: 'POST',
-          headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+          headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${accessToken || SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
           body: JSON.stringify({
             user_id:             effectiveUserId,
             session_id:          effectiveSessionId,
