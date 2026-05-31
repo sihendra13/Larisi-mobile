@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import MobileHeader from '@/components/layout/MobileHeader';
-import { connectSocial, getStoredAccounts, syncSocialAccountsToSupabase, prefetchAuthUrl } from '@/lib/connectSocial';
+import { connectSocial, getStoredAccounts, syncSocialAccountsToSupabase, prefetchAuthUrl, refreshConnectedAccounts } from '@/lib/connectSocial';
 
 /* ── Platform config ── */
 const PLATFORMS = [
@@ -165,6 +165,15 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext, pro
 
   /* Refresh akun dari localStorage saat profile berubah atau layar aktif */
   useEffect(() => {
+    (async () => {
+      const externalId = localStorage.getItem('radar_session_id') || '';
+      if (externalId && userId && accessToken) {
+        const changed = await refreshConnectedAccounts(externalId, userId, accessToken);
+        if (changed) {
+          setAccounts(getStoredAccounts());
+        }
+      }
+    })();
     setAccounts(getStoredAccounts());
     
     // Cek jika ada akun multiple yang tertunda dari redirect OAuth
