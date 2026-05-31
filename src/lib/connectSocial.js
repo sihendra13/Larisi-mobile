@@ -43,7 +43,7 @@ export async function prefetchAuthUrl(platform, externalId) {
  * 4. Dengarkan postMessage dari postforme-callback.html
  * 5. Setelah berhasil, fetch detail akun dari postforme-proxy
  */
-export function connectSocial({ platform, accessToken, userId, onStart, onDone, onCancel, onLog, preloadedUrl }) {
+export function connectSocial({ platform, accessToken, userId, onStart, onDone, onMultipleAccounts, onCancel, onLog, preloadedUrl }) {
   /* Detect iOS PWA standalone — pakai polling approach */
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
@@ -98,6 +98,8 @@ export function connectSocial({ platform, accessToken, userId, onStart, onDone, 
   /* Helper: fetch detail akun dari PostForMe & simpan ke localStorage */
   const fetchAndSaveAccount = async (accountIds) => {
     let accountData = { id: (accountIds || [])[0] || `pfm_${platform}_${Date.now()}`, platform, username: '', avatar_url: '' };
+    let multipleMatches = [];
+    
     try {
       const pfResp = await fetch(`${SUPABASE_URL}/functions/v1/postforme-proxy`, {
         method: 'POST',
@@ -107,8 +109,18 @@ export function connectSocial({ platform, accessToken, userId, onStart, onDone, 
       if (pfResp.ok) {
         const pfData = await pfResp.json();
         const list = pfData.data || pfData.accounts || (Array.isArray(pfData) ? pfData : []);
-        const match = list.find(a => (a.platform || a.provider || '').toLowerCase().startsWith(platform));
-        if (match) {
+        const matches = list.filter(a => (a.platform || a.provider || '').toLowerCase().startsWith(platform));
+        
+        if (matches.length > 1 && typeof onMultipleAccounts === 'function') {
+          // Format accounts for the modal
+          multipleMatches = matches.map(m => ({
+            id: m.id || `pfm_${platform}_${Date.now()}_${Math.random()}`,
+            platform,
+            username: m.username || m.name || m.handle || '',
+            avatar_url: m.avatar_url || m.profile_photo_url || m.profile_picture_url || m.picture || m.avatar || m.image_url || '',
+          }));
+        } else if (matches.length > 0) {
+          const match = matches[0];
           accountData = {
             id: match.id || accountData.id,
             platform,
@@ -120,12 +132,19 @@ export function connectSocial({ platform, accessToken, userId, onStart, onDone, 
       }
     } catch (e) { console.warn('[connectSocial] proxy error:', e); }
 
-    const existing = JSON.parse(localStorage.getItem('radar_social_accounts') || '[]');
-    const filtered = existing.filter(a => a.platform !== platform);
-    filtered.push(accountData);
-    localStorage.setItem('radar_social_accounts', JSON.stringify(filtered));
     popup?.close();
-    onDone?.(platform, accountData);
+
+    if (multipleMatches.length > 1) {
+      // Return multiple accounts for UI selection (DO NOT SAVE automatically)
+      onMultipleAccounts(multipleMatches);
+    } else {
+      // Save single account automatically
+      const existing = JSON.parse(localStorage.getItem('radar_social_accounts') || '[]');
+      const filtered = existing.filter(a => a.platform !== platform);
+      filtered.push(accountData);
+      localStorage.setItem('radar_social_accounts', JSON.stringify(filtered));
+      onDone?.(platform, accountData);
+    }
   };
 
   /* Poll satu kali ke PostForMe, return true jika akun baru ditemukan */

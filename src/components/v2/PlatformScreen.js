@@ -156,6 +156,9 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext, pro
   const [disconnectPlatform, setDisconnectPlatform] = useState('');
   const [showDisconnectConfirm, setShowDisconnectConfirm] = useState(false);
   const [animateDisconnectConfirm, setAnimateDisconnectConfirm] = useState(false);
+  /* Modal "Pilih Akun" */
+  const [accountSelection, setAccountSelection] = useState({ show: false, platform: '', accounts: [] });
+  const [animateAccountSelection, setAnimateAccountSelection] = useState(false);
   /* Toast notification */
   const [toast, setToast] = useState({ show: false, message: '' });
   const [preloadedUrls, setPreloadedUrls] = useState({});
@@ -248,6 +251,11 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext, pro
       userId: userId || '',
       preloadedUrl: preloadedUrls[pid] || null,
       onStart:  (p) => setSocialBusy(p),
+      onMultipleAccounts: (matches) => {
+        setSocialBusy('');
+        setAccountSelection({ show: true, platform: pid, accounts: matches });
+        setTimeout(() => setAnimateAccountSelection(true), 10);
+      },
       onDone:   async (plt, accData) => {
         // Update local state
         setAccounts(getStoredAccounts());
@@ -260,6 +268,30 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext, pro
       },
       onCancel: ()  => setSocialBusy(''),
     });
+  };
+
+  const closeAccountSelection = () => {
+    setAnimateAccountSelection(false);
+    setTimeout(() => {
+      setAccountSelection({ show: false, platform: '', accounts: [] });
+    }, 300);
+  };
+
+  const handleSelectSpecificAccount = async (accData) => {
+    // Simpan akun yang dipilih ke localStorage
+    const existing = JSON.parse(localStorage.getItem('radar_social_accounts') || '[]');
+    const filtered = existing.filter(a => a.platform !== accountSelection.platform);
+    filtered.push(accData);
+    localStorage.setItem('radar_social_accounts', JSON.stringify(filtered));
+    
+    // Update local state
+    setAccounts(getStoredAccounts());
+    closeAccountSelection();
+
+    // Sync to Supabase
+    if (userId && accessToken) {
+      await syncSocialAccountsToSupabase(userId, accessToken);
+    }
   };
 
   const connectedPlatforms = PLATFORMS.filter(p => accounts.some(a => a.platform === p.id));
@@ -618,6 +650,91 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext, pro
                 </>
               );
             })()}
+          </div>
+        </>
+      )}
+
+      {/* ── Modal Account Selection (Jika multiple accounts ditemukan) ── */}
+      {accountSelection.show && (
+        <>
+          <div
+            onClick={closeAccountSelection}
+            style={{
+              position:'fixed',top:0,left:0,right:0,bottom:0,
+              background:'rgba(0,0,0,0.5)',backdropFilter:'blur(4px)',
+              zIndex:1000,
+              opacity: animateAccountSelection ? 1 : 0,
+              transition:'opacity 0.3s ease',
+            }}
+          />
+          <div style={{
+            position:'fixed',bottom: animateAccountSelection ? 0 : '-100%',
+            left:0,right:0,
+            background:'#fff',
+            borderRadius:'24px 24px 0 0',
+            padding:'24px',
+            zIndex:1001,
+            transition:'bottom 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1)',
+            boxShadow:'0 -4px 24px rgba(0,0,0,0.1)',
+            maxHeight:'80vh',
+            display:'flex', flexDirection:'column'
+          }}>
+            <div style={{width:'40px',height:'4px',background:'#e5e7eb',borderRadius:'2px',margin:'0 auto 24px'}} />
+            
+            <h3 style={{margin:'0 0 8px',fontSize:'18px',fontWeight:'800',color:'#111827',fontFamily:'var(--m-font)'}}>
+              Pilih Akun {PLATFORMS.find(p=>p.id===accountSelection.platform)?.label}
+            </h3>
+            <p style={{margin:'0 0 20px',fontSize:'14px',color:'#6b7280',fontFamily:'var(--m-font)',lineHeight:1.5}}>
+              Ditemukan lebih dari satu akun. Silakan pilih akun mana yang ingin Anda hubungkan.
+            </p>
+
+            <div style={{flex:1, overflowY:'auto', display:'flex', flexDirection:'column', gap:'12px', paddingBottom:'24px'}}>
+              {accountSelection.accounts.map((acc, i) => (
+                <div 
+                  key={i}
+                  onClick={() => handleSelectSpecificAccount(acc)}
+                  style={{
+                    display:'flex', alignItems:'center', gap:'16px',
+                    padding:'16px', borderRadius:'16px',
+                    background:'#f9fafb', border:'1px solid #e5e7eb',
+                    cursor:'pointer', transition:'all 0.2s ease',
+                  }}
+                >
+                  <div style={{
+                    width:'48px', height:'48px', borderRadius:'50%',
+                    background:'#e5e7eb', overflow:'hidden', flexShrink:0
+                  }}>
+                    {acc.avatar_url ? (
+                      <img src={acc.avatar_url} alt="" style={{width:'100%',height:'100%',objectFit:'cover'}} />
+                    ) : (
+                      <div style={{width:'100%',height:'100%',display:'flex',alignItems:'center',justifyContent:'center',color:'#9ca3af'}}>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                      </div>
+                    )}
+                  </div>
+                  <div style={{flex:1, overflow:'hidden'}}>
+                    <div style={{fontSize:'16px',fontWeight:'700',color:'#111827',marginBottom:'2px',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',fontFamily:'var(--m-font)'}}>
+                      {acc.username || 'Akun Tanpa Nama'}
+                    </div>
+                  </div>
+                  <div style={{color:'var(--m-primary)'}}>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            <button
+              onClick={closeAccountSelection}
+              style={{
+                width:'100%',padding:'14px',borderRadius:'12px',
+                background:'#f3f4f6',color:'#4b5563',border:'none',
+                fontSize:'15px',fontWeight:'700',cursor:'pointer',
+                fontFamily:'var(--m-font)', marginTop:'auto'
+              }}
+            >
+              Batal
+            </button>
           </div>
         </>
       )}
