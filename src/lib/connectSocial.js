@@ -48,6 +48,10 @@ export function connectSocial({ platform, accessToken, userId, onStart, onDone, 
     if (closedCheck) clearInterval(closedCheck);
     if (pollInterval) clearInterval(pollInterval);
     window.removeEventListener('message', msgHandler);
+    if (cleanup._visHandler) {
+      document.removeEventListener('visibilitychange', cleanup._visHandler);
+      cleanup._visHandler = null;
+    }
   };
 
   /* Helper: fetch detail akun dari PostForMe & simpan ke localStorage */
@@ -83,11 +87,50 @@ export function connectSocial({ platform, accessToken, userId, onStart, onDone, 
     onDone?.(platform, accountData);
   };
 
-  /* Polling: check PostForMe setiap 3 detik apakah akun baru muncul */
+  /* Poll satu kali ke PostForMe, return true jika akun baru ditemukan */
+  const pollOnce = async (existingIds) => {
+    if (done) return false;
+    try {
+      const pfResp = await fetch(`${SUPABASE_URL}/functions/v1/postforme-proxy`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ endpoint: `/v1/social-accounts?external_id=${encodeURIComponent(externalId)}`, method: 'GET' }),
+      });
+      if (!pfResp.ok) return false;
+      const pfData = await pfResp.json();
+      const list = pfData.data || pfData.accounts || (Array.isArray(pfData) ? pfData : []);
+      const match = list.find(a => {
+        const plt = (a.platform || a.provider || '').toLowerCase();
+        return plt.startsWith(platform) && !existingIds.includes(String(a.id));
+      });
+      if (match && !done) {
+        done = true;
+        cleanup();
+        onLog?.(`[connectSocial] Found new account: ${match.username || match.name}`);
+        const accountData = {
+          id: match.id, platform,
+          username: match.username || match.name || match.handle || '',
+          avatar_url: match.avatar_url || match.profile_photo_url || match.profile_picture_url
+                   || match.picture || match.avatar || match.image_url || '',
+        };
+        const existing2 = JSON.parse(localStorage.getItem('radar_social_accounts') || '[]');
+        const filtered2 = existing2.filter(a => a.platform !== platform);
+        filtered2.push(accountData);
+        localStorage.setItem('radar_social_accounts', JSON.stringify(filtered2));
+        popup?.close();
+        onDone?.(platform, accountData);
+        return true;
+      }
+    } catch (e) { /* ignore */ }
+    return false;
+  };
+
+  /* Polling: check PostForMe setiap 3 detik + saat app kembali ke foreground */
   const startPolling = (existingIds) => {
     onLog?.(`[connectSocial] Starting polling for ${platform} account...`);
     let attempts = 0;
-    const maxAttempts = 60; // max 3 menit
+    const maxAttempts = 40; // max 2 menit
+
     pollInterval = setInterval(async () => {
       if (done) { clearInterval(pollInterval); return; }
       attempts++;
@@ -96,42 +139,31 @@ export function connectSocial({ platform, accessToken, userId, onStart, onDone, 
         if (!done) { cleanup(); onCancel?.(); }
         return;
       }
-      try {
-        const pfResp = await fetch(`${SUPABASE_URL}/functions/v1/postforme-proxy`, {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ endpoint: `/v1/social-accounts?external_id=${encodeURIComponent(externalId)}`, method: 'GET' }),
-        });
-        if (!pfResp.ok) return;
-        const pfData = await pfResp.json();
-        const list = pfData.data || pfData.accounts || (Array.isArray(pfData) ? pfData : []);
-        const match = list.find(a => {
-          const plt = (a.platform || a.provider || '').toLowerCase();
-          const isNewPlatform = plt.startsWith(platform);
-          const isNew = !existingIds.includes(String(a.id));
-          return isNewPlatform && isNew;
-        });
-        if (match) {
-          if (done) return;
-          done = true;
-          cleanup();
-          onLog?.(`[connectSocial] Poll found new account: ${match.username || match.name}`);
-          const accountData = {
-            id: match.id,
-            platform,
-            username: match.username || match.name || match.handle || '',
-            avatar_url: match.avatar_url || match.profile_photo_url || match.profile_picture_url
-                     || match.picture || match.avatar || match.image_url || '',
-          };
-          const existing2 = JSON.parse(localStorage.getItem('radar_social_accounts') || '[]');
-          const filtered2 = existing2.filter(a => a.platform !== platform);
-          filtered2.push(accountData);
-          localStorage.setItem('radar_social_accounts', JSON.stringify(filtered2));
-          popup?.close();
-          onDone?.(platform, accountData);
-        }
-      } catch (e) { /* ignore poll errors */ }
+      await pollOnce(existingIds);
     }, 3000);
+
+    /* iOS: saat app kembali ke foreground setelah Safari, langsung poll */
+    const onVisibilityChange = async () => {
+      if (document.hidden || done) return;
+      onLog?.(`[connectSocial] App back to foreground, polling immediately...`);
+      clearInterval(pollInterval); // stop interval lama
+      const found = await pollOnce(existingIds);
+      if (!found && !done) {
+        // restart interval
+        attempts = 0;
+        pollInterval = setInterval(async () => {
+          if (done) { clearInterval(pollInterval); return; }
+          attempts++;
+          if (attempts > maxAttempts) { clearInterval(pollInterval); if (!done) { cleanup(); onCancel?.(); } return; }
+          await pollOnce(existingIds);
+        }, 3000);
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+
+    // Simpan cleanup visibilitychange
+    const origCleanup = cleanup;
+    Object.assign(cleanup, { _visHandler: onVisibilityChange });
   };
 
   /* Fetch daftar akun existing sebelum OAuth (untuk detect akun baru) */
