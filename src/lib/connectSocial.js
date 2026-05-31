@@ -161,26 +161,36 @@ export function connectSocial({ platform, accessToken, userId, onStart, onDone, 
       if (!pfResp.ok) return false;
       const pfData = await pfResp.json();
       const list = pfData.data || pfData.accounts || (Array.isArray(pfData) ? pfData : []);
-      const match = list.find(a => {
-        const plt = (a.platform || a.provider || '').toLowerCase();
-        return plt.startsWith(platform);
-      });
-      if (match && !done) {
+      const matches = list.filter(a => (a.platform || a.provider || '').toLowerCase().startsWith(platform));
+      
+      if (matches.length > 0 && !done) {
         done = true;
         cleanup();
-        onLog?.(`[connectSocial] Found new account: ${match.username || match.name}`);
-        const accountData = {
-          id: match.id, platform,
-          username: match.username || match.name || match.handle || '',
-          avatar_url: match.avatar_url || match.profile_photo_url || match.profile_picture_url
-                   || match.picture || match.avatar || match.image_url || '',
-        };
-        const existing2 = JSON.parse(localStorage.getItem('radar_social_accounts') || '[]');
-        const filtered2 = existing2.filter(a => a.platform !== platform);
-        filtered2.push(accountData);
-        localStorage.setItem('radar_social_accounts', JSON.stringify(filtered2));
-        popup?.close();
-        onDone?.(platform, accountData);
+
+        if (matches.length > 1 && typeof onMultipleAccounts === 'function') {
+          const multipleMatches = matches.map(m => ({
+            id: m.id || `pfm_${platform}_${Date.now()}_${Math.random()}`,
+            platform,
+            username: m.username || m.name || m.handle || '',
+            avatar_url: m.avatar_url || m.profile_photo_url || m.profile_picture_url || m.picture || m.avatar || m.image_url || '',
+          }));
+          onLog?.(`[connectSocial] Found multiple accounts during poll (${matches.length})`);
+          onMultipleAccounts(multipleMatches);
+        } else {
+          const match = matches[0];
+          onLog?.(`[connectSocial] Found new account: ${match.username || match.name}`);
+          const accountData = {
+            id: match.id, platform,
+            username: match.username || match.name || match.handle || '',
+            avatar_url: match.avatar_url || match.profile_photo_url || match.profile_picture_url
+                     || match.picture || match.avatar || match.image_url || '',
+          };
+          const existing2 = JSON.parse(localStorage.getItem('radar_social_accounts') || '[]');
+          const filtered2 = existing2.filter(a => a.platform !== platform);
+          filtered2.push(accountData);
+          localStorage.setItem('radar_social_accounts', JSON.stringify(filtered2));
+          onDone?.(platform, accountData);
+        }
         return true;
       }
     } catch (e) { /* ignore */ }
@@ -317,8 +327,19 @@ export async function handleOAuthRedirectCallback() {
     if (pfResp.ok) {
       const pfData = await pfResp.json();
       const list = pfData.data || pfData.accounts || (Array.isArray(pfData) ? pfData : []);
-      const match = list.find(a => (a.platform || a.provider || '').toLowerCase().startsWith(platform));
-      if (match) {
+      const matches = list.filter(a => (a.platform || a.provider || '').toLowerCase().startsWith(platform));
+      
+      if (matches.length > 1 && typeof onMultipleAccounts === 'function') {
+        const multipleMatches = matches.map(m => ({
+          id: m.id || `pfm_${platform}_${Date.now()}_${Math.random()}`,
+          platform,
+          username: m.username || m.name || m.handle || '',
+          avatar_url: m.avatar_url || m.profile_photo_url || m.profile_picture_url || m.picture || m.avatar || m.image_url || '',
+        }));
+        onLog?.(`[connectSocial] Found multiple accounts in callback (${matches.length})`);
+        return { platform, accountData: null, multipleMatches };
+      } else if (matches.length > 0) {
+        const match = matches[0];
         accountData = {
           id: match.id || accountData.id,
           platform,
@@ -330,10 +351,12 @@ export async function handleOAuthRedirectCallback() {
     }
   } catch (e) { console.warn('[connectSocial] redirect callback error:', e); }
 
-  const existing = JSON.parse(localStorage.getItem('radar_social_accounts') || '[]');
-  const filtered = existing.filter(a => a.platform !== platform);
-  filtered.push(accountData);
-  localStorage.setItem('radar_social_accounts', JSON.stringify(filtered));
+  if (accountData.username) {
+    const existing = JSON.parse(localStorage.getItem('radar_social_accounts') || '[]');
+    const filtered = existing.filter(a => a.platform !== platform);
+    filtered.push(accountData);
+    localStorage.setItem('radar_social_accounts', JSON.stringify(filtered));
+  }
 
   return { platform, accountData };
 }
