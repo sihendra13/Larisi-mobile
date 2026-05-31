@@ -244,7 +244,7 @@ export default function ProfilePanel({
       <div
         onClick={onClose}
         style={{
-          position: 'fixed', inset: 0, zIndex: 400,
+          position: 'fixed', inset: 0, zIndex: 1000,
           background: 'rgba(0,0,0,0.45)',
           opacity: open ? 1 : 0,
           pointerEvents: open ? 'auto' : 'none',
@@ -254,7 +254,7 @@ export default function ProfilePanel({
 
       {/* Panel */}
       <div style={{
-        position: 'fixed', top: 0, right: 0, bottom: 0, zIndex: 401,
+        position: 'fixed', top: 0, right: 0, bottom: 0, zIndex: 1001,
         width: 'min(360px, 92vw)',
         background: '#F9F9FA',
         boxShadow: '-4px 0 32px rgba(0,0,0,0.18)',
