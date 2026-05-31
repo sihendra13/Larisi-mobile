@@ -217,6 +217,39 @@ function buildSystemPrompt(profile, persona, platform, format, locName, locFull,
   const hasDelivery = profile?.delivery_service || false;
   const targetArea  = locName || '';
 
+  /* ── Deteksi apakah target di luar region bisnis → tambah nama kota (sama seperti desktop) ── */
+  const _regionMap = {
+    jogja:       ['sleman','bantul','kulon progo','gunungkidul','gunung kidul','yogyakarta'],
+    solo:        ['surakarta','solo','sukoharjo','karanganyar','klaten','wonogiri','boyolali','sragen'],
+    semarang:    ['semarang','kendal','demak','kudus','jepara','pati'],
+    jakarta:     ['jakarta','tangerang','bekasi','depok','bogor','kemayoran','tanjung priok','menteng','gambir'],
+    bandung:     ['bandung','sumedang','garut','tasikmalaya','cimahi','cirebon'],
+    surabaya:    ['surabaya','sidoarjo','gresik','mojokerto'],
+    malang:      ['malang','pasuruan','probolinggo','lumajang'],
+    medan:       ['medan','deli serdang','binjai','langkat'],
+    makassar:    ['makassar','gowa','maros'],
+    bali:        ['badung','gianyar','tabanan','denpasar','bali'],
+  };
+  const _cityLabel = { jogja:'Yogyakarta', solo:'Solo', semarang:'Semarang', jakarta:'Jakarta',
+    bandung:'Bandung', surabaya:'Surabaya', malang:'Malang', medan:'Medan',
+    makassar:'Makassar', bali:'Bali' };
+
+  const _toRegion = (str) => {
+    if (!str) return null;
+    const s = str.toLowerCase();
+    for (const [region, keywords] of Object.entries(_regionMap)) {
+      if (keywords.some(k => s.includes(k))) return region;
+    }
+    return null;
+  };
+
+  const _bizRegion    = _toRegion(bizKab || bizKec);
+  const _targetRegion = _toRegion(locFull || targetArea);
+  const _isFarTarget  = _bizRegion && _targetRegion && _bizRegion !== _targetRegion;
+  const bizLocDisplay = (_isFarTarget && _cityLabel[_bizRegion])
+    ? `${bizLoc}, ${_cityLabel[_bizRegion]}`
+    : bizLoc;
+
   const personaName   = persona?.name   || category || 'General';
   const personaTarget = persona?.target || '';
   const personaAge    = persona?.age    || '18–45';
@@ -252,7 +285,7 @@ function buildSystemPrompt(profile, persona, platform, format, locName, locFull,
   /* ── Hook rotation — per AI call count (bukan per jam) ── */
   const n    = (aiCallCount || 0) % 4;
   const biz  = bizName || 'kami';
-  const loc  = bizLoc  || 'lokasi kami';
+  const loc  = bizLocDisplay || bizLoc || 'lokasi kami';
   const area = targetArea || 'sekitar';
   const u    = usp || 'kualitas terbaik';
   const hookInstructions = [
@@ -279,8 +312,8 @@ function buildSystemPrompt(profile, persona, platform, format, locName, locFull,
     `- Nama: ${bizName || 'UMKM'}`,
     `- Kategori: ${category}`,
     `- Keunggulan utama (USP): ${usp}`,
-    `- Lokasi bisnis: ${bizLoc || 'tidak disebutkan'}`,
-    `- Area target iklan: ${targetArea || bizLoc || 'sekitar lokasi bisnis'}`,
+    `- Lokasi bisnis: ${bizLocDisplay || bizLoc || 'tidak disebutkan'}`,
+    `- Area target iklan: ${targetArea || bizLocDisplay || bizLoc || 'sekitar lokasi bisnis'}`,
     `- Layanan antar: ${hasDelivery ? 'ada' : 'tidak ada'}`,
     '',
     'MASTER PERSONA (target audiens):',
@@ -303,9 +336,9 @@ function buildSystemPrompt(profile, persona, platform, format, locName, locFull,
     '- Sesuaikan gaya bahasa dengan persona — foodie/anak muda = santai & seru, profesional = informatif & hangat',
     positioningLine,
     '- USP harus jadi kekuatan utama caption, bukan sekadar disebut',
-    `- KRITIS — Lokasi bisnis (${bizLoc || 'tidak diketahui'}) dan area target iklan (${targetArea || 'sekitar lokasi'}) adalah DUA HAL BERBEDA.`,
-    `- DILARANG KERAS: menulis seolah bisnis berada di area target. Bisnis SELALU di lokasi aslinya (${bizLoc || 'lokasi bisnis'}).`,
-    `- Yang benar: ajak audiens di area target (${targetArea || 'sekitar'}) untuk datang/memesan ke ${bizName || 'bisnis ini'} di ${bizLoc || 'lokasi kami'}.`,
+    `- KRITIS — Lokasi bisnis (${bizLocDisplay || bizLoc || 'tidak diketahui'}) dan area target iklan (${targetArea || 'sekitar lokasi'}) adalah DUA HAL BERBEDA.`,
+    `- DILARANG KERAS: menulis seolah bisnis berada di area target. Bisnis SELALU di lokasi aslinya (${bizLocDisplay || bizLoc || 'lokasi bisnis'}).`,
+    `- Yang benar: ajak audiens di area target (${targetArea || 'sekitar'}) untuk datang/memesan ke ${bizName || 'bisnis ini'} di ${bizLocDisplay || bizLoc || 'lokasi kami'}.`,
     `- Contoh hook yang SALAH: "Ada tempat makan baru di ${targetArea || 'area target'}!" — ini SALAH karena bisnis tidak ada di sana.`,
     '- Struktur: hook menarik → nilai/cerita → CTA',
     '- Akhiri dengan 3–5 hashtag (mix populer + lokal + niche, termasuk hashtag area target)',
