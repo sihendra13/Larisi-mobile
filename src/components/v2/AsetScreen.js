@@ -1547,46 +1547,29 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
                 {' '}Apakah foto ini sudah benar?
               </div>
 
-              {/* Action buttons */}
+              {/* Action buttons — 2 tombol saja, sama seperti desktop */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 <button
                   onClick={() => resolveConflict(true)}
                   style={{
                     width: '100%', padding: '14px', borderRadius: '12px', border: 'none',
-                    background: '#7C3AED', color: '#fff',
+                    background: '#1A1A1A', color: '#fff',
                     fontFamily: 'var(--m-font)', fontSize: '14px', fontWeight: '700',
                     cursor: 'pointer', WebkitTapHighlightColor: 'transparent',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
                   }}
                 >
-                  <span>✅</span>
-                  <span>Pakai hasil foto ({conflictData.visionLabel})</span>
-                </button>
-                <button
-                  onClick={() => resolveConflict(false)}
-                  style={{
-                    width: '100%', padding: '14px', borderRadius: '12px',
-                    border: '1.5px solid #E4E4EB', background: '#fff', color: '#374151',
-                    fontFamily: 'var(--m-font)', fontSize: '14px', fontWeight: '600',
-                    cursor: 'pointer', WebkitTapHighlightColor: 'transparent',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
-                  }}
-                >
-                  <span>📋</span>
-                  <span>Pakai profil bisnis ({conflictData.bizLabel})</span>
+                  Ya, lanjutkan
                 </button>
                 <button
                   onClick={handleChangePhotoConflict}
                   style={{
-                    width: '100%', padding: '12px', borderRadius: '12px',
-                    border: 'none', background: 'transparent',
-                    fontFamily: 'var(--m-font)', fontSize: '13px', fontWeight: '600',
-                    color: '#9CA3AF', cursor: 'pointer', WebkitTapHighlightColor: 'transparent',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                    width: '100%', padding: '14px', borderRadius: '12px',
+                    border: '1.5px solid #1A1A1A', background: '#fff', color: '#1A1A1A',
+                    fontFamily: 'var(--m-font)', fontSize: '14px', fontWeight: '600',
+                    cursor: 'pointer', WebkitTapHighlightColor: 'transparent',
                   }}
                 >
-                  <span>🔄</span>
-                  <span>Ganti foto</span>
+                  Ganti foto
                 </button>
               </div>
             </div>

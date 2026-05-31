@@ -987,14 +987,15 @@ export default function CaptionScreen({
               <div style={{fontFamily:'var(--m-font)', fontSize:'17px', fontWeight:'800', color:'var(--m-ink)', marginBottom:'4px'}}>Tayangkan Iklan</div>
               <div style={{fontFamily:'var(--m-font)', fontSize:'13px', color:'var(--m-ink-sub)', marginBottom:'20px'}}>Pastikan detail iklanmu sudah benar</div>
 
-              {/* Platform + Format summary */}
-              <div style={{display:'flex', alignItems:'center', gap:'8px', marginBottom:'20px'}}>
-                <div style={{background:`${platColor}15`, border:`1.5px solid ${platColor}40`, borderRadius:'10px', padding:'8px 14px', display:'flex', alignItems:'center', gap:'8px'}}>
+              {/* Platform + Format chips */}
+              <div style={{display:'flex', alignItems:'center', gap:'8px', marginBottom:'20px', flexWrap:'wrap'}}>
+                <div style={{background:`${platColor}15`, border:`1.5px solid ${platColor}40`, borderRadius:'999px', padding:'6px 14px', display:'flex', alignItems:'center', gap:'6px'}}>
+                  {PLATFORM_ICONS[sp]}
                   <span style={{fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'700', color:platColor}}>{platName}</span>
                 </div>
                 {fmtName && (
-                  <div style={{background:'var(--m-brand-soft,#F3E8FF)', border:'1.5px solid #DDD6FE', borderRadius:'10px', padding:'8px 14px'}}>
-                    <span style={{fontFamily:'var(--m-font)', fontSize:'12px', fontWeight:'700', color:'var(--m-brand)'}}>📐 {fmtName}</span>
+                  <div style={{background:'#F3F4F6', border:'1.5px solid #E4E4EB', borderRadius:'999px', padding:'6px 14px', display:'flex', alignItems:'center', gap:'4px'}}>
+                    <span style={{fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'700', color:'var(--m-ink)'}}>{fmtName}</span>
                   </div>
                 )}
               </div>
