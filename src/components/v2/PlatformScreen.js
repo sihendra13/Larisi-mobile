@@ -166,6 +166,20 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext, pro
   /* Refresh akun dari localStorage saat profile berubah atau layar aktif */
   useEffect(() => {
     setAccounts(getStoredAccounts());
+    
+    // Cek jika ada akun multiple yang tertunda dari redirect OAuth
+    const pendingMultiple = localStorage.getItem('larisi_oauth_pending_multiple');
+    if (pendingMultiple) {
+      try {
+        const parsed = JSON.parse(pendingMultiple);
+        if (parsed && parsed.platform && parsed.matches && parsed.matches.length > 1) {
+          setAccountSelection({ show: true, platform: parsed.platform, accounts: parsed.matches });
+          setTimeout(() => setAnimateAccountSelection(true), 10);
+        }
+      } catch(e) {}
+      localStorage.removeItem('larisi_oauth_pending_multiple');
+    }
+
     const refresh = () => setAccounts(getStoredAccounts());
     window.addEventListener('focus', refresh);
     return () => window.removeEventListener('focus', refresh);

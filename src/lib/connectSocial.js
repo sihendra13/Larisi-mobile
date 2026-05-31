@@ -329,7 +329,7 @@ export async function handleOAuthRedirectCallback() {
       const list = pfData.data || pfData.accounts || (Array.isArray(pfData) ? pfData : []);
       const matches = list.filter(a => (a.platform || a.provider || '').toLowerCase().startsWith(platform));
       
-      if (matches.length > 1 && typeof onMultipleAccounts === 'function') {
+      if (matches.length > 1) {
         const multipleMatches = matches.map(m => ({
           id: m.id || `pfm_${platform}_${Date.now()}_${Math.random()}`,
           platform,
@@ -337,6 +337,7 @@ export async function handleOAuthRedirectCallback() {
           avatar_url: m.avatar_url || m.profile_photo_url || m.profile_picture_url || m.picture || m.avatar || m.image_url || '',
         }));
         onLog?.(`[connectSocial] Found multiple accounts in callback (${matches.length})`);
+        localStorage.setItem('larisi_oauth_pending_multiple', JSON.stringify({ platform, matches: multipleMatches }));
         return { platform, accountData: null, multipleMatches };
       } else if (matches.length > 0) {
         const match = matches[0];
