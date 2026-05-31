@@ -1,13 +1,34 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 
-export default function SiLarisScreen({ onBack }) {
+export default function SiLarisScreen({ onBack, campaign, analytics }) {
   const bottomRef = useRef(null);
 
   // Auto-scroll to bottom on mount
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, []);
+
+  // Format data
+  const thumbUrl = campaign?.thumbUrl;
+  const thumbColor = campaign?.thumbColor || '#E8C39E';
+  const format = (campaign?.format || 'POST').toUpperCase();
+  const title = campaign?.name || 'Campaign Baru';
+  const statusLbl = campaign?.status === 'running' ? 'Berjalan' : (campaign?.status === 'paused' ? 'Diarsipkan' : 'Selesai');
+  const statusBg = campaign?.status === 'running' ? '#E6F4EA' : '#FEF3C7';
+  const statusColor = campaign?.status === 'running' ? '#34A853' : '#d97706';
+  
+  const dateObj = campaign?.created_at ? new Date(campaign.created_at) : new Date();
+  const dateStr = dateObj.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+
+  const viewsRaw = analytics?.engagements || 0;
+  const reachRaw = analytics?.reach || campaign?.estimated_reach_min || 0;
+  
+  const fmtShort = (n) => {
+    if (!n) return '0';
+    if (n >= 1000) return (n / 1000).toFixed(1).replace('.0', '') + 'K';
+    return n.toLocaleString('id-ID');
+  };
 
   return (
     <div style={{display:'flex', flexDirection:'column', flex:1, overflow:'hidden', background:'#F9F9FB', height:'100%', position:'fixed', top:0, left:0, right:0, bottom:0, zIndex:99999}}>
@@ -88,15 +109,18 @@ export default function SiLarisScreen({ onBack }) {
           }}>
             {/* Thumbnail */}
             <div style={{
-              width:'80px', height:'80px', borderRadius:'10px', background:'#E8C39E', flexShrink:0,
-              backgroundImage:'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0,0,0,0.05) 10px, rgba(0,0,0,0.05) 20px)',
+              width:'80px', height:'80px', borderRadius:'10px', background: thumbColor, flexShrink:0,
+              backgroundImage: thumbUrl ? 'none' : 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0,0,0,0.05) 10px, rgba(0,0,0,0.05) 20px)',
               display:'flex', alignItems:'flex-end', padding:'6px', position:'relative', overflow:'hidden'
             }}>
+              {thumbUrl && (
+                <img src={thumbUrl} alt="" style={{position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', zIndex:0}} onError={e => { e.target.style.display='none'; }} />
+              )}
               <div style={{
                 background:'rgba(0,0,0,0.5)', color:'#fff', fontFamily:'var(--m-font)', 
-                fontSize:'9px', padding:'3px 6px', borderRadius:'4px', fontWeight:'700'
+                fontSize:'9px', padding:'3px 6px', borderRadius:'4px', fontWeight:'700', zIndex:1
               }}>
-                REEL
+                {format}
               </div>
             </div>
             
@@ -106,24 +130,24 @@ export default function SiLarisScreen({ onBack }) {
                 fontFamily:'var(--m-font)', fontSize:'15px', fontWeight:'800', color:'var(--m-ink)', 
                 whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', marginBottom:'4px'
               }}>
-                Reel Pondok Indah
+                {title}
               </div>
               <div style={{display:'flex', alignItems:'center', gap:'6px', marginBottom:'6px'}}>
-                <span style={{fontFamily:'var(--m-font)', fontSize:'11px', fontWeight:'700', color:'#34A853', background:'#E6F4EA', padding:'2px 6px', borderRadius:'4px'}}>
-                  Berjalan
+                <span style={{fontFamily:'var(--m-font)', fontSize:'11px', fontWeight:'700', color: statusColor, background: statusBg, padding:'2px 6px', borderRadius:'4px'}}>
+                  {statusLbl}
                 </span>
                 <span style={{fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)'}}>
-                  24 Mei 2026
+                  {dateStr}
                 </span>
               </div>
               <div style={{display:'flex', alignItems:'center', gap:'8px'}}>
                 <div style={{display:'flex', alignItems:'center', gap:'4px'}}>
                   <span style={{fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)'}}>Views:</span>
-                  <span style={{fontFamily:'var(--m-font)', fontSize:'12px', fontWeight:'700', color:'var(--m-ink)'}}>1,2K</span>
+                  <span style={{fontFamily:'var(--m-font)', fontSize:'12px', fontWeight:'700', color:'var(--m-ink)'}}>{fmtShort(viewsRaw)}</span>
                 </div>
                 <div style={{display:'flex', alignItems:'center', gap:'4px'}}>
                   <span style={{fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)'}}>Reach:</span>
-                  <span style={{fontFamily:'var(--m-font)', fontSize:'12px', fontWeight:'700', color:'var(--m-ink)'}}>109</span>
+                  <span style={{fontFamily:'var(--m-font)', fontSize:'12px', fontWeight:'700', color:'var(--m-ink)'}}>{fmtShort(reachRaw)}</span>
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#34A853" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                     <polyline points="18 15 12 9 6 15"/>
                   </svg>

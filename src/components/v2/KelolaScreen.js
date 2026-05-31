@@ -471,7 +471,7 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
             </div>
           </button>
         )}
-        {showSiLaris && <SiLarisScreen onBack={() => setShowSiLaris(false)} />}
+        {showSiLaris && <SiLarisScreen onBack={() => setShowSiLaris(false)} campaign={c} analytics={an} />}
       </div>
     );
   }
