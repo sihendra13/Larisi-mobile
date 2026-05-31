@@ -29,7 +29,11 @@ export async function prefetchAuthUrl(platform, externalId) {
     });
     if (!resp.ok) return null;
     const data = await resp.json();
-    return data.url || data.auth_url || data.redirect_url || data.authorization_url || null;
+    let authUrl = data.url || data.auth_url || data.redirect_url || data.authorization_url || null;
+    if (authUrl && (platform === 'facebook' || platform === 'instagram')) {
+      authUrl += (authUrl.includes('?') ? '&' : '?') + 'auth_type=rerequest';
+    }
+    return authUrl;
   } catch { return null; }
 }
 
@@ -247,8 +251,11 @@ export function connectSocial({ platform, accessToken, userId, onStart, onDone, 
     })
     .then(resp => { if (!resp.ok) throw new Error('Server error ' + resp.status); return resp.json(); })
     .then(async data => {
-      const authUrl = data.url || data.auth_url || data.redirect_url || data.authorization_url;
+      let authUrl = data.url || data.auth_url || data.redirect_url || data.authorization_url;
       if (!authUrl) throw new Error('URL OAuth tidak tersedia');
+      if (platform === 'facebook' || platform === 'instagram') {
+        authUrl += (authUrl.includes('?') ? '&' : '?') + 'auth_type=rerequest';
+      }
       onLog?.(`[connectSocial] Auth URL: ${authUrl?.substring(0, 50)}...`);
       if (disconnectPromise) await disconnectPromise;
       if (popup && !popup.closed) {
