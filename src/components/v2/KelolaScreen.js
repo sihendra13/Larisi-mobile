@@ -434,17 +434,6 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
             }
           </div>
 
-          {/* Estimasi reach dari campaign */}
-          <div style={{ background:'#fff', borderRadius:'20px', padding:'20px', border:'1px solid #E4E4EB', marginBottom:'16px' }}>
-            <div style={{ fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'800', color:'var(--m-ink)', marginBottom:'12px' }}>Estimasi Reach Campaign</div>
-            <div style={{ display:'flex', justifyContent:'space-between', marginBottom:'8px' }}>
-              <span style={{ fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)' }}>Target</span>
-              <span style={{ fontFamily:'var(--m-font)', fontSize:'12px', fontWeight:'700', color:'var(--m-ink)' }}>{fmtViews(c.reachTarget)}</span>
-            </div>
-            <div style={{ width:'100%', height:'6px', background:'#F3F3F6', borderRadius:'999px', overflow:'hidden' }}>
-              <div style={{ height:'100%', width: `${Math.min(100, Math.round(((an?.reach || c.reach) / (c.reachTarget || 1)) * 100))}%`, background:'var(--m-brand)', borderRadius:'999px', transition:'width 0.4s' }} />
-            </div>
-          </div>
 
           {!an && !loadingAn && (
             <div style={{ background:'#FFFBEB', border:'1px solid #FCD34D', borderRadius:'16px', padding:'14px 16px', marginBottom:'16px', fontFamily:'var(--m-font)', fontSize:'13px', color:'#92400E', lineHeight:'1.5' }}>
