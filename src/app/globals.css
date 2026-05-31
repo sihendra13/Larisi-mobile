@@ -16,6 +16,9 @@
 @import '../css/mobile.css';
 @import '../css/auth-premium.css';
 
+@keyframes spin  { to { transform: rotate(360deg); } }
+@keyframes pulse { 0%, 100% { opacity: 0.3; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1); } }
+
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body {
   height: 100%;

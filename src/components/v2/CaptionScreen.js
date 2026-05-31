@@ -260,14 +260,13 @@ export default function CaptionScreen({
   persona, profile,
   caption, setCaption,
   accessToken, sessionId, userId,
-  onBack, onUbahAset,
+  onBack, onUbahAset, onLaunchSuccess,
 }) {
   const [stitchOn,        setStitchOn]        = useState(true);
   const [generating,      setGenerating]      = useState(false);
   const [hasGenerated,    setHasGenerated]    = useState(false);
   const [posting,         setPosting]         = useState(false);
-  const [postResult,      setPostResult]      = useState(null); // null | 'success' | 'error'
-  const [postError,       setPostError]       = useState('');
+  const [launchPhase,     setLaunchPhase]     = useState(null); // null | 'loading' | 'success'
 
   /* ── AI call counter — naik tiap Generate, untuk rotasi hook style ── */
   const aiCallCountRef = useRef(0);
@@ -374,6 +373,27 @@ export default function CaptionScreen({
     };
   }, [showEditSheet]);
 
+  /* ── Toast helper (slide dari atas, sama seperti desktop) ── */
+  const showToast = (message, type = 'success') => {
+    const existing = document.getElementById('m-top-toast');
+    if (existing) existing.remove();
+    const toast = document.createElement('div');
+    toast.id = 'm-top-toast';
+    const bg = type === 'error' ? '#EF4444' : type === 'warning' ? '#F59E0B' : '#10B981';
+    toast.style.cssText = `position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-80px);background:${bg};color:#fff;padding:12px 20px;border-radius:12px;font-size:14px;font-weight:700;font-family:var(--m-font,sans-serif);box-shadow:0 4px 20px rgba(0,0,0,0.25);z-index:99999;white-space:nowrap;transition:transform 0.35s cubic-bezier(0.34,1.56,0.64,1),opacity 0.35s ease;opacity:0;pointer-events:none;`;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      toast.style.transform = 'translateX(-50%) translateY(0)';
+      toast.style.opacity = '1';
+    }));
+    setTimeout(() => {
+      toast.style.transform = 'translateX(-50%) translateY(-80px)';
+      toast.style.opacity = '0';
+      setTimeout(() => toast.remove(), 400);
+    }, 3500);
+  };
+
   /* ── Posting via PostForMe ── */
   const handleTayangkan = async () => {
     if (!caption || posting) return;
@@ -383,18 +403,21 @@ export default function CaptionScreen({
     })();
 
     const platMap = { ig: 'instagram', tiktok: 'tiktok', meta: 'facebook', youtube: 'youtube' };
-    const sp = platMap[platform] || platform;
+    const sp  = platMap[platform] || platform;
     const acc = accounts.find(a => a.platform === sp);
 
+    const platLabels = { instagram:'Instagram', facebook:'Facebook', tiktok:'TikTok', youtube:'YouTube' };
+    const fmtLabels  = { post:'Post', reel:'Reel', story:'Story', shorts:'Shorts' };
+    const platName   = platLabels[sp]     || sp;
+    const fmtName    = sp === 'youtube' ? 'Shorts' : (fmtLabels[format] || '');
+
     if (!acc?.id) {
-      setPostError(`Akun ${platform === 'instagram' ? 'Instagram' : platform} belum terhubung. Hubungkan dulu di Dapur Konten → Platform.`);
-      setPostResult('error');
+      showToast(`⚠ Akun ${platName} belum terhubung. Hubungkan di Platform.`, 'error');
       return;
     }
 
     setPosting(true);
-    setPostResult(null);
-    setPostError('');
+    setLaunchPhase('loading');
 
     try {
       // Upload media
@@ -417,7 +440,7 @@ export default function CaptionScreen({
 
       const data = await pfmProxy('/v1/social-posts', 'POST', payload, accessToken);
 
-      const postId = data?.id || data?.post_id || data?.posts?.[0]?.id || null;
+      const postId  = data?.id || data?.post_id || data?.posts?.[0]?.id || null;
       const postUrl = data?.post_url || data?.platform_url || data?.permalink || data?.posts?.[0]?.post_url || null;
 
       // Simpan campaign ke Supabase
@@ -425,12 +448,7 @@ export default function CaptionScreen({
         const reach = Math.round(Math.PI * radius * radius * ((locPop || 50000) / (Math.PI * 25)));
         await fetch(`${SUPABASE_URL}/rest/v1/campaigns`, {
           method: 'POST',
-          headers: {
-            'apikey': SUPABASE_ANON_KEY,
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json',
-            'Prefer': 'return=minimal',
-          },
+          headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
           body: JSON.stringify({
             user_id:             userId || null,
             session_id:          sessionId,
@@ -442,17 +460,30 @@ export default function CaptionScreen({
             estimated_reach_max: Math.round(reach * 1.5),
             post_id:             postId || null,
             post_url:            postUrl || null,
-            caption:             caption,
+            caption,
           }),
         });
       }
 
-      setPostResult('success');
+      // Toast sukses spesifik platform+format (sama seperti desktop)
+      const toastLabel = fmtName ? `${fmtName} ${platName}` : platName;
+      showToast(`✓ ${toastLabel} berhasil dipublish!`, 'success');
+
+      // Phase 2: success state (setelah 1.6 detik, sama seperti desktop)
+      setTimeout(() => {
+        setLaunchPhase('success');
+        // Redirect ke Kelola setelah 2 detik
+        setTimeout(() => {
+          setLaunchPhase(null);
+          setPosting(false);
+          if (onLaunchSuccess) onLaunchSuccess();
+        }, 2000);
+      }, 1600);
+
     } catch (e) {
-      setPostError(e.message || 'Terjadi kesalahan saat posting.');
-      setPostResult('error');
-    } finally {
+      setLaunchPhase(null);
       setPosting(false);
+      showToast(`⚠ Posting gagal: ${e.message}`, 'error');
     }
   };
 
@@ -849,36 +880,55 @@ export default function CaptionScreen({
         </button>
       </div>
 
-      {/* ── Post Success Modal ── */}
-      {postResult === 'success' && (
-        <div style={{position:'fixed', inset:0, zIndex:2000, background:'rgba(0,0,0,0.5)', display:'flex', alignItems:'center', justifyContent:'center', padding:'24px'}}>
-          <div style={{background:'#fff', borderRadius:'24px', padding:'32px 24px', textAlign:'center', maxWidth:'320px', width:'100%'}}>
-            <div style={{fontSize:'48px', marginBottom:'16px'}}>🎉</div>
-            <div style={{fontFamily:'var(--m-font)', fontSize:'18px', fontWeight:'800', color:'var(--m-ink)', marginBottom:'8px'}}>Berhasil Ditayangkan!</div>
-            <div style={{fontFamily:'var(--m-font)', fontSize:'13px', color:'var(--m-ink-sub)', lineHeight:'1.5', marginBottom:'24px'}}>Kontenmu sedang diproses dan akan muncul di akun Instagram dalam beberapa menit.</div>
-            <button
-              onClick={() => setPostResult(null)}
-              style={{width:'100%', padding:'14px', borderRadius:'12px', background:'#1A1A1A', color:'#fff', border:'none', cursor:'pointer', fontFamily:'var(--m-font)', fontSize:'15px', fontWeight:'700'}}
-            >
-              Oke
-            </button>
-          </div>
-        </div>
-      )}
+      {/* ── Launching Modal (2 phase: loading → success → redirect ke Kelola) ── */}
+      {launchPhase && (
+        <div style={{position:'fixed', inset:0, zIndex:2000, background:'rgba(0,0,0,0.6)', display:'flex', alignItems:'center', justifyContent:'center', padding:'24px'}}>
+          <div style={{background:'#fff', borderRadius:'24px', padding:'40px 28px', textAlign:'center', maxWidth:'300px', width:'100%', boxShadow:'0 20px 60px rgba(0,0,0,0.2)'}}>
 
-      {/* ── Post Error Modal ── */}
-      {postResult === 'error' && (
-        <div style={{position:'fixed', inset:0, zIndex:2000, background:'rgba(0,0,0,0.5)', display:'flex', alignItems:'center', justifyContent:'center', padding:'24px'}}>
-          <div style={{background:'#fff', borderRadius:'24px', padding:'32px 24px', textAlign:'center', maxWidth:'320px', width:'100%'}}>
-            <div style={{fontSize:'48px', marginBottom:'16px'}}>⚠️</div>
-            <div style={{fontFamily:'var(--m-font)', fontSize:'18px', fontWeight:'800', color:'var(--m-ink)', marginBottom:'8px'}}>Gagal Memposting</div>
-            <div style={{fontFamily:'var(--m-font)', fontSize:'13px', color:'var(--m-ink-sub)', lineHeight:'1.5', marginBottom:'24px'}}>{postError}</div>
-            <button
-              onClick={() => setPostResult(null)}
-              style={{width:'100%', padding:'14px', borderRadius:'12px', background:'#1A1A1A', color:'#fff', border:'none', cursor:'pointer', fontFamily:'var(--m-font)', fontSize:'15px', fontWeight:'700'}}
-            >
-              Tutup
-            </button>
+            {/* Phase 1: Loading */}
+            {launchPhase === 'loading' && (
+              <>
+                <div style={{position:'relative', width:'64px', height:'64px', margin:'0 auto 20px'}}>
+                  {/* Spinner ring */}
+                  <svg width="64" height="64" style={{position:'absolute', inset:0, animation:'spin 1s linear infinite'}}>
+                    <circle cx="32" cy="32" r="28" fill="none" stroke="#E4E4EB" strokeWidth="4"/>
+                    <circle cx="32" cy="32" r="28" fill="none" stroke="var(--m-brand)" strokeWidth="4" strokeDasharray="44 132" strokeLinecap="round"/>
+                  </svg>
+                  {/* Play icon di tengah */}
+                  <div style={{position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center'}}>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="var(--m-brand)"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                  </div>
+                </div>
+                <div style={{fontFamily:'var(--m-font)', fontSize:'17px', fontWeight:'800', color:'var(--m-ink)', marginBottom:'6px'}}>Meluncurkan Iklan…</div>
+                <div style={{fontFamily:'var(--m-font)', fontSize:'13px', color:'var(--m-ink-sub)', lineHeight:'1.5'}}>Sedang mengupload dan memposting kontenmu</div>
+                {/* Dots animation */}
+                <div style={{display:'flex', justifyContent:'center', gap:'6px', marginTop:'20px'}}>
+                  {[0,1,2].map(i => (
+                    <div key={i} style={{width:'6px', height:'6px', borderRadius:'50%', background:'var(--m-brand)', opacity:0.4, animation:`pulse 1.2s ease-in-out ${i * 0.4}s infinite`}}/>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {/* Phase 2: Success */}
+            {launchPhase === 'success' && (
+              <>
+                {/* Animated checkmark ring */}
+                <div style={{width:'72px', height:'72px', margin:'0 auto 20px'}}>
+                  <svg viewBox="0 0 52 52" width="72" height="72">
+                    <circle cx="26" cy="26" r="23" fill="none" stroke="#10B981" strokeWidth="3"
+                      style={{strokeDasharray:'145', strokeDashoffset:'0', transition:'stroke-dashoffset 0.6s ease'}}/>
+                    <polyline points="14,26 22,34 38,18" fill="none" stroke="#10B981" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"
+                      style={{strokeDasharray:'30', strokeDashoffset:'0', transition:'stroke-dashoffset 0.4s ease 0.3s'}}/>
+                  </svg>
+                </div>
+                <div style={{fontFamily:'var(--m-font)', fontSize:'17px', fontWeight:'800', color:'var(--m-ink)', marginBottom:'6px'}}>Iklan berhasil diluncurkan!</div>
+                <div style={{fontFamily:'var(--m-font)', fontSize:'13px', color:'var(--m-ink-sub)', lineHeight:'1.5', display:'flex', alignItems:'center', justifyContent:'center', gap:'4px', marginTop:'12px'}}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--m-brand)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                  <span>Membuka halaman kelola iklan…</span>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
