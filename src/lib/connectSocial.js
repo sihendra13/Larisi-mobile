@@ -174,13 +174,20 @@ export function connectSocial({ platform, accessToken, userId, onStart, onDone, 
   /* Tidak perlu fetch existing IDs — langsung cari akun platform setelah OAuth selesai */
   let existingAccountIds = [];
 
-  /* Fetch OAuth URL lalu buka popup */
+  /* Buka popup SEBELUM fetch — harus synchronous dari user gesture
+     iOS: pakai _blank agar Safari buka sebagai tab baru yang visible
+     Desktop: pakai named window dengan size */
+  popup = isIOS
+    ? window.open('about:blank', '_blank')
+    : window.open('about:blank', 'postforme_oauth', 'width=520,height=700,left=100,top=80');
+  onLog?.(`[connectSocial] Popup pre-opened: ${popup ? 'SUCCESS' : 'BLOCKED'}`);
+
+  /* Fetch OAuth URL lalu arahkan popup */
   fetch(`${SUPABASE_URL}/functions/v1/postforme-auth`, {
     method: 'POST',
     headers: { 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
       platform, redirect_uri: REDIRECT_URI, external_id: externalId,
-      force_reauth: true,
       ...(platform === 'instagram' ? { scopes: INSTAGRAM_SCOPES } : {}),
     }),
   })
@@ -190,21 +197,16 @@ export function connectSocial({ platform, accessToken, userId, onStart, onDone, 
     if (!authUrl) throw new Error('URL OAuth tidak tersedia');
     onLog?.(`[connectSocial] Auth URL: ${authUrl?.substring(0, 50)}...`);
 
-    /* Tunggu disconnect selesai sebelum redirect/open (popup sudah terbuka di non-iOS) */
+    /* Tunggu disconnect selesai */
     if (disconnectPromise) await disconnectPromise;
 
-    if (isIOS) {
-      /* iOS: buka langsung ke URL dengan _blank setelah disconnect selesai */
-      popup = window.open(authUrl, '_blank');
-      onLog?.(`[connectSocial] iOS: window.open(_blank) = ${popup ? 'SUCCESS' : 'BLOCKED'}`);
+    if (popup && !popup.closed) {
+      popup.location.href = authUrl;
+      onLog?.(`[connectSocial] Navigating popup to OAuth`);
     } else {
-      onLog?.(`[connectSocial] Popup = ${popup ? 'open' : 'blocked'}`);
-      if (popup) {
-        popup.location.href = authUrl;
-        onLog?.(`[connectSocial] Redirecting popup to OAuth`);
-      } else {
-        window.open(authUrl, '_blank');
-      }
+      /* Fallback kalau popup blocked */
+      onLog?.(`[connectSocial] Popup blocked, fallback window.open`);
+      popup = window.open(authUrl, '_blank');
     }
 
     /* Mulai polling untuk iOS PWA (postMessage mungkin tidak sampai) */
