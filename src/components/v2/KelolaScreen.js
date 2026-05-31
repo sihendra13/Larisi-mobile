@@ -175,8 +175,9 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
   const [loading,     setLoading]     = useState(true);
   const [activeTab,   setActiveTab]   = useState('Semua');
   const [selectedCamp, setSelectedCamp] = useState(null);
-  const [analytics,   setAnalytics]   = useState(null);  // metrics untuk detail view
+  const [analytics,   setAnalytics]   = useState(null);
   const [loadingAn,   setLoadingAn]   = useState(false);
+  const [archiveTarget, setArchiveTarget] = useState(null); // campaign yang mau diarsipkan
   // realReach: { [campaignId]: number } — reach real dari PostForMe, '—' kalau belum ada
   const [realReach,   setRealReach]   = useState({});
   const [showSiLaris, setShowSiLaris] = useState(false);
@@ -195,6 +196,7 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
         platforms:        (r.platforms || []).map(p => platMap[p] || p),
         format:           r.format || 'post',
         thumbUrl:         r.thumb_url || null,
+        hasVideo:         r.has_video || false,
         thumbColor:       '#791ADB',
         reachTarget:      r.estimated_reach_max || 10000,
         created_at:       r.created_at || null,
@@ -302,12 +304,19 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
     }));
   }, [accessToken]);
 
-  /* ── Archive ── */
-  const handleArchive = useCallback(async (camp) => {
+  /* ── Archive — konfirmasi dulu, sama seperti desktop ── */
+  const handleArchive = useCallback((camp) => {
+    setArchiveTarget(camp);
+  }, []);
+
+  const confirmArchive = useCallback(async () => {
+    if (!archiveTarget) return;
+    const camp = archiveTarget;
+    setArchiveTarget(null);
     await archiveCampaign(camp.id, sessionId, accessToken);
     setCampaigns(prev => prev.map(c => c.id === camp.id ? { ...c, status: 'paused' } : c));
     setSelectedCamp(null);
-  }, [sessionId, accessToken]);
+  }, [archiveTarget, sessionId, accessToken]);
 
   const handleDetailScroll = (e) => {
     const y = e.target.scrollTop;
@@ -375,7 +384,7 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
               <div style={{ flex:1, minWidth:0 }}>
                 {/* Judul + status badge */}
                 <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:'8px', marginBottom:'2px' }}>
-                  <div style={{ fontFamily:'var(--m-font)', fontSize:'15px', fontWeight:'800', color:'var(--m-ink)', lineHeight:'1.3' }}>{c.name}</div>
+                  <div style={{ fontFamily:'var(--m-font)', fontSize:'15px', fontWeight:'800', color:'var(--m-ink)', lineHeight:'1.3', overflow:'hidden', display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical' }}>{c.name}</div>
                   <div style={{ background: c.status === 'running' ? '#E6F4EA' : '#FEF3C7', padding:'4px 10px', borderRadius:'999px', display:'flex', alignItems:'center', gap:'5px', flexShrink:0 }}>
                     <div style={{ width:'6px', height:'6px', borderRadius:'50%', background: statusColor }} />
                     <span style={{ fontFamily:'var(--m-font)', fontSize:'11px', fontWeight:'700', color: statusColor }}>{statusLbl}</span>
@@ -406,7 +415,7 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
                 : <div style={{ position:'absolute', inset:0, backgroundImage:'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.05) 10px, rgba(255,255,255,0.05) 20px)' }} />
               }
               <div style={{ position:'absolute', bottom:'10px', left:'10px', background:'rgba(0,0,0,0.5)', color:'#fff', padding:'4px 8px', borderRadius:'6px', display:'flex', alignItems:'center', gap:'4px' }}>
-                {(c.format === 'reel' || c.format === 'video') && <svg width="11" height="11" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"/></svg>}
+                {c.hasVideo && <svg width="11" height="11" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"/></svg>}
                 <span style={{ fontFamily:'var(--m-font)', fontSize:'10px', fontWeight:'700' }}>{(c.format || 'POST').toUpperCase()}</span>
               </div>
             </div>
@@ -529,9 +538,9 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
                   <img src={camp.thumbUrl} alt="" style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover' }} onError={e => { e.target.style.display='none'; }} />
                 )}
 
-                {/* Format badge top-right */}
+                {/* Format badge — ikon berdasarkan file type (video/foto), label berdasarkan format */}
                 <div style={{ position:'absolute', top:'8px', right:'8px', background:'rgba(0,0,0,0.4)', borderRadius:'6px', padding:'4px 6px', display:'flex', alignItems:'center', gap:'3px' }}>
-                  {(camp.format === 'reel' || camp.format === 'video')
+                  {camp.hasVideo
                     ? <svg width="12" height="12" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"/></svg>
                     : <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
                   }
@@ -562,6 +571,57 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
           </div>
         )}
       </main>
+
+      {/* ── Archive Confirm Modal — sama seperti desktop deleteConfirmOverlay ── */}
+      {archiveTarget && (
+        <div
+          onClick={e => { if (e.target === e.currentTarget) setArchiveTarget(null); }}
+          style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.55)', zIndex:9999, display:'flex', alignItems:'center', justifyContent:'center', padding:'24px', backdropFilter:'blur(4px)' }}
+        >
+          <div style={{ background:'#fff', borderRadius:'20px', padding:'28px', width:'100%', maxWidth:'340px', boxShadow:'0 24px 64px rgba(0,0,0,0.2)' }}>
+            {/* Header */}
+            <div style={{ display:'flex', alignItems:'center', gap:'12px', marginBottom:'16px' }}>
+              <div style={{ width:'40px', height:'40px', borderRadius:'12px', background:'#FEF2F2', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
+                  <path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/>
+                </svg>
+              </div>
+              <div>
+                <div style={{ fontFamily:'var(--m-font)', fontSize:'16px', fontWeight:'700', color:'#111827' }}>Arsipkan Campaign?</div>
+                <div style={{ fontFamily:'var(--m-font)', fontSize:'12px', color:'#6B7280', marginTop:'2px' }}>Iklan akan dipindahkan ke tab Diarsipkan</div>
+              </div>
+            </div>
+
+            {/* Campaign name */}
+            <div style={{ background:'#F9FAFB', borderRadius:'10px', padding:'12px 14px', marginBottom:'14px' }}>
+              <div style={{ fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'700', color:'#111827', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{archiveTarget.name}</div>
+              <div style={{ fontFamily:'var(--m-font)', fontSize:'11px', color:'#6B7280', marginTop:'3px' }}>{platformLabel(archiveTarget.platforms)}</div>
+            </div>
+
+            {/* Warning */}
+            <div style={{ background:'#FFFBEB', border:'1px solid #FCD34D', borderRadius:'10px', padding:'12px 14px', marginBottom:'20px', fontFamily:'var(--m-font)', fontSize:'12px', color:'#92400E', lineHeight:'1.6' }}>
+              ⚠️ <strong>Postingan di {platformLabel(archiveTarget.platforms)} TIDAK akan terhapus.</strong> Kamu perlu hapus manual di masing-masing platform.
+            </div>
+
+            {/* Buttons */}
+            <div style={{ display:'flex', gap:'10px' }}>
+              <button
+                onClick={() => setArchiveTarget(null)}
+                style={{ flex:1, padding:'11px', borderRadius:'12px', border:'1.5px solid #E5E7EB', background:'#fff', color:'#374151', fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'600', cursor:'pointer' }}
+              >
+                Batal
+              </button>
+              <button
+                onClick={confirmArchive}
+                style={{ flex:1, padding:'11px', borderRadius:'12px', border:'none', background:'#6B7280', color:'#fff', fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'600', cursor:'pointer' }}
+              >
+                Arsipkan
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
