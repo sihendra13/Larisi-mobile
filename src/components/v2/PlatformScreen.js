@@ -160,12 +160,13 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext, pro
   const [toast, setToast] = useState({ show: false, message: '' });
   const [preloadedUrls, setPreloadedUrls] = useState({});
 
-  /* Refresh akun dari localStorage setiap kali layar aktif */
+  /* Refresh akun dari localStorage saat profile berubah atau layar aktif */
   useEffect(() => {
+    setAccounts(getStoredAccounts());
     const refresh = () => setAccounts(getStoredAccounts());
     window.addEventListener('focus', refresh);
     return () => window.removeEventListener('focus', refresh);
-  }, []);
+  }, [profile]);
 
   /* iOS: pre-fetch OAuth URL untuk semua platform saat mount */
   useEffect(() => {

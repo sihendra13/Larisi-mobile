@@ -234,6 +234,37 @@ export default function DapurV2() {
     }
   };
 
+  /* Background Refresh: Tarik profil terbaru dari Supabase saat app aktif */
+  useEffect(() => {
+    if (!userId || authState !== 'app') return;
+
+    const refreshProfile = async () => {
+      if (typeof window !== 'undefined' && window.getUserProfile) {
+        try {
+          const { data, error } = await window.getUserProfile(userId);
+          if (data && !error) {
+            restoreSocialAccounts(data);
+            setProfile(data);
+          }
+        } catch (e) {
+          console.warn('[app] Background refresh failed:', e);
+        }
+      }
+    };
+
+    // Jalankan sekali saat authState === 'app' (user sudah di dalam app)
+    refreshProfile();
+
+    const onVisChange = () => { if (!document.hidden) refreshProfile(); };
+    window.addEventListener('focus', refreshProfile);
+    window.addEventListener('visibilitychange', onVisChange);
+
+    return () => {
+      window.removeEventListener('focus', refreshProfile);
+      window.removeEventListener('visibilitychange', onVisChange);
+    };
+  }, [userId, authState]);
+
   /* Callback setelah login berhasil */
   const handleLoginSuccess = ({ access_token, user, profile: p }) => {
     setAccessToken(access_token);
