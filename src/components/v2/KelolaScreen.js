@@ -158,14 +158,16 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
   const [selectedCamp, setSelectedCamp] = useState(null);
   const [analytics,   setAnalytics]   = useState(null);  // metrics untuk detail view
   const [loadingAn,   setLoadingAn]   = useState(false);
+  // realReach: { [campaignId]: number } — reach real dari PostForMe, '—' kalau belum ada
+  const [realReach,   setRealReach]   = useState({});
   const [showSiLaris, setShowSiLaris] = useState(false);
   const [isFabExpanded, setIsFabExpanded] = useState(true);
   const lastScrollY = useRef(0);
 
-  /* ── Load campaigns on mount ── */
+  /* ── Load campaigns on mount, lalu fetch real reach dari PostForMe ── */
   useEffect(() => {
-    if (!sessionId || !accessToken) { setLoading(false); return; }
-    fetchCampaigns(sessionId, accessToken).then(rows => {
+    if (!accessToken) { setLoading(false); return; }
+    fetchCampaigns(sessionId, accessToken).then(async rows => {
       const platMap = { instagram: 'ig', facebook: 'meta' };
       const mapped = rows.map(r => ({
         id:               r.id,
@@ -175,7 +177,6 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
         format:           r.format || 'post',
         thumbUrl:         r.thumb_url || null,
         thumbColor:       '#791ADB',
-        reach:            r.estimated_reach_min || 0,
         reachTarget:      r.estimated_reach_max || 10000,
         created_at:       r.created_at || null,
         post_id:          r.post_id || null,
@@ -185,6 +186,36 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
       }));
       setCampaigns(mapped);
       setLoading(false);
+
+      // Fetch real reach dari PostForMe per akun — sama seperti desktop _loadAnalyticsForCard
+      // Cache per social account ID agar tidak fetch berkali-kali untuk akun yang sama
+      const accounts = (() => {
+        try { return JSON.parse(localStorage.getItem('radar_social_accounts') || '[]'); } catch { return []; }
+      })();
+      const platApiMap = { ig:'instagram', meta:'facebook', tiktok:'tiktok', youtube:'youtube' };
+      const feedCache = {}; // accountId → posts[]
+
+      for (const camp of mapped) {
+        if (camp.status === 'paused') continue;
+        const sp  = platApiMap[camp.platforms[0]] || camp.platforms[0];
+        const acc = accounts.find(a => a.platform === sp);
+        if (!acc?.id) continue;
+
+        // Fetch feed sekali per akun, cache untuk campaign lain di akun sama
+        if (!feedCache[acc.id]) {
+          try {
+            feedCache[acc.id] = await fetchAnalytics(acc.id, accessToken);
+          } catch { feedCache[acc.id] = []; }
+        }
+        const posts = feedCache[acc.id] || [];
+        const post  = matchPost(posts, camp);
+        if (post) {
+          const m = extractMetrics(post, camp.platforms[0]);
+          if (m.reach > 0) {
+            setRealReach(prev => ({ ...prev, [camp.id]: m.reach }));
+          }
+        }
+      }
     });
   }, [sessionId, accessToken]);
 
@@ -452,11 +483,13 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
                   <span style={{ fontFamily:'var(--m-font)', fontSize:'9px', fontWeight:'800', color:'#fff' }}>{(camp.format || 'POST').toUpperCase()}</span>
                 </div>
 
-                {/* Bottom gradient — reach only, no name */}
+                {/* Bottom gradient — real reach dari PostForMe, '—' kalau belum ada */}
                 <div style={{ position:'absolute', bottom:0, left:0, right:0, height:'40%', background:'linear-gradient(to top, rgba(0,0,0,0.75), rgba(0,0,0,0))', display:'flex', alignItems:'flex-end', padding:'10px 10px 12px' }}>
                   <div style={{ display:'flex', alignItems:'center', gap:'4px' }}>
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                    <span style={{ fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'800', color:'#fff' }}>{fmtViews(camp.reach)}</span>
+                    <span style={{ fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'800', color:'#fff' }}>
+                      {realReach[camp.id] != null ? fmtViews(realReach[camp.id]) : '—'}
+                    </span>
                   </div>
                 </div>
               </div>
