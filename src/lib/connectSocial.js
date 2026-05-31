@@ -180,6 +180,7 @@ export function connectSocial({ platform, accessToken, userId, onStart, onDone, 
     headers: { 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
       platform, redirect_uri: REDIRECT_URI, external_id: externalId,
+      force_reauth: true,
       ...(platform === 'instagram' ? { scopes: INSTAGRAM_SCOPES } : {}),
     }),
   })
