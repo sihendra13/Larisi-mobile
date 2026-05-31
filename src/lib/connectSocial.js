@@ -101,7 +101,7 @@ export function connectSocial({ platform, accessToken, userId, onStart, onDone, 
       const list = pfData.data || pfData.accounts || (Array.isArray(pfData) ? pfData : []);
       const match = list.find(a => {
         const plt = (a.platform || a.provider || '').toLowerCase();
-        return plt.startsWith(platform) && !existingIds.includes(String(a.id));
+        return plt.startsWith(platform);
       });
       if (match && !done) {
         done = true;
@@ -125,62 +125,35 @@ export function connectSocial({ platform, accessToken, userId, onStart, onDone, 
     return false;
   };
 
-  /* Polling: check PostForMe setiap 3 detik + saat app kembali ke foreground */
+  /* Polling strategy:
+     - iOS PWA: JS suspended saat di background. Pakai visibilitychange sebagai trigger utama.
+               Juga jalankan interval lambat (5s) sebagai backup kalau visibilitychange tidak fire.
+     - Desktop: interval 3s + postMessage */
   const startPolling = (existingIds) => {
-    onLog?.(`[connectSocial] Starting polling for ${platform} account...`);
+    onLog?.(`[connectSocial] Starting polling for ${platform}...`);
     let attempts = 0;
-    const maxAttempts = 40; // max 2 menit
+    const maxAttempts = 40;
 
+    /* Interval sebagai backup */
     pollInterval = setInterval(async () => {
       if (done) { clearInterval(pollInterval); return; }
       attempts++;
-      if (attempts > maxAttempts) {
-        clearInterval(pollInterval);
-        if (!done) { cleanup(); onCancel?.(); }
-        return;
-      }
+      if (attempts > maxAttempts) { clearInterval(pollInterval); if (!done) { cleanup(); onCancel?.(); } return; }
       await pollOnce(existingIds);
-    }, 3000);
+    }, isIOS ? 5000 : 3000);
 
-    /* iOS: saat app kembali ke foreground setelah Safari, langsung poll */
+    /* visibilitychange: saat user balik ke app dari Safari — poll SEGERA */
     const onVisibilityChange = async () => {
       if (document.hidden || done) return;
-      onLog?.(`[connectSocial] App back to foreground, polling immediately...`);
-      clearInterval(pollInterval); // stop interval lama
-      const found = await pollOnce(existingIds);
-      if (!found && !done) {
-        // restart interval
-        attempts = 0;
-        pollInterval = setInterval(async () => {
-          if (done) { clearInterval(pollInterval); return; }
-          attempts++;
-          if (attempts > maxAttempts) { clearInterval(pollInterval); if (!done) { cleanup(); onCancel?.(); } return; }
-          await pollOnce(existingIds);
-        }, 3000);
-      }
+      onLog?.(`[connectSocial] Foreground detected, polling now...`);
+      await pollOnce(existingIds);
     };
     document.addEventListener('visibilitychange', onVisibilityChange);
-
-    // Simpan cleanup visibilitychange
-    const origCleanup = cleanup;
-    Object.assign(cleanup, { _visHandler: onVisibilityChange });
+    cleanup._visHandler = onVisibilityChange;
   };
 
-  /* Fetch daftar akun existing sebelum OAuth (untuk detect akun baru) */
+  /* Tidak perlu fetch existing IDs — langsung cari akun platform setelah OAuth selesai */
   let existingAccountIds = [];
-  fetch(`${SUPABASE_URL}/functions/v1/postforme-proxy`, {
-    method: 'POST',
-    headers: { 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ endpoint: `/v1/social-accounts?external_id=${encodeURIComponent(externalId)}`, method: 'GET' }),
-  })
-  .then(r => r.ok ? r.json() : null)
-  .then(d => {
-    if (d) {
-      const list = d.data || d.accounts || (Array.isArray(d) ? d : []);
-      existingAccountIds = list.map(a => String(a.id));
-    }
-  })
-  .catch(() => {});
 
   /* Fetch OAuth URL lalu buka popup */
   fetch(`${SUPABASE_URL}/functions/v1/postforme-auth`, {
