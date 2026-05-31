@@ -22,6 +22,11 @@ const INSTAGRAM_SCOPES = [
  * 5. Setelah berhasil, fetch detail akun dari postforme-proxy
  */
 export function connectSocial({ platform, accessToken, userId, onStart, onDone, onCancel, onLog }) {
+  /* Debug: detect iOS PWA */
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+  onLog?.(`[connectSocial] Starting ${platform} connect on iOS=${isIOS}, Standalone=${isStandalone}`);
+
   /* Ambil atau buat external_id (identik desktop) */
   let externalId = localStorage.getItem('radar_session_id');
   if (!externalId) {
@@ -33,6 +38,7 @@ export function connectSocial({ platform, accessToken, userId, onStart, onDone, 
 
   /* Buka popup SEBELUM await — browser hanya izinkan dari user gesture langsung */
   const popup = window.open('about:blank', 'postforme_oauth', 'width=520,height=700,left=100,top=80');
+  onLog?.(`[connectSocial] Popup opened: ${popup ? 'SUCCESS' : 'NULL (BLOCKED)'}`);
   onStart?.(platform);
 
   let done = false;
@@ -63,9 +69,14 @@ export function connectSocial({ platform, accessToken, userId, onStart, onDone, 
   .then(data => {
     const authUrl = data.url || data.auth_url || data.redirect_url || data.authorization_url;
     if (!authUrl) throw new Error('URL OAuth tidak tersedia');
-    if (popup) popup.location.href = authUrl;
-    else {
+    onLog?.(`[connectSocial] Auth URL: ${authUrl?.substring(0, 50)}...`);
+
+    if (popup) {
+      popup.location.href = authUrl;
+      onLog?.(`[connectSocial] Redirecting popup to OAuth`);
+    } else {
       /* Fallback kalau popup diblokir */
+      onLog?.(`[connectSocial] Popup blocked! Using full-page fallback`);
       window.open(authUrl, 'postforme_oauth', 'width=520,height=700,left=100,top=80');
     }
   })

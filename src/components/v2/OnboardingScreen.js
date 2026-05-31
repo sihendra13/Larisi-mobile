@@ -191,10 +191,17 @@ export default function OnboardingScreen({
   /* ── Social State ── */
   const [accounts,     setAccounts]     = useState(() => getStoredAccounts());
   const [socialBusy,   setSocialBusy]  = useState('');
+  const [debugLogs,    setDebugLogs]    = useState([]); /* Debug logs untuk iOS testing */
 
   /* ── Refs ── */
   const uspInputRef  = useRef(null);
   const kecTimerRef  = useRef(null);
+
+  /* ── Helper: add debug log ── */
+  const addDebugLog = (msg) => {
+    console.log(msg);
+    setDebugLogs(prev => [...prev.slice(-20), msg]); /* Keep last 20 logs */
+  };
 
   /* ── Countdown OTP ── */
   useEffect(() => {
@@ -403,12 +410,17 @@ export default function OnboardingScreen({
      STEP 2 — SOCIAL
   ───────────────── */
   const handleConnectSocial = (platform) => {
+    addDebugLog(`=== Connecting ${platform} ===`);
     connectSocial({
       platform,
       accessToken: token || accessToken,
       userId,
-      onStart:  (plt) => setSocialBusy(plt),
+      onStart:  (plt) => {
+        setSocialBusy(plt);
+        addDebugLog(`[START] ${plt} connection starting`);
+      },
       onDone:   async (plt, accData) => {
+        addDebugLog(`[DONE] ${plt} connected: @${accData.username}`);
         // Update local state
         setAccounts(getStoredAccounts());
         setSocialBusy('');
@@ -419,7 +431,11 @@ export default function OnboardingScreen({
           await syncSocialAccountsToSupabase(userId, tok);
         }
       },
-      onCancel: () => setSocialBusy(''),
+      onCancel: () => {
+        addDebugLog(`[CANCEL] ${platform} connection cancelled`);
+        setSocialBusy('');
+      },
+      onLog: addDebugLog, /* ← Pass callback untuk logging */
     });
   };
 
@@ -934,6 +950,23 @@ export default function OnboardingScreen({
                 >
                   Hubungkan Nanti
                 </button>
+              )}
+
+              {/* DEBUG BOX: Floating logs untuk iPhone testing */}
+              {debugLogs.length > 0 && (
+                <div style={{
+                  position: 'fixed', bottom: '100px', left: '12px', right: '12px', zIndex: 9999,
+                  background: 'rgba(0, 0, 0, 0.85)', color: '#0f0', fontSize: '11px',
+                  padding: '12px', borderRadius: '8px', maxHeight: '180px', overflow: 'auto',
+                  fontFamily: 'monospace', lineHeight: '1.4', border: '1px solid #0f0'
+                }}>
+                  <div style={{ fontWeight: 'bold', marginBottom: '6px', color: '#0ff' }}>DEBUG LOG:</div>
+                  {debugLogs.map((log, i) => (
+                    <div key={i} style={{ marginBottom: '2px' }}>
+                      {log}
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
           )}
