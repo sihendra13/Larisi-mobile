@@ -95,6 +95,69 @@ async function pfmProxy(endpoint, method, body, accessToken) {
   return resp.json();
 }
 
+/* ── Buat compressed thumbnail dari blob URL foto (max 600px, JPEG 90%) ── */
+function createThumbFromUrl(blobUrl) {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const maxW = 600;
+        const ratio = maxW / img.naturalWidth;
+        const c = document.createElement('canvas');
+        c.width  = maxW;
+        c.height = Math.round(img.naturalHeight * ratio);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        resolve(c.toDataURL('image/jpeg', 0.9));
+      } catch { resolve(null); }
+    };
+    img.onerror = () => resolve(null);
+    img.src = blobUrl;
+  });
+}
+
+/* ── Capture frame 0.5s dari video blob URL (480×270, JPEG 80%) ── */
+function captureVideoThumb(blobUrl) {
+  return new Promise(resolve => {
+    const video = document.createElement('video');
+    video.preload = 'metadata';
+    video.muted   = true;
+    video.src     = blobUrl;
+    video.addEventListener('loadeddata', () => {
+      video.currentTime = Math.min(0.5, video.duration || 0.5);
+    });
+    video.addEventListener('seeked', () => {
+      try {
+        const c = document.createElement('canvas');
+        c.width = 480; c.height = 270;
+        c.getContext('2d').drawImage(video, 0, 0, 480, 270);
+        resolve(c.toDataURL('image/jpeg', 0.8));
+      } catch { resolve(null); }
+    });
+    video.onerror = () => resolve(null);
+    setTimeout(() => resolve(null), 8000); // timeout 8 detik
+  });
+}
+
+/* ── Upload thumbnail ke Supabase Storage → return public URL ── */
+async function uploadThumbToStorage(campaignId, dataUrl, accessToken) {
+  if (!campaignId || !dataUrl?.startsWith('data:image')) return null;
+  try {
+    const base64 = dataUrl.split(',')[1];
+    const binary = atob(base64);
+    const bytes  = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    const blob = new Blob([bytes], { type: 'image/jpeg' });
+    const path = `${campaignId}.jpg`;
+    const res  = await fetch(`${SUPABASE_URL}/storage/v1/object/thumbnails/${path}`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${accessToken || SUPABASE_ANON_KEY}`, 'Content-Type': 'image/jpeg', 'x-upsert': 'true' },
+      body: blob,
+    });
+    if (!res.ok) return null;
+    return `${SUPABASE_URL}/storage/v1/object/public/thumbnails/${path}`;
+  } catch { return null; }
+}
+
 /* ── USP fallback per kategori (identik dengan desktop caption.js) ── */
 const USP_FALLBACKS = {
   fnb:                 'Cita rasa yang bikin balik lagi',
@@ -449,12 +512,23 @@ export default function CaptionScreen({
       const postId  = data?.id || data?.post_id || data?.posts?.[0]?.id || null;
       const postUrl = data?.post_url || data?.platform_url || data?.permalink || data?.posts?.[0]?.post_url || null;
 
+      // Generate thumbnail dari file pertama (foto atau video)
+      let thumbDataUrl = null;
+      if (files.length > 0) {
+        const firstFile = files[0];
+        if (firstFile.type === 'video') {
+          thumbDataUrl = await captureVideoThumb(firstFile.url);
+        } else {
+          thumbDataUrl = await createThumbFromUrl(firstFile.url);
+        }
+      }
+
       // Simpan campaign ke Supabase
       if (sessionId && accessToken) {
         const reach = Math.round(Math.PI * radius * radius * ((locPop || 50000) / (Math.PI * 25)));
-        await fetch(`${SUPABASE_URL}/rest/v1/campaigns`, {
+        const saveResp = await fetch(`${SUPABASE_URL}/rest/v1/campaigns`, {
           method: 'POST',
-          headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+          headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' },
           body: JSON.stringify({
             user_id:             userId || null,
             session_id:          sessionId,
@@ -469,6 +543,23 @@ export default function CaptionScreen({
             caption,
           }),
         });
+
+        // Upload thumbnail ke Supabase Storage setelah dapat campaign ID
+        if (saveResp.ok && thumbDataUrl) {
+          const saved = await saveResp.json();
+          const campId = Array.isArray(saved) ? saved[0]?.id : saved?.id;
+          if (campId) {
+            const thumbUrl = await uploadThumbToStorage(campId, thumbDataUrl, accessToken);
+            if (thumbUrl) {
+              // Update thumb_url di record campaign
+              fetch(`${SUPABASE_URL}/rest/v1/campaigns?id=eq.${campId}`, {
+                method: 'PATCH',
+                headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ thumb_url: thumbUrl }),
+              }).catch(() => {});
+            }
+          }
+        }
       }
 
       // Toast sukses spesifik platform+format (sama seperti desktop)
