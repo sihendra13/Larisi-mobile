@@ -170,13 +170,19 @@ export function connectSocial({ platform, accessToken, userId, onStart, onDone, 
     if (!authUrl) throw new Error('URL OAuth tidak tersedia');
     onLog?.(`[connectSocial] Auth URL: ${authUrl?.substring(0, 50)}...`);
 
-    popup = window.open('about:blank', 'postforme_oauth', 'width=520,height=700,left=100,top=80');
-    onLog?.(`[connectSocial] Popup opened: ${popup ? 'SUCCESS' : 'NULL (BLOCKED)'}`);
-    if (popup) {
-      popup.location.href = authUrl;
-      onLog?.(`[connectSocial] Redirecting popup to OAuth`);
+    /* iOS PWA: buka langsung ke URL (bukan about:blank dulu) agar tidak diblock */
+    if (isIOS) {
+      popup = window.open(authUrl, '_blank');
+      onLog?.(`[connectSocial] iOS: window.open(_blank) = ${popup ? 'SUCCESS' : 'BLOCKED'}`);
     } else {
-      window.open(authUrl, 'postforme_oauth', 'width=520,height=700,left=100,top=80');
+      popup = window.open('about:blank', 'postforme_oauth', 'width=520,height=700,left=100,top=80');
+      onLog?.(`[connectSocial] Popup opened: ${popup ? 'SUCCESS' : 'NULL (BLOCKED)'}`);
+      if (popup) {
+        popup.location.href = authUrl;
+        onLog?.(`[connectSocial] Redirecting popup to OAuth`);
+      } else {
+        window.open(authUrl, '_blank');
+      }
     }
 
     /* Mulai polling untuk iOS PWA (postMessage mungkin tidak sampai) */
