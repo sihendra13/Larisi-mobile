@@ -39,8 +39,27 @@ export function connectSocial({ platform, accessToken, userId, onStart, onDone, 
 
   onStart?.(platform);
 
+  /* Cek akun existing untuk platform ini — hapus dari localStorage & DELETE dari PostForMe */
+  const existingAccounts = JSON.parse(localStorage.getItem('radar_social_accounts') || '[]');
+  const existingAcc = existingAccounts.find(a => a.platform === platform);
+  if (existingAcc) {
+    const remaining = existingAccounts.filter(a => a.platform !== platform);
+    localStorage.setItem('radar_social_accounts', JSON.stringify(remaining));
+  }
+
+  /* DELETE akun lama dari PostForMe secara paralel */
+  let disconnectPromise = null;
+  if (existingAcc && existingAcc.id && !/^pfm_[a-z]+_\d+$/.test(existingAcc.id)) {
+    disconnectPromise = fetch(`${SUPABASE_URL}/functions/v1/postforme-proxy`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ endpoint: `/v1/social-accounts/${existingAcc.id}`, method: 'DELETE' }),
+    }).catch(() => {});
+  }
+
+  /* Buka popup SEBELUM await — harus dari user gesture langsung */
   let done = false;
-  let popup = null;
+  let popup = isIOS ? null : window.open('about:blank', 'postforme_oauth', 'width=520,height=700,left=100,top=80');
   let pollInterval = null;
   let closedCheck = null;
 
@@ -165,18 +184,20 @@ export function connectSocial({ platform, accessToken, userId, onStart, onDone, 
     }),
   })
   .then(resp => { if (!resp.ok) throw new Error('Server error ' + resp.status); return resp.json(); })
-  .then(data => {
+  .then(async data => {
     const authUrl = data.url || data.auth_url || data.redirect_url || data.authorization_url;
     if (!authUrl) throw new Error('URL OAuth tidak tersedia');
     onLog?.(`[connectSocial] Auth URL: ${authUrl?.substring(0, 50)}...`);
 
-    /* iOS PWA: buka langsung ke URL (bukan about:blank dulu) agar tidak diblock */
+    /* Tunggu disconnect selesai sebelum redirect/open (popup sudah terbuka di non-iOS) */
+    if (disconnectPromise) await disconnectPromise;
+
     if (isIOS) {
+      /* iOS: buka langsung ke URL dengan _blank setelah disconnect selesai */
       popup = window.open(authUrl, '_blank');
       onLog?.(`[connectSocial] iOS: window.open(_blank) = ${popup ? 'SUCCESS' : 'BLOCKED'}`);
     } else {
-      popup = window.open('about:blank', 'postforme_oauth', 'width=520,height=700,left=100,top=80');
-      onLog?.(`[connectSocial] Popup opened: ${popup ? 'SUCCESS' : 'NULL (BLOCKED)'}`);
+      onLog?.(`[connectSocial] Popup = ${popup ? 'open' : 'blocked'}`);
       if (popup) {
         popup.location.href = authUrl;
         onLog?.(`[connectSocial] Redirecting popup to OAuth`);
