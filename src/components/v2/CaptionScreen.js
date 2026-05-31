@@ -597,7 +597,6 @@ export default function CaptionScreen({
             post_id:             postId          || null,
             post_url:            postUrl         || null,
             thumb_url:           thumbUrl || null,
-            has_video:           files[0]?.type === 'video',
             caption,
           }),
         });
