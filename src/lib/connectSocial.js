@@ -177,7 +177,7 @@ export function connectSocial({ platform, accessToken, userId, onStart, onDone, 
           onLog?.(`[connectSocial] Found multiple accounts during poll (${matches.length})`);
           onMultipleAccounts(multipleMatches);
         } else {
-          const match = matches[0];
+          const match = matches[matches.length - 1];
           onLog?.(`[connectSocial] Found new account: ${match.username || match.name}`);
           const accountData = {
             id: match.id, platform,
@@ -340,7 +340,7 @@ export async function handleOAuthRedirectCallback() {
         localStorage.setItem('larisi_oauth_pending_multiple', JSON.stringify({ platform, matches: multipleMatches }));
         return { platform, accountData: null, multipleMatches };
       } else if (matches.length > 0) {
-        const match = matches[0];
+        const match = matches[matches.length - 1];
         accountData = {
           id: match.id || accountData.id,
           platform,
