@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import MobileHeader from '@/components/layout/MobileHeader';
-import { connectSocial, getStoredAccounts } from '@/lib/connectSocial';
+import { connectSocial, getStoredAccounts, syncSocialAccountsToSupabase } from '@/lib/connectSocial';
 
 /* ── Platform config ── */
 const PLATFORMS = [
@@ -219,7 +219,16 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext, pro
       accessToken: accessToken || '',
       userId: userId || '',
       onStart:  (p) => setSocialBusy(p),
-      onDone:   ()  => { setAccounts(getStoredAccounts()); setSocialBusy(''); },
+      onDone:   async (plt, accData) => {
+        // Update local state
+        setAccounts(getStoredAccounts());
+        setSocialBusy('');
+
+        // Sync to Supabase untuk persistent storage
+        if (userId && accessToken) {
+          await syncSocialAccountsToSupabase(userId, accessToken);
+        }
+      },
       onCancel: ()  => setSocialBusy(''),
     });
   };
