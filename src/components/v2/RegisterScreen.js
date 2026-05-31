@@ -237,6 +237,7 @@ export default function RegisterScreen({ onRegisterSuccess, onGoLogin }) {
 
           {/* Submit Button */}
           <div className="stagger-6" style={{ marginTop: '8px' }}>
+            <style>{`@keyframes btnSpin { to { transform: rotate(360deg); } }`}</style>
             <button type="submit" disabled={loading || !canSubmit} style={{
               width: '100%', padding: '16px', borderRadius: '16px', 
               background: loading || !canSubmit ? '#E4E4EB' : '#111827', 
@@ -244,13 +245,23 @@ export default function RegisterScreen({ onRegisterSuccess, onGoLogin }) {
               border: 'none', fontSize: '15px', fontWeight: '800', fontFamily: 'inherit',
               cursor: loading || !canSubmit ? 'not-allowed' : 'pointer', 
               boxShadow: loading || !canSubmit ? 'none' : '0 8px 24px rgba(0, 0, 0, 0.15)',
-              transition: 'all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)', transform: 'translateY(0)'
+              transition: 'all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)', transform: 'translateY(0)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'
             }}
             onMouseDown={(e) => !(loading || !canSubmit) && (e.currentTarget.style.transform = 'translateY(2px)')}
             onMouseUp={(e) => !(loading || !canSubmit) && (e.currentTarget.style.transform = 'translateY(0)')}
             onMouseLeave={(e) => !(loading || !canSubmit) && (e.currentTarget.style.transform = 'translateY(0)')}
             >
-              {loading ? 'Memproses...' : 'Buat Akun'}
+              {loading ? (
+                <>
+                  <span>Memproses...</span>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ animation: 'btnSpin 1s linear infinite' }}>
+                    <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                  </svg>
+                </>
+              ) : (
+                'Buat Akun'
+              )}
             </button>
           </div>
 

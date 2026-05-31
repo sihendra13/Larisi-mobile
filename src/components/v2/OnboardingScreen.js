@@ -501,15 +501,26 @@ export default function OnboardingScreen({
      Render
   ───────────────────────────────────────── */
   return (
-    <div style={{
-      minHeight: '100dvh', background: '#F9F9FA',
-      fontFamily: 'var(--m-font, -apple-system, sans-serif)',
-      overflowY: 'auto', display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
+    <div className="bg-animated" style={{
+      minHeight: '100vh', display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
+      padding: '24px', position: 'relative', overflowY: 'auto', fontFamily: '-apple-system, sans-serif'
     }}>
-      <div style={{ width: '100%', maxWidth: '440px', padding: '32px 20px 80px' }}>
-        <div style={{
-          background: '#fff', borderRadius: '20px', padding: '32px 28px',
-          border: '1px solid #E4E4EB', boxShadow: '0 4px 32px rgba(0,0,0,0.07)',
+      
+      {/* Background Blobs for extra energy */}
+      <div style={{
+        position: 'fixed', top: '5%', left: '-5%', width: '300px', height: '300px',
+        background: 'var(--m-brand)', filter: 'blur(100px)', opacity: 0.15, borderRadius: '50%',
+        animation: 'float 8s ease-in-out infinite', zIndex: 0, pointerEvents: 'none'
+      }} />
+      <div style={{
+        position: 'fixed', bottom: '5%', right: '-5%', width: '250px', height: '250px',
+        background: '#FF007A', filter: 'blur(120px)', opacity: 0.1, borderRadius: '50%',
+        animation: 'float 6s ease-in-out infinite reverse', zIndex: 0, pointerEvents: 'none'
+      }} />
+
+      <div style={{ width: '100%', maxWidth: '440px', position: 'relative', zIndex: 10, paddingBottom: '40px' }}>
+        <div className="glass-card stagger-1" style={{
+          borderRadius: '32px', padding: '40px 32px',
           display: 'flex', flexDirection: 'column', gap: '0',
         }}>
 
@@ -852,7 +863,7 @@ export default function OnboardingScreen({
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
               <div>
                 <h1 style={{ margin: 0, fontSize: '22px', fontWeight: '800', color: '#111827', letterSpacing: '-0.3px' }}>
-                  Hubungkan Akun Media Sosial
+                  Hubungkan Akun
                 </h1>
                 <p style={{ margin: '8px 0 0', fontSize: '13px', color: '#6b7280', lineHeight: '1.5' }}>
                   Hubungkan minimal 1 akun sosial media bisnismu untuk mulai membuat konten.
