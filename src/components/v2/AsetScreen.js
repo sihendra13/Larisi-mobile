@@ -704,10 +704,6 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
           alignItems: 'center', justifyContent: 'center',
           gap: '14px', overflow: 'hidden',
         }}>
-          <div className="ai-corner ai-corner--tl" />
-          <div className="ai-corner ai-corner--tr" />
-          <div className="ai-corner ai-corner--bl" />
-          <div className="ai-corner ai-corner--br" />
           <div className="ai-scan-line" />
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', zIndex: 1, position: 'relative' }}>
             <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
