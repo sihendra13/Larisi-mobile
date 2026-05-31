@@ -443,20 +443,20 @@ export default function OnboardingScreen({
     const tok  = token || accessToken;
     const plan = localStorage.getItem('larisi_selected_plan') || 'freemium';
 
-    /* Save ALL profile fields to database */
+    /* Save ALL profile fields to database — column names harus sama dengan desktop */
     const updates = {
-      email:                   email.trim(), /* ← Copy email dari register ke profiles */
-      full_name:               ownerName.trim(),
-      business_name:           bizName.trim(),
-      phone_number:            whatsapp.replace(/\D/g, ''),
-      kategori:                category || null,
-      kecamatan:               kecamatan.trim(),
-      kabupaten:               kabupaten.trim(),
-      city:                    kabupaten.trim(), /* alias untuk compatibility */
-      provinsi:                provinsi.trim(),
-      delivery:                delivery === 'ya' ? true : false,
-      business_description:    usp.trim(),
-      onboarding_completed:    true,
+      email:            email.trim(),
+      full_name:        ownerName.trim(),
+      business_name:    bizName.trim(),
+      whatsapp:         whatsapp.replace(/\D/g, ''),
+      category:         category || null,
+      kecamatan:        kecamatan.trim(),
+      kabupaten:        kabupaten.trim(),
+      city:             kabupaten.trim(),
+      provinsi:         provinsi.trim(),
+      delivery_service: delivery === 'ya' ? true : false,
+      usp:              usp.trim(),
+      onboarding_completed: true,
       ...(plan !== 'freemium' ? { trial_start: new Date().toISOString() } : {}),
     };
 
