@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/lib/config';
-import { connectSocial, getStoredAccounts, syncSocialAccountsToSupabase } from '@/lib/connectSocial';
+import { connectSocial, getStoredAccounts, syncSocialAccountsToSupabase, refreshConnectedAccounts } from '@/lib/connectSocial';
 
 /* ─────────────────────────────────────────
    Data
@@ -196,6 +196,22 @@ export default function OnboardingScreen({
   /* ── Refs ── */
   const uspInputRef  = useRef(null);
   const kecTimerRef  = useRef(null);
+
+
+  useEffect(() => {
+    if (step === 2) {
+      (async () => {
+        const externalId = localStorage.getItem('radar_session_id') || '';
+        if (externalId && userId && token) {
+          const changed = await refreshConnectedAccounts(externalId, userId, token);
+          if (changed) {
+            setAccounts(getStoredAccounts());
+          }
+        }
+      })();
+      setAccounts(getStoredAccounts());
+    }
+  }, [step, userId, token]);
 
   /* ── Helper: add debug log ── */
   const addDebugLog = (msg) => {
