@@ -111,6 +111,8 @@ export function connectSocial({ platform, accessToken, userId, onStart, onDone, 
         const list = pfData.data || pfData.accounts || (Array.isArray(pfData) ? pfData : []);
         const matches = list.filter(a => (a.platform || a.provider || '').toLowerCase().startsWith(platform));
         
+        alert('DEBUG: Sistem menerima ' + matches.length + ' akun dari Facebook (' + matches.map(m => m.username).join(', ') + ')');
+        
         if (matches.length > 1 && typeof onMultipleAccounts === 'function') {
           // Format accounts for the modal
           multipleMatches = matches.map(m => ({
