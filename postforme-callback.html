@@ -76,21 +76,30 @@
       var hasAccountId = ids.trim().length > 0;
       var treatAsSuccess = success || hasAccountId;
 
+      // ── Detect iOS PWA redirect flow ──
+      // Kalau tidak ada opener (iOS PWA buka full redirect, bukan popup),
+      // redirect balik ke app dengan OAuth result di URL params
+      var noOpener = !window.opener || window.opener.closed;
+
       if (treatAsSuccess && hasAccountId) {
-        // Kirim data ke window induk (tab utama Larisi)
-        // Pakai '*' sebagai targetOrigin agar bekerja lintas domain
-        // (app.larisi.id ↔ larisi.vercel.app)
-        if (window.opener && !window.opener.closed) {
-          try {
-            window.opener.postMessage({
-              type:       'postforme_oauth_success',
-              accountIds: ids.split(',').map(function(s){ return s.trim(); }).filter(Boolean),
-              provider:   provider
-            }, window.location.origin);
-          } catch(e) { /* cross-origin guard */ }
+        if (noOpener) {
+          // iOS PWA redirect flow: kembali ke app dengan params
+          var returnUrl = localStorage.getItem('larisi_oauth_return_url') || 'https://mobile.larisi.id/v2/';
+          localStorage.removeItem('larisi_oauth_return_url');
+          var sep = returnUrl.indexOf('?') >= 0 ? '&' : '?';
+          window.location.replace(returnUrl + sep + 'oauth_callback=1&accountIds=' + encodeURIComponent(ids) + '&provider=' + encodeURIComponent(provider));
+          return;
         }
 
-        // Tampilkan konfirmasi lalu tutup popup
+        // Popup flow: kirim postMessage ke opener
+        try {
+          window.opener.postMessage({
+            type:       'postforme_oauth_success',
+            accountIds: ids.split(',').map(function(s){ return s.trim(); }).filter(Boolean),
+            provider:   provider
+          }, '*');
+        } catch(e) {}
+
         document.getElementById('spinner').style.display = 'none';
         document.getElementById('card').innerHTML =
           '<div class="icon">✅</div>' +
@@ -102,23 +111,21 @@
       } else {
         document.getElementById('spinner').style.display = 'none';
 
-        // Jika dibuka langsung (bukan popup) tanpa params → arahkan ke dashboard
-        if (!window.opener || window.opener.closed) {
-          document.getElementById('card').innerHTML =
-            '<div class="icon">🔗</div>' +
-            '<div class="title">Larisi</div>' +
-            '<div class="subtitle">Halaman ini digunakan saat menghubungkan akun sosial media.' +
-            ' <a href="/" style="color:#791ADB;font-weight:600;">Kembali ke dashboard</a></div>';
+        if (noOpener) {
+          // iOS PWA redirect flow tanpa accountId → resync, kembali ke app
+          var returnUrl2 = localStorage.getItem('larisi_oauth_return_url') || 'https://mobile.larisi.id/v2/';
+          localStorage.removeItem('larisi_oauth_return_url');
+          var sep2 = returnUrl2.indexOf('?') >= 0 ? '&' : '?';
+          window.location.replace(returnUrl2 + sep2 + 'oauth_callback=1&resync=1&provider=' + encodeURIComponent(provider));
           return;
         }
 
-        // isSuccess=false tanpa accountId → mungkin akun sudah terhubung sebelumnya
-        // atau user membatalkan. Kirim pesan ke opener untuk sync ulang dari PostForMe API.
+        // isSuccess=false tanpa accountId → resync via postMessage
         try {
           window.opener.postMessage({
             type:     'postforme_oauth_resync',
             provider: provider
-          }, window.location.origin);
+          }, '*');
         } catch(e) {}
 
         document.getElementById('card').innerHTML =

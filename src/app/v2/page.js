@@ -15,6 +15,7 @@ import InstallScreen     from '@/components/v2/InstallScreen';
 import ProfilePanel      from '@/components/v2/ProfilePanel';
 import ReminderModal     from '@/components/v2/ReminderModal';
 import { getProfile, getSessionId, getAccessToken } from '@/lib/config';
+import { handleOAuthRedirectCallback, syncSocialAccountsToSupabase, getStoredAccounts } from '@/lib/connectSocial';
 
 export default function DapurV2() {
   const [screen,     setScreen]     = useState('platform');
@@ -81,6 +82,22 @@ export default function DapurV2() {
   const [showInstall, setShowInstall] = useState(false);
 
   useEffect(() => {
+    /* Handle iOS PWA OAuth redirect callback */
+    handleOAuthRedirectCallback().then(result => {
+      if (result) {
+        console.log('[page] OAuth redirect callback received:', result.platform, result.accountData);
+        /* Sync ke Supabase setelah berhasil connect */
+        const tok = getAccessToken();
+        const uid = (() => {
+          try {
+            const payload = JSON.parse(atob(tok.split('.')[1]));
+            return payload.sub || null;
+          } catch { return null; }
+        })();
+        if (uid && tok) syncSocialAccountsToSupabase(uid, tok);
+      }
+    });
+
     /* localStorage agar splash hanya muncul sekali seumur install, bukan tiap buka app */
     const splashShown = localStorage.getItem('larisi_splash_shown');
     const tok = getAccessToken();
