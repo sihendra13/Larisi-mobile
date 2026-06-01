@@ -1,298 +1,307 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/lib/config';
 
+/* ─── Build campaign data object (sama seperti desktop _buildCampaignData) ─── */
+function buildCampaignData(campaign, analytics) {
+  const platLabel = { ig:'Instagram', meta:'Facebook', tiktok:'TikTok', youtube:'YouTube' };
+  const an = analytics || {};
+  return {
+    name:      campaign?.name     || '-',
+    platform:  platLabel[(campaign?.platforms||[])[0]] || '-',
+    format:    campaign?.format   || 'post',
+    post_time: campaign?.created_at
+      ? new Date(campaign.created_at).toLocaleDateString('id-ID', { day:'numeric', month:'short', year:'numeric' })
+      : null,
+    caption:      (campaign?.caption || '').slice(0, 300) || null,
+    reactions:    an.likes        ?? null,
+    comments:     an.comments     ?? null,
+    shares:       an.shares       ?? null,
+    views:        an.views        ?? null,
+    reach:        an.reach        ?? null,
+    total_eng:    an.engagements  ?? null,
+    saved:        an.saved        ?? null,
+    engagement_rate: (an.reach > 0 && an.engagements != null)
+      ? ((an.engagements / an.reach) * 100).toFixed(1) + '%'
+      : null,
+  };
+}
+
+/* ─── Build system prompt (sama seperti desktop buildSilarisSystemPrompt) ─── */
+function buildSystemPrompt(profile, cd) {
+  const bizName  = profile?.business_name || null;
+  const category = profile?.category      || null;
+  const city     = profile?.city          || null;
+
+  const baseRules = [
+    'KARAKTER & TONE:',
+    'Bicara semangat dan hangat seperti coach yang peduli, bukan laporan audit kering.',
+    'Urutan selalu: rayakan yang bagus dulu, WHY di balik angka, aksi konkret.',
+    '',
+    'FORMAT DUA MODE:',
+    '',
+    'MODE 1 AUTO-INSIGHT (pertama kali analisa campaign):',
+    'Buka WAJIB dengan: "Hei! Saya udah cek data iklan \\"' + cd.name + '\\" kamu nih 👋"',
+    'Lanjut dengan 3 seksi:',
+    '📊 PERFORMA SEKARANG',
+    '• Engagement Rate: [angka] — [interpretasi coach]',
+    '• Paling kuat: [metric + artinya bagi bisnis]',
+    '• Perlu diperhatiin: [metric + kenapa penting]',
+    '💡 INSIGHT UTAMA',
+    '[1-2 kalimat mengalir, jelaskan WHY di balik angka]',
+    '🎯 SARAN LANGSUNG',
+    '[1 action konkret spesifik hari ini]',
+    'Tutup: "Ada yang mau kamu tanyain lebih dalam?"',
+    '',
+    'MODE 2 CHAT LANJUTAN:',
+    'Paragraf mengalir natural, JANGAN pakai header 📊 💡 🎯.',
+    'Langsung ke poin, coach style, saran spesifik di akhir.',
+    '',
+    'ANALISIS CAPTION:',
+    'Kalau ada caption di data, nilai apakah sudah optimal.',
+    'Kalau bisa diperbaiki, tulis versi yang lebih kuat.',
+    '',
+    'BENCHMARK:',
+    'Engagement Rate: <1% sangat rendah, 1-3% normal, 3-10% bagus, >10% luar biasa.',
+    'Reach: <100 perlu boost, 100-1000 growing, >1000 sudah luas.',
+    '',
+    'SARAN WAJIB SPESIFIK:',
+    'Hashtag: 3-5 contoh nyata sesuai bisnis + platform + lokasi.',
+    'Jam posting: jam spesifik + alasan.',
+    'Budget boost: angka konkret (contoh: Rp 20rb-50rb per hari 3 hari).',
+    '',
+    'ATURAN KERAS:',
+    'HANYA analisa campaign yang sedang dibuka.',
+    'JANGAN berasumsi data yang tidak ada di context.',
+    'DILARANG gunakan em-dash (—), ganti dengan koma.',
+    'Jawaban tanpa action item DILARANG.',
+    '',
+    'DATA CAMPAIGN:',
+    'Nama: ' + cd.name,
+    'Platform: ' + cd.platform,
+    'Format: ' + cd.format,
+    'Tanggal: ' + (cd.post_time || '-'),
+    cd.caption ? 'Caption: "' + cd.caption + '"' : 'Caption: tidak tersedia',
+    'Reach: ' + (cd.reach ?? '-'),
+    'Engagement total: ' + (cd.total_eng ?? '-'),
+    'Likes/Reaksi: ' + (cd.reactions ?? '-'),
+    'Comments: ' + (cd.comments ?? '-'),
+    'Shares: ' + (cd.shares ?? '-'),
+    'Views: ' + (cd.views ?? '-'),
+    cd.saved != null ? 'Saved: ' + cd.saved : '',
+    'Engagement Rate: ' + (cd.engagement_rate || 'belum cukup data'),
+  ].filter(Boolean).join('\n');
+
+  if (bizName) {
+    return [
+      'Kamu adalah SiLaris, Asisten Iklan AI yang semangat dan inspiratif untuk bisnis lokal Indonesia.',
+      '',
+      'KONTEKS USER:',
+      'Bisnis: ' + bizName,
+      'Kategori: ' + (category || 'Umum'),
+      'Region: ' + (city || 'Indonesia'),
+      '',
+      'Sesuaikan insight dengan industri: ' + (category || 'Umum') + '.',
+      'Selalu ada 1 quick action konkret.',
+      '',
+      baseRules,
+    ].join('\n');
+  }
+
+  return [
+    'Kamu adalah SiLaris, Asisten Iklan AI yang semangat dan inspiratif untuk bisnis lokal Indonesia.',
+    '',
+    baseRules,
+  ].join('\n');
+}
+
+function fmtV(n) {
+  if (!n || n < 1) return '0';
+  if (n >= 1000000) return (n/1000000).toFixed(1).replace('.0','') + 'jt';
+  if (n >= 1000)    return (n/1000).toFixed(1).replace('.0','') + 'rb';
+  return String(n);
+}
+
+/* ════════════════════════════════════════
+   Main Component
+   ════════════════════════════════════════ */
 export default function SiLarisScreen({ onBack, campaign, analytics }) {
-  const bottomRef = useRef(null);
+  const [messages,    setMessages]    = useState([]);
+  const [input,       setInput]       = useState('');
+  const [loading,     setLoading]     = useState(false);
+  const [initialized, setInitialized] = useState(false);
+  const historyRef = useRef([]);
+  const bottomRef  = useRef(null);
 
-  // Auto-scroll to bottom on mount
+  const profile = (() => {
+    try { return JSON.parse(localStorage.getItem('radar_user_profile') || 'null'); } catch { return null; }
+  })();
+  const cd           = buildCampaignData(campaign, analytics);
+  const systemPrompt = buildSystemPrompt(profile, cd);
+
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior:'smooth' }); }, [messages]);
+
+  /* Auto-insight saat pertama buka */
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (initialized) return;
+    setInitialized(true);
+    callAI(`Analisa campaign "${cd.name}" dan berikan auto-insight mengikuti format MODE 1.`, true);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Format data
-  const thumbUrl = campaign?.thumbUrl;
-  const thumbColor = campaign?.thumbColor || '#E8C39E';
-  const format = (campaign?.format || 'POST').toUpperCase();
-  const title = campaign?.name || 'Campaign Baru';
-  const statusLbl = campaign?.status === 'running' ? 'Berjalan' : (campaign?.status === 'paused' ? 'Diarsipkan' : 'Selesai');
-  const statusBg = campaign?.status === 'running' ? '#E6F4EA' : '#FEF3C7';
-  const statusColor = campaign?.status === 'running' ? '#34A853' : '#d97706';
-  
-  const dateObj = campaign?.created_at ? new Date(campaign.created_at) : new Date();
-  const dateStr = dateObj.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+  const callAI = async (text, isAuto) => {
+    setLoading(true);
+    if (!isAuto) {
+      historyRef.current.push({ role:'user', content: text });
+      setMessages(prev => [...prev, { type:'user', text }]);
+      setInput('');
+    }
 
-  const viewsRaw = analytics?.engagements || 0;
-  const reachRaw = analytics?.reach || campaign?.estimated_reach_min || 0;
-  
-  const fmtShort = (n) => {
-    if (!n) return '0';
-    if (n >= 1000) return (n / 1000).toFixed(1).replace('.0', '') + 'K';
-    return n.toLocaleString('id-ID');
+    const msgs = isAuto
+      ? [{ role:'user', content: text }]
+      : historyRef.current.slice(-6).map(m => ({ role: m.role, content: m.content }));
+
+    try {
+      const resp = await fetch(`${SUPABASE_URL}/functions/v1/silaris-chat`, {
+        method: 'POST',
+        headers: { 'Content-Type':'application/json', 'Authorization':`Bearer ${SUPABASE_ANON_KEY}` },
+        body: JSON.stringify({ systemPrompt, messages: msgs }),
+      });
+      const data  = await resp.json();
+      const reply = data?.reply || 'Maaf, ada gangguan. Coba lagi ya!';
+      historyRef.current.push({ role:'assistant', content: reply });
+      setMessages(prev => [...prev, { type:'ai', text: reply }]);
+    } catch {
+      setMessages(prev => [...prev, { type:'ai', text:'Koneksi bermasalah. Coba lagi ya!' }]);
+    } finally {
+      setLoading(false);
+    }
   };
 
+  const handleSend = () => { if (input.trim() && !loading) callAI(input.trim(), false); };
+
+  const platColor = { ig:'#E1306C', meta:'#1877F2', tiktok:'#010101', youtube:'#FF0000' };
+  const plat  = (campaign?.platforms||[])[0] || 'ig';
+  const color = platColor[plat] || 'var(--m-brand)';
+
   return (
-    <div style={{display:'flex', flexDirection:'column', flex:1, overflow:'hidden', background:'#F9F9FB', height:'100%', position:'fixed', top:0, left:0, right:0, bottom:0, zIndex:99999}}>
-      
-      {/* ── Header ── */}
-      <header style={{
-        display:'flex', alignItems:'center', justifyContent:'space-between',
-        padding:'12px 16px', background:'#fff', borderBottom:'1px solid #ECECF1',
-        zIndex:10, flexShrink:0
-      }}>
-        <div style={{display:'flex', alignItems:'center', gap:'12px'}}>
-          <button onClick={onBack} style={{
-            width:'36px', height:'36px', borderRadius:'50%', background:'#fff', border:'1px solid #ECECF1',
-            display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer'
-          }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--m-ink)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="15 18 9 12 15 6"/>
-            </svg>
+    <div style={{ position:'fixed', inset:0, background:'#F9F9FB', zIndex:99999, display:'flex', flexDirection:'column', overflow:'hidden' }}>
+
+      {/* Header */}
+      <header style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'12px 16px', background:'#fff', borderBottom:'1px solid #ECECF1', flexShrink:0 }}>
+        <div style={{ display:'flex', alignItems:'center', gap:'12px' }}>
+          <button onClick={onBack} style={{ width:'36px', height:'36px', borderRadius:'50%', background:'#fff', border:'1px solid #ECECF1', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--m-ink)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
           </button>
-          
-          <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
-            <div style={{
-              width:'40px', height:'40px', borderRadius:'50%', background:'var(--m-brand)',
-              display:'flex', alignItems:'center', justifyContent:'center', overflow:'hidden'
-            }}>
-              <img src="/logo-dashboard.png" alt="SiLaris" style={{width:'24px', height:'24px', objectFit:'contain'}} />
+          <div style={{ display:'flex', alignItems:'center', gap:'10px' }}>
+            <div style={{ width:'40px', height:'40px', borderRadius:'50%', background:'var(--m-brand)', display:'flex', alignItems:'center', justifyContent:'center', overflow:'hidden' }}>
+              <img src="/logo-dashboard.png" alt="SiLaris" style={{ width:'24px', height:'24px', objectFit:'contain' }} />
             </div>
-            <div style={{display:'flex', flexDirection:'column'}}>
-              <div style={{display:'flex', alignItems:'center', gap:'6px'}}>
-                <span style={{fontFamily:'var(--m-font)', fontSize:'16px', fontWeight:'800', color:'var(--m-ink)'}}>SiLaris</span>
-                <div style={{width:'8px', height:'8px', borderRadius:'50%', background:'#34A853'}} />
+            <div>
+              <div style={{ display:'flex', alignItems:'center', gap:'6px' }}>
+                <span style={{ fontFamily:'var(--m-font)', fontSize:'16px', fontWeight:'800', color:'var(--m-ink)' }}>SiLaris</span>
+                <div style={{ width:'8px', height:'8px', borderRadius:'50%', background:'#34A853' }} />
               </div>
-              <span style={{fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)'}}>Asisten cerdas · online</span>
+              <span style={{ fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)' }}>Asisten cerdas · online</span>
             </div>
           </div>
         </div>
-
-        <button style={{
-          width:'36px', height:'36px', borderRadius:'50%', background:'#fff', border:'1px solid #ECECF1',
-          display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer'
-        }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--m-ink)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>
-          </svg>
-        </button>
       </header>
 
-      {/* ── Chat Area ── */}
-      <main style={{flex:1, overflowY:'auto', padding:'20px 16px', display:'flex', flexDirection:'column', gap:'16px'}}>
-        
-        {/* SiLaris Greeting */}
-        <div style={{display:'flex', gap:'10px', alignItems:'flex-start'}}>
-          <div style={{
-            width:'28px', height:'28px', borderRadius:'50%', background:'var(--m-brand)', flexShrink:0,
-            display:'flex', alignItems:'center', justifyContent:'center', marginTop:'4px', overflow:'hidden'
-          }}>
-            <img src="/logo-dashboard.png" alt="SiLaris" style={{width:'18px', height:'18px', objectFit:'contain'}} />
-          </div>
-          <div style={{
-            background:'#fff', borderRadius:'16px', borderTopLeftRadius:'4px',
-            padding:'14px', border:'1px solid #ECECF1', boxShadow:'0 2px 8px rgba(0,0,0,0.02)',
-            maxWidth:'90%'
-          }}>
-            <div style={{fontFamily:'var(--m-font)', fontSize:'14px', fontWeight:'800', color:'var(--m-ink)', marginBottom:'4px'}}>
-              Halo Nila 👋
-            </div>
-            <div style={{fontFamily:'var(--m-font)', fontSize:'14px', color:'var(--m-ink)', lineHeight:'1.5'}}>
-              Aku SiLaris, asisten cerdas yang siap bantu iklan kamu jadi rebutan pelanggan. Berikut adalah analisis untuk iklan yang kamu pilih.
-            </div>
-          </div>
-        </div>
+      {/* Chat */}
+      <main style={{ flex:1, overflowY:'auto', padding:'16px', display:'flex', flexDirection:'column', gap:'12px' }}>
 
-        {/* Ad Summary Card (e-commerce style) */}
-        <div style={{display:'flex', justifyContent:'center', paddingLeft:'38px'}}>
-          <div style={{
-            background:'#fff', borderRadius:'16px', padding:'12px', border:'1px solid #ECECF1',
-            boxShadow:'0 4px 12px rgba(0,0,0,0.04)', display:'flex', gap:'12px', width:'100%', maxWidth:'100%'
-          }}>
-            {/* Thumbnail */}
-            <div style={{
-              width:'80px', height:'80px', borderRadius:'10px', background: thumbColor, flexShrink:0,
-              backgroundImage: thumbUrl ? 'none' : 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0,0,0,0.05) 10px, rgba(0,0,0,0.05) 20px)',
-              display:'flex', alignItems:'flex-end', padding:'6px', position:'relative', overflow:'hidden'
-            }}>
-              {thumbUrl && (
-                <img src={thumbUrl} alt="" style={{position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', zIndex:0}} onError={e => { e.target.style.display='none'; }} />
+        {/* Campaign card context */}
+        <div style={{ background:'#fff', borderRadius:'16px', padding:'12px', border:'1px solid #ECECF1', display:'flex', gap:'12px' }}>
+          {campaign?.thumbUrl
+            ? <img src={campaign.thumbUrl} alt="" style={{ width:'72px', height:'72px', borderRadius:'10px', objectFit:'cover', flexShrink:0 }} onError={e=>{e.target.style.display='none';}} />
+            : <div style={{ width:'72px', height:'72px', borderRadius:'10px', background:color+'20', flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center' }}>
+                <span style={{ fontFamily:'var(--m-font)', fontSize:'10px', fontWeight:'700', color }}>{(campaign?.format||'POST').toUpperCase()}</span>
+              </div>
+          }
+          <div style={{ flex:1, minWidth:0 }}>
+            <div style={{ fontFamily:'var(--m-font)', fontSize:'14px', fontWeight:'800', color:'var(--m-ink)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', marginBottom:'4px' }}>{cd.name}</div>
+            <div style={{ display:'flex', alignItems:'center', gap:'6px', marginBottom:'4px' }}>
+              <span style={{ fontFamily:'var(--m-font)', fontSize:'11px', fontWeight:'700', color: campaign?.status==='running'?'#34A853':'#d97706', background: campaign?.status==='running'?'#E6F4EA':'#FEF3C7', padding:'2px 7px', borderRadius:'4px' }}>
+                {campaign?.status==='running'?'Berjalan':'Diarsipkan'}
+              </span>
+              {cd.post_time && <span style={{ fontFamily:'var(--m-font)', fontSize:'11px', color:'var(--m-ink-sub)' }}>{cd.post_time}</span>}
+            </div>
+            <div style={{ display:'flex', gap:'10px' }}>
+              {cd.views != null && <span style={{ fontFamily:'var(--m-font)', fontSize:'11px', color:'var(--m-ink-sub)' }}>Views: <strong style={{color:'var(--m-ink)'}}>{fmtV(cd.views)}</strong></span>}
+              {cd.reach != null && (
+                <span style={{ fontFamily:'var(--m-font)', fontSize:'11px', color:'var(--m-ink-sub)', display:'flex', alignItems:'center', gap:'2px' }}>
+                  Reach: <strong style={{color:'var(--m-ink)'}}>{fmtV(cd.reach)}</strong>
+                  {cd.reach > 0 && <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#34A853" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15"/></svg>}
+                </span>
               )}
-              <div style={{
-                background:'rgba(0,0,0,0.5)', color:'#fff', fontFamily:'var(--m-font)', 
-                fontSize:'9px', padding:'3px 6px', borderRadius:'4px', fontWeight:'700', zIndex:1
-              }}>
-                {format}
-              </div>
-            </div>
-            
-            {/* Details */}
-            <div style={{display:'flex', flexDirection:'column', justifyContent:'center', flex:1, minWidth:0}}>
-              <div style={{
-                fontFamily:'var(--m-font)', fontSize:'15px', fontWeight:'800', color:'var(--m-ink)', 
-                whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', marginBottom:'4px'
-              }}>
-                {title}
-              </div>
-              <div style={{display:'flex', alignItems:'center', gap:'6px', marginBottom:'6px'}}>
-                <span style={{fontFamily:'var(--m-font)', fontSize:'11px', fontWeight:'700', color: statusColor, background: statusBg, padding:'2px 6px', borderRadius:'4px'}}>
-                  {statusLbl}
-                </span>
-                <span style={{fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)'}}>
-                  {dateStr}
-                </span>
-              </div>
-              <div style={{display:'flex', alignItems:'center', gap:'8px'}}>
-                <div style={{display:'flex', alignItems:'center', gap:'4px'}}>
-                  <span style={{fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)'}}>Views:</span>
-                  <span style={{fontFamily:'var(--m-font)', fontSize:'12px', fontWeight:'700', color:'var(--m-ink)'}}>{fmtShort(viewsRaw)}</span>
-                </div>
-                <div style={{display:'flex', alignItems:'center', gap:'4px'}}>
-                  <span style={{fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)'}}>Reach:</span>
-                  <span style={{fontFamily:'var(--m-font)', fontSize:'12px', fontWeight:'700', color:'var(--m-ink)'}}>{fmtShort(reachRaw)}</span>
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#34A853" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="18 15 12 9 6 15"/>
-                  </svg>
-                </div>
-              </div>
             </div>
           </div>
         </div>
 
-        {/* User Message */}
-        <div style={{display:'flex', justifyContent:'flex-end'}}>
-          <div style={{display:'flex', flexDirection:'column', alignItems:'flex-end', maxWidth:'85%'}}>
-            <div style={{
-              background:'var(--m-brand)', color:'#fff', padding:'14px', 
-              borderRadius:'16px', borderBottomRightRadius:'4px',
-              fontFamily:'var(--m-font)', fontSize:'14px', lineHeight:'1.5'
-            }}>
-              Iklan reelku kok views naik tapi reaksi nol? Apa yang harus aku perbaiki?
-            </div>
-            <span style={{fontFamily:'var(--m-font)', fontSize:'11px', color:'var(--m-ink-sub)', marginTop:'4px', marginRight:'4px'}}>
-              10.42 · Terkirim
-            </span>
+        {/* Messages */}
+        {messages.map((msg, i) => (
+          <div key={i} style={{ display:'flex', justifyContent:msg.type==='user'?'flex-end':'flex-start', gap:'8px', alignItems:'flex-start' }}>
+            {msg.type === 'ai' && (
+              <div style={{ width:'28px', height:'28px', borderRadius:'50%', background:'var(--m-brand)', flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center', marginTop:'2px', overflow:'hidden' }}>
+                <img src="/logo-dashboard.png" alt="" style={{ width:'18px', height:'18px', objectFit:'contain' }} />
+              </div>
+            )}
+            {msg.type === 'user' ? (
+              <div style={{ maxWidth:'85%' }}>
+                <div style={{ background:'var(--m-brand)', color:'#fff', padding:'12px 14px', borderRadius:'16px', borderBottomRightRadius:'4px', fontFamily:'var(--m-font)', fontSize:'14px', lineHeight:'1.5' }}>{msg.text}</div>
+                <div style={{ fontFamily:'var(--m-font)', fontSize:'11px', color:'var(--m-ink-sub)', marginTop:'4px', textAlign:'right', marginRight:'4px' }}>Terkirim</div>
+              </div>
+            ) : (
+              <div
+                style={{ maxWidth:'90%', background:'#fff', borderRadius:'16px', borderTopLeftRadius:'4px', padding:'14px', border:'1px solid #ECECF1', fontFamily:'var(--m-font)', fontSize:'14px', color:'var(--m-ink)', lineHeight:'1.6' }}
+                dangerouslySetInnerHTML={{ __html: msg.text.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br/>') }}
+              />
+            )}
           </div>
-        </div>
+        ))}
 
-        {/* SiLaris Reply */}
-        <div style={{display:'flex', gap:'10px', alignItems:'flex-start'}}>
-          <div style={{
-            width:'28px', height:'28px', borderRadius:'50%', background:'var(--m-brand)', flexShrink:0,
-            display:'flex', alignItems:'center', justifyContent:'center', marginTop:'4px', overflow:'hidden'
-          }}>
-            <img src="/logo-dashboard.png" alt="SiLaris" style={{width:'18px', height:'18px', objectFit:'contain'}} />
-          </div>
-          <div style={{
-            background:'#fff', borderRadius:'16px', borderTopLeftRadius:'4px',
-            padding:'16px', border:'1px solid #ECECF1', boxShadow:'0 2px 8px rgba(0,0,0,0.02)',
-            maxWidth:'90%'
-          }}>
-            <div style={{fontFamily:'var(--m-font)', fontSize:'14px', color:'var(--m-ink)', lineHeight:'1.5', marginBottom:'12px'}}>
-              Berdasarkan data 24 jam, viewers <strong>scroll cepat</strong> di detik 3-5. Coba 3 hal ini:
+        {/* Loading dots */}
+        {loading && (
+          <div style={{ display:'flex', gap:'8px', alignItems:'flex-start' }}>
+            <div style={{ width:'28px', height:'28px', borderRadius:'50%', background:'var(--m-brand)', flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center', overflow:'hidden' }}>
+              <img src="/logo-dashboard.png" alt="" style={{ width:'18px', height:'18px', objectFit:'contain' }} />
             </div>
-            
-            <div style={{display:'flex', flexDirection:'column', gap:'12px'}}>
-              <div style={{display:'flex', gap:'10px'}}>
-                <div style={{
-                  width:'20px', height:'20px', borderRadius:'50%', background:'var(--m-brand-soft)', color:'var(--m-brand)',
-                  fontFamily:'var(--m-font)', fontSize:'11px', fontWeight:'800', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0
-                }}>
-                  1
-                </div>
-                <div style={{fontFamily:'var(--m-font)', fontSize:'14px', color:'var(--m-ink)', lineHeight:'1.4'}}>
-                  Tambahkan CTA "Ketuk untuk pesan" di detik pertama
-                </div>
-              </div>
-              <div style={{display:'flex', gap:'10px'}}>
-                <div style={{
-                  width:'20px', height:'20px', borderRadius:'50%', background:'var(--m-brand-soft)', color:'var(--m-brand)',
-                  fontFamily:'var(--m-font)', fontSize:'11px', fontWeight:'800', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0
-                }}>
-                  2
-                </div>
-                <div style={{fontFamily:'var(--m-font)', fontSize:'14px', color:'var(--m-ink)', lineHeight:'1.4'}}>
-                  Ganti caption ke pertanyaan: "Sudah coba kulit asli?"
-                </div>
-              </div>
-              <div style={{display:'flex', gap:'10px'}}>
-                <div style={{
-                  width:'20px', height:'20px', borderRadius:'50%', background:'var(--m-brand-soft)', color:'var(--m-brand)',
-                  fontFamily:'var(--m-font)', fontSize:'11px', fontWeight:'800', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0
-                }}>
-                  3
-                </div>
-                <div style={{fontFamily:'var(--m-font)', fontSize:'14px', color:'var(--m-ink)', lineHeight:'1.4'}}>
-                  Boost +5km, target warga umur 25-40
-                </div>
-              </div>
+            <div style={{ background:'#fff', borderRadius:'16px', borderTopLeftRadius:'4px', padding:'14px', border:'1px solid #ECECF1', display:'flex', gap:'5px', alignItems:'center' }}>
+              {[0,1,2].map(i => (
+                <div key={i} style={{ width:'7px', height:'7px', borderRadius:'50%', background:'var(--m-brand)', opacity:0.4, animation:`pulse 1.2s ease-in-out ${i*0.4}s infinite` }} />
+              ))}
             </div>
           </div>
-        </div>
+        )}
 
-        {/* Action Chips */}
-        <div style={{display:'flex', flexWrap:'wrap', gap:'8px', paddingLeft:'38px', marginTop:'-4px'}}>
-          <button style={{
-            padding:'10px 16px', borderRadius:'999px', border:'1.5px solid var(--m-brand)', background:'#fff',
-            color:'var(--m-brand)', fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'700', cursor:'pointer'
-          }}>
-            Terapkan saran #3
-          </button>
-          <button style={{
-            padding:'10px 16px', borderRadius:'999px', border:'1.5px solid var(--m-brand)', background:'#fff',
-            color:'var(--m-brand)', fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'700', cursor:'pointer'
-          }}>
-            Lihat audiens
-          </button>
-          <button style={{
-            padding:'10px 16px', borderRadius:'999px', border:'1.5px solid var(--m-brand)', background:'#fff',
-            color:'var(--m-brand)', fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'700', cursor:'pointer'
-          }}>
-            Buat caption baru
-          </button>
-        </div>
-
-        <div ref={bottomRef} style={{height:'10px'}} />
+        <div ref={bottomRef} style={{ height:'4px' }} />
       </main>
 
-      {/* ── Bottom Input ── */}
-      <footer style={{
-        padding:'12px 16px', background:'#fff', borderTop:'1px solid #ECECF1',
-        paddingBottom:'calc(12px + env(safe-area-inset-bottom))',
-        flexShrink:0
-      }}>
-        <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
-          <button style={{
-            width:'40px', height:'40px', borderRadius:'50%', border:'1px solid #ECECF1', background:'#fff',
-            display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', flexShrink:0
-          }}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--m-ink-sub)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-            </svg>
-          </button>
-          <div style={{
-            flex:1, height:'44px', borderRadius:'999px', background:'#F5F5F7',
-            display:'flex', alignItems:'center', padding:'0 16px'
-          }}>
-            <input 
-              type="text" 
-              placeholder="Ketik pesan ke SiLaris..." 
-              style={{
-                border:'none', background:'transparent', width:'100%', outline:'none',
-                fontFamily:'var(--m-font)', fontSize:'14px', color:'var(--m-ink)'
-              }} 
+      {/* Input */}
+      <footer style={{ padding:'12px 16px', background:'#fff', borderTop:'1px solid #ECECF1', paddingBottom:'calc(12px + env(safe-area-inset-bottom))', flexShrink:0 }}>
+        <div style={{ display:'flex', alignItems:'center', gap:'10px' }}>
+          <div style={{ flex:1, height:'44px', borderRadius:'999px', background:'#F5F5F7', display:'flex', alignItems:'center', padding:'0 16px' }}>
+            <input
+              type="text"
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={e => { if (e.key==='Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+              placeholder="Ketik pesan ke SiLaris..."
+              style={{ border:'none', background:'transparent', width:'100%', outline:'none', fontFamily:'var(--m-font)', fontSize:'14px', color:'var(--m-ink)' }}
             />
           </div>
-          <button style={{
-            width:'44px', height:'44px', borderRadius:'50%', background:'var(--m-brand)', border:'none',
-            display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', flexShrink:0,
-            boxShadow:'0 4px 12px rgba(108, 92, 231, 0.3)'
-          }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{marginLeft:'-2px', marginTop:'2px'}}>
+          <button
+            onClick={handleSend}
+            disabled={!input.trim() || loading}
+            style={{ width:'44px', height:'44px', borderRadius:'50%', background:input.trim()?'var(--m-brand)':'#E5E7EB', border:'none', display:'flex', alignItems:'center', justifyContent:'center', cursor:input.trim()?'pointer':'default', flexShrink:0, transition:'background 0.2s', boxShadow:input.trim()?'0 4px 12px rgba(108,92,231,0.3)':'none' }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft:'-2px', marginTop:'2px' }}>
               <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
             </svg>
           </button>
         </div>
       </footer>
-
     </div>
   );
 }
