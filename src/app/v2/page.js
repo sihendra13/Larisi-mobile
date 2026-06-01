@@ -493,7 +493,7 @@ export default function DapurV2() {
             userId={userId}
             onBack={goBack}
             onUbahAset={() => goTo('aset')}
-            onLaunchSuccess={() => setActiveNav('monitor')}
+            onLaunchSuccess={() => setActiveNav('command')}
           />
         )}
       </div>
