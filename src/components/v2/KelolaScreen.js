@@ -18,35 +18,37 @@ function platformLabel(platforms) {
 }
 
 /* ─── Fetch campaigns dari Supabase ─── */
-// Sama seperti desktop: query by session_id dengan anon key (session_id = access control)
+// Mengambil campaign berdasarkan user_id (jika login) ATAU session_id
 async function fetchCampaigns(sessionId, accessToken) {
   const sid = sessionId || localStorage.getItem('radar_session_id');
   if (!sid && !accessToken) return [];
 
   try {
-    // Primary: session_id + anon key (sama seperti desktop getCampaigns)
-    if (sid) {
-      const resp = await fetch(
-        `${SUPABASE_URL}/rest/v1/campaigns?session_id=eq.${sid}&order=created_at.desc&limit=20`,
-        { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` } }
-      );
-      if (resp.ok) {
-        const rows = await resp.json();
-        if (rows.length > 0) return rows;
-      }
+    let uid = null;
+    if (accessToken) {
+      try { uid = JSON.parse(atob(accessToken.split('.')[1]))?.sub || null; } catch {}
     }
 
-    // Fallback: user JWT + user_id (untuk campaign yang disimpan dengan auth)
-    if (accessToken) {
-      let uid = null;
-      try { uid = JSON.parse(atob(accessToken.split('.')[1]))?.sub || null; } catch {}
-      if (uid) {
-        const resp2 = await fetch(
-          `${SUPABASE_URL}/rest/v1/campaigns?user_id=eq.${uid}&order=created_at.desc&limit=20`,
-          { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${accessToken}` } }
-        );
-        if (resp2.ok) return await resp2.json();
-      }
+    let url = `${SUPABASE_URL}/rest/v1/campaigns?order=created_at.desc&limit=20`;
+    let authHeader = `Bearer ${SUPABASE_ANON_KEY}`;
+
+    if (uid && sid) {
+      url += `&or=(user_id.eq.${uid},session_id.eq.${sid})`;
+      authHeader = `Bearer ${accessToken}`;
+    } else if (uid) {
+      url += `&user_id=eq.${uid}`;
+      authHeader = `Bearer ${accessToken}`;
+    } else if (sid) {
+      url += `&session_id=eq.${sid}`;
+    }
+
+    const resp = await fetch(url, {
+      headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': authHeader }
+    });
+    
+    if (resp.ok) {
+      const rows = await resp.json();
+      return rows;
     }
     return [];
   } catch { return []; }
