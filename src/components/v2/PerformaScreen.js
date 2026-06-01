@@ -27,6 +27,7 @@ export default function PerformaScreen({ sessionId, accessToken, profile, onAvat
   const [compResult, setCompResult]     = useState(null);
   const [compLoading, setCompLoading]   = useState(false);
   const [compSaving, setCompSaving]     = useState(false);
+  const [compSaved, setCompSaved]       = useState(false);
   // Boost
   const [boostCamp, setBoostCamp]       = useState(null);
   const [boostBudget, setBoostBudget]   = useState(25000);
@@ -143,12 +144,25 @@ export default function PerformaScreen({ sessionId, accessToken, profile, onAvat
   };
 
   const handleSaveStrategy = async () => {
-    if (!compResult || !profile?.id || !accessToken) return;
+    if (!compResult) return;
+    const userId = profile?.id;
+    if (!userId || !accessToken) return;
     setCompSaving(true);
-    await anSaveStrategy(profile.id, { handle: compResult.comp_handle || compInput, platform: compPlatform, comp_result: compResult }, accessToken);
-    const strats = await anGetStrategies(profile.id, accessToken);
-    setStrategies(strats);
-    setCompSaving(false);
+    try {
+      await anSaveStrategy(userId, {
+        handle: compResult.comp_handle || compInput,
+        platform: compPlatform,
+        comp_result: compResult,
+      }, accessToken);
+      const strats = await anGetStrategies(userId, accessToken);
+      setStrategies(strats);
+      setCompSaved(true);
+      setTimeout(() => setCompSaved(false), 3000);
+    } catch (e) {
+      console.error('[save strategy]', e);
+    } finally {
+      setCompSaving(false);
+    }
   };
 
   const handleDeleteStrategy = async (id) => {
@@ -602,7 +616,7 @@ export default function PerformaScreen({ sessionId, accessToken, profile, onAvat
               <div style={{ display:'flex', gap:'8px', marginBottom:'16px' }}>
                 {[['ig','Instagram'],['meta','Facebook'],['tiktok','TikTok']].map(([key, label]) => (
                   <button key={key} onClick={() => { setCompPlatform(key); setCompResult(null); }}
-                    style={{ flex:1, padding:'10px', background: compPlatform === key ? '#fff' : 'transparent', border: compPlatform === key ? '1px solid #E4E4EB' : 'none', borderRadius:'999px', fontFamily:'var(--m-font)', fontSize:'12px', fontWeight:'700', color: compPlatform === key ? 'var(--m-ink)' : 'var(--m-ink-sub)', cursor:'pointer', boxShadow: compPlatform === key ? '0 2px 4px rgba(0,0,0,0.04)' : 'none' }}>
+                    style={{ flex:1, padding:'10px', background: compPlatform === key ? '#1A1A1A' : 'transparent', border:'none', borderRadius:'999px', fontFamily:'var(--m-font)', fontSize:'12px', fontWeight:'700', color: compPlatform === key ? '#fff' : 'var(--m-ink-sub)', cursor:'pointer', transition:'all 0.2s' }}>
                     {label}
                   </button>
                 ))}
@@ -645,22 +659,19 @@ export default function PerformaScreen({ sessionId, accessToken, profile, onAvat
                     </div>
                   </div>
                   {/* Insights */}
-                  {compResult.insights?.map((ins, i) => {
-                    const colors = { purple: { bg:'#F0E6FF', text:'var(--m-brand)' }, green: { bg:'#E6F4EA', text:'#34A853' }, amber: { bg:'#FFF9E6', text:'#B27A00' } };
-                    const c = colors[ins.type] || colors.purple;
-                    return (
-                      <div key={i} style={{ background: c.bg, borderRadius:'10px', padding:'10px 12px', marginBottom:'6px' }}>
-                        <div style={{ fontFamily:'var(--m-font)', fontSize:'12px', color: c.text, lineHeight:'1.5' }}>{ins.text}</div>
-                      </div>
-                    );
-                  })}
+                  {compResult.insights?.map((ins, i) => (
+                    <div key={i} style={{ background:'#F9F9FA', borderRadius:'12px', padding:'12px 14px', marginBottom:'6px', display:'flex', gap:'8px', alignItems:'flex-start' }}>
+                      <span style={{ fontSize:'12px', flexShrink:0, marginTop:'1px' }}>
+                        {ins.type === 'green' ? '💡' : ins.type === 'amber' ? '⚠️' : '🔍'}
+                      </span>
+                      <div style={{ fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink)', lineHeight:'1.5' }}>{ins.text}</div>
+                    </div>
+                  ))}
                   {/* Save button */}
-                  {profile?.id && accessToken && (
-                    <button onClick={handleSaveStrategy} disabled={compSaving}
-                      style={{ width:'100%', marginTop:'8px', padding:'12px', borderRadius:'12px', background:'#F0E6FF', border:'none', cursor:'pointer', fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'700', color:'var(--m-brand)', opacity: compSaving ? 0.6 : 1 }}>
-                      {compSaving ? 'Menyimpan...' : '✨ Simpan Strategi Pesaing Ini'}
-                    </button>
-                  )}
+                  <button onClick={handleSaveStrategy} disabled={compSaving || compSaved || !profile?.id || !accessToken}
+                    style={{ width:'100%', marginTop:'8px', padding:'12px', borderRadius:'12px', background: compSaved ? '#E6F4EA' : '#1A1A1A', border:'none', cursor: compSaved ? 'default' : 'pointer', fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'700', color: compSaved ? '#34A853' : '#fff', opacity: compSaving ? 0.6 : 1, transition:'all 0.3s' }}>
+                    {compSaved ? '✓ Tersimpan!' : compSaving ? 'Menyimpan...' : '✨ Simpan Strategi Pesaing Ini'}
+                  </button>
                 </div>
               )}
 
