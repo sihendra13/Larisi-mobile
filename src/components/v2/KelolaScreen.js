@@ -5,10 +5,26 @@ import MobileHeader from '@/components/layout/MobileHeader';
 import { SUPABASE_URL, SUPABASE_ANON_KEY, fmtViews } from '@/lib/config';
 
 /* ─── Helpers ─── */
+function parseSafeDate(dStr) {
+  if (!dStr) return new Date(NaN);
+  let s = String(dStr).replace(' ', 'T');
+  // Buang pecahan detik yang sering bikin Safari iOS crash
+  s = s.replace(/\.\d+/, '');
+  // Standarisasi timezone ke Z (UTC) jika dari Supabase
+  if (s.endsWith('+00') || s.endsWith('+00:00')) {
+    s = s.replace(/\+00(:00)?$/, 'Z');
+  } else if (!s.endsWith('Z') && !s.includes('+') && !s.match(/-\d{2}:\d{2}$/)) {
+    s += 'Z';
+  }
+  return new Date(s);
+}
+
 function fmtDate(iso) {
   if (!iso) return '';
-  const d = new Date(iso.replace(' ', 'T'));
-  return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+  const d = parseSafeDate(iso);
+  if (isNaN(d.getTime())) return '';
+  const m = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'];
+  return `${d.getDate()} ${m[d.getMonth()]} ${d.getFullYear()}`;
 }
 
 function platformLabel(platforms) {
@@ -68,7 +84,7 @@ async function fetchCampaigns(sessionId, accessToken) {
       }
     }
     
-    unique.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    unique.sort((a, b) => parseSafeDate(b.created_at).getTime() - parseSafeDate(a.created_at).getTime());
     return unique.slice(0, 20);
     
   } catch { return []; }
@@ -168,11 +184,11 @@ function matchPost(posts, campaign) {
   }
   // Temporal match ±15 menit
   if (campaign.created_at) {
-    const campTime = new Date(campaign.created_at.replace(' ', 'T')).getTime();
+    const campTime = parseSafeDate(campaign.created_at).getTime();
     let best = null, bestDiff = Infinity;
     for (const p of posts) {
       const pTimeStr = p.posted_at || p.published_at || p.created_at || p.scheduled_at || '';
-      const t = new Date(pTimeStr.replace(' ', 'T')).getTime();
+      const t = parseSafeDate(pTimeStr).getTime();
       if (!t) continue;
       const diff = Math.abs(campTime - t);
       if (diff < bestDiff) { bestDiff = diff; best = p; }
