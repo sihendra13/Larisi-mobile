@@ -265,6 +265,19 @@ export default function ProfilePanel({
         fontFamily: 'var(--m-font, -apple-system, sans-serif)',
       }}>
 
+        {/* ── Toast Notification ── */}
+        {saved && (
+          <div style={{
+            position: 'fixed', top: '20px', left: '50%', transform: 'translateX(-50%)',
+            background: '#10B981', color: '#fff', padding: '12px 20px', borderRadius: '12px',
+            fontSize: '14px', fontWeight: '700', fontFamily: 'var(--m-font,sans-serif)',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.25)', zIndex: 99999, whiteSpace: 'nowrap',
+            animation: 'slideDown 0.3s cubic-bezier(0.34,1.56,0.64,1)'
+          }}>
+            ✓ Profil berhasil disimpan!
+          </div>
+        )}
+
         {/* ── Panel header ── */}
         <div style={{
           position: 'sticky', top: 0, zIndex: 10,
@@ -458,8 +471,10 @@ export default function ProfilePanel({
                 border: 'none', fontSize: '14px', fontWeight: '700',
                 cursor: saving ? 'not-allowed' : 'pointer',
                 fontFamily: 'inherit', transition: 'background 0.2s',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
               }}
             >
+              {saving && <div style={{width:'14px', height:'14px', border:'2px solid rgba(156,163,175,0.4)', borderTopColor:'#9ca3af', borderRadius:'50%', animation:'spin 0.7s linear infinite'}} />}
               {saved ? '✓ Tersimpan!' : saving ? 'Menyimpan...' : 'Simpan Perubahan'}
             </button>
           </div>
