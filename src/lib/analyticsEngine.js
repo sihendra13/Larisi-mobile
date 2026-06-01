@@ -394,6 +394,253 @@ export async function callSilarisAnalytics(agg, profile) {
   return null;
 }
 
+/* ─── Streak Mingguan ─── */
+export function anStreak(campaigns) {
+  if (!campaigns || !campaigns.length) return { weeks: 0, thisWeek: false, totalWeeks: 0 };
+  const getWeekStart = (d) => {
+    const date = new Date(d.getTime());
+    const day = date.getDay();
+    date.setDate(date.getDate() - (day === 0 ? 6 : day - 1));
+    date.setHours(0, 0, 0, 0);
+    return date.getTime();
+  };
+  const weekStarts = new Set();
+  campaigns.forEach(c => {
+    const d = parseSafeDate(c.created_at);
+    if (!isNaN(d.getTime())) weekStarts.add(getWeekStart(d));
+  });
+  const now = new Date();
+  const thisWeekStart = getWeekStart(now);
+  const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+  const thisWeek = weekStarts.has(thisWeekStart);
+  const lastWeek = weekStarts.has(thisWeekStart - WEEK_MS);
+  let streak = 0;
+  let check = thisWeek ? thisWeekStart : (lastWeek ? thisWeekStart - WEEK_MS : null);
+  if (check) { while (weekStarts.has(check)) { streak++; check -= WEEK_MS; } }
+  return { weeks: streak, thisWeek, totalWeeks: weekStarts.size };
+}
+
+/* ─── Frekuensi Posting ─── */
+export function anPostingFreq(agg) {
+  const perMonth = agg.countThisMonth || 0;
+  const ideal = { ig: 12, meta: 8, tiktok: 20, youtube: 4 };
+  const topPlat = agg.platList?.[0]?.key || 'ig';
+  return { perMonth, ideal: ideal[topPlat] || 8, platform: topPlat };
+}
+
+/* ─── Milestone Definitions ─── */
+const MILESTONE_DEFS = [
+  { key: 'first_post',    label: 'Iklan Pertama! 🎉',        check: a => a.total >= 1,             val: a => a.total },
+  { key: 'reach_100',     label: '100 Orang Terjangkau! 🎯', check: a => a.totalReach >= 100,      val: a => a.totalReach },
+  { key: 'reach_1000',    label: '1.000 Reach Organik! 🚀',  check: a => a.totalReach >= 1000,     val: a => a.totalReach },
+  { key: 'first_comment', label: 'Komentar Pertama! 💬',     check: a => (a.bestCamp?._engagement?.comments || 0) > 0, val: () => 1 },
+  { key: 'er_bagus',      label: 'ER di Atas Rata-rata! ⭐', check: a => a.avgER != null && a.avgER >= 3, val: a => a.avgER },
+  { key: 'total_5',       label: '5 Iklan Selesai! 📱',      check: a => a.total >= 5,             val: a => a.total },
+  { key: 'total_10',      label: '10 Iklan! Konsisten! 🔥',  check: a => a.total >= 10,            val: a => a.total },
+];
+export function anMilestones(agg) {
+  return MILESTONE_DEFS.filter(m => m.check(agg)).map(m => ({ key: m.key, label: m.label, value: m.val(agg) }));
+}
+
+/* ─── Smart Calendar (3 slot minggu depan) ─── */
+export function anSmartCalendar(agg) {
+  const dayNames = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+  const bestDayIdx = dayNames.indexOf(agg?.bestDay || 'Selasa');
+  const bestHour = agg?.bestHour || 19;
+  const topPlat = agg?.platList?.[0]?.key || 'ig';
+  const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'];
+  const now = new Date();
+  const slots = [];
+  for (let i = 1; i <= 7 && slots.length < 3; i++) {
+    const d = new Date(now); d.setDate(now.getDate() + i);
+    const dayIdx = d.getDay();
+    const isBestDay = dayIdx === bestDayIdx;
+    const isMidWeek = dayIdx === 3 && bestDayIdx !== 3;
+    if (isBestDay || isMidWeek || (slots.length === 0 && i === 7)) {
+      slots.push({
+        label: `${dayNames[dayIdx]}, ${d.getDate()} ${months[d.getMonth()]}`,
+        jam: `${String(bestHour).padStart(2,'0')}:00`,
+        platform: topPlat,
+        isBestDay,
+      });
+    }
+  }
+  return slots;
+}
+
+/* ─── Data-driven Rekomendasi (port dari desktop) ─── */
+export function buildRekomendasiData(agg) {
+  if (!agg || agg.total < 5) return null;
+  const dayNames = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+  const bestDay     = agg.bestDay || 'Kamis';
+  const bestHour    = agg.bestHourER || agg.bestHour || 17;
+  const bestHourStr = String(bestHour).padStart(2,'0') + ':00';
+  const bestCamp    = agg.bestCamp;
+  const bestName    = bestCamp ? (bestCamp.name || bestCamp.nama_campaign || null) : null;
+  const rekoList    = [];
+
+  if (agg.platList?.length) {
+    const p1     = agg.platList[0];
+    const p1Name = (AN_PLAT[p1.key] || {}).name || p1.key;
+    rekoList.push({
+      platform: p1.key,
+      hari:     bestDay,
+      jam:      bestHourStr,
+      aksi:     bestName
+        ? `Buat iklan seperti "${bestName}" di ${p1Name}`
+        : `Buat iklan baru di ${p1Name} dengan format terbaikmu`,
+      alasan:   p1.avgER > 0
+        ? `ER rata-rata ${p1Name} kamu ${p1.avgER.toFixed(1)}%, platform terkuat`
+        : `Platform dengan iklan terbanyak`,
+    });
+
+    const p2Candidates = agg.platList.filter(p => p.key !== p1.key);
+    const p2 = p2Candidates[0] || (bestName && agg.totalPaidReach === 0 ? p1 : null);
+    if (p2) {
+      const p2Name = (AN_PLAT[p2.key] || {}).name || p2.key;
+      const onSame = p2.key === p1.key;
+      rekoList.push({
+        platform: p2.key,
+        hari:     bestDay,
+        jam:      String(Math.max(0, bestHour - 1)).padStart(2,'0') + ':00',
+        aksi:     onSame && bestName
+          ? `Boost "${bestName}" dengan Rp 20-50rb selama 3 hari`
+          : `Pertahankan konsistensi posting di ${p2Name}`,
+        alasan:   `${p2.count} iklan di ${p2Name}`,
+      });
+    }
+  }
+
+  if ((agg.distinctDays || 0) <= 1) {
+    const allDays = ['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+    const altDays = allDays.filter(d => d !== bestDay).slice(0,2).join(' atau ');
+    rekoList.push({
+      platform: 'all',
+      hari:     `Coba ${altDays}`,
+      jam:      '',
+      aksi:     `Semua ${agg.total} iklan dibuat hari ${bestDay}. Coba hari ${altDays} untuk jangkau audiens yang aktif di hari berbeda.`,
+      alasan:   'Variasi hari posting membuka segmen audiens baru',
+    });
+  }
+  return rekoList;
+}
+
+/* ─── Competitor Helpers ─── */
+export function anParseFollowers(str) {
+  if (!str) return null;
+  const n = parseFloat(str.replace(/[^0-9.]/g, ''));
+  if (isNaN(n)) return null;
+  if (/[Mm]/.test(str)) return Math.round(n * 1_000_000);
+  if (/[Kk]/.test(str)) return Math.round(n * 1_000);
+  return Math.round(n);
+}
+export function anEstCompER(followerCount, handle) {
+  let base = followerCount == null ? 3.0 : followerCount < 1000 ? 6.5 : followerCount < 10000 ? 4.5 : followerCount < 100000 ? 3.0 : 1.5;
+  let h = 0; const s = handle || '';
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) & 0xffff;
+  return Math.max(0.5, parseFloat((base + ((h % 7) - 3) * 0.1).toFixed(1)));
+}
+export function anExtractHandle(raw) {
+  const s = (raw || '').trim();
+  const igM = s.match(/instagram\.com\/([^/?&#\s/]+)/i);
+  if (igM && !/^(p|reel|reels|explore|stories)$/i.test(igM[1])) return '@' + igM[1];
+  const ttM = s.match(/tiktok\.com\/@?([^/?&#\s/]+)/i);
+  if (ttM) return '@' + ttM[1];
+  const fbM = s.match(/facebook\.com\/([^/?&#\s/]+)/i);
+  if (fbM && !/^(profile\.php|pages|groups)$/i.test(fbM[1])) return '@' + fbM[1];
+  if (s.startsWith('@') || s.startsWith('http')) return s;
+  return '@' + s;
+}
+
+/* ─── Call SiLaris: Competitor Analysis ─── */
+export async function callSilarisCompetitor(handle, platform, agg, profile) {
+  const platNames = { ig: 'Instagram', meta: 'Facebook', tiktok: 'TikTok' };
+  const platName    = platNames[platform] || platform;
+  const bizName     = profile?.business_name || profile?.full_name || 'User';
+  const bizCategory = profile?.business_category || 'Umum';
+  const systemPrompt = [
+    'Kamu adalah SiLaris, AI Coach UMKM Indonesia.',
+    `TUGAS: Estimasi profil publik ${handle} di ${platName} berdasarkan pengetahuanmu.`,
+    `DATA USER: bisnis ${bizName} (${bizCategory}), avg ER ${agg?.avgER ? agg.avgER.toFixed(1)+'%' : 'belum ada'}.`,
+    'ATURAN: Jika tidak tahu akun ini, isi comp_followers/comp_freq/comp_category sebagai null.',
+    'ATURAN: JANGAN isi comp_er — akan di-override sistem.',
+    'ATURAN: insights WAJIB 3 item: strategi konten mereka, peluang untuk user, hal yang perlu diwaspadai.',
+    'Balas JSON persis (tanpa markdown):',
+    '{"comp_handle":"' + handle + '","comp_category":null,"comp_followers":null,"comp_freq":null,"comp_format":null,',
+    '"insights":[{"type":"purple","text":"..."},{"type":"green","text":"..."},{"type":"amber","text":"..."}]}'
+  ].join('\n');
+  try {
+    const resp = await fetch(SUPABASE_URL + '/functions/v1/silaris-chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY },
+      body: JSON.stringify({ systemPrompt, messages: [], autoInsight: true, campaignData: {} }),
+    });
+    const data = await resp.json();
+    if (data?.reply) {
+      let text = data.reply.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim();
+      const s = text.indexOf('{'), e = text.lastIndexOf('}');
+      if (s !== -1 && e !== -1) text = text.slice(s, e + 1);
+      return JSON.parse(text);
+    }
+  } catch(e) { console.warn('[analytics] callSilarisCompetitor:', e); }
+  return null;
+}
+
+/* ─── Supabase: Milestones ─── */
+export async function anGetMilestones(userId, accessToken) {
+  if (!userId || !accessToken) return [];
+  try {
+    const r = await fetch(
+      `${SUPABASE_URL}/rest/v1/user_milestones?user_id=eq.${userId}&select=milestone_key,value_at_time,created_at`,
+      { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${accessToken}` } }
+    );
+    if (r.ok) return await r.json();
+  } catch {}
+  return [];
+}
+export async function anSetMilestone(userId, milestoneKey, valueAtTime, accessToken) {
+  if (!userId || !accessToken) return;
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/user_milestones`, {
+      method: 'POST',
+      headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json', 'Prefer': 'resolution=ignore-duplicates' },
+      body: JSON.stringify({ user_id: userId, milestone_key: milestoneKey, value_at_time: valueAtTime }),
+    });
+  } catch {}
+}
+
+/* ─── Supabase: Competitor Strategies ─── */
+export async function anGetStrategies(userId, accessToken) {
+  if (!userId || !accessToken) return [];
+  try {
+    const r = await fetch(
+      `${SUPABASE_URL}/rest/v1/competitor_strategies?user_id=eq.${userId}&order=created_at.desc`,
+      { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${accessToken}` } }
+    );
+    if (r.ok) return await r.json();
+  } catch {}
+  return [];
+}
+export async function anSaveStrategy(userId, { handle, platform, comp_result }, accessToken) {
+  if (!userId || !accessToken) return;
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/competitor_strategies`, {
+      method: 'POST',
+      headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' },
+      body: JSON.stringify({ user_id: userId, handle, platform, comp_result, last_refreshed_at: new Date().toISOString() }),
+    });
+  } catch {}
+}
+export async function anDeleteStrategy(id, accessToken) {
+  if (!id || !accessToken) return;
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/competitor_strategies?id=eq.${id}`, {
+      method: 'DELETE',
+      headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${accessToken}` },
+    });
+  } catch {}
+}
+
 export function buildAnalyticsFallback(agg, profile) {
   const bizName     = profile?.business_name || profile?.full_name || 'Kamu';
   const erTier      = agg.avgER == null ? 'unknown' : agg.avgER >= 10 ? 'high' : agg.avgER >= 3 ? 'mid' : 'low';

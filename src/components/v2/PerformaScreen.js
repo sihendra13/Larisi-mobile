@@ -1,35 +1,41 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import MobileHeader from '@/components/layout/MobileHeader';
 import { fetchCampaigns, fetchAnalytics, matchPost, extractMetrics } from '@/lib/campaigns';
 import {
-  anAggregate,
-  anNeedsRegenerate,
-  callSilarisAnalytics,
-  buildAnalyticsFallback,
-  anGetCache,
-  anSetCache,
-  anErLabel,
-  anFmtK,
-  anDelta,
-  AN_PLAT,
-  anRelTime
+  anAggregate, anNeedsRegenerate, callSilarisAnalytics, buildAnalyticsFallback,
+  anGetCache, anSetCache, anErLabel, anFmtK, anDelta, AN_PLAT, anRelTime,
+  anStreak, anPostingFreq, anMilestones, anSmartCalendar, buildRekomendasiData,
+  anGetMilestones, anSetMilestone, anGetStrategies, anSaveStrategy, anDeleteStrategy,
+  callSilarisCompetitor, anParseFollowers, anEstCompER, anExtractHandle,
 } from '@/lib/analyticsEngine';
 
 export default function PerformaScreen({ sessionId, accessToken, profile, onAvatarClick }) {
-  const [activeTab, setActiveTab] = useState('Insight');
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [agg, setAgg] = useState(null);
-  const [aiNarrative, setAiNarrative] = useState(null);
-  const [lastUpdated, setLastUpdated] = useState(null);
-  
+  const [activeTab, setActiveTab]       = useState('Insight');
+  const [loading, setLoading]           = useState(true);
+  const [refreshing, setRefreshing]     = useState(false);
+  const [agg, setAgg]                   = useState(null);
+  const [aiNarrative, setAiNarrative]   = useState(null);
+  const [lastUpdated, setLastUpdated]   = useState(null);
+  const [streak, setStreak]             = useState(null);
+  const [newMilestones, setNewMilestones] = useState([]);
+  const [calendar, setCalendar]         = useState([]);
+  const [strategies, setStrategies]     = useState([]);
+  // Competitor
+  const [compInput, setCompInput]       = useState('');
+  const [compPlatform, setCompPlatform] = useState('ig');
+  const [compResult, setCompResult]     = useState(null);
+  const [compLoading, setCompLoading]   = useState(false);
+  const [compSaving, setCompSaving]     = useState(false);
+  // Boost
+  const [boostCamp, setBoostCamp]       = useState(null);
+  const [boostBudget, setBoostBudget]   = useState(25000);
+
   const tabs = ['Insight', 'Rekomendasi', 'Local Pulse', 'Strategi'];
 
   const loadData = useCallback(async (forceRefresh = false) => {
     if (forceRefresh) setRefreshing(true);
     else setLoading(true);
-
     try {
       const rows = await fetchCampaigns(sessionId, accessToken);
       const platMap = { instagram: 'ig', facebook: 'meta' };
@@ -56,53 +62,136 @@ export default function PerformaScreen({ sessionId, accessToken, profile, onAvat
         const sp = platApiMap[c.platforms[0]] || c.platforms[0];
         const posts = allPosts[sp] || [];
         const post = matchPost(posts, c);
-        if (post) {
-          c._engagement = extractMetrics(post, c.platforms[0]);
-        }
+        if (post) c._engagement = extractMetrics(post, c.platforms[0]);
       });
 
       const aggData = anAggregate(mapped);
       setAgg(aggData);
+      setStreak(anStreak(mapped));
+      setCalendar(anSmartCalendar(aggData));
 
-      const userId = profile?.id || sessionId;
-      let cached = null;
-      if (!forceRefresh) {
-        cached = await anGetCache(userId, 'narasi');
+      // Milestone check
+      const userId = profile?.id || null;
+      const reached = anMilestones(aggData);
+      if (userId && accessToken && reached.length) {
+        const saved = await anGetMilestones(userId, accessToken);
+        const savedKeys = new Set(saved.map(s => s.milestone_key));
+        const fresh = reached.filter(m => !savedKeys.has(m.key));
+        setNewMilestones(fresh);
+        await Promise.all(fresh.map(m => anSetMilestone(userId, m.key, m.value, accessToken)));
       }
 
+      // Strategies
+      if (userId && accessToken) {
+        const strats = await anGetStrategies(userId, accessToken);
+        setStrategies(strats);
+      }
+
+      // AI Narrative
+      const cacheUserId = profile?.id || sessionId;
+      let cached = null;
+      if (!forceRefresh) cached = await anGetCache(cacheUserId, 'narasi');
       if (cached && !anNeedsRegenerate(aggData, cached.agg_snapshot)) {
         setAiNarrative(cached.payload);
       } else {
         const aiRes = await callSilarisAnalytics(aggData, profile);
         if (aiRes) {
           setAiNarrative(aiRes);
-          await anSetCache(userId, 'narasi', aiRes, aggData, 60);
+          await anSetCache(cacheUserId, 'narasi', aiRes, aggData, 60);
         } else {
           setAiNarrative(buildAnalyticsFallback(aggData, profile));
         }
       }
 
       setLastUpdated(new Date().toISOString());
-
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
+    } catch (e) { console.error(e); }
+    finally { setLoading(false); setRefreshing(false); }
   }, [sessionId, accessToken, profile]);
 
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+  useEffect(() => { loadData(); }, [loadData]);
 
-  const SkeletonBlock = ({ w, h, br = '8px' }) => (
-    <div style={{ width: w, height: h, borderRadius: br, background: '#E5E7EB', animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' }} />
+  // ── Competitor Analysis ──
+  const handleAnalyzeCompetitor = async () => {
+    const raw = compInput.trim();
+    if (!raw) return;
+    const handle = anExtractHandle(raw);
+    setCompInput(handle);
+    setCompLoading(true);
+    setCompResult(null);
+
+    // Cache localStorage 24 jam
+    const cacheKey = `radar_comp_${handle}_${compPlatform}`;
+    try {
+      const cached = JSON.parse(localStorage.getItem(cacheKey) || 'null');
+      if (cached && Date.now() - cached.ts < 86400000) {
+        setCompResult(cached.result);
+        setCompLoading(false);
+        return;
+      }
+    } catch {}
+
+    const result = await callSilarisCompetitor(handle, compPlatform, agg, profile);
+    if (result) {
+      // Override ER dengan benchmark
+      const fc = anParseFollowers(result.comp_followers);
+      result.comp_er = anEstCompER(fc, handle).toFixed(1) + '%';
+      result._followerCount = fc;
+      try { localStorage.setItem(cacheKey, JSON.stringify({ result, ts: Date.now() })); } catch {}
+    }
+    setCompResult(result);
+    setCompLoading(false);
+  };
+
+  const handleSaveStrategy = async () => {
+    if (!compResult || !profile?.id || !accessToken) return;
+    setCompSaving(true);
+    await anSaveStrategy(profile.id, { handle: compResult.comp_handle || compInput, platform: compPlatform, comp_result: compResult }, accessToken);
+    const strats = await anGetStrategies(profile.id, accessToken);
+    setStrategies(strats);
+    setCompSaving(false);
+  };
+
+  const handleDeleteStrategy = async (id) => {
+    await anDeleteStrategy(id, accessToken);
+    setStrategies(prev => prev.filter(s => s.id !== id));
+  };
+
+  // ── Boost helpers ──
+  const handleBoostCopy = () => {
+    if (!boostCamp) return;
+    const rec = `💡 Rekomendasi Boost — Larisi\n` +
+      `📱 Platform: ${(boostCamp.platforms || []).map(p => (AN_PLAT[p] || {}).name || p).join(', ')}\n` +
+      `💰 Budget harian: Rp ${boostBudget.toLocaleString('id-ID')}\n` +
+      `⏰ Prime time: ${agg?.bestDay || 'Kamis'}, ${String(agg?.bestHour || 19).padStart(2,'0')}:00\n` +
+      `📈 Est. reach baru: ${(boostBudget / 5).toLocaleString('id-ID')}–${(boostBudget / 3).toLocaleString('id-ID')} orang`;
+    navigator.clipboard?.writeText(rec).catch(() => {});
+  };
+  const handleBoostOpen = () => {
+    handleBoostCopy();
+    const plats = boostCamp?.platforms || [];
+    const url = plats.includes('tiktok') && !plats.includes('meta') && !plats.includes('ig')
+      ? 'https://ads.tiktok.com/i18n/creation/campaign'
+      : 'https://www.facebook.com/adsmanager/creation';
+    setTimeout(() => window.open(url, '_blank'), 400);
+  };
+
+  const Sk = ({ w, h, br = '8px' }) => (
+    <div style={{ width: w, height: h, borderRadius: br, background: '#E5E7EB', animation: 'pulse 2s cubic-bezier(0.4,0,0.6,1) infinite' }} />
   );
 
+  // ── Local Pulse: Kondisi A/B ──
+  const hasEnoughTimeData = (agg?.total || 0) >= 10 && (agg?.distinctDays || 0) >= 2;
+  const activeHour  = hasEnoughTimeData ? (agg?.bestHourER || agg?.bestHour || 19) : (agg?.bestHour || 19);
+  const jamSubtext  = hasEnoughTimeData
+    ? 'Berdasarkan performa engagement iklan aktif kamu'
+    : 'Berdasarkan jam posting iklanmu — makin akurat setelah lebih banyak iklan berjalan';
+
+  // ── Rekomendasi data-driven ──
+  const rekoData = agg ? buildRekomendasiData(agg) : null;
+  const postFreq = agg ? anPostingFreq(agg) : null;
+
   return (
-    <div style={{display:'flex', flexDirection:'column', flex:1, overflow:'hidden', background:'var(--m-bg)'}}>
-      {/* ── Header ── */}
+    <div style={{ display:'flex', flexDirection:'column', flex:1, overflow:'hidden', background:'var(--m-bg)' }}>
       <MobileHeader
         userName={profile?.full_name || profile?.business_name || 'Pengguna'}
         userInitials={(profile?.full_name || profile?.business_name || 'P').trim().split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2)}
@@ -110,34 +199,24 @@ export default function PerformaScreen({ sessionId, accessToken, profile, onAvat
         onAvatarClick={onAvatarClick}
       />
 
-      <main style={{flex:1, overflowY:'auto', padding:'0 16px', paddingBottom:'calc(80px + env(safe-area-inset-bottom))'}}>
-        
-        {/* Page title */}
-        <div style={{padding:'24px 0 16px'}}>
-          <h1 style={{fontFamily:'var(--m-font)',fontSize:'28px',fontWeight:'800',color:'var(--m-ink)',lineHeight:'1.2',marginBottom:'6px'}}>
-            Performa Iklan
-          </h1>
-          <p style={{fontFamily:'var(--m-font)',fontSize:'14px',color:'var(--m-ink-sub)', lineHeight:'1.5'}}>
-            Lihat hasil & temukan saran pintar.
-          </p>
+      <main style={{ flex:1, overflowY:'auto', padding:'0 16px', paddingBottom:'calc(80px + env(safe-area-inset-bottom))' }}>
+
+        <div style={{ padding:'24px 0 16px' }}>
+          <h1 style={{ fontFamily:'var(--m-font)', fontSize:'28px', fontWeight:'800', color:'var(--m-ink)', lineHeight:'1.2', marginBottom:'6px' }}>Performa Iklan</h1>
+          <p style={{ fontFamily:'var(--m-font)', fontSize:'14px', color:'var(--m-ink-sub)', lineHeight:'1.5' }}>Lihat hasil & temukan saran pintar.</p>
         </div>
 
-        {/* Status */}
-        <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'4px'}}>
-          <div style={{display:'flex', alignItems:'center', gap:'6px'}}>
-            <div style={{width:'8px', height:'8px', borderRadius:'50%', background: loading ? '#FBBC04' : '#34A853'}} />
-            <span style={{fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)', fontWeight:'600'}}>
+        {/* Status bar */}
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'4px' }}>
+          <div style={{ display:'flex', alignItems:'center', gap:'6px' }}>
+            <div style={{ width:'8px', height:'8px', borderRadius:'50%', background: loading ? '#FBBC04' : '#34A853' }} />
+            <span style={{ fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)', fontWeight:'600' }}>
               {loading ? 'Memuat data...' : `Diperbarui ${anRelTime(lastUpdated)}`}
             </span>
           </div>
-          <button 
-            onClick={() => loadData(true)}
-            disabled={loading || refreshing}
-            style={{
-              background:'none', border:'none', color:'var(--m-brand)', display:'flex', alignItems:'center', gap:'4px',
-              fontFamily:'var(--m-font)', fontSize:'12px', fontWeight:'700', cursor:'pointer', opacity: (loading || refreshing) ? 0.5 : 1
-            }}>
-            <svg style={{ transform: refreshing ? 'rotate(180deg)' : 'none', transition: 'transform 0.3s' }} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <button onClick={() => loadData(true)} disabled={loading || refreshing}
+            style={{ background:'none', border:'none', color:'var(--m-brand)', display:'flex', alignItems:'center', gap:'4px', fontFamily:'var(--m-font)', fontSize:'12px', fontWeight:'700', cursor:'pointer', opacity:(loading||refreshing)?0.5:1 }}>
+            <svg style={{ transform: refreshing ? 'rotate(180deg)' : 'none', transition:'transform 0.3s' }} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>
               <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21v-5h5"/>
             </svg>
@@ -145,28 +224,13 @@ export default function PerformaScreen({ sessionId, accessToken, profile, onAvat
           </button>
         </div>
 
-        {/* ── Tabs ── */}
-        <div style={{
-          position: 'sticky', top: 0, zIndex: 190, background: 'var(--m-bg)',
-          paddingTop:'12px', paddingBottom:'16px', margin:'0 -16px', paddingLeft:'16px', paddingRight:'16px',
-        }}>
-          <div style={{
-            display:'flex', alignItems:'center', background:'#F5F5F7',
-            borderRadius:'999px', padding:'4px', overflowX:'auto', scrollbarWidth:'none', gap:'4px'
-          }}>
+        {/* Tabs */}
+        <div style={{ position:'sticky', top:0, zIndex:190, background:'var(--m-bg)', paddingTop:'12px', paddingBottom:'16px', margin:'0 -16px', paddingLeft:'16px', paddingRight:'16px' }}>
+          <div style={{ display:'flex', alignItems:'center', background:'#F5F5F7', borderRadius:'999px', padding:'4px', overflowX:'auto', scrollbarWidth:'none', gap:'4px' }}>
             {tabs.map(tab => {
               const active = tab === activeTab;
               return (
-                <button 
-                  key={tab} 
-                  onClick={() => setActiveTab(tab)}
-                  style={{
-                    padding:'8px 16px', borderRadius:'999px', border:'none', flexShrink:0,
-                    background: active ? 'var(--m-brand)' : '#fff',
-                    color: active ? '#fff' : 'var(--m-ink-sub)',
-                    fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'700',
-                    cursor:'pointer', transition:'all 0.2s',
-                  }}>
+                <button key={tab} onClick={() => setActiveTab(tab)} style={{ padding:'8px 16px', borderRadius:'999px', border:'none', flexShrink:0, background: active ? 'var(--m-brand)' : '#fff', color: active ? '#fff' : 'var(--m-ink-sub)', fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'700', cursor:'pointer', transition:'all 0.2s' }}>
                   {tab}
                 </button>
               );
@@ -174,152 +238,167 @@ export default function PerformaScreen({ sessionId, accessToken, profile, onAvat
           </div>
         </div>
 
-        {/* ── TAB CONTENT ── */}
-
+        {/* ══ INSIGHT TAB ══ */}
         {activeTab === 'Insight' && (
-          <div style={{display:'flex', flexDirection:'column', gap:'12px'}}>
+          <div style={{ display:'flex', flexDirection:'column', gap:'12px' }}>
             {loading ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                  {[1, 2, 3, 4].map(i => <SkeletonBlock key={i} w="100%" h="110px" br="16px" />)}
+              <div style={{ display:'flex', flexDirection:'column', gap:'12px' }}>
+                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'12px' }}>
+                  {[1,2,3,4].map(i => <Sk key={i} w="100%" h="110px" br="16px" />)}
                 </div>
-                <SkeletonBlock w="100%" h="250px" br="20px" />
-                <SkeletonBlock w="100%" h="150px" br="20px" />
+                <Sk w="100%" h="60px" br="16px" />
+                <Sk w="100%" h="250px" br="20px" />
               </div>
             ) : (
               <>
-                {/* Grid 4 Cards */}
-                <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'12px'}}>
-                  <div style={{background:'#fff', border:'1px solid #E4E4EB', borderRadius:'16px', padding:'16px', borderTop:'3px solid var(--m-brand)'}}>
-                    <div style={{display:'flex', alignItems:'center', gap:'4px', marginBottom:'8px'}}>
-                      <span style={{fontFamily:'var(--m-font)', fontSize:'10px', fontWeight:'800', color:'var(--m-ink-sub)', letterSpacing:'0.5px'}}>TOTAL REACH</span>
-                    </div>
-                    <div style={{fontFamily:'var(--m-font)', fontSize:'28px', fontWeight:'800', color:'var(--m-ink)', marginBottom:'4px'}}>{anFmtK(agg?.totalReach)}</div>
-                    <div style={{fontFamily:'var(--m-font)', fontSize:'11px', color:'var(--m-ink-sub)', lineHeight:'1.4'}}>Orang tahu bisnis kamu · dari {agg?.countThisMonth || agg?.total || 0} iklan</div>
+                {/* 4 KPI Cards */}
+                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'12px' }}>
+                  <div style={{ background:'#fff', border:'1px solid #E4E4EB', borderRadius:'16px', padding:'16px', borderTop:'3px solid var(--m-brand)' }}>
+                    <div style={{ fontFamily:'var(--m-font)', fontSize:'10px', fontWeight:'800', color:'var(--m-ink-sub)', letterSpacing:'0.5px', marginBottom:'8px' }}>TOTAL REACH</div>
+                    <div style={{ fontFamily:'var(--m-font)', fontSize:'28px', fontWeight:'800', color:'var(--m-ink)', marginBottom:'4px' }}>{anFmtK(agg?.totalReach)}</div>
+                    <div style={{ fontFamily:'var(--m-font)', fontSize:'11px', color:'var(--m-ink-sub)', lineHeight:'1.4' }}>Orang tahu bisnis kamu · dari {agg?.countThisMonth || agg?.total || 0} iklan</div>
                   </div>
-                  <div style={{background:'#fff', border:'1px solid #E4E4EB', borderRadius:'16px', padding:'16px', borderTop:'3px solid #34A853'}}>
-                    <div style={{display:'flex', alignItems:'center', gap:'4px', marginBottom:'8px'}}>
-                      <span style={{fontFamily:'var(--m-font)', fontSize:'10px', fontWeight:'800', color:'var(--m-ink-sub)', letterSpacing:'0.5px'}}>IKLAN AKTIF</span>
-                    </div>
-                    <div style={{fontFamily:'var(--m-font)', fontSize:'28px', fontWeight:'800', color:'var(--m-ink)', marginBottom:'4px'}}>{agg?.active || 0}</div>
-                    <div style={{fontFamily:'var(--m-font)', fontSize:'11px', color:'var(--m-ink-sub)', lineHeight:'1.4'}}>{anDelta(agg?.reachThisMonth || 0, agg?.reachLastMonth || 0)?.text || 'Sedang berjalan'}</div>
+                  <div style={{ background:'#fff', border:'1px solid #E4E4EB', borderRadius:'16px', padding:'16px', borderTop:'3px solid #34A853' }}>
+                    <div style={{ fontFamily:'var(--m-font)', fontSize:'10px', fontWeight:'800', color:'var(--m-ink-sub)', letterSpacing:'0.5px', marginBottom:'8px' }}>IKLAN AKTIF</div>
+                    <div style={{ fontFamily:'var(--m-font)', fontSize:'28px', fontWeight:'800', color:'var(--m-ink)', marginBottom:'4px' }}>{agg?.active || 0}</div>
+                    <div style={{ fontFamily:'var(--m-font)', fontSize:'11px', color:'var(--m-ink-sub)', lineHeight:'1.4' }}>{anDelta(agg?.reachThisMonth || 0, agg?.reachLastMonth || 0)?.text || 'Sedang berjalan'}</div>
                   </div>
-                  <div style={{background:'#fff', border:'1px solid #E4E4EB', borderRadius:'16px', padding:'16px', borderTop:'3px solid #FBBC04'}}>
-                    <div style={{display:'flex', alignItems:'center', gap:'4px', marginBottom:'8px'}}>
-                      <span style={{fontFamily:'var(--m-font)', fontSize:'10px', fontWeight:'800', color:'var(--m-ink-sub)', letterSpacing:'0.5px'}}>PERFORMA KONTEN</span>
-                    </div>
-                    <div style={{fontFamily:'var(--m-font)', fontSize:'28px', fontWeight:'800', color:'var(--m-ink)', marginBottom:'4px'}}>{agg?.avgER ? `${agg.avgER.toFixed(1)}%` : '0%'}</div>
-                    <div style={{fontFamily:'var(--m-font)', fontSize:'11px', color:'var(--m-ink-sub)', lineHeight:'1.4'}}>{anErLabel(agg?.avgER).label}</div>
+                  <div style={{ background:'#fff', border:'1px solid #E4E4EB', borderRadius:'16px', padding:'16px', borderTop:'3px solid #FBBC04' }}>
+                    <div style={{ fontFamily:'var(--m-font)', fontSize:'10px', fontWeight:'800', color:'var(--m-ink-sub)', letterSpacing:'0.5px', marginBottom:'8px' }}>PERFORMA KONTEN</div>
+                    <div style={{ fontFamily:'var(--m-font)', fontSize:'28px', fontWeight:'800', color:'var(--m-ink)', marginBottom:'4px' }}>{agg?.avgER ? `${agg.avgER.toFixed(1)}%` : '0%'}</div>
+                    <div style={{ fontFamily:'var(--m-font)', fontSize:'11px', color:'var(--m-ink-sub)', lineHeight:'1.4' }}>{anErLabel(agg?.avgER).label}</div>
                   </div>
-                  <div style={{background:'#fff', border:'1px solid #E4E4EB', borderRadius:'16px', padding:'16px', borderTop:'3px solid #4285F4'}}>
-                    <div style={{display:'flex', alignItems:'center', gap:'4px', marginBottom:'8px'}}>
-                      <span style={{fontFamily:'var(--m-font)', fontSize:'10px', fontWeight:'800', color:'var(--m-ink-sub)', letterSpacing:'0.5px'}}>INTERAKSI</span>
-                    </div>
-                    <div style={{fontFamily:'var(--m-font)', fontSize:'28px', fontWeight:'800', color:'var(--m-ink)', marginBottom:'4px'}}>{anFmtK(agg?.totalReact || 0)}</div>
-                    <div style={{fontFamily:'var(--m-font)', fontSize:'11px', color:'var(--m-ink-sub)', lineHeight:'1.4'}}>Suka, komentar, & bagikan</div>
+                  {/* Card 4: KONTEN TERBAIK (ganti INTERAKSI) */}
+                  <div style={{ background:'#fff', border:'1px solid #E4E4EB', borderRadius:'16px', padding:'16px', borderTop:'3px solid #4285F4' }}>
+                    <div style={{ fontFamily:'var(--m-font)', fontSize:'10px', fontWeight:'800', color:'var(--m-ink-sub)', letterSpacing:'0.5px', marginBottom:'8px' }}>KONTEN TERBAIK</div>
+                    {agg?.bestCamp ? (
+                      <>
+                        <div style={{ fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'800', color:'var(--m-ink)', marginBottom:'4px', overflow:'hidden', display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', lineHeight:'1.3' }}>
+                          {agg.bestCamp.name}
+                        </div>
+                        <div style={{ fontFamily:'var(--m-font)', fontSize:'11px', color:'var(--m-ink-sub)' }}>
+                          {agg.bestER > 0 ? `ER ${agg.bestER.toFixed(1)}%` : 'Engagement tertinggi'}
+                        </div>
+                      </>
+                    ) : (
+                      <div style={{ fontFamily:'var(--m-font)', fontSize:'11px', color:'var(--m-ink-sub)', lineHeight:'1.5' }}>Belum ada data</div>
+                    )}
                   </div>
                 </div>
 
-                {/* SiLaris Analysis Card */}
-                {aiNarrative && (
-                  <div style={{background:'#fff', border:'1px solid #E4E4EB', borderRadius:'20px', padding:'20px', marginTop:'8px'}}>
-                    <div style={{display:'flex', alignItems:'center', gap:'12px', marginBottom:'16px'}}>
-                      <div style={{
-                        width:'40px', height:'40px', borderRadius:'50%', background:'var(--m-brand)',
-                        display:'flex', alignItems:'center', justifyContent:'center', overflow:'hidden'
-                      }}>
-                        <img src="/logo-dashboard.png" alt="SiLaris" style={{width:'24px', height:'24px', objectFit:'contain'}} />
+                {/* Streak & Frekuensi */}
+                {streak && streak.weeks > 0 && (
+                  <div style={{ background:'#FFF9E6', border:'1px solid #FFE082', borderRadius:'16px', padding:'14px 16px', display:'flex', alignItems:'center', gap:'12px' }}>
+                    <span style={{ fontSize:'28px', flexShrink:0 }}>🔥</span>
+                    <div style={{ flex:1 }}>
+                      <div style={{ fontFamily:'var(--m-font)', fontSize:'15px', fontWeight:'800', color:'#B27A00' }}>
+                        {streak.weeks} minggu berturut-turut!
                       </div>
-                      <div>
-                        <div style={{fontFamily:'var(--m-font)', fontSize:'16px', fontWeight:'800', color:'var(--m-brand)'}}>SiLaris</div>
-                        <div style={{fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)'}}>AI Social Media Analysis</div>
-                      </div>
-                    </div>
-                    
-                    <div style={{fontFamily:'var(--m-font)', fontSize:'14px', color:'var(--m-ink)', lineHeight:'1.6', marginBottom:'16px'}}>
-                      {aiNarrative.narasi_p1}
-                    </div>
-                    <div style={{fontFamily:'var(--m-font)', fontSize:'14px', color:'var(--m-ink)', lineHeight:'1.6', marginBottom:'16px'}}>
-                      {aiNarrative.narasi_p2}
-                    </div>
-                    <div style={{fontFamily:'var(--m-font)', fontSize:'14px', color:'var(--m-ink-sub)', lineHeight:'1.6', marginBottom:'16px'}}>
-                      {aiNarrative.narasi_p3}
-                    </div>
-                    <div style={{fontFamily:'var(--m-font)', fontSize:'12px', color:'#999', fontStyle:'italic', marginBottom:'16px'}}>
-                      {aiNarrative.narasi_footer}
-                    </div>
-
-                    <div style={{background:'#FFF9E6', borderRadius:'12px', padding:'16px', border:'1px solid #FFE082'}}>
-                      <div style={{display:'flex', alignItems:'center', gap:'6px', marginBottom:'8px'}}>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="#FBBC04" stroke="#FBBC04" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 12 3a4.65 4.65 0 0 0-4.5 8.5c.76.76 1.23 1.52 1.41 2.5"/></svg>
-                        <span style={{fontFamily:'var(--m-font)', fontSize:'11px', fontWeight:'800', color:'#B27A00', letterSpacing:'0.5px'}}>ARTINYA UNTUK BISNISMU</span>
-                      </div>
-                      <div style={{fontFamily:'var(--m-font)', fontSize:'13px', color:'var(--m-ink)', lineHeight:'1.5'}}>
-                        {aiNarrative.clue_potensi}
-                      </div>
-                    </div>
-                    
-                    <div style={{background:'#F0E6FF', borderRadius:'12px', padding:'16px', border:'1px solid #D6BCFA', marginTop:'12px'}}>
-                      <div style={{display:'flex', alignItems:'center', gap:'6px', marginBottom:'8px'}}>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="var(--m-brand)" stroke="var(--m-brand)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
-                        <span style={{fontFamily:'var(--m-font)', fontSize:'11px', fontWeight:'800', color:'var(--m-brand)', letterSpacing:'0.5px'}}>YANG BISA DILAKUKAN SEKARANG</span>
-                      </div>
-                      <div style={{fontFamily:'var(--m-font)', fontSize:'13px', color:'var(--m-ink)', lineHeight:'1.5'}}>
-                        {aiNarrative.clue_todo}
+                      <div style={{ fontFamily:'var(--m-font)', fontSize:'12px', color:'#B27A00', opacity:0.8, marginTop:'2px' }}>
+                        {streak.thisWeek ? '✓ Sudah posting minggu ini' : '⚠ Belum posting minggu ini'}
+                        {postFreq && ` · ${postFreq.perMonth}/${postFreq.ideal}x bulan ini`}
                       </div>
                     </div>
                   </div>
                 )}
 
-                {/* Mood Audiens */}
-                {agg?.hasMoodData && (
-                  <div style={{background:'#fff', border:'1px solid #E4E4EB', borderRadius:'20px', padding:'20px'}}>
-                    <div style={{display:'flex', alignItems:'center', gap:'10px', marginBottom:'16px'}}>
-                      <div style={{width:'32px', height:'32px', borderRadius:'50%', background:'#F4F4F7', display:'flex', alignItems:'center', justifyContent:'center'}}>
-                        <span style={{fontSize:'16px'}}>☺</span>
+                {/* Milestone baru */}
+                {newMilestones.length > 0 && (
+                  <div style={{ background:'#fff', border:'1px solid #E4E4EB', borderRadius:'20px', padding:'20px' }}>
+                    <div style={{ fontFamily:'var(--m-font)', fontSize:'14px', fontWeight:'800', color:'var(--m-ink)', marginBottom:'12px' }}>🏆 Pencapaian Baru!</div>
+                    <div style={{ display:'flex', flexDirection:'column', gap:'8px' }}>
+                      {newMilestones.map(m => (
+                        <div key={m.key} style={{ background:'#F0E6FF', borderRadius:'12px', padding:'12px 16px' }}>
+                          <span style={{ fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'700', color:'var(--m-brand)' }}>{m.label}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* SiLaris AI Card */}
+                {aiNarrative && (
+                  <div style={{ background:'#fff', border:'1px solid #E4E4EB', borderRadius:'20px', padding:'20px', marginTop:'4px' }}>
+                    <div style={{ display:'flex', alignItems:'center', gap:'12px', marginBottom:'16px' }}>
+                      <div style={{ width:'40px', height:'40px', borderRadius:'50%', background:'var(--m-brand)', display:'flex', alignItems:'center', justifyContent:'center', overflow:'hidden' }}>
+                        <img src="/logo-dashboard.png" alt="SiLaris" style={{ width:'24px', height:'24px', objectFit:'contain' }} />
                       </div>
                       <div>
-                        <div style={{fontFamily:'var(--m-font)', fontSize:'14px', fontWeight:'800', color:'var(--m-ink)'}}>Mood Audiens</div>
-                        <div style={{fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)'}}>{aiNarrative?.mood_insight || 'Reaksi audiens terhadap iklanmu'}</div>
+                        <div style={{ fontFamily:'var(--m-font)', fontSize:'16px', fontWeight:'800', color:'var(--m-brand)' }}>SiLaris</div>
+                        <div style={{ fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)' }}>AI Social Media Analysis</div>
                       </div>
                     </div>
-                    <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'8px'}}>
+                    <div style={{ fontFamily:'var(--m-font)', fontSize:'14px', color:'var(--m-ink)', lineHeight:'1.6', marginBottom:'12px' }}>{aiNarrative.narasi_p1}</div>
+                    <div style={{ fontFamily:'var(--m-font)', fontSize:'14px', color:'var(--m-ink)', lineHeight:'1.6', marginBottom:'12px' }}>{aiNarrative.narasi_p2}</div>
+                    <div style={{ fontFamily:'var(--m-font)', fontSize:'14px', color:'var(--m-ink-sub)', lineHeight:'1.6', marginBottom:'12px' }}>{aiNarrative.narasi_p3}</div>
+                    <div style={{ fontFamily:'var(--m-font)', fontSize:'12px', color:'#999', fontStyle:'italic', marginBottom:'16px' }}>{aiNarrative.narasi_footer}</div>
+                    <div style={{ background:'#FFF9E6', borderRadius:'12px', padding:'16px', border:'1px solid #FFE082', marginBottom:'12px' }}>
+                      <div style={{ fontFamily:'var(--m-font)', fontSize:'11px', fontWeight:'800', color:'#B27A00', letterSpacing:'0.5px', marginBottom:'8px' }}>💡 ARTINYA UNTUK BISNISMU</div>
+                      <div style={{ fontFamily:'var(--m-font)', fontSize:'13px', color:'var(--m-ink)', lineHeight:'1.5' }}>{aiNarrative.clue_potensi}</div>
+                    </div>
+                    <div style={{ background:'#F0E6FF', borderRadius:'12px', padding:'16px', border:'1px solid #D6BCFA' }}>
+                      <div style={{ fontFamily:'var(--m-font)', fontSize:'11px', fontWeight:'800', color:'var(--m-brand)', letterSpacing:'0.5px', marginBottom:'8px' }}>🎯 YANG BISA DILAKUKAN SEKARANG</div>
+                      <div style={{ fontFamily:'var(--m-font)', fontSize:'13px', color:'var(--m-ink)', lineHeight:'1.5' }}>{aiNarrative.clue_todo}</div>
+                    </div>
+                    {/* Boost CTA kalau ada bestCamp */}
+                    {agg?.bestCamp && (
+                      <button onClick={() => { setBoostCamp(agg.bestCamp); setBoostBudget(25000); }}
+                        style={{ width:'100%', marginTop:'16px', padding:'14px', borderRadius:'12px', background:'#1A1A1A', color:'#fff', border:'none', cursor:'pointer', fontFamily:'var(--m-font)', fontSize:'14px', fontWeight:'700', display:'flex', alignItems:'center', justifyContent:'center', gap:'8px' }}>
+                        🚀 Boost {agg.bestCamp.name} →
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {/* Mood Audiens */}
+                {agg?.hasMoodData && (
+                  <div style={{ background:'#fff', border:'1px solid #E4E4EB', borderRadius:'20px', padding:'20px' }}>
+                    <div style={{ display:'flex', alignItems:'center', gap:'10px', marginBottom:'16px' }}>
+                      <div style={{ width:'32px', height:'32px', borderRadius:'50%', background:'#F4F4F7', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                        <span style={{ fontSize:'16px' }}>☺</span>
+                      </div>
+                      <div>
+                        <div style={{ fontFamily:'var(--m-font)', fontSize:'14px', fontWeight:'800', color:'var(--m-ink)' }}>Mood Audiens</div>
+                        <div style={{ fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)' }}>{aiNarrative?.mood_insight || 'Reaksi audiens terhadap iklanmu'}</div>
+                      </div>
+                    </div>
+                    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'8px' }}>
                       {agg.moodData.map((m, idx) => {
                         const pct = agg.totalReact > 0 ? Math.round((m.count / agg.totalReact) * 100) : 0;
                         return (
-                          <div key={idx} style={{background:'#F9F9FA', borderRadius:'12px', padding:'12px', textAlign:'center'}}>
-                            <div style={{fontSize:'20px', marginBottom:'4px'}}>{m.emoji}</div>
-                            <div style={{fontFamily:'var(--m-font)', fontSize:'16px', fontWeight:'800', color:'var(--m-ink)'}}>{pct}%</div>
-                            <div style={{fontFamily:'var(--m-font)', fontSize:'11px', color:'var(--m-ink-sub)'}}>{m.label}</div>
+                          <div key={idx} style={{ background:'#F9F9FA', borderRadius:'12px', padding:'12px', textAlign:'center' }}>
+                            <div style={{ fontSize:'20px', marginBottom:'4px' }}>{m.emoji}</div>
+                            <div style={{ fontFamily:'var(--m-font)', fontSize:'16px', fontWeight:'800', color:'var(--m-ink)' }}>{pct}%</div>
+                            <div style={{ fontFamily:'var(--m-font)', fontSize:'11px', color:'var(--m-ink-sub)' }}>{m.label}</div>
                           </div>
                         );
                       })}
                     </div>
                   </div>
                 )}
-                
+
                 {/* Platform Terkuat */}
                 {agg?.platList?.length > 0 && (
-                  <div style={{background:'#fff', border:'1px solid #E4E4EB', borderRadius:'20px', padding:'20px'}}>
-                    <div style={{display:'flex', alignItems:'center', gap:'10px', marginBottom:'16px'}}>
-                      <div style={{width:'32px', height:'32px', borderRadius:'50%', background:'#F4F4F7', display:'flex', alignItems:'center', justifyContent:'center'}}>
+                  <div style={{ background:'#fff', border:'1px solid #E4E4EB', borderRadius:'20px', padding:'20px' }}>
+                    <div style={{ display:'flex', alignItems:'center', gap:'10px', marginBottom:'16px' }}>
+                      <div style={{ width:'32px', height:'32px', borderRadius:'50%', background:'#F4F4F7', display:'flex', alignItems:'center', justifyContent:'center' }}>
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--m-brand)" strokeWidth="2"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
                       </div>
                       <div>
-                        <div style={{fontFamily:'var(--m-font)', fontSize:'14px', fontWeight:'800', color:'var(--m-ink)'}}>Platform Terkuat</div>
-                        <div style={{fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)'}}>{aiNarrative?.platform_insight || 'Engagement per platform'}</div>
+                        <div style={{ fontFamily:'var(--m-font)', fontSize:'14px', fontWeight:'800', color:'var(--m-ink)' }}>Platform Terkuat</div>
+                        <div style={{ fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)' }}>{aiNarrative?.platform_insight || 'Engagement per platform'}</div>
                       </div>
                     </div>
-                    <div style={{display:'flex', flexDirection:'column', gap:'8px'}}>
+                    <div style={{ display:'flex', flexDirection:'column', gap:'8px' }}>
                       {agg.platList.map((p, idx) => {
                         const platInfo = AN_PLAT[p.key] || { name: p.key, color: '#666' };
                         return (
-                          <div key={idx} style={{background:'#F9F9FA', borderRadius:'12px', padding:'12px', display:'flex', alignItems:'center', gap:'12px'}}>
-                            <div style={{color: platInfo.color, fontWeight:'800'}}>{platInfo.name}</div>
-                            <div style={{fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'700', color:'var(--m-brand)', background:'#F0E6FF', padding:'4px 8px', borderRadius:'6px'}}>ER {p.avgER.toFixed(1)}%</div>
-                            <div style={{fontFamily:'var(--m-font)', fontSize:'13px', color:'var(--m-ink-sub)'}}>{p.count} iklan</div>
+                          <div key={idx} style={{ background:'#F9F9FA', borderRadius:'12px', padding:'12px', display:'flex', alignItems:'center', gap:'12px' }}>
+                            <div style={{ color: platInfo.color, fontWeight:'800', fontFamily:'var(--m-font)', fontSize:'13px' }}>{platInfo.name}</div>
+                            <div style={{ fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'700', color:'var(--m-brand)', background:'#F0E6FF', padding:'4px 8px', borderRadius:'6px' }}>ER {p.avgER.toFixed(1)}%</div>
+                            <div style={{ fontFamily:'var(--m-font)', fontSize:'13px', color:'var(--m-ink-sub)' }}>{p.count} iklan</div>
                           </div>
-                        )
+                        );
                       })}
                     </div>
                   </div>
@@ -329,130 +408,168 @@ export default function PerformaScreen({ sessionId, accessToken, profile, onAvat
           </div>
         )}
 
+        {/* ══ REKOMENDASI TAB ══ */}
         {activeTab === 'Rekomendasi' && (
-          <div style={{display:'flex', flexDirection:'column', gap:'12px'}}>
+          <div style={{ display:'flex', flexDirection:'column', gap:'12px' }}>
             {loading ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <SkeletonBlock w="100%" h="250px" br="20px" />
-                <SkeletonBlock w="100%" h="200px" br="20px" />
+              <div style={{ display:'flex', flexDirection:'column', gap:'12px' }}>
+                <Sk w="100%" h="250px" br="20px" />
+                <Sk w="100%" h="120px" br="20px" />
               </div>
-            ) : (
+            ) : rekoData ? (
               <>
-                {/* Rekomendasi Minggu Ini */}
-                <div style={{background:'#fff', border:'1px solid #E4E4EB', borderRadius:'20px', padding:'20px'}}>
-                  <div style={{display:'flex', alignItems:'center', gap:'10px', marginBottom:'16px'}}>
-                    <div style={{width:'32px', height:'32px', borderRadius:'50%', background:'#FFF0F5', display:'flex', alignItems:'center', justifyContent:'center'}}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="#E1306C" stroke="#E1306C"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                <div style={{ background:'#fff', border:'1px solid #E4E4EB', borderRadius:'20px', padding:'20px' }}>
+                  <div style={{ display:'flex', alignItems:'center', gap:'10px', marginBottom:'16px' }}>
+                    <div style={{ width:'32px', height:'32px', borderRadius:'50%', background:'#FFF0F5', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                      <span style={{ fontSize:'16px' }}>🎯</span>
                     </div>
-                    <div>
-                      <div style={{fontFamily:'var(--m-font)', fontSize:'16px', fontWeight:'800', color:'var(--m-ink)'}}>Rekomendasi Pintar</div>
-                    </div>
+                    <div style={{ fontFamily:'var(--m-font)', fontSize:'16px', fontWeight:'800', color:'var(--m-ink)' }}>Rekomendasi Minggu Ini</div>
                   </div>
-
-                  <div style={{display:'flex', flexDirection:'column', gap:'12px', marginBottom:'16px'}}>
-                    {aiNarrative?.rekomendasi?.map((r, idx) => (
-                      <div key={idx} style={{background:'#F9F9FA', borderRadius:'12px', padding:'16px'}}>
-                        <div style={{display:'flex', gap:'12px'}}>
-                          <div style={{width:'24px', height:'24px', borderRadius:'50%', background:'#1A1A1A', color:'#fff', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'12px', fontWeight:'700', flexShrink:0}}>{idx + 1}</div>
-                          <div>
-                            <div style={{display:'flex', alignItems:'center', gap:'8px', marginBottom:'6px'}}>
-                              <span style={{fontFamily:'var(--m-font)', fontSize:'11px', fontWeight:'700', color:(AN_PLAT[r.platform]?.color || '#1877F2')}}>{AN_PLAT[r.platform]?.name || r.platform}</span>
-                              <span style={{fontFamily:'var(--m-font)', fontSize:'11px', color:'var(--m-ink-sub)'}}>{r.hari}, {r.jam}</span>
-                            </div>
-                            <div style={{fontFamily:'var(--m-font)', fontSize:'13px', color:'var(--m-ink)', lineHeight:'1.5', fontWeight:'bold'}}>
-                              {r.aksi}
-                            </div>
-                            <div style={{fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)', lineHeight:'1.5', marginTop:'4px'}}>
-                              {r.alasan}
+                  <div style={{ display:'flex', flexDirection:'column', gap:'12px', marginBottom:'16px' }}>
+                    {rekoData.map((r, idx) => {
+                      const platInfo = r.platform === 'all' ? { name: 'Semua Platform', color: '#666' } : (AN_PLAT[r.platform] || { name: r.platform, color: '#666' });
+                      return (
+                        <div key={idx} style={{ background:'#F9F9FA', borderRadius:'12px', padding:'16px' }}>
+                          <div style={{ display:'flex', gap:'12px' }}>
+                            <div style={{ width:'24px', height:'24px', borderRadius:'50%', background:'#1A1A1A', color:'#fff', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'12px', fontWeight:'700', flexShrink:0 }}>{idx + 1}</div>
+                            <div>
+                              <div style={{ display:'flex', alignItems:'center', gap:'8px', marginBottom:'6px', flexWrap:'wrap' }}>
+                                <span style={{ fontFamily:'var(--m-font)', fontSize:'11px', fontWeight:'700', color: platInfo.color }}>{platInfo.name}</span>
+                                {r.hari && <span style={{ fontFamily:'var(--m-font)', fontSize:'11px', color:'var(--m-ink-sub)' }}>{r.hari}{r.jam ? `, ${r.jam}` : ''}</span>}
+                              </div>
+                              <div style={{ fontFamily:'var(--m-font)', fontSize:'13px', color:'var(--m-ink)', lineHeight:'1.5', fontWeight:'700' }}>{r.aksi}</div>
+                              <div style={{ fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)', lineHeight:'1.5', marginTop:'4px' }}>{r.alasan}</div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
-
-                  <button style={{
-                    width:'100%', padding:'14px', borderRadius:'12px', background:'#1A1A1A', color:'#fff',
-                    border:'none', cursor:'pointer', fontFamily:'var(--m-font)', fontSize:'14px', fontWeight:'700',
-                    display:'flex', alignItems:'center', justifyContent:'center', gap:'8px'
-                  }}>
-                    {aiNarrative?.rekom_cta || 'Buat Iklan Sekarang'} →
+                  <button onClick={() => {}} style={{ width:'100%', padding:'14px', borderRadius:'12px', background:'#1A1A1A', color:'#fff', border:'none', cursor:'pointer', fontFamily:'var(--m-font)', fontSize:'14px', fontWeight:'700', display:'flex', alignItems:'center', justifyContent:'center', gap:'8px' }}>
+                    🚀 Buat Iklan Sekarang →
                   </button>
                 </div>
+
+                {/* Konsistensi nudge */}
+                {postFreq && (
+                  <div style={{ background:'#fff', border:'1px solid #E4E4EB', borderRadius:'16px', padding:'16px' }}>
+                    <div style={{ fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'700', color:'var(--m-ink)', marginBottom:'8px' }}>📊 Frekuensi Posting</div>
+                    <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
+                      <div style={{ flex:1, height:'6px', borderRadius:'999px', background:'#E4E4EB', overflow:'hidden' }}>
+                        <div style={{ height:'100%', borderRadius:'999px', background:'var(--m-brand)', width: `${Math.min(100, Math.round(postFreq.perMonth / postFreq.ideal * 100))}%`, transition:'width 0.5s' }} />
+                      </div>
+                      <span style={{ fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)', flexShrink:0 }}>{postFreq.perMonth}/{postFreq.ideal}x</span>
+                    </div>
+                    <div style={{ fontFamily:'var(--m-font)', fontSize:'11px', color:'var(--m-ink-sub)', marginTop:'6px' }}>
+                      Ideal {(AN_PLAT[postFreq.platform] || {}).name || postFreq.platform}: {postFreq.ideal}x/bulan
+                    </div>
+                  </div>
+                )}
               </>
+            ) : (
+              <div style={{ background:'#fff', border:'1px solid #E4E4EB', borderRadius:'20px', padding:'32px', textAlign:'center' }}>
+                <div style={{ fontSize:'32px', marginBottom:'12px' }}>📊</div>
+                <div style={{ fontFamily:'var(--m-font)', fontSize:'15px', fontWeight:'800', color:'var(--m-ink)', marginBottom:'8px' }}>Butuh minimal 5 iklan</div>
+                <div style={{ fontFamily:'var(--m-font)', fontSize:'13px', color:'var(--m-ink-sub)', lineHeight:'1.5' }}>
+                  Tambah lebih banyak iklan lewat Dapur Konten dan data akan dianalisis otomatis.
+                </div>
+                <div style={{ fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)', marginTop:'8px', opacity:0.7 }}>
+                  Saat ini: {agg?.total || 0} dari 5 iklan
+                </div>
+              </div>
             )}
           </div>
         )}
 
+        {/* ══ LOCAL PULSE TAB ══ */}
         {activeTab === 'Local Pulse' && (
-          <div style={{background:'#fff', border:'1px solid #E4E4EB', borderRadius:'20px', padding:'20px'}}>
-            <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'20px'}}>
-              <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
-                <div style={{width:'40px', height:'40px', borderRadius:'50%', background:'#F0E6FF', display:'flex', alignItems:'center', justifyContent:'center'}}>
+          <div style={{ background:'#fff', border:'1px solid #E4E4EB', borderRadius:'20px', padding:'20px' }}>
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'20px' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:'10px' }}>
+                <div style={{ width:'40px', height:'40px', borderRadius:'50%', background:'#F0E6FF', display:'flex', alignItems:'center', justifyContent:'center' }}>
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--m-brand)" strokeWidth="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
                 </div>
                 <div>
-                  <div style={{fontFamily:'var(--m-font)', fontSize:'18px', fontWeight:'800', color:'var(--m-ink)'}}>Local Pulse</div>
-                  <div style={{fontFamily:'var(--m-font)', fontSize:'13px', color:'var(--m-ink-sub)'}}>Pola lokal terbaik</div>
+                  <div style={{ fontFamily:'var(--m-font)', fontSize:'18px', fontWeight:'800', color:'var(--m-ink)' }}>Local Pulse</div>
+                  <div style={{ fontFamily:'var(--m-font)', fontSize:'13px', color:'var(--m-ink-sub)' }}>Pola lokal terbaik</div>
                 </div>
               </div>
-              <div style={{background:'#F0E6FF', padding:'6px 10px', borderRadius:'999px'}}>
-                <span style={{fontFamily:'var(--m-font)', fontSize:'11px', fontWeight:'800', color:'var(--m-brand)', letterSpacing:'0.5px'}}>LOKAL</span>
+              <div style={{ background:'#F0E6FF', padding:'6px 10px', borderRadius:'999px' }}>
+                <span style={{ fontFamily:'var(--m-font)', fontSize:'11px', fontWeight:'800', color:'var(--m-brand)', letterSpacing:'0.5px' }}>LOKAL</span>
               </div>
             </div>
 
             {loading ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <SkeletonBlock w="100%" h="80px" br="16px" />
-                <SkeletonBlock w="100%" h="80px" br="16px" />
-                <SkeletonBlock w="100%" h="80px" br="16px" />
+              <div style={{ display:'flex', flexDirection:'column', gap:'12px' }}>
+                {[1,2,3,4].map(i => <Sk key={i} w="100%" h="80px" br="16px" />)}
               </div>
             ) : (
-              <div style={{display:'flex', flexDirection:'column', gap:'12px'}}>
-                {/* Jam Terbaik */}
-                <div style={{background:'#F9F9FA', borderRadius:'16px', padding:'16px', display:'flex', gap:'12px'}}>
-                  <div style={{width:'32px', height:'32px', borderRadius:'50%', background:'#fff', border:'1px solid #E4E4EB', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0}}>
+              <div style={{ display:'flex', flexDirection:'column', gap:'12px' }}>
+                {/* Jam Terbaik — Kondisi A/B */}
+                <div style={{ background:'#F9F9FA', borderRadius:'16px', padding:'16px', display:'flex', gap:'12px' }}>
+                  <div style={{ width:'32px', height:'32px', borderRadius:'50%', background:'#fff', border:'1px solid #E4E4EB', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--m-brand)" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                   </div>
                   <div>
-                    <div style={{fontFamily:'var(--m-font)', fontSize:'11px', fontWeight:'800', color:'var(--m-ink-sub)', letterSpacing:'0.5px', marginBottom:'4px'}}>JAM TERBAIK POSTING</div>
-                    <div style={{fontFamily:'var(--m-font)', fontSize:'18px', fontWeight:'800', color:'var(--m-ink)', marginBottom:'4px'}}>
-                      {String(agg?.bestHour || 19).padStart(2,'0')}:00 – {String((agg?.bestHour || 19) + 2).padStart(2,'0')}:00
+                    <div style={{ fontFamily:'var(--m-font)', fontSize:'11px', fontWeight:'800', color:'var(--m-ink-sub)', letterSpacing:'0.5px', marginBottom:'4px' }}>JAM TERBAIK POSTING</div>
+                    <div style={{ fontFamily:'var(--m-font)', fontSize:'18px', fontWeight:'800', color:'var(--m-ink)', marginBottom:'4px' }}>
+                      {String(activeHour).padStart(2,'0')}:00 – {String((activeHour + 2) % 24).padStart(2,'0')}:00
                     </div>
-                    <div style={{fontFamily:'var(--m-font)', fontSize:'13px', color:'var(--m-ink-sub)', lineHeight:'1.4'}}>Berdasarkan jam posting iklanmu.</div>
+                    <div style={{ fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)', lineHeight:'1.4' }}>{jamSubtext}</div>
                   </div>
                 </div>
 
                 {/* Hari Terkuat */}
-                <div style={{background:'#F9F9FA', borderRadius:'16px', padding:'16px', display:'flex', gap:'12px'}}>
-                  <div style={{width:'32px', height:'32px', borderRadius:'50%', background:'#fff', border:'1px solid #E4E4EB', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0}}>
+                <div style={{ background:'#F9F9FA', borderRadius:'16px', padding:'16px', display:'flex', gap:'12px' }}>
+                  <div style={{ width:'32px', height:'32px', borderRadius:'50%', background:'#fff', border:'1px solid #E4E4EB', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--m-brand)" strokeWidth="2.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                   </div>
                   <div>
-                    <div style={{fontFamily:'var(--m-font)', fontSize:'11px', fontWeight:'800', color:'var(--m-ink-sub)', letterSpacing:'0.5px', marginBottom:'4px'}}>HARI TERKUAT</div>
-                    <div style={{fontFamily:'var(--m-font)', fontSize:'18px', fontWeight:'800', color:'var(--m-ink)', marginBottom:'4px'}}>{agg?.bestDay || 'Minggu'}</div>
-                    <div style={{fontFamily:'var(--m-font)', fontSize:'13px', color:'var(--m-ink-sub)'}}>Hari dengan aktivitas iklan tertinggi</div>
+                    <div style={{ fontFamily:'var(--m-font)', fontSize:'11px', fontWeight:'800', color:'var(--m-ink-sub)', letterSpacing:'0.5px', marginBottom:'4px' }}>HARI TERKUAT</div>
+                    <div style={{ fontFamily:'var(--m-font)', fontSize:'18px', fontWeight:'800', color:'var(--m-ink)', marginBottom:'4px' }}>{agg?.bestDay || 'Minggu'}</div>
+                    <div style={{ fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)' }}>Hari dengan aktivitas iklan tertinggi</div>
                   </div>
                 </div>
 
-                {/* Sapaan highlight */}
+                {/* Smart Calendar */}
+                {calendar.length > 0 && (
+                  <div style={{ background:'#F9F9FA', borderRadius:'16px', padding:'16px', display:'flex', gap:'12px' }}>
+                    <div style={{ width:'32px', height:'32px', borderRadius:'50%', background:'#fff', border:'1px solid #E4E4EB', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                      <span style={{ fontSize:'16px' }}>📅</span>
+                    </div>
+                    <div style={{ flex:1 }}>
+                      <div style={{ fontFamily:'var(--m-font)', fontSize:'11px', fontWeight:'800', color:'var(--m-ink-sub)', letterSpacing:'0.5px', marginBottom:'8px' }}>JADWAL POSTING MINGGU INI</div>
+                      <div style={{ display:'flex', flexDirection:'column', gap:'6px' }}>
+                        {calendar.map((slot, i) => (
+                          <div key={i} style={{ display:'flex', alignItems:'center', gap:'8px' }}>
+                            <span style={{ fontFamily:'var(--m-font)', fontSize:'13px', fontWeight: slot.isBestDay ? '800' : '600', color:'var(--m-ink)', minWidth:'120px' }}>{slot.label}</span>
+                            <span style={{ fontFamily:'var(--m-font)', fontSize:'11px', color:'var(--m-brand)', background:'#F0E6FF', padding:'2px 8px', borderRadius:'999px', flexShrink:0 }}>{slot.jam}</span>
+                            <span style={{ fontFamily:'var(--m-font)', fontSize:'11px', color:'var(--m-ink-sub)', flexShrink:0 }}>{(AN_PLAT[slot.platform] || {}).name || slot.platform}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Stitch insight */}
                 {aiNarrative?.stitch_insight && (
-                  <div style={{background:'#FFF9E6', borderRadius:'12px', padding:'16px', border:'1px solid #FFE082', margin:'4px 0'}}>
-                    <div style={{fontFamily:'var(--m-font)', fontSize:'13px', color:'#B27A00', lineHeight:'1.5'}}>
-                      <span style={{fontWeight:'700'}}>💡 Insights:</span> {aiNarrative.stitch_insight}
+                  <div style={{ background:'#FFF9E6', borderRadius:'12px', padding:'16px', border:'1px solid #FFE082' }}>
+                    <div style={{ fontFamily:'var(--m-font)', fontSize:'13px', color:'#B27A00', lineHeight:'1.5' }}>
+                      <span style={{ fontWeight:'700' }}>💡 Insights: </span>{aiNarrative.stitch_insight}
                     </div>
                   </div>
                 )}
 
                 {/* Format Terbaik */}
-                <div style={{background:'#F9F9FA', borderRadius:'16px', padding:'16px', display:'flex', gap:'12px'}}>
-                  <div style={{width:'32px', height:'32px', borderRadius:'50%', background:'#fff', border:'1px solid #E4E4EB', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0}}>
+                <div style={{ background:'#F9F9FA', borderRadius:'16px', padding:'16px', display:'flex', gap:'12px' }}>
+                  <div style={{ width:'32px', height:'32px', borderRadius:'50%', background:'#fff', border:'1px solid #E4E4EB', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--m-brand)" strokeWidth="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
                   </div>
                   <div>
-                    <div style={{fontFamily:'var(--m-font)', fontSize:'11px', fontWeight:'800', color:'var(--m-ink-sub)', letterSpacing:'0.5px', marginBottom:'4px'}}>FORMAT TERBAIK</div>
-                    <div style={{fontFamily:'var(--m-font)', fontSize:'18px', fontWeight:'800', color:'var(--m-ink)', marginBottom:'4px'}}>{agg?.topFormat || 'Foto / Video'}</div>
-                    <div style={{fontFamily:'var(--m-font)', fontSize:'13px', color:'var(--m-ink-sub)'}}>Format dominan dari iklan aktif</div>
+                    <div style={{ fontFamily:'var(--m-font)', fontSize:'11px', fontWeight:'800', color:'var(--m-ink-sub)', letterSpacing:'0.5px', marginBottom:'4px' }}>FORMAT TERBAIK</div>
+                    <div style={{ fontFamily:'var(--m-font)', fontSize:'18px', fontWeight:'800', color:'var(--m-ink)', marginBottom:'4px' }}>{agg?.topFormat || 'Foto / Video'}</div>
+                    <div style={{ fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)' }}>Format dominan dari iklan aktif</div>
                   </div>
                 </div>
               </div>
@@ -460,80 +577,237 @@ export default function PerformaScreen({ sessionId, accessToken, profile, onAvat
           </div>
         )}
 
+        {/* ══ STRATEGI TAB ══ */}
         {activeTab === 'Strategi' && (
-          <div style={{display:'flex', flexDirection:'column', gap:'12px'}}>
-            
+          <div style={{ display:'flex', flexDirection:'column', gap:'12px' }}>
+
             {/* Competitor Analysis */}
-            <div style={{background:'#fff', border:'1px solid #E4E4EB', borderRadius:'20px', padding:'20px'}}>
-              <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'20px'}}>
-                <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
-                  <div style={{width:'40px', height:'40px', borderRadius:'50%', background:'#F0E6FF', display:'flex', alignItems:'center', justifyContent:'center'}}>
+            <div style={{ background:'#fff', border:'1px solid #E4E4EB', borderRadius:'20px', padding:'20px' }}>
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'20px' }}>
+                <div style={{ display:'flex', alignItems:'center', gap:'10px' }}>
+                  <div style={{ width:'40px', height:'40px', borderRadius:'50%', background:'#F0E6FF', display:'flex', alignItems:'center', justifyContent:'center' }}>
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--m-brand)" strokeWidth="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                   </div>
                   <div>
-                    <div style={{fontFamily:'var(--m-font)', fontSize:'16px', fontWeight:'800', color:'var(--m-ink)'}}>Competitor Analysis</div>
-                    <div style={{fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)'}}>Analisa pesaing instan</div>
+                    <div style={{ fontFamily:'var(--m-font)', fontSize:'16px', fontWeight:'800', color:'var(--m-ink)' }}>Competitor Analysis</div>
+                    <div style={{ fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)' }}>Analisa pesaing instan</div>
                   </div>
                 </div>
-                <div style={{background:'#E6F4EA', padding:'4px 8px', borderRadius:'999px'}}>
-                  <span style={{fontFamily:'var(--m-font)', fontSize:'11px', fontWeight:'800', color:'#34A853', letterSpacing:'0.5px'}}>GRATIS</span>
+                <div style={{ background:'#E6F4EA', padding:'4px 8px', borderRadius:'999px' }}>
+                  <span style={{ fontFamily:'var(--m-font)', fontSize:'11px', fontWeight:'800', color:'#34A853', letterSpacing:'0.5px' }}>GRATIS</span>
                 </div>
               </div>
 
-              <div style={{display:'flex', gap:'8px', marginBottom:'16px'}}>
-                <button style={{flex:1, padding:'10px', background:'#fff', border:'1px solid #E4E4EB', borderRadius:'999px', fontFamily:'var(--m-font)', fontSize:'12px', fontWeight:'700', color:'var(--m-ink)', boxShadow:'0 2px 4px rgba(0,0,0,0.02)'}}>Instagram</button>
-                <button style={{flex:1, padding:'10px', background:'transparent', border:'none', fontFamily:'var(--m-font)', fontSize:'12px', fontWeight:'600', color:'var(--m-ink-sub)'}}>Facebook</button>
-                <button style={{flex:1, padding:'10px', background:'transparent', border:'none', fontFamily:'var(--m-font)', fontSize:'12px', fontWeight:'600', color:'var(--m-ink-sub)'}}>TikTok</button>
+              {/* Platform tabs */}
+              <div style={{ display:'flex', gap:'8px', marginBottom:'16px' }}>
+                {[['ig','Instagram'],['meta','Facebook'],['tiktok','TikTok']].map(([key, label]) => (
+                  <button key={key} onClick={() => { setCompPlatform(key); setCompResult(null); }}
+                    style={{ flex:1, padding:'10px', background: compPlatform === key ? '#fff' : 'transparent', border: compPlatform === key ? '1px solid #E4E4EB' : 'none', borderRadius:'999px', fontFamily:'var(--m-font)', fontSize:'12px', fontWeight:'700', color: compPlatform === key ? 'var(--m-ink)' : 'var(--m-ink-sub)', cursor:'pointer', boxShadow: compPlatform === key ? '0 2px 4px rgba(0,0,0,0.04)' : 'none' }}>
+                    {label}
+                  </button>
+                ))}
               </div>
 
-              <div style={{display:'flex', gap:'8px', marginBottom:'16px'}}>
-                <input 
-                  type="text" 
-                  placeholder="Paste link atau @handle pesaing..." 
-                  style={{flex:1, padding:'12px 16px', background:'#F5F5F7', border:'none', borderRadius:'12px', outline:'none', fontFamily:'var(--m-font)', fontSize:'13px'}}
-                />
-                <button style={{padding:'12px 20px', background:'#1A1A1A', color:'#fff', border:'none', borderRadius:'12px', fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'700', cursor:'pointer'}}>
-                  Analisa →
+              {/* Input */}
+              <div style={{ display:'flex', gap:'8px', marginBottom:'16px' }}>
+                <input type="text" value={compInput} onChange={e => setCompInput(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && !compLoading && handleAnalyzeCompetitor()}
+                  placeholder="Paste link atau @handle pesaing..."
+                  style={{ flex:1, padding:'12px 16px', background:'#F5F5F7', border:'none', borderRadius:'12px', outline:'none', fontFamily:'var(--m-font)', fontSize:'13px' }} />
+                <button onClick={handleAnalyzeCompetitor} disabled={compLoading || !compInput.trim()}
+                  style={{ padding:'12px 20px', background:'#1A1A1A', color:'#fff', border:'none', borderRadius:'12px', fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'700', cursor:'pointer', opacity: compLoading || !compInput.trim() ? 0.6 : 1, display:'flex', alignItems:'center', gap:'6px' }}>
+                  {compLoading ? (
+                    <><div style={{ width:'14px', height:'14px', border:'2px solid rgba(255,255,255,0.3)', borderTopColor:'#fff', borderRadius:'50%', animation:'spin 0.7s linear infinite' }} /> Analisa</>
+                  ) : 'Analisa →'}
                 </button>
               </div>
 
-              <div style={{background:'#F0E6FF', borderRadius:'12px', padding:'16px'}}>
-                <div style={{fontFamily:'var(--m-font)', fontSize:'13px', color:'var(--m-ink)', lineHeight:'1.5'}}>
-                  ⚡ Upgrade <strong>Pro</strong> untuk analisis hingga 3 pesaing sekaligus. <a href="#" style={{color:'var(--m-brand)', textDecoration:'none', fontWeight:'700'}}>Lihat paket →</a>
+              {/* Comp Result */}
+              {compResult && (
+                <div style={{ background:'#F9F9FA', borderRadius:'16px', padding:'16px', marginBottom:'16px' }}>
+                  <div style={{ fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)', marginBottom:'12px', fontStyle:'italic' }}>
+                    Profil estimatif AI · bukan data dashboard pesaing
+                  </div>
+                  {/* Compare grid */}
+                  <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'8px', marginBottom:'12px' }}>
+                    <div style={{ background:'#fff', borderRadius:'12px', padding:'12px' }}>
+                      <div style={{ fontFamily:'var(--m-font)', fontSize:'10px', fontWeight:'800', color:'var(--m-ink-sub)', marginBottom:'6px' }}>KAMU</div>
+                      {agg?.avgER && <div style={{ fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'700', color:'var(--m-brand)', marginBottom:'4px' }}>ER {agg.avgER.toFixed(1)}%</div>}
+                      <div style={{ fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)' }}>{agg?.active || 0} iklan aktif</div>
+                      <div style={{ fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)' }}>Reach {anFmtK(agg?.totalReach || 0)}</div>
+                    </div>
+                    <div style={{ background:'#fff', borderRadius:'12px', padding:'12px' }}>
+                      <div style={{ fontFamily:'var(--m-font)', fontSize:'10px', fontWeight:'800', color:'var(--m-ink-sub)', marginBottom:'6px' }}>PESAING · {compResult.comp_handle || compInput}</div>
+                      {compResult.comp_er && <div style={{ fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'700', color:'#E1306C', marginBottom:'4px' }}>Est. ER {compResult.comp_er}</div>}
+                      {compResult.comp_followers && <div style={{ fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)' }}>{compResult.comp_followers} followers</div>}
+                      {compResult.comp_freq && <div style={{ fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)' }}>{compResult.comp_freq}</div>}
+                      {compResult.comp_format && <div style={{ fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)' }}>{compResult.comp_format}</div>}
+                    </div>
+                  </div>
+                  {/* Insights */}
+                  {compResult.insights?.map((ins, i) => {
+                    const colors = { purple: { bg:'#F0E6FF', text:'var(--m-brand)' }, green: { bg:'#E6F4EA', text:'#34A853' }, amber: { bg:'#FFF9E6', text:'#B27A00' } };
+                    const c = colors[ins.type] || colors.purple;
+                    return (
+                      <div key={i} style={{ background: c.bg, borderRadius:'10px', padding:'10px 12px', marginBottom:'6px' }}>
+                        <div style={{ fontFamily:'var(--m-font)', fontSize:'12px', color: c.text, lineHeight:'1.5' }}>{ins.text}</div>
+                      </div>
+                    );
+                  })}
+                  {/* Save button */}
+                  {profile?.id && accessToken && (
+                    <button onClick={handleSaveStrategy} disabled={compSaving}
+                      style={{ width:'100%', marginTop:'8px', padding:'12px', borderRadius:'12px', background:'#F0E6FF', border:'none', cursor:'pointer', fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'700', color:'var(--m-brand)', opacity: compSaving ? 0.6 : 1 }}>
+                      {compSaving ? 'Menyimpan...' : '✨ Simpan Strategi Pesaing Ini'}
+                    </button>
+                  )}
+                </div>
+              )}
+
+              <div style={{ background:'#F0E6FF', borderRadius:'12px', padding:'16px' }}>
+                <div style={{ fontFamily:'var(--m-font)', fontSize:'13px', color:'var(--m-ink)', lineHeight:'1.5' }}>
+                  ⚡ Upgrade <strong>Pro</strong> untuk analisis hingga 3 pesaing sekaligus. <a href="#" style={{ color:'var(--m-brand)', textDecoration:'none', fontWeight:'700' }}>Lihat paket →</a>
                 </div>
               </div>
-              <div style={{fontFamily:'var(--m-font)', fontSize:'11px', color:'var(--m-ink-sub)', textAlign:'center', marginTop:'12px'}}>
+              <div style={{ fontFamily:'var(--m-font)', fontSize:'11px', color:'var(--m-ink-sub)', textAlign:'center', marginTop:'12px' }}>
                 Estimasi berdasarkan data publik · bukan dashboard pesaing
               </div>
             </div>
-            
+
+            {/* Boost Card — hanya jika ada bestCamp */}
+            {agg?.bestCamp && (
+              <div style={{ background:'#fff', border:'1px solid #E4E4EB', borderRadius:'20px', padding:'20px' }}>
+                <div style={{ display:'flex', alignItems:'center', gap:'10px', marginBottom:'16px' }}>
+                  <div style={{ width:'40px', height:'40px', borderRadius:'50%', background:'#F0E6FF', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                    <span style={{ fontSize:'20px' }}>🚀</span>
+                  </div>
+                  <div>
+                    <div style={{ fontFamily:'var(--m-font)', fontSize:'16px', fontWeight:'800', color:'var(--m-ink)' }}>Boost Iklan Terbaik</div>
+                    <div style={{ fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:'180px' }}>{agg.bestCamp.name}</div>
+                  </div>
+                </div>
+                <div style={{ background:'#F9F9FA', borderRadius:'12px', padding:'12px', marginBottom:'16px' }}>
+                  <div style={{ fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)', lineHeight:'1.6' }}>
+                    Iklan dengan engagement tertinggi. Boost dengan budget kecil untuk jangkau lebih banyak orang.
+                  </div>
+                </div>
+                <button onClick={() => { setBoostCamp(agg.bestCamp); setBoostBudget(25000); }}
+                  style={{ width:'100%', padding:'14px', borderRadius:'12px', background:'#1A1A1A', color:'#fff', border:'none', cursor:'pointer', fontFamily:'var(--m-font)', fontSize:'14px', fontWeight:'700', display:'flex', alignItems:'center', justifyContent:'center', gap:'8px' }}>
+                  🚀 Boost Sekarang →
+                </button>
+              </div>
+            )}
+
             {/* Strategi Tersimpan */}
-            <div style={{background:'#fff', border:'1px solid #E4E4EB', borderRadius:'20px', padding:'20px'}}>
-              <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'20px'}}>
-                <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
-                  <div style={{width:'40px', height:'40px', borderRadius:'50%', background:'#F0E6FF', display:'flex', alignItems:'center', justifyContent:'center'}}>
+            <div style={{ background:'#fff', border:'1px solid #E4E4EB', borderRadius:'20px', padding:'20px' }}>
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'20px' }}>
+                <div style={{ display:'flex', alignItems:'center', gap:'10px' }}>
+                  <div style={{ width:'40px', height:'40px', borderRadius:'50%', background:'#F0E6FF', display:'flex', alignItems:'center', justifyContent:'center' }}>
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--m-brand)" strokeWidth="2.5"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
                   </div>
                   <div>
-                    <div style={{display:'flex', alignItems:'center', gap:'8px'}}>
-                      <div style={{fontFamily:'var(--m-font)', fontSize:'16px', fontWeight:'800', color:'var(--m-ink)'}}>Strategi Tersimpan</div>
-                      <div style={{width:'20px', height:'20px', borderRadius:'50%', background:'var(--m-brand)', color:'#fff', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'12px', fontWeight:'700'}}>0</div>
+                    <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
+                      <div style={{ fontFamily:'var(--m-font)', fontSize:'16px', fontWeight:'800', color:'var(--m-ink)' }}>Strategi Tersimpan</div>
+                      <div style={{ width:'20px', height:'20px', borderRadius:'50%', background:'var(--m-brand)', color:'#fff', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'12px', fontWeight:'700' }}>{strategies.length}</div>
                     </div>
-                    <div style={{fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)'}}>Rencana iklan yang kamu simpan</div>
+                    <div style={{ fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)' }}>Analisis pesaing yang kamu simpan</div>
                   </div>
                 </div>
               </div>
 
-              <div style={{background:'#F9F9FA', borderRadius:'16px', padding:'24px', textAlign:'center'}}>
-                <div style={{fontFamily:'var(--m-font)', fontSize:'14px', color:'var(--m-ink-sub)', marginBottom:'8px'}}>Belum ada strategi tersimpan.</div>
-                <button style={{padding:'8px 16px', background:'var(--m-brand)', color:'#fff', border:'none', borderRadius:'8px', fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'700', cursor:'pointer'}}>Buat Strategi</button>
-              </div>
+              {strategies.length === 0 ? (
+                <div style={{ background:'#F9F9FA', borderRadius:'16px', padding:'24px', textAlign:'center' }}>
+                  <div style={{ fontFamily:'var(--m-font)', fontSize:'14px', color:'var(--m-ink-sub)', marginBottom:'8px' }}>Belum ada strategi tersimpan.</div>
+                  <div style={{ fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)', opacity:0.7 }}>Analisis pesaing di atas lalu simpan hasilnya.</div>
+                </div>
+              ) : (
+                <div style={{ display:'flex', flexDirection:'column', gap:'8px' }}>
+                  {strategies.map(s => {
+                    const platInfo = AN_PLAT[s.platform] || { name: s.platform, color: '#666' };
+                    const result = s.comp_result || {};
+                    return (
+                      <div key={s.id} style={{ background:'#F9F9FA', borderRadius:'12px', padding:'14px', display:'flex', alignItems:'center', gap:'12px' }}>
+                        <div style={{ flex:1, minWidth:0 }}>
+                          <div style={{ fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'700', color:'var(--m-ink)', marginBottom:'2px' }}>{s.handle}</div>
+                          <div style={{ fontFamily:'var(--m-font)', fontSize:'11px', color: platInfo.color }}>{platInfo.name}{result.comp_er ? ` · Est. ER ${result.comp_er}` : ''}</div>
+                        </div>
+                        <button onClick={() => handleDeleteStrategy(s.id)}
+                          style={{ width:'32px', height:'32px', borderRadius:'50%', background:'#fff', border:'1px solid #E4E4EB', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', flexShrink:0 }}>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
           </div>
         )}
 
       </main>
+
+      {/* ══ BOOST MODAL ══ */}
+      {boostCamp && (
+        <div onClick={e => { if (e.target === e.currentTarget) setBoostCamp(null); }}
+          style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.55)', zIndex:9999, display:'flex', alignItems:'flex-end', backdropFilter:'blur(4px)' }}>
+          <div style={{ background:'#fff', borderRadius:'20px 20px 0 0', padding:'24px', width:'100%', maxHeight:'80vh', overflowY:'auto' }}>
+            {/* Handle */}
+            <div style={{ width:'40px', height:'4px', borderRadius:'999px', background:'#E4E4EB', margin:'0 auto 20px' }} />
+            <div style={{ fontFamily:'var(--m-font)', fontSize:'18px', fontWeight:'800', color:'var(--m-ink)', marginBottom:'4px' }}>🚀 Boost Iklan</div>
+            <div style={{ fontFamily:'var(--m-font)', fontSize:'13px', color:'var(--m-ink-sub)', marginBottom:'20px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{boostCamp.name}</div>
+
+            {/* Rekomendasi card */}
+            <div style={{ background:'#F9F9FA', borderRadius:'12px', padding:'16px', marginBottom:'20px' }}>
+              <div style={{ fontFamily:'var(--m-font)', fontSize:'11px', fontWeight:'800', color:'var(--m-ink-sub)', letterSpacing:'0.5px', marginBottom:'12px' }}>💡 REKOMENDASI LARISI</div>
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'8px' }}>
+                {[
+                  ['📱', 'Platform', (boostCamp.platforms || []).map(p => (AN_PLAT[p] || {}).name || p).join(', ')],
+                  ['⏰', 'Prime Time', `${agg?.bestDay || 'Kamis'}, ${String(agg?.bestHour || 19).padStart(2,'0')}:00`],
+                  ['📈', 'Est. Reach Baru', `${Math.round(boostBudget/5).toLocaleString('id-ID')}–${Math.round(boostBudget/3).toLocaleString('id-ID')} orang`],
+                  ['🎬', 'Format', (boostCamp.format || 'post').toUpperCase()],
+                ].map(([icon, label, val]) => (
+                  <div key={label} style={{ background:'#fff', borderRadius:'8px', padding:'10px' }}>
+                    <div style={{ fontFamily:'var(--m-font)', fontSize:'10px', color:'#9ca3af', marginBottom:'2px' }}>{icon} {label}</div>
+                    <div style={{ fontFamily:'var(--m-font)', fontSize:'12px', fontWeight:'600', color:'var(--m-ink)', lineHeight:'1.3' }}>{val}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Budget slider */}
+            <div style={{ marginBottom:'20px' }}>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'8px' }}>
+                <span style={{ fontFamily:'var(--m-font)', fontSize:'12px', fontWeight:'700', color:'var(--m-ink)' }}>💰 Budget Harian</span>
+                <span style={{ fontFamily:'var(--m-font)', fontSize:'14px', fontWeight:'800', color:'var(--m-brand)' }}>Rp {boostBudget.toLocaleString('id-ID')}</span>
+              </div>
+              <input type="range" min="10000" max="500000" step="5000" value={boostBudget}
+                onChange={e => setBoostBudget(Number(e.target.value))}
+                style={{ width:'100%', accentColor:'var(--m-brand)', height:'4px', cursor:'pointer' }} />
+              <div style={{ display:'flex', justifyContent:'space-between', fontFamily:'var(--m-font)', fontSize:'10px', color:'#9ca3af', marginTop:'4px' }}>
+                <span>Rp 10.000</span><span>Rp 500.000</span>
+              </div>
+            </div>
+
+            {/* Buttons */}
+            <div style={{ display:'flex', gap:'10px', marginBottom:'8px' }}>
+              <button onClick={handleBoostCopy}
+                style={{ flex:1, padding:'14px', borderRadius:'12px', border:'1.5px solid #1A1A1A', background:'#fff', color:'#1A1A1A', fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'700', cursor:'pointer' }}>
+                Salin Rekomendasi
+              </button>
+              <button onClick={handleBoostOpen}
+                style={{ flex:1, padding:'14px', borderRadius:'12px', border:'none', background:'#1A1A1A', color:'#fff', fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'700', cursor:'pointer' }}>
+                {(boostCamp.platforms || []).includes('tiktok') && !(boostCamp.platforms || []).includes('meta') && !(boostCamp.platforms || []).includes('ig')
+                  ? 'Buka TikTok Ads' : 'Buka Meta Ads'}
+              </button>
+            </div>
+            <div style={{ fontFamily:'var(--m-font)', fontSize:'10px', color:'#9ca3af', textAlign:'center' }}>
+              Form Ads Manager perlu diisi manual · Salin rekomendasi sebagai panduan
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
