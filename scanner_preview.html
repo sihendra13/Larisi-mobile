@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Preview AI Scanner UI</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        
+        body {
+            margin: 0;
+            padding: 0;
+            background: #111;
+            color: #fff;
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sidebar Kontrol */
+        .controls {
+            width: 300px;
+            background: #1a1a1a;
+            padding: 24px;
+            border-right: 1px solid #333;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            z-index: 10;
+        }
+
+        .controls h2 {
+            margin: 0 0 16px 0;
+            font-size: 18px;
+            color: #a855f7;
+        }
+
+        .concept-btn {
+            background: #2dd4bf10;
+            border: 1px solid #333;
+            color: #fff;
+            padding: 16px;
+            border-radius: 12px;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s;
+        }
+
+        .concept-btn:hover {
+            border-color: #a855f7;
+            background: #a855f710;
+        }
+
+        .concept-btn.active {
+            border-color: #a855f7;
+            background: #a855f720;
+            box-shadow: 0 0 15px #a855f730;
+        }
+
+        .concept-btn h3 { margin: 0 0 8px 0; font-size: 15px; }
+        .concept-btn p { margin: 0; font-size: 12px; color: #aaa; line-height: 1.4; }
+
+        /* Area Preview */
+        .preview-area {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #000;
+            position: relative;
+        }
+
+        /* Mockup HP */
+        .phone-mockup {
+            width: 375px;
+            height: 812px;
+            background: #222;
+            border-radius: 40px;
+            border: 8px solid #333;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+
+        /* Gambar Background (Simulasi foto user) */
+        .user-photo {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url('https://images.unsplash.com/photo-1573164713988-8665fc963095?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80');
+            background-size: cover;
+            background-position: center;
+        }
+
+        /* ─── KONSEP 1: Lensa Kaca (Glassmorphism Lens) ─── */
+        .c1-overlay {
+            position: absolute; inset: 0;
+            backdrop-filter: blur(8px) brightness(0.4);
+            -webkit-backdrop-filter: blur(8px) brightness(0.4);
+        }
+        .c1-lens-container {
+            position: absolute; top: 0; left: 0; right: 0; height: 150px;
+            animation: scan-vertical 3s ease-in-out infinite alternate;
+            overflow: hidden;
+        }
+        .c1-lens {
+            position: absolute; inset: 20px;
+            border-radius: 20px;
+            backdrop-filter: blur(0px) brightness(1.2);
+            -webkit-backdrop-filter: blur(0px) brightness(1.2);
+            border: 1px solid rgba(168, 85, 247, 0.5);
+            box-shadow: 0 0 30px rgba(168, 85, 247, 0.2), inset 0 0 20px rgba(168, 85, 247, 0.1);
+        }
+        .c1-line {
+            position: absolute; bottom: 0; left: 20px; right: 20px; height: 2px;
+            background: linear-gradient(90deg, transparent, #a855f7, transparent);
+            box-shadow: 0 0 10px #a855f7;
+        }
+
+        /* ─── KONSEP 2: Gelombang Cahaya (Organic Light Wave) ─── */
+        .c2-overlay {
+            position: absolute; inset: 0;
+            background: rgba(0,0,0,0.4);
+        }
+        .c2-wave {
+            position: absolute; top: -200px; left: 0; right: 0; height: 300px;
+            background: linear-gradient(to bottom, transparent, rgba(168, 85, 247, 0.05), rgba(168, 85, 247, 0.4), transparent);
+            animation: scan-wave 2.5s linear infinite;
+        }
+
+        /* ─── KONSEP 3: Minimalist Crosshair & Data Points ─── */
+        .c3-overlay {
+            position: absolute; inset: 0;
+            background: rgba(10, 10, 15, 0.7);
+        }
+        .c3-crosshair {
+            position: absolute; width: 20px; height: 20px;
+        }
+        .c3-crosshair::before, .c3-crosshair::after {
+            content: ''; position: absolute; background: rgba(255,255,255,0.4);
+        }
+        .c3-crosshair::before { top: 9px; left: 0; width: 20px; height: 2px; }
+        .c3-crosshair::after { left: 9px; top: 0; height: 20px; width: 2px; }
+        
+        .c3-tl { top: 40px; left: 40px; }
+        .c3-tr { top: 40px; right: 40px; }
+        .c3-bl { bottom: 40px; left: 40px; }
+        .c3-br { bottom: 40px; right: 40px; }
+        .c3-center { top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: 0.2; transform: scale(3); }
+
+        .c3-scanline {
+            position: absolute; top: 0; left: 0; right: 0; height: 1px;
+            background: rgba(168, 85, 247, 0.8);
+            box-shadow: 0 0 15px rgba(168, 85, 247, 1);
+            animation: scan-vertical-full 2s linear infinite;
+        }
+        .c3-data {
+            position: absolute; width: 4px; height: 4px; background: #fff; border-radius: 50%;
+            box-shadow: 0 0 8px #fff; opacity: 0;
+            animation: blink-data 2s infinite;
+        }
+
+        /* Animations */
+        @keyframes scan-vertical {
+            0% { transform: translateY(100px); }
+            100% { transform: translateY(500px); }
+        }
+        @keyframes scan-vertical-full {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(812px); }
+        }
+        @keyframes scan-wave {
+            0% { transform: translateY(-300px); }
+            100% { transform: translateY(900px); }
+        }
+        @keyframes blink-data {
+            0%, 100% { opacity: 0; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.5); }
+        }
+
+        /* UI Status (Original Larisi UI) */
+        .scan-text-overlay {
+            font-size: 13px;
+            font-weight: 600;
+            background: linear-gradient(90deg, rgba(255,255,255,0.65) 0%, rgba(255,255,255,0.65) 20%, #e9d5ff 50%, rgba(255,255,255,0.65) 80%, rgba(255,255,255,0.65) 100%);
+            background-size: 250% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: scanShimmer 2s linear infinite;
+            text-align: center;
+            padding: 0 28px;
+            font-family: inherit;
+            line-height: 1.4;
+        }
+        @keyframes scanShimmer {
+            from { background-position: 200% center; }
+            to   { background-position: -200% center; }
+        }
+
+        .status-box {
+            position: absolute; bottom: 0; left: 0; right: 0; top: 0;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            gap: 10px; z-index: 40; pointer-events: none;
+        }
+        .dots { display: flex; gap: 6px; align-items: center; }
+        .dot { width: 6px; height: 6px; border-radius: 50%; background: #a78bfa; animation: pulse 1s infinite; }
+        .dot:nth-child(2) { animation-delay: .2s; }
+        .dot:nth-child(3) { animation-delay: .4s; }
+        @keyframes pulse { 0%,100%{opacity:.3;transform:scale(.8)} 50%{opacity:1;transform:scale(1)} }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <div class="controls">
+        <h2>Pilih Konsep Scan</h2>
+        
+        <div class="concept-btn" onclick="setConcept(1)">
+            <h3>Konsep 1: Lensa Kaca (Glassmorphism)</h3>
+            <p>Tanpa siku kaku. Menggunakan efek kotak lensa kaca yang bergerak perlahan, memperjelas area yang dipindai.</p>
+        </div>
+        
+        <div class="concept-btn active" onclick="setConcept(2)">
+            <h3>Konsep 2: Gelombang Cahaya Organik</h3>
+            <p>Tidak ada kotak pembatas. Hanya gradasi cahaya ungu lembut yang menyapu dari atas ke bawah seperti Face ID.</p>
+        </div>
+        
+        <div class="concept-btn" onclick="setConcept(3)">
+            <h3>Konsep 3: Crosshair Minimalis</h3>
+            <p>Mengganti siku ungu besar dengan tanda '+' (crosshair) kecil berwarna putih elegan ala kamera profesional.</p>
+        </div>
+    </div>
+
+    <div class="preview-area">
+        <div class="phone-mockup">
+            <div class="user-photo"></div>
+
+            <!-- Konsep 1 -->
+            <div id="concept-1" class="concept-layer hidden">
+                <div class="c1-overlay"></div>
+                <div class="c1-lens-container">
+                    <div class="c1-lens"></div>
+                    <div class="c1-line"></div>
+                </div>
+            </div>
+
+            <!-- Konsep 2 -->
+            <div id="concept-2" class="concept-layer">
+                <div class="c2-overlay"></div>
+                <div class="c2-wave"></div>
+            </div>
+
+            <!-- Konsep 3 -->
+            <div id="concept-3" class="concept-layer hidden">
+                <div class="c3-overlay"></div>
+                <div class="c3-crosshair c3-tl"></div>
+                <div class="c3-crosshair c3-tr"></div>
+                <div class="c3-crosshair c3-bl"></div>
+                <div class="c3-crosshair c3-br"></div>
+                <div class="c3-crosshair c3-center"></div>
+                <div class="c3-scanline"></div>
+                
+                <!-- Random data points -->
+                <div class="c3-data" style="top: 30%; left: 40%; animation-delay: 0.1s"></div>
+                <div class="c3-data" style="top: 60%; left: 70%; animation-delay: 0.7s"></div>
+                <div class="c3-data" style="top: 45%; left: 20%; animation-delay: 1.2s"></div>
+            </div>
+
+            <!-- Teks Loading Umum (Original Larisi Style) -->
+            <div class="status-box">
+                <div class="dots">
+                    <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+                </div>
+                <div class="scan-text-overlay" id="scan-text">SiLaris sedang menganalisis kontenmu...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function setConcept(id) {
+            document.querySelectorAll('.concept-layer').forEach(el => el.classList.add('hidden'));
+            document.getElementById('concept-' + id).classList.remove('hidden');
+            
+            document.querySelectorAll('.concept-btn').forEach((btn, index) => {
+                if(index + 1 === id) btn.classList.add('active');
+                else btn.classList.remove('active');
+            });
+        }
+
+        // Cycle through Larisi's original scan messages
+        const SCAN_MESSAGES = [
+            'SiLaris sedang menganalisis kontenmu...',
+            'Mendeteksi kategori bisnis...',
+            'Mengidentifikasi target audiens...',
+            'Menyiapkan Master Persona...',
+        ];
+        let msgIdx = 0;
+        setInterval(() => {
+            msgIdx = (msgIdx + 1) % SCAN_MESSAGES.length;
+            document.getElementById('scan-text').innerText = SCAN_MESSAGES[msgIdx];
+        }, 950);
+    </script>
+</body>
+</html>
