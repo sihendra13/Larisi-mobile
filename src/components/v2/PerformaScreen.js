@@ -319,11 +319,25 @@ export default function PerformaScreen({ sessionId, accessToken, profile, onAvat
                 {/* Milestone baru */}
                 {newMilestones.length > 0 && (
                   <div style={{ background:'#fff', border:'1px solid #E4E4EB', borderRadius:'20px', padding:'20px' }}>
-                    <div style={{ fontFamily:'var(--m-font)', fontSize:'14px', fontWeight:'800', color:'var(--m-ink)', marginBottom:'12px' }}>🏆 Pencapaian Baru!</div>
+                    <div style={{ display:'flex', alignItems:'center', gap:'8px', marginBottom:'14px' }}>
+                      <span style={{ fontSize:'18px' }}>🏆</span>
+                      <div>
+                        <div style={{ fontFamily:'var(--m-font)', fontSize:'14px', fontWeight:'800', color:'var(--m-ink)' }}>Pencapaian Baru!</div>
+                        <div style={{ fontFamily:'var(--m-font)', fontSize:'11px', color:'var(--m-ink-sub)' }}>Kamu baru saja mencapai ini</div>
+                      </div>
+                    </div>
                     <div style={{ display:'flex', flexDirection:'column', gap:'8px' }}>
                       {newMilestones.map(m => (
-                        <div key={m.key} style={{ background:'#F0E6FF', borderRadius:'12px', padding:'12px 16px' }}>
-                          <span style={{ fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'700', color:'var(--m-brand)' }}>{m.label}</span>
+                        <div key={m.key} style={{ background:'#F9F9FA', borderRadius:'12px', padding:'14px 16px', display:'flex', gap:'12px', alignItems:'flex-start' }}>
+                          <div style={{ width:'36px', height:'36px', borderRadius:'50%', background:'#F0E6FF', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, fontSize:'18px' }}>
+                            {m.label.match(/[\u{1F300}-\u{1FFFF}]|[\u{2600}-\u{27FF}]/u)?.[0] || '🎯'}
+                          </div>
+                          <div>
+                            <div style={{ fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'800', color:'var(--m-ink)', marginBottom:'3px' }}>
+                              {m.label.replace(/[\u{1F300}-\u{1FFFF}]|[\u{2600}-\u{27FF}]/gu, '').trim()}
+                            </div>
+                            <div style={{ fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)', lineHeight:'1.4' }}>{m.desc}</div>
+                          </div>
                         </div>
                       ))}
                     </div>

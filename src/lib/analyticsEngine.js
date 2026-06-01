@@ -430,16 +430,16 @@ export function anPostingFreq(agg) {
 
 /* ─── Milestone Definitions ─── */
 const MILESTONE_DEFS = [
-  { key: 'first_post',    label: 'Iklan Pertama! 🎉',        check: a => a.total >= 1,             val: a => a.total },
-  { key: 'reach_100',     label: '100 Orang Terjangkau! 🎯', check: a => a.totalReach >= 100,      val: a => a.totalReach },
-  { key: 'reach_1000',    label: '1.000 Reach Organik! 🚀',  check: a => a.totalReach >= 1000,     val: a => a.totalReach },
-  { key: 'first_comment', label: 'Komentar Pertama! 💬',     check: a => (a.bestCamp?._engagement?.comments || 0) > 0, val: () => 1 },
-  { key: 'er_bagus',      label: 'ER di Atas Rata-rata! ⭐', check: a => a.avgER != null && a.avgER >= 3, val: a => a.avgER },
-  { key: 'total_5',       label: '5 Iklan Selesai! 📱',      check: a => a.total >= 5,             val: a => a.total },
-  { key: 'total_10',      label: '10 Iklan! Konsisten! 🔥',  check: a => a.total >= 10,            val: a => a.total },
+  { key: 'first_post',    label: 'Iklan Pertama! 🎉',        desc: 'Kamu berhasil buat dan posting iklan pertama lewat Larisi. Perjalanan dimulai dari sini.',             check: a => a.total >= 1,             val: a => a.total },
+  { key: 'reach_100',     label: '100 Orang Terjangkau! 🎯', desc: 'Iklan organikmu sudah dilihat lebih dari 100 orang tanpa iklan berbayar. Ini awal yang solid.',      check: a => a.totalReach >= 100,      val: a => a.totalReach },
+  { key: 'reach_1000',    label: '1.000 Reach Organik! 🚀',  desc: 'Ribuan orang sudah tahu bisnismu lewat konten organik saja. Saatnya pertimbangkan boost.',           check: a => a.totalReach >= 1000,     val: a => a.totalReach },
+  { key: 'first_comment', label: 'Komentar Pertama! 💬',     desc: 'Ada yang meluangkan waktu untuk berkomentar — tanda audiens mulai tertarik dan terlibat.',           check: a => (a.bestCamp?._engagement?.comments || 0) > 0, val: () => 1 },
+  { key: 'er_bagus',      label: 'ER di Atas Rata-rata! ⭐', desc: 'Engagement rate kamu melampaui rata-rata platform. Artinya kontenmu relevan dan disukai audiens.',   check: a => a.avgER != null && a.avgER >= 3, val: a => a.avgER },
+  { key: 'total_5',       label: '5 Iklan Berjalan! 📱',     desc: '5 iklan sudah tayang — konsistensi mulai terbentuk. Algoritma platform menyukai pebisnis aktif.',   check: a => a.total >= 5,             val: a => a.total },
+  { key: 'total_10',      label: '10 Iklan! Konsisten! 🔥',  desc: '10 iklan adalah bukti nyata konsistensi. Kamu termasuk pebisnis yang aktif di platform sosial.',     check: a => a.total >= 10,            val: a => a.total },
 ];
 export function anMilestones(agg) {
-  return MILESTONE_DEFS.filter(m => m.check(agg)).map(m => ({ key: m.key, label: m.label, value: m.val(agg) }));
+  return MILESTONE_DEFS.filter(m => m.check(agg)).map(m => ({ key: m.key, label: m.label, desc: m.desc, value: m.val(agg) }));
 }
 
 /* ─── Smart Calendar (3 slot minggu depan) ─── */
