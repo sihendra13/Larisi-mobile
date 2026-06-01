@@ -11,9 +11,9 @@ function parseSafeDate(dStr) {
   // Buang pecahan detik yang sering bikin Safari iOS crash
   s = s.replace(/\.\d+/, '');
   // Standarisasi timezone ke Z (UTC) jika dari Supabase
-  if (s.endsWith('+00') || s.endsWith('+00:00')) {
+  if (/\+00(:00)?$/.test(s)) {
     s = s.replace(/\+00(:00)?$/, 'Z');
-  } else if (!s.endsWith('Z') && !s.includes('+') && !s.match(/-\d{2}:\d{2}$/)) {
+  } else if (!/Z$/.test(s) && !/\+|-/.test(s)) {
     s += 'Z';
   }
   return new Date(s);
