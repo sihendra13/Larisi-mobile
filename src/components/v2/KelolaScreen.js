@@ -18,39 +18,59 @@ function platformLabel(platforms) {
 }
 
 /* ─── Fetch campaigns dari Supabase ─── */
-// Mengambil campaign berdasarkan user_id (jika login) ATAU session_id
+// Fetch by session_id (anon) dan user_id (auth), lalu gabungkan
 async function fetchCampaigns(sessionId, accessToken) {
   const sid = sessionId || localStorage.getItem('radar_session_id');
   if (!sid && !accessToken) return [];
 
   try {
-    let uid = null;
-    if (accessToken) {
-      try { uid = JSON.parse(atob(accessToken.split('.')[1]))?.sub || null; } catch {}
-    }
-
-    let url = `${SUPABASE_URL}/rest/v1/campaigns?order=created_at.desc&limit=20`;
-    let authHeader = `Bearer ${SUPABASE_ANON_KEY}`;
-
-    if (uid && sid) {
-      url += `&or=(user_id.eq.${uid},session_id.eq.${sid})`;
-      authHeader = `Bearer ${accessToken}`;
-    } else if (uid) {
-      url += `&user_id=eq.${uid}`;
-      authHeader = `Bearer ${accessToken}`;
-    } else if (sid) {
-      url += `&session_id=eq.${sid}`;
-    }
-
-    const resp = await fetch(url, {
-      headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': authHeader }
-    });
+    let allRows = [];
     
-    if (resp.ok) {
-      const rows = await resp.json();
-      return rows;
+    // 1. Fetch by session_id (sebagai anon) - aman dari JWT expired / RLS strict
+    if (sid) {
+      try {
+        const resp = await fetch(
+          `${SUPABASE_URL}/rest/v1/campaigns?session_id=eq.${sid}&order=created_at.desc&limit=20`,
+          { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` } }
+        );
+        if (resp.ok) {
+          const rows = await resp.json();
+          allRows = allRows.concat(rows);
+        }
+      } catch (e) {}
     }
-    return [];
+
+    // 2. Fetch by user_id (jika login) - untuk mengambil campaign dari perangkat lain
+    if (accessToken) {
+      let uid = null;
+      try { uid = JSON.parse(atob(accessToken.split('.')[1]))?.sub || null; } catch {}
+      if (uid) {
+        try {
+          const resp2 = await fetch(
+            `${SUPABASE_URL}/rest/v1/campaigns?user_id=eq.${uid}&order=created_at.desc&limit=20`,
+            { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${accessToken}` } }
+          );
+          if (resp2.ok) {
+            const rows2 = await resp2.json();
+            allRows = allRows.concat(rows2);
+          }
+        } catch (e) {}
+      }
+    }
+
+    // 3. Deduplikasi berdasarkan id dan urutkan ulang berdasarkan created_at
+    const unique = [];
+    const seen = new Set();
+    for (const r of allRows) {
+      if (!seen.has(r.id)) {
+        seen.add(r.id);
+        unique.push(r);
+      }
+    }
+    
+    unique.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    return unique.slice(0, 20);
+    
   } catch { return []; }
 }
 
