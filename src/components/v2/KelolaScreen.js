@@ -134,6 +134,16 @@ function matchPost(posts, campaign) {
     const exact = posts.find(p => String(p.platform_post_id) === String(campaign.platform_post_id));
     if (exact) return exact;
   }
+  // Exact match via post_id (PostForMe internal ID)
+  if (campaign.post_id) {
+    const exactInternal = posts.find(p => String(p.id) === String(campaign.post_id) || String(p.post_id) === String(campaign.post_id));
+    if (exactInternal) return exactInternal;
+  }
+  // Exact match via post_url
+  if (campaign.post_url) {
+    const exactUrl = posts.find(p => p.post_url === campaign.post_url || p.permalink === campaign.post_url || p.platform_url === campaign.post_url);
+    if (exactUrl) return exactUrl;
+  }
   // Temporal match ±15 menit
   if (campaign.created_at) {
     const campTime = new Date(campaign.created_at.replace(' ', 'T')).getTime();
