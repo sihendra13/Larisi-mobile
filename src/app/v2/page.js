@@ -512,6 +512,7 @@ export default function DapurV2() {
           accessToken={accessToken}
           profile={profile}
           onAvatarClick={() => setShowPanel(true)}
+          onGoToDapur={() => setActiveNav('command')}
         />
       )}
 

@@ -10,7 +10,7 @@ import {
   callSilarisCompetitor, anParseFollowers, anEstCompER, anExtractHandle,
 } from '@/lib/analyticsEngine';
 
-export default function PerformaScreen({ sessionId, accessToken, profile, onAvatarClick }) {
+export default function PerformaScreen({ sessionId, accessToken, profile, onAvatarClick, onGoToDapur }) {
   const [activeTab, setActiveTab]       = useState('Insight');
   const [loading, setLoading]           = useState(true);
   const [refreshing, setRefreshing]     = useState(false);
@@ -300,18 +300,56 @@ export default function PerformaScreen({ sessionId, accessToken, profile, onAvat
                   </div>
                 </div>
 
-                {/* Streak & Frekuensi */}
-                {streak && streak.weeks > 0 && (
-                  <div style={{ background:'#FFF9E6', border:'1px solid #FFE082', borderRadius:'16px', padding:'14px 16px', display:'flex', alignItems:'center', gap:'12px' }}>
-                    <span style={{ fontSize:'28px', flexShrink:0 }}>🔥</span>
-                    <div style={{ flex:1 }}>
-                      <div style={{ fontFamily:'var(--m-font)', fontSize:'15px', fontWeight:'800', color:'#B27A00' }}>
-                        {streak.weeks} minggu berturut-turut!
+                {/* Streak Card — selalu tampil */}
+                {streak !== null && (
+                  <div style={{ background:'#fff', border:'1px solid #E4E4EB', borderRadius:'16px', overflow:'hidden' }}>
+                    {/* Highlight baris atas */}
+                    <div style={{ background:'#FFFBEB', padding:'12px 16px', borderBottom:'1px solid #FDE68A' }}>
+                      <div style={{ fontFamily:'var(--m-font)', fontSize:'12px', fontWeight:'700', color:'#92400E', lineHeight:'1.6' }}>
+                        Algoritma Instagram, Facebook, dan TikTok secara aktif memprioritaskan akun yang posting rutin.{' '}
+                        <mark style={{ background:'#FDE68A', color:'#92400E', padding:'0 3px', borderRadius:'3px' }}>
+                          Akun yang konsisten mendapat organic reach lebih tinggi tanpa perlu iklan berbayar.
+                        </mark>
                       </div>
-                      <div style={{ fontFamily:'var(--m-font)', fontSize:'12px', color:'#B27A00', opacity:0.8, marginTop:'2px' }}>
-                        {streak.thisWeek ? '✓ Sudah posting minggu ini' : '⚠ Belum posting minggu ini'}
-                        {postFreq && ` · ${postFreq.perMonth}/${postFreq.ideal}x bulan ini`}
-                      </div>
+                    </div>
+                    {/* Status personal */}
+                    <div style={{ padding:'14px 16px' }}>
+                      {streak.weeks > 0 && streak.thisWeek ? (
+                        <div style={{ display:'flex', alignItems:'flex-start', gap:'10px' }}>
+                          <span style={{ fontSize:'22px', flexShrink:0 }}>🔥</span>
+                          <div>
+                            <div style={{ fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'800', color:'var(--m-ink)', marginBottom:'3px' }}>
+                              Kamu Aktif {streak.weeks} minggu berturut-turut!
+                            </div>
+                            <div style={{ fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)', lineHeight:'1.4' }}>
+                              Algoritma platform mengenali akunmu yang konsisten, reach organikmu akan lebih terjaga.
+                              {postFreq && ` · ${postFreq.perMonth}/${postFreq.ideal}x bulan ini`}
+                            </div>
+                          </div>
+                        </div>
+                      ) : streak.weeks > 0 && !streak.thisWeek ? (
+                        <div style={{ display:'flex', alignItems:'flex-start', gap:'10px' }}>
+                          <span style={{ fontSize:'22px', flexShrink:0 }}>⚠️</span>
+                          <div>
+                            <div style={{ fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'800', color:'#B45309', marginBottom:'3px' }}>
+                              Belum posting minggu ini.
+                            </div>
+                            <div style={{ fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)', lineHeight:'1.4' }}>
+                              Posting sekarang agar algoritma terus mengenal kontenmu dan tidak skip akunmu.
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div>
+                          <div style={{ fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)', lineHeight:'1.5', marginBottom:'10px' }}>
+                            Posting rutin setiap minggu, algoritma akan lebih sering tampilkan iklanmu.
+                          </div>
+                          <button onClick={onGoToDapur}
+                            style={{ padding:'10px 20px', background:'var(--m-brand)', color:'#fff', border:'none', borderRadius:'10px', fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'700', cursor:'pointer' }}>
+                            Mulai Sekarang →
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
