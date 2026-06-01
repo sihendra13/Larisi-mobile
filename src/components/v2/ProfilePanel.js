@@ -172,7 +172,19 @@ export default function ProfilePanel({
     if (!kecamatan)        { setError('Pilih kecamatan dari dropdown.'); return; }
 
     setSaving(true); setError('');
-    const tok = accessToken;
+    let tok = accessToken;
+    if (!tok) {
+      try {
+        const raw = localStorage.getItem('sb-mojzmlrdihenvfhrwopd-auth-token');
+        if (raw) tok = JSON.parse(raw).access_token;
+      } catch (e) {}
+    }
+    const uid = userId || profile?.id;
+    if (!uid || !tok) {
+      setError('Sesi tidak valid, silakan muat ulang halaman.');
+      setSaving(false);
+      return;
+    }
 
     const profileData = {
       full_name:        ownerName.trim(),
@@ -188,27 +200,31 @@ export default function ProfilePanel({
     };
 
     try {
-      const resp = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}`, {
+      const resp = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${uid}`, {
         method:  'PATCH',
         headers: {
           'apikey':        SUPABASE_ANON_KEY,
           'Authorization': `Bearer ${tok}`,
           'Content-Type':  'application/json',
-          'Prefer':        'return=representation',
+          'Prefer':        'return=minimal',
         },
         body: JSON.stringify(profileData),
       });
-      if (!resp.ok) throw new Error();
-      const updated    = await resp.json();
-      const newProfile = (Array.isArray(updated) ? updated[0] : updated) || profileData;
+      if (!resp.ok) throw new Error('Network or server error');
+      // Karena return=minimal, tidak perlu resp.json()
+      const newProfile = profileData;
       const merged     = { ...(profile || {}), ...newProfile, ...profileData };
       localStorage.setItem('radar_user_profile', JSON.stringify(merged));
+      
       setSaved(true);
       setSaving(false);
-      onSaved?.(merged);
-      setTimeout(() => setSaved(false), 2500);
-    } catch {
-      setError('Gagal menyimpan. Coba lagi.');
+      // Wait a moment so user can see "Tersimpan!" before closing
+      setTimeout(() => {
+        onSaved?.(merged);
+        setSaved(false);
+      }, 1000);
+    } catch (e) {
+      setError(`Gagal menyimpan: ${e.message || 'Coba lagi.'}`);
       setSaving(false);
     }
   };

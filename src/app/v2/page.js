@@ -508,6 +508,8 @@ export default function DapurV2() {
       )}
       {activeNav === 'analytics' && (
         <PerformaScreen
+          sessionId={sessionId}
+          accessToken={accessToken}
           profile={profile}
           onAvatarClick={() => setShowPanel(true)}
         />

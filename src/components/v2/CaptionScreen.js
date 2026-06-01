@@ -517,7 +517,7 @@ export default function CaptionScreen({
     const platLabels = { instagram:'Instagram', facebook:'Facebook', tiktok:'TikTok', youtube:'YouTube' };
     const fmtLabels  = { post:'Post', reel:'Reel', story:'Story', shorts:'Shorts' };
     const platName   = platLabels[sp]     || sp;
-    const fmtName    = sp === 'youtube' ? 'Shorts' : (fmtLabels[format] || '');
+    const fmtName    = (sp === 'tiktok' || sp === 'youtube') ? '' : (fmtLabels[format] || '');
 
     if (!acc?.id) {
       showToast(`⚠ Akun ${platName} belum terhubung. Hubungkan di Platform.`, 'error');
@@ -612,10 +612,10 @@ export default function CaptionScreen({
         try { return JSON.parse(atob((accessToken||'').split('.')[1]))?.sub || null; } catch { return null; }
       })();
 
-      if (effectiveSessionId) {
+      if (effectiveSessionId && accessToken) {
         const reachVal  = computeReach(locPop, radius, localOn, travelerOn);
         const finalName = (overrideName && overrideName.trim()) ? overrideName.trim() : campName;
-        await fetch(`${SUPABASE_URL}/rest/v1/campaigns`, {
+        const dbResp = await fetch(`${SUPABASE_URL}/rest/v1/campaigns`, {
           method: 'POST',
           headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${accessToken || SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
           body: JSON.stringify({
@@ -634,11 +634,15 @@ export default function CaptionScreen({
             caption,
           }),
         });
+        if (!dbResp.ok) {
+          const errTxt = await dbResp.text();
+          throw new Error(`Gagal menyimpan kampanye: ${errTxt}`);
+        }
       }
 
-      // Toast sukses spesifik platform+format (sama seperti desktop)
+      // Toast sukses spesifik platform+format
       const toastLabel = fmtName ? `${fmtName} ${platName}` : platName;
-      showToast(`✓ ${toastLabel} berhasil dipublish!`, 'success');
+      showToast(`✓ ${toastLabel} berhasil diluncurkan!`, 'success');
 
       // Polling background: ambil thumb_url dari /v1/social-posts/{postId} — sama seperti desktop monitor.js
       // Dijalankan SETELAH modal success, tidak blocking UX
@@ -1101,7 +1105,7 @@ export default function CaptionScreen({
         const sp       = { ig:'instagram', tiktok:'tiktok', meta:'facebook', youtube:'youtube' }[platform] || platform;
         const platName = platLabels[sp] || sp;
         const platColor= platColors[sp] || 'var(--m-brand)';
-        const fmtName  = sp === 'youtube' ? 'Shorts' : (fmtLabels[format] || format || '');
+        const fmtName  = (sp === 'tiktok' || sp === 'youtube') ? '' : (fmtLabels[format] || format || '');
         return (
           <div style={{position:'fixed', inset:0, zIndex:2000, background:'rgba(0,0,0,0.5)', display:'flex', alignItems:'flex-end', justifyContent:'center'}}>
             <div style={{background:'#fff', borderRadius:'24px 24px 0 0', padding:'24px 20px', width:'100%', maxWidth:'480px', paddingBottom:'calc(24px + env(safe-area-inset-bottom))'}}>
@@ -1199,10 +1203,6 @@ export default function CaptionScreen({
                   </svg>
                 </div>
                 <div style={{fontFamily:'var(--m-font)', fontSize:'17px', fontWeight:'800', color:'var(--m-ink)', marginBottom:'6px'}}>Iklan berhasil diluncurkan!</div>
-                <div style={{fontFamily:'var(--m-font)', fontSize:'13px', color:'var(--m-ink-sub)', lineHeight:'1.5', display:'flex', alignItems:'center', justifyContent:'center', gap:'4px', marginTop:'12px'}}>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--m-brand)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-                  <span>Membuka halaman kelola iklan…</span>
-                </div>
               </>
             )}
           </div>
