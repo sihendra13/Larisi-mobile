@@ -131,7 +131,7 @@ function matchPost(posts, campaign) {
   if (!posts.length) return null;
   // Exact match via platform_post_id
   if (campaign.platform_post_id) {
-    const exact = posts.find(p => p.platform_post_id === campaign.platform_post_id);
+    const exact = posts.find(p => String(p.platform_post_id) === String(campaign.platform_post_id));
     if (exact) return exact;
   }
   // Temporal match ±15 menit
@@ -258,10 +258,12 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
   });
 
   /* ── Load analytics when detail opens ── */
-  const openDetail = useCallback(async (camp) => {
-    setSelectedCamp(camp);
-    setAnalytics(null);
-    setLoadingAn(true);
+  const openDetail = useCallback(async (camp, silent = false) => {
+    if (!silent) {
+      setSelectedCamp(camp);
+      setAnalytics(null);
+      setLoadingAn(true);
+    }
 
     const accounts = (() => {
       try { return JSON.parse(localStorage.getItem('radar_social_accounts') || '[]'); } catch { return []; }
@@ -271,7 +273,7 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
     const sp  = platApiMap[camp.platforms[0]] || camp.platforms[0];
     const acc = accounts.find(a => a.platform === sp);
 
-    if (!acc?.id) { setLoadingAn(false); return; }
+    if (!acc?.id) { if (!silent) setLoadingAn(false); else { /* done background refresh */ } return; }
 
     const posts = await fetchAnalytics(acc.id, accessToken);
     const post  = matchPost(posts, camp);
@@ -298,12 +300,23 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
     setLoadingAn(false);
 
     // Simpan avatar + username dari akun IG ke camp untuk ditampilkan di detail
-    setSelectedCamp(prev => ({
-      ...prev,
-      avatarUrl: acc.avatar_url || null,
-      username:  acc.username   || null,
-    }));
+    if (!silent) {
+      setSelectedCamp(prev => ({
+        ...prev,
+        avatarUrl: acc.avatar_url || null,
+        username:  acc.username   || null,
+      }));
+    }
   }, [accessToken]);
+
+  /* ── Auto-refresh analytics for detail view every 15s ── */
+  useEffect(() => {
+    if (!selectedCamp) return;
+    const interval = setInterval(() => {
+      openDetail(selectedCamp, true);
+    }, 15000);
+    return () => clearInterval(interval);
+  }, [selectedCamp, openDetail]);
 
   /* ── Archive — konfirmasi dulu, sama seperti desktop ── */
   const handleArchive = useCallback((camp) => {
@@ -392,11 +405,11 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
                   </div>
                 </div>
                 {/* Username akun + platform · format */}
+                
                 <div style={{ fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)', marginBottom:'2px' }}>
-                  {c.username ? `@${c.username}` : platformLabel(c.platforms)}
+                  {c.username ? `@${c.username}` : platformLabel(c.platforms)} · {platformLabel(c.platforms)} · {(c.format || 'POST').toUpperCase()}
                 </div>
-                <div style={{ fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)', marginBottom:'4px', display:'flex', alignItems:'center', gap:'4px', flexWrap:'wrap' }}>
-                  <span>{platformLabel(c.platforms)} · {(c.format || 'POST').toUpperCase()} · </span>
+                <div style={{ fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)', marginBottom:'4px' }}>
                   {c.post_url
                     ? <a href={c.post_url} target="_blank" rel="noopener noreferrer" style={{ display:'inline-flex', alignItems:'center', gap:'4px', textDecoration:'none' }}>
                         <span style={{ fontWeight:'700', color:'var(--m-brand)', textDecoration:'underline', textUnderlineOffset:'2px' }}>{fmtDate(c.created_at)}</span>
