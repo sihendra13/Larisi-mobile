@@ -622,8 +622,12 @@ export async function anGetStrategies(userId, accessToken) {
   return [];
 }
 export async function anSaveStrategy(userId, { handle, platform, comp_result }, accessToken) {
-  if (!userId || !accessToken) return false;
+  if (!userId || !accessToken) {
+    console.warn('[anSaveStrategy] missing userId or accessToken', { userId, hasToken: !!accessToken });
+    return false;
+  }
   try {
+    // Coba upsert dulu dengan on_conflict
     const r = await fetch(
       `${SUPABASE_URL}/rest/v1/competitor_strategies?on_conflict=user_id,handle,platform`,
       {
@@ -632,19 +636,43 @@ export async function anSaveStrategy(userId, { handle, platform, comp_result }, 
           'apikey': SUPABASE_ANON_KEY,
           'Authorization': `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
-          'Prefer': 'resolution=merge-duplicates,return=representation',
+          'Prefer': 'resolution=merge-duplicates',
         },
-        body: JSON.stringify({ user_id: userId, handle, platform, comp_result, last_refreshed_at: new Date().toISOString() }),
+        body: JSON.stringify({
+          user_id: userId,
+          handle,
+          platform,
+          comp_result,
+          last_refreshed_at: new Date().toISOString(),
+        }),
       }
     );
-    if (!r.ok) {
-      const err = await r.text();
-      console.error('[anSaveStrategy] HTTP', r.status, err);
-      return false;
-    }
-    return true;
+    if (r.ok || r.status === 201) return true;
+    // Fallback: coba INSERT biasa tanpa upsert
+    const errText = await r.text();
+    console.warn('[anSaveStrategy] upsert failed', r.status, errText, '— trying plain INSERT');
+    const r2 = await fetch(`${SUPABASE_URL}/rest/v1/competitor_strategies`, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'resolution=ignore-duplicates',
+      },
+      body: JSON.stringify({
+        user_id: userId,
+        handle,
+        platform,
+        comp_result,
+        last_refreshed_at: new Date().toISOString(),
+      }),
+    });
+    if (r2.ok || r2.status === 201) return true;
+    const err2 = await r2.text();
+    console.error('[anSaveStrategy] both attempts failed', r2.status, err2);
+    return false;
   } catch(e) {
-    console.error('[anSaveStrategy]', e);
+    console.error('[anSaveStrategy] exception', e);
     return false;
   }
 }

@@ -311,11 +311,9 @@ export default function PerformaScreen({ sessionId, accessToken, profile, onAvat
                   <div style={{ background:'#fff', border:'1px solid #E4E4EB', borderRadius:'16px', overflow:'hidden' }}>
                     {/* Highlight baris atas */}
                     <div style={{ background:'#F0E6FF', padding:'12px 16px', borderBottom:'1px solid #D6BCFA' }}>
-                      <div style={{ fontFamily:'var(--m-font)', fontSize:'12px', fontWeight:'700', color:'#5B21B6', lineHeight:'1.6' }}>
+                      <div style={{ fontFamily:'var(--m-font)', fontSize:'12px', fontWeight:'600', color:'#5B21B6', lineHeight:'1.6' }}>
                         Algoritma Instagram, Facebook, dan TikTok secara aktif memprioritaskan akun yang posting rutin.{' '}
-                        <mark style={{ background:'#D6BCFA', color:'#4C1D95', padding:'0 3px', borderRadius:'3px' }}>
-                          Akun yang konsisten mendapat organic reach lebih tinggi tanpa perlu iklan berbayar.
-                        </mark>
+                        <strong style={{ color:'#4C1D95' }}>Akun yang konsisten mendapat organic reach lebih tinggi tanpa perlu iklan berbayar.</strong>
                       </div>
                     </div>
                     {/* Status personal */}
