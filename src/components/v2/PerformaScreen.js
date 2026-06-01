@@ -149,15 +149,21 @@ export default function PerformaScreen({ sessionId, accessToken, profile, onAvat
     if (!userId || !accessToken) return;
     setCompSaving(true);
     try {
-      await anSaveStrategy(userId, {
+      const ok = await anSaveStrategy(userId, {
         handle: compResult.comp_handle || compInput,
         platform: compPlatform,
         comp_result: compResult,
       }, accessToken);
-      const strats = await anGetStrategies(userId, accessToken);
-      setStrategies(strats);
-      setCompSaved(true);
-      setTimeout(() => setCompSaved(false), 3000);
+      if (ok) {
+        const strats = await anGetStrategies(userId, accessToken);
+        setStrategies(strats);
+        setCompSaved(true);
+        setTimeout(() => setCompSaved(false), 3000);
+      } else {
+        // Fallback: tetap refresh list meski save gagal
+        const strats = await anGetStrategies(userId, accessToken);
+        setStrategies(strats);
+      }
     } catch (e) {
       console.error('[save strategy]', e);
     } finally {
@@ -304,10 +310,10 @@ export default function PerformaScreen({ sessionId, accessToken, profile, onAvat
                 {streak !== null && (
                   <div style={{ background:'#fff', border:'1px solid #E4E4EB', borderRadius:'16px', overflow:'hidden' }}>
                     {/* Highlight baris atas */}
-                    <div style={{ background:'#FFFBEB', padding:'12px 16px', borderBottom:'1px solid #FDE68A' }}>
-                      <div style={{ fontFamily:'var(--m-font)', fontSize:'12px', fontWeight:'700', color:'#92400E', lineHeight:'1.6' }}>
+                    <div style={{ background:'#F0E6FF', padding:'12px 16px', borderBottom:'1px solid #D6BCFA' }}>
+                      <div style={{ fontFamily:'var(--m-font)', fontSize:'12px', fontWeight:'700', color:'#5B21B6', lineHeight:'1.6' }}>
                         Algoritma Instagram, Facebook, dan TikTok secara aktif memprioritaskan akun yang posting rutin.{' '}
-                        <mark style={{ background:'#FDE68A', color:'#92400E', padding:'0 3px', borderRadius:'3px' }}>
+                        <mark style={{ background:'#D6BCFA', color:'#4C1D95', padding:'0 3px', borderRadius:'3px' }}>
                           Akun yang konsisten mendapat organic reach lebih tinggi tanpa perlu iklan berbayar.
                         </mark>
                       </div>

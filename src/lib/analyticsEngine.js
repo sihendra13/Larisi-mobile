@@ -622,14 +622,31 @@ export async function anGetStrategies(userId, accessToken) {
   return [];
 }
 export async function anSaveStrategy(userId, { handle, platform, comp_result }, accessToken) {
-  if (!userId || !accessToken) return;
+  if (!userId || !accessToken) return false;
   try {
-    await fetch(`${SUPABASE_URL}/rest/v1/competitor_strategies`, {
-      method: 'POST',
-      headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' },
-      body: JSON.stringify({ user_id: userId, handle, platform, comp_result, last_refreshed_at: new Date().toISOString() }),
-    });
-  } catch {}
+    const r = await fetch(
+      `${SUPABASE_URL}/rest/v1/competitor_strategies?on_conflict=user_id,handle,platform`,
+      {
+        method: 'POST',
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'resolution=merge-duplicates,return=representation',
+        },
+        body: JSON.stringify({ user_id: userId, handle, platform, comp_result, last_refreshed_at: new Date().toISOString() }),
+      }
+    );
+    if (!r.ok) {
+      const err = await r.text();
+      console.error('[anSaveStrategy] HTTP', r.status, err);
+      return false;
+    }
+    return true;
+  } catch(e) {
+    console.error('[anSaveStrategy]', e);
+    return false;
+  }
 }
 export async function anDeleteStrategy(id, accessToken) {
   if (!id || !accessToken) return;
