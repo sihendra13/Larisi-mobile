@@ -30,6 +30,9 @@ export default function PerformaScreen({ sessionId, accessToken, profile, userId
   const [compLoading, setCompLoading]   = useState(false);
   const [compSaving, setCompSaving]     = useState(false);
   const [compSaved, setCompSaved]       = useState(false);
+  // Strategi tersimpan — expanded item
+  const [expandedStratId, setExpandedStratId] = useState(null);
+  const [stratStatus, setStratStatus]   = useState({}); // { [id]: 'baru'|'sedang'|'selesai' }
   // Boost
   const [boostCamp, setBoostCamp]       = useState(null);
   const [boostBudget, setBoostBudget]   = useState(25000);
@@ -792,17 +795,58 @@ export default function PerformaScreen({ sessionId, accessToken, profile, userId
                 <div style={{ display:'flex', flexDirection:'column', gap:'8px' }}>
                   {strategies.map(s => {
                     const platInfo = AN_PLAT[s.platform] || { name: s.platform, color: '#666' };
-                    const result = s.comp_result || {};
+                    const result   = s.comp_result || {};
+                    const isOpen   = expandedStratId === s.id;
+                    const status   = stratStatus[s.id] || 'baru';
+                    const statusMap = { baru: { icon:'⚪', label:'Baru', color:'#6B7280' }, sedang: { icon:'🔵', label:'Berjalan', color:'#2563EB' }, selesai: { icon:'✅', label:'Selesai', color:'#16a34a' } };
+                    const st = statusMap[status];
+                    const nextStatus = { baru:'sedang', sedang:'selesai', selesai:'baru' };
+
                     return (
-                      <div key={s.id} style={{ background:'#F9F9FA', borderRadius:'12px', padding:'14px', display:'flex', alignItems:'center', gap:'12px' }}>
-                        <div style={{ flex:1, minWidth:0 }}>
-                          <div style={{ fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'700', color:'var(--m-ink)', marginBottom:'2px' }}>{s.handle}</div>
-                          <div style={{ fontFamily:'var(--m-font)', fontSize:'11px', color: platInfo.color }}>{platInfo.name}{result.comp_er ? ` · Est. ER ${result.comp_er}` : ''}</div>
+                      <div key={s.id} style={{ background:'#F9F9FA', borderRadius:'12px', overflow:'hidden', border: isOpen ? '1px solid #E4E4EB' : '1px solid transparent' }}>
+                        {/* Header — tap untuk expand */}
+                        <div onClick={() => setExpandedStratId(isOpen ? null : s.id)}
+                          style={{ padding:'14px', display:'flex', alignItems:'center', gap:'12px', cursor:'pointer' }}>
+                          <div style={{ flex:1, minWidth:0 }}>
+                            <div style={{ fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'700', color:'var(--m-ink)', marginBottom:'2px' }}>{s.handle}</div>
+                            <div style={{ fontFamily:'var(--m-font)', fontSize:'11px', color: platInfo.color }}>{platInfo.name}{result.comp_er ? ` · Est. ER ${result.comp_er}` : ''}</div>
+                          </div>
+                          <button onClick={e => { e.stopPropagation(); setStratStatus(prev => ({ ...prev, [s.id]: nextStatus[status] })); }}
+                            style={{ background: status === 'selesai' ? '#E6F4EA' : '#fff', border:'1px solid #E4E4EB', borderRadius:'999px', padding:'4px 10px', fontFamily:'var(--m-font)', fontSize:'11px', fontWeight:'600', color: st.color, cursor:'pointer', flexShrink:0 }}>
+                            {st.icon} {st.label}
+                          </button>
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink:0, transform: isOpen ? 'rotate(180deg)' : 'none', transition:'transform 0.2s' }}>
+                            <polyline points="6 9 12 15 18 9"/>
+                          </svg>
                         </div>
-                        <button onClick={() => handleDeleteStrategy(s.id)}
-                          style={{ width:'32px', height:'32px', borderRadius:'50%', background:'#fff', border:'1px solid #E4E4EB', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', flexShrink:0 }}>
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
-                        </button>
+
+                        {/* Expanded content */}
+                        {isOpen && (
+                          <div style={{ borderTop:'1px solid #E4E4EB', padding:'14px', background:'#fff' }}>
+                            {/* Insights */}
+                            {result.insights?.length > 0 && (
+                              <div style={{ display:'flex', flexDirection:'column', gap:'6px', marginBottom:'14px' }}>
+                                {result.insights.map((ins, i) => (
+                                  <div key={i} style={{ background:'#F9F9FA', borderRadius:'10px', padding:'10px 12px', display:'flex', gap:'8px', alignItems:'flex-start' }}>
+                                    <span style={{ fontSize:'12px', flexShrink:0 }}>{ins.type === 'green' ? '💡' : ins.type === 'amber' ? '⚠️' : '🔍'}</span>
+                                    <div style={{ fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink)', lineHeight:'1.5' }}>{ins.text}</div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                            {/* Actions */}
+                            <div style={{ display:'flex', gap:'8px' }}>
+                              <button onClick={onGoToDapur}
+                                style={{ flex:1, padding:'11px', borderRadius:'10px', background:'#1A1A1A', color:'#fff', border:'none', fontFamily:'var(--m-font)', fontSize:'12px', fontWeight:'700', cursor:'pointer' }}>
+                                🚀 Buat Iklan
+                              </button>
+                              <button onClick={() => handleDeleteStrategy(s.id)}
+                                style={{ width:'44px', height:'44px', borderRadius:'10px', background:'#fff', border:'1px solid #E4E4EB', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', flexShrink:0 }}>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+                              </button>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     );
                   })}
