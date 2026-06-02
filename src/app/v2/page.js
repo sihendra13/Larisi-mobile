@@ -283,11 +283,15 @@ export default function DapurV2() {
     // Jalankan sekali saat authState === 'app'
     refreshAll();
 
+    // Proactive refresh setiap 30 menit — cegah token expired saat app aktif
+    const timer = setInterval(refreshAll, 30 * 60 * 1000);
+
     const onVisChange = () => { if (!document.hidden) refreshAll(); };
     window.addEventListener('focus', refreshAll);
     window.addEventListener('visibilitychange', onVisChange);
 
     return () => {
+      clearInterval(timer);
       window.removeEventListener('focus', refreshAll);
       window.removeEventListener('visibilitychange', onVisChange);
     };
