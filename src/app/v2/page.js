@@ -511,6 +511,7 @@ export default function DapurV2() {
           sessionId={sessionId}
           accessToken={accessToken}
           profile={profile}
+          userId={userId}
           onAvatarClick={() => setShowPanel(true)}
           onGoToDapur={() => setActiveNav('command')}
         />

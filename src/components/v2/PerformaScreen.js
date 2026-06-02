@@ -10,7 +10,9 @@ import {
   callSilarisCompetitor, anParseFollowers, anEstCompER, anExtractHandle,
 } from '@/lib/analyticsEngine';
 
-export default function PerformaScreen({ sessionId, accessToken, profile, onAvatarClick, onGoToDapur }) {
+export default function PerformaScreen({ sessionId, accessToken, profile, userId: userIdProp, onAvatarClick, onGoToDapur }) {
+  // userId dari JWT (paling akurat) — fallback ke profile.id
+  const authUserId = userIdProp || profile?.id || null;
   const [activeTab, setActiveTab]       = useState('Insight');
   const [loading, setLoading]           = useState(true);
   const [refreshing, setRefreshing]     = useState(false);
@@ -72,24 +74,23 @@ export default function PerformaScreen({ sessionId, accessToken, profile, onAvat
       setCalendar(anSmartCalendar(aggData));
 
       // Milestone check
-      const userId = profile?.id || null;
       const reached = anMilestones(aggData);
-      if (userId && accessToken && reached.length) {
-        const saved = await anGetMilestones(userId, accessToken);
+      if (authUserId && accessToken && reached.length) {
+        const saved = await anGetMilestones(authUserId, accessToken);
         const savedKeys = new Set(saved.map(s => s.milestone_key));
         const fresh = reached.filter(m => !savedKeys.has(m.key));
         setNewMilestones(fresh);
-        await Promise.all(fresh.map(m => anSetMilestone(userId, m.key, m.value, accessToken)));
+        await Promise.all(fresh.map(m => anSetMilestone(authUserId, m.key, m.value, accessToken)));
       }
 
       // Strategies
-      if (userId && accessToken) {
-        const strats = await anGetStrategies(userId, accessToken);
+      if (authUserId && accessToken) {
+        const strats = await anGetStrategies(authUserId, accessToken);
         setStrategies(strats);
       }
 
       // AI Narrative
-      const cacheUserId = profile?.id || sessionId;
+      const cacheUserId = authUserId || sessionId;
       let cached = null;
       if (!forceRefresh) cached = await anGetCache(cacheUserId, 'narasi');
       if (cached && !anNeedsRegenerate(aggData, cached.agg_snapshot)) {
@@ -145,7 +146,7 @@ export default function PerformaScreen({ sessionId, accessToken, profile, onAvat
 
   const handleSaveStrategy = async () => {
     if (!compResult) return;
-    const userId = profile?.id;
+    const userId = authUserId;
     if (!userId || !accessToken) return;
     setCompSaving(true);
     try {
@@ -724,7 +725,7 @@ export default function PerformaScreen({ sessionId, accessToken, profile, onAvat
                     </div>
                   ))}
                   {/* Save button */}
-                  <button onClick={handleSaveStrategy} disabled={compSaving || compSaved || !profile?.id || !accessToken}
+                  <button onClick={handleSaveStrategy} disabled={compSaving || compSaved || !authUserId || !accessToken}
                     style={{ width:'100%', marginTop:'8px', padding:'12px', borderRadius:'12px', background: compSaved ? '#E6F4EA' : '#1A1A1A', border:'none', cursor: compSaved ? 'default' : 'pointer', fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'700', color: compSaved ? '#34A853' : '#fff', opacity: compSaving ? 0.6 : 1, transition:'all 0.3s' }}>
                     {compSaved ? '✓ Tersimpan!' : compSaving ? 'Menyimpan...' : '✨ Simpan Strategi Pesaing Ini'}
                   </button>
