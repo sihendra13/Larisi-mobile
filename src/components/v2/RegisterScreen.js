@@ -131,7 +131,7 @@ export default function RegisterScreen({ onRegisterSuccess, onGoLogin }) {
   return (
     <div className="bg-animated" style={{
       minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
-      padding: '24px', position: 'relative', overflow: 'hidden', fontFamily: '-apple-system, sans-serif'
+      padding: '24px', position: 'relative', overflowY: 'auto', fontFamily: '-apple-system, sans-serif'
     }}>
       
       {/* Background Blobs for extra energy */}

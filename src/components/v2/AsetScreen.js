@@ -787,34 +787,36 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
         </div>
 
         {/* Format chips — Instagram underline style */}
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '0', paddingBottom: '4px' }}>
-          {FORMATS.map(f => {
-            const active = fmtLower === f.toLowerCase();
-            return (
-              <button key={f}
-                onClick={() => onFormatChange(f.toLowerCase())}
-                style={{
-                  padding: '5px 18px 7px',
-                  border: 'none', background: 'transparent',
-                  cursor: 'pointer',
-                  fontFamily: 'var(--m-font)', fontSize: '14px',
-                  fontWeight: active ? '700' : '500',
-                  color: isEmpty
-                    ? (active ? 'var(--m-ink)' : 'var(--m-ink-sub)')
-                    : (active ? '#fff' : 'rgba(255,255,255,0.45)'),
-                  borderBottom: active
-                    ? `2px solid ${isEmpty ? 'var(--m-ink)' : '#fff'}`
-                    : '2px solid transparent',
-                  textShadow: isEmpty ? 'none' : '0 1px 3px rgba(0,0,0,0.4)',
-                  WebkitTapHighlightColor: 'transparent',
-                  transition: 'color .15s',
-                }}
-              >
-                {f}
-              </button>
-            );
-          })}
-        </div>
+        {(platform !== 'tiktok' && platform !== 'youtube') && (
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '0', paddingBottom: '4px' }}>
+            {FORMATS.map(f => {
+              const active = fmtLower === f.toLowerCase();
+              return (
+                <button key={f}
+                  onClick={() => onFormatChange(f.toLowerCase())}
+                  style={{
+                    padding: '5px 18px 7px',
+                    border: 'none', background: 'transparent',
+                    cursor: 'pointer',
+                    fontFamily: 'var(--m-font)', fontSize: '14px',
+                    fontWeight: active ? '700' : '500',
+                    color: isEmpty
+                      ? (active ? 'var(--m-ink)' : 'var(--m-ink-sub)')
+                      : (active ? '#fff' : 'rgba(255,255,255,0.45)'),
+                    borderBottom: active
+                      ? `2px solid ${isEmpty ? 'var(--m-ink)' : '#fff'}`
+                      : '2px solid transparent',
+                    textShadow: isEmpty ? 'none' : '0 1px 3px rgba(0,0,0,0.4)',
+                    WebkitTapHighlightColor: 'transparent',
+                    transition: 'color .15s',
+                  }}
+                >
+                  {f}
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {/* ── Master Persona card — tepat di bawah chips, ukuran penuh ── */}
         {!isEmpty && !isScanning && detectedPersona && (
