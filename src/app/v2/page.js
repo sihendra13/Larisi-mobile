@@ -14,7 +14,7 @@ import SplashScreen      from '@/components/v2/SplashScreen';
 import InstallScreen     from '@/components/v2/InstallScreen';
 import ProfilePanel      from '@/components/v2/ProfilePanel';
 import ReminderModal     from '@/components/v2/ReminderModal';
-import { getProfile, getSessionId, getAccessToken, SUPABASE_URL, SUPABASE_ANON_KEY } from '@/lib/config';
+import { getProfile, getSessionId, getAccessToken, getValidAccessToken, SUPABASE_URL, SUPABASE_ANON_KEY } from '@/lib/config';
 import { handleOAuthRedirectCallback, syncSocialAccountsToSupabase, getStoredAccounts } from '@/lib/connectSocial';
 
 export default function DapurV2() {
@@ -98,9 +98,12 @@ export default function DapurV2() {
       }
     });
 
+    /* Bungkus async agar bisa await token refresh */
+    (async () => {
     /* localStorage agar splash hanya muncul sekali seumur install, bukan tiap buka app */
     const splashShown = localStorage.getItem('larisi_splash_shown');
-    const tok = getAccessToken();
+    // getValidAccessToken: auto-refresh kalau expired (fix iOS PWA 401)
+    const tok = await getValidAccessToken().catch(() => getAccessToken());
 
     const urlParams = new URLSearchParams(window.location.search);
     const planParam = urlParams.get('plan');
@@ -212,6 +215,7 @@ export default function DapurV2() {
       setShowSplash(false);
       continueToAuth();
     }
+    })(); // tutup async IIFE
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -249,11 +253,20 @@ export default function DapurV2() {
     }
   };
 
-  /* Background Refresh: Tarik profil terbaru dari Supabase saat app aktif */
+  /* Background Refresh: token + profil saat app kembali aktif */
   useEffect(() => {
     if (!userId || authState !== 'app') return;
 
-    const refreshProfile = async () => {
+    const refreshAll = async () => {
+      // 1. Refresh accessToken kalau expired (iOS PWA sering expired di background)
+      try {
+        const freshTok = await getValidAccessToken();
+        if (freshTok) setAccessToken(freshTok);
+      } catch (e) {
+        console.warn('[app] Token refresh failed:', e);
+      }
+
+      // 2. Refresh profil
       if (typeof window !== 'undefined' && window.getUserProfile) {
         try {
           const { data, error } = await window.getUserProfile(userId);
@@ -262,20 +275,20 @@ export default function DapurV2() {
             setProfile(data);
           }
         } catch (e) {
-          console.warn('[app] Background refresh failed:', e);
+          console.warn('[app] Profile refresh failed:', e);
         }
       }
     };
 
-    // Jalankan sekali saat authState === 'app' (user sudah di dalam app)
-    refreshProfile();
+    // Jalankan sekali saat authState === 'app'
+    refreshAll();
 
-    const onVisChange = () => { if (!document.hidden) refreshProfile(); };
-    window.addEventListener('focus', refreshProfile);
+    const onVisChange = () => { if (!document.hidden) refreshAll(); };
+    window.addEventListener('focus', refreshAll);
     window.addEventListener('visibilitychange', onVisChange);
 
     return () => {
-      window.removeEventListener('focus', refreshProfile);
+      window.removeEventListener('focus', refreshAll);
       window.removeEventListener('visibilitychange', onVisChange);
     };
   }, [userId, authState]);
