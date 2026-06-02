@@ -383,7 +383,7 @@ function renderCampaigns() {
         '</svg>' +
         '<h3 style="font-size:18px;font-weight:600;color:#1a1a2e;margin:0;font-family:var(--font,sans-serif);">Belum ada iklan yang berjalan</h3>' +
         '<p style="font-size:14px;color:#6b7280;line-height:1.6;margin:0;font-family:var(--font,sans-serif);">Tayangkan iklan pertamamu dan pantau performanya secara real-time di sini!</p>' +
-        '<button onclick="switchMenu(\'command\')" class="cc-empty-cta">🚀 Buat Iklan Pertama</button>' +
+        '<button onclick="switchMenu(\'command\')" class="cc-empty-cta">Buat Iklan Pertama</button>' +
       '</div>';
     return;
   }

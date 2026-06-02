@@ -1139,7 +1139,7 @@ function _renderRekomendasiWeek() {
     '</div>' +
     '<div class="an-rekom-week-cta">' +
       '<div class="an-rekom-cta-row">' +
-        '<button class="an-rekom-week-cta-btn" onclick="switchMenu(\'command\')">🚀 Buat Iklan Sekarang →</button>' +
+        '<button class="an-rekom-week-cta-btn" onclick="switchMenu(\'command\')">Buat Iklan Sekarang →</button>' +
         '<button class="an-rekom-week-cta-btn an-rekom-week-cta-btn-outline" onclick="switchMenu(\'monitor\')">Lihat Iklan Aktif →</button>' +
       '</div>' +
     '</div>' +
@@ -1282,7 +1282,7 @@ function _anPopulateAI(ai, narasiTs, agg) {
       ctaWrap.innerHTML =
         '<div class="an-si-cta-row">' +
           '<button class="an-si-cta" onclick="if(typeof showBoostModal===\'function\')showBoostModal(window._analyticsBestCamp);">' +
-            '🚀 Boost ' + _bestCName +
+            'Boost ' + _bestCName +
           '</button>' +
           '<button class="an-si-cta an-si-cta-outline" onclick="switchMenu(\'command\')">' +
             '+ Buat Iklan Baru' +
@@ -2364,7 +2364,7 @@ function _anRenderSavedStrategies(showAll) {
       (judul     ? '<div class="an-saved-strat-judul">' + judul + '</div>' : '') +
       (firstStep ? '<div class="an-saved-strat-preview">' + firstStep + '</div>' : '') +
       '<div class="an-saved-strat-actions">' +
-        '<button class="an-saved-strat-act-btn an-saved-strat-act-launch" onclick="anLaunchFromStrat(' + s.id + ')">🚀 Buat Iklan Sekarang</button>' +
+        '<button class="an-saved-strat-act-btn an-saved-strat-act-launch" onclick="anLaunchFromStrat(' + s.id + ')">Buat Iklan Sekarang</button>' +
         '<button class="an-saved-strat-act-btn an-saved-strat-act-done' + (isSelesai ? ' done' : '') + '" onclick="anToggleStratStatus(' + s.id + ')">' +
           (isSelesai ? '✅ Selesai' : '✓ Tandai Selesai') +
         '</button>' +

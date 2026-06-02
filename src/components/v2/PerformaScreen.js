@@ -520,7 +520,7 @@ export default function PerformaScreen({ sessionId, accessToken, profile, userId
                     })}
                   </div>
                   <button onClick={() => {}} style={{ width:'100%', padding:'14px', borderRadius:'12px', background:'#1A1A1A', color:'#fff', border:'none', cursor:'pointer', fontFamily:'var(--m-font)', fontSize:'14px', fontWeight:'700', display:'flex', alignItems:'center', justifyContent:'center', gap:'8px' }}>
-                    🚀 Buat Iklan Sekarang →
+                    Buat Iklan Sekarang →
                   </button>
                 </div>
 
@@ -825,11 +825,11 @@ export default function PerformaScreen({ sessionId, accessToken, profile, userId
                           <div style={{ borderTop:'1px solid #E4E4EB', padding:'14px', background:'#fff' }}>
                             {/* Insights */}
                             {result.insights?.length > 0 && (
-                              <div style={{ display:'flex', flexDirection:'column', gap:'6px', marginBottom:'14px' }}>
+                              <div style={{ display:'flex', flexDirection:'column', gap:'10px', marginBottom:'14px' }}>
                                 {result.insights.map((ins, i) => (
-                                  <div key={i} style={{ background:'#F9F9FA', borderRadius:'10px', padding:'10px 12px', display:'flex', gap:'8px', alignItems:'flex-start' }}>
-                                    <span style={{ fontSize:'12px', flexShrink:0 }}>{ins.type === 'green' ? '💡' : ins.type === 'amber' ? '⚠️' : '🔍'}</span>
-                                    <div style={{ fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink)', lineHeight:'1.5' }}>{ins.text}</div>
+                                  <div key={i} style={{ background:'#fff', borderRadius:'12px', padding:'14px', display:'flex', gap:'12px', alignItems:'flex-start', border:'1px solid #D1D5DB', boxShadow:'0 2px 4px rgba(0,0,0,0.02)' }}>
+                                    <span style={{ fontSize:'16px', flexShrink:0, marginTop:'2px' }}>{ins.type === 'green' ? '💡' : ins.type === 'amber' ? '⚠️' : '🔍'}</span>
+                                    <div style={{ fontFamily:'var(--m-font)', fontSize:'13px', color:'var(--m-ink)', lineHeight:'1.5' }}>{ins.text}</div>
                                   </div>
                                 ))}
                               </div>
@@ -838,7 +838,7 @@ export default function PerformaScreen({ sessionId, accessToken, profile, userId
                             <div style={{ display:'flex', gap:'8px' }}>
                               <button onClick={onGoToDapur}
                                 style={{ flex:1, padding:'11px', borderRadius:'10px', background:'#1A1A1A', color:'#fff', border:'none', fontFamily:'var(--m-font)', fontSize:'12px', fontWeight:'700', cursor:'pointer' }}>
-                                🚀 Buat Iklan
+                                Buat Iklan
                               </button>
                               <button onClick={() => handleDeleteStrategy(s.id)}
                                 style={{ width:'44px', height:'44px', borderRadius:'10px', background:'#fff', border:'1px solid #E4E4EB', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', flexShrink:0 }}>
