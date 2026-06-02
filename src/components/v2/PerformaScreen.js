@@ -10,7 +10,7 @@ import {
   callSilarisCompetitor, anParseFollowers, anEstCompER, anExtractHandle,
 } from '@/lib/analyticsEngine';
 
-export default function PerformaScreen({ sessionId, accessToken, profile, userId: userIdProp, onAvatarClick, onGoToDapur }) {
+export default function PerformaScreen({ sessionId, accessToken, profile, userId: userIdProp, onAvatarClick, onGoToDapur, triggerUpgrade }) {
   // userId dari JWT (paling akurat) — fallback ke profile.id
   const authUserId = userIdProp || profile?.id || null;
   const [activeTab, setActiveTab]       = useState('Insight');
@@ -119,6 +119,19 @@ export default function PerformaScreen({ sessionId, accessToken, profile, userId
   const handleAnalyzeCompetitor = async () => {
     const raw = compInput.trim();
     if (!raw) return;
+
+    // Logic Gembok (Padlock) untuk Freemium
+    const plan = profile?.selected_plan || 'freemium';
+    if (plan === 'freemium' && strategies.length >= 1) {
+      if (triggerUpgrade) {
+        triggerUpgrade(
+          'Batas Analisis Tercapai',
+          'Anda telah mencapai batas 1 Analisis Kompetitor untuk paket Freemium. Upgrade ke paket Pro untuk analisis pesaing tanpa batas:'
+        );
+      }
+      return;
+    }
+
     const handle = anExtractHandle(raw);
     setCompInput(handle);
     setCompLoading(true);
@@ -735,9 +748,19 @@ export default function PerformaScreen({ sessionId, accessToken, profile, userId
                 </div>
               )}
 
-              <div style={{ background:'#F0E6FF', borderRadius:'12px', padding:'16px' }}>
+              <div 
+                onClick={() => {
+                  if (triggerUpgrade) {
+                    triggerUpgrade(
+                      'Upgrade ke Pro',
+                      'Dapatkan akses penuh ke fitur analisis kompetitor dan fitur eksklusif lainnya dengan berlangganan paket Pro:'
+                    );
+                  }
+                }}
+                style={{ background:'#F0E6FF', borderRadius:'12px', padding:'16px', cursor:'pointer' }}
+              >
                 <div style={{ fontFamily:'var(--m-font)', fontSize:'13px', color:'var(--m-ink)', lineHeight:'1.5' }}>
-                  ⚡ Upgrade <strong>Pro</strong> untuk analisis hingga 3 pesaing sekaligus. <a href="#" style={{ color:'var(--m-brand)', textDecoration:'none', fontWeight:'700' }}>Lihat paket →</a>
+                  ⚡ Upgrade <strong>Pro</strong> untuk analisis pesaing tanpa batas. <span style={{ color:'var(--m-brand)', textDecoration:'none', fontWeight:'700' }}>Lihat paket →</span>
                 </div>
               </div>
               <div style={{ fontFamily:'var(--m-font)', fontSize:'11px', color:'var(--m-ink-sub)', textAlign:'center', marginTop:'12px' }}>

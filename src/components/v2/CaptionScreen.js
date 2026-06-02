@@ -356,7 +356,7 @@ export default function CaptionScreen({
   persona, profile,
   caption, setCaption,
   accessToken, sessionId, userId,
-  onBack, onUbahAset, onLaunchSuccess,
+  onBack, onUbahAset, onLaunchSuccess, triggerUpgrade,
 }) {
   const [stitchOn,        setStitchOn]        = useState(true);
   const [generating,      setGenerating]      = useState(false);
@@ -495,6 +495,28 @@ export default function CaptionScreen({
   /* ── Buka confirm modal saat Tayangkan diklik ── */
   const handleTayangkan = () => {
     if (!caption || posting) return;
+
+    // Cek Kuota Tayang Iklan
+    const plan = profile?.selected_plan || 'freemium';
+    let quota = 0;
+    if (plan === 'freemium') {
+      quota = typeof profile?.ai_launch_count === 'number' ? profile.ai_launch_count : parseInt(localStorage.getItem('larisi_freemium_quota') || '10');
+    } else if (plan === 'starter') {
+      quota = typeof profile?.ai_launch_count === 'number' ? profile.ai_launch_count : parseInt(localStorage.getItem('larisi_starter_quota') || '50');
+    } else {
+      quota = 999999;
+    }
+
+    if (quota <= 0) {
+      if (triggerUpgrade) {
+        triggerUpgrade(
+          'Kuota Tayang Habis!',
+          'Anda telah mencapai batas maksimal tayang iklan. Pilih paket yang sesuai untuk menambah kuota tayang dan terus kembangkan bisnis Anda:'
+        );
+      }
+      return;
+    }
+
     // Pre-fill nama campaign: personaName · locShort (sama seperti desktop)
     const personaName = persona?.name || profile?.category || 'Iklan Baru';
     const locShort    = locName ? locName.split(',')[0].trim() : '';
@@ -643,6 +665,33 @@ export default function CaptionScreen({
       // Toast sukses spesifik platform+format
       const toastLabel = fmtName ? `${fmtName} ${platName}` : platName;
       showToast(`✓ ${toastLabel} berhasil diluncurkan!`, 'success');
+
+      // Kurangi kuota jika bukan pro
+      const plan = profile?.selected_plan || 'freemium';
+      if (plan !== 'pro' && profile?.id) {
+        let currentQuota = 10;
+        if (plan === 'freemium') {
+          currentQuota = typeof profile?.ai_launch_count === 'number' ? profile.ai_launch_count : parseInt(localStorage.getItem('larisi_freemium_quota') || '10');
+        } else if (plan === 'starter') {
+          currentQuota = typeof profile?.ai_launch_count === 'number' ? profile.ai_launch_count : parseInt(localStorage.getItem('larisi_starter_quota') || '50');
+        }
+        
+        const newQuota = Math.max(0, currentQuota - 1);
+        profile.ai_launch_count = newQuota;
+        
+        if (plan === 'freemium') {
+          localStorage.setItem('larisi_freemium_quota', newQuota.toString());
+        } else {
+          localStorage.setItem('larisi_starter_quota', newQuota.toString());
+        }
+
+        // Update DB (non-blocking)
+        fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${profile.id}`, {
+          method: 'PATCH',
+          headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${accessToken || SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ai_launch_count: newQuota })
+        }).catch(() => {});
+      }
 
       // Polling background: ambil thumb_url dari /v1/social-posts/{postId} — sama seperti desktop monitor.js
       // Dijalankan SETELAH modal success, tidak blocking UX
@@ -800,7 +849,7 @@ export default function CaptionScreen({
                 PREVIEW
               </div>
               <div style={{fontFamily:'var(--m-font)', fontSize:'15px', fontWeight:'700', color:'var(--m-ink)', marginBottom:'3px'}}>
-                {platLabel} · {fmtLabel}
+                {platLabel}{(platform !== 'tiktok' && platform !== 'youtube') ? ' · ' + fmtLabel : ''}
               </div>
               <div style={{fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)', marginBottom:'10px', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis'}}>
                 {assetInfo}
@@ -1074,27 +1123,51 @@ export default function CaptionScreen({
         </div>
 
         {/* Right: Button */}
-        <button
-          onClick={handleTayangkan}
-          disabled={!caption || posting}
-          style={{
-            padding:'10px 16px', borderRadius:'12px', flexShrink:0,
-            background: (!caption || posting) ? '#9CA3AF' : '#1A1A1A',
-            color:'#fff', border:'none', cursor: (!caption || posting) ? 'not-allowed' : 'pointer',
-            fontFamily:'var(--m-font)', fontSize:'14px', fontWeight:'700',
-            display:'flex', alignItems:'center', gap:'6px',
-            transition:'background 0.2s',
-          }}
-        >
-          {posting ? (
-            <div style={{width:'14px', height:'14px', border:'2px solid rgba(255,255,255,0.4)', borderTopColor:'#fff', borderRadius:'50%', animation:'spin 0.7s linear infinite'}} />
-          ) : (
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none">
-              <polygon points="5 3 19 12 5 21 5 3"/>
-            </svg>
-          )}
-          {posting ? 'Memposting…' : 'Tayangkan'}
-        </button>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+          {(() => {
+            const plan = profile?.selected_plan || 'freemium';
+            let currentQuota = null;
+            if (plan === 'freemium') {
+              currentQuota = typeof profile?.ai_launch_count === 'number' ? profile.ai_launch_count : parseInt(localStorage.getItem('larisi_freemium_quota') || '10');
+            } else if (plan === 'starter') {
+              currentQuota = typeof profile?.ai_launch_count === 'number' ? profile.ai_launch_count : parseInt(localStorage.getItem('larisi_starter_quota') || '50');
+            }
+            const isOutOfQuota = currentQuota !== null && currentQuota <= 0;
+
+            return (
+              <>
+                {currentQuota !== null && (
+                  <div style={{ fontFamily: 'var(--m-font)', fontSize: '10px', fontWeight: '800', color: isOutOfQuota ? '#EF4444' : 'var(--m-ink-sub)' }}>
+                    SISA KUOTA: {currentQuota}/{plan === 'freemium' ? '10' : '50'}
+                  </div>
+                )}
+                <button
+                  onClick={handleTayangkan}
+                  disabled={!caption || posting}
+                  style={{
+                    padding:'10px 16px', borderRadius:'12px', flexShrink:0,
+                    background: (!caption || posting) ? '#9CA3AF' : (isOutOfQuota ? '#EF4444' : '#1A1A1A'),
+                    color:'#fff', border:'none', cursor: (!caption || posting) ? 'not-allowed' : 'pointer',
+                    fontFamily:'var(--m-font)', fontSize:'14px', fontWeight:'700',
+                    display:'flex', alignItems:'center', gap:'6px',
+                    transition:'background 0.2s',
+                  }}
+                >
+                  {posting ? (
+                    <div style={{width:'14px', height:'14px', border:'2px solid rgba(255,255,255,0.4)', borderTopColor:'#fff', borderRadius:'50%', animation:'spin 0.7s linear infinite'}} />
+                  ) : (
+                    !isOutOfQuota && (
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                        <polygon points="5 3 19 12 5 21 5 3"/>
+                      </svg>
+                    )
+                  )}
+                  {posting ? 'Memposting…' : (isOutOfQuota ? 'Upgrade Tayang' : 'Tayangkan')}
+                </button>
+              </>
+            );
+          })()}
+        </div>
       </div>
 
       {/* ── Confirm Modal sebelum posting (sama seperti desktop launchConfirmModal) ── */}
@@ -1135,7 +1208,7 @@ export default function CaptionScreen({
                   type="text"
                   value={campName}
                   onChange={e => setCampName(e.target.value)}
-                  style={{width:'100%', padding:'12px 14px', borderRadius:'12px', border:'1.5px solid #E4E4EB', fontFamily:'var(--m-font)', fontSize:'14px', fontWeight:'600', color:'var(--m-ink)', outline:'none', background:'#F9F9FA', boxSizing:'border-box'}}
+                  style={{width:'100%', padding:'12px 14px', borderRadius:'12px', border:'1.5px solid #E4E4EB', fontFamily:'var(--m-font)', fontSize:'16px', fontWeight:'600', color:'var(--m-ink)', outline:'none', background:'#F9F9FA', boxSizing:'border-box'}}
                   onFocus={e => { e.target.style.borderColor='var(--m-brand)'; e.target.style.background='#fff'; }}
                   onBlur={e => { e.target.style.borderColor='#E4E4EB'; e.target.style.background='#F9F9FA'; }}
                 />

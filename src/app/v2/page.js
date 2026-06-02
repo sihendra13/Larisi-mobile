@@ -11,9 +11,11 @@ import LoginScreen       from '@/components/v2/LoginScreen';
 import RegisterScreen    from '@/components/v2/RegisterScreen';
 import OnboardingScreen  from '@/components/v2/OnboardingScreen';
 import SplashScreen      from '@/components/v2/SplashScreen';
-import InstallScreen     from '@/components/v2/InstallScreen';
+import InstallModal      from '@/components/v2/InstallModal';
 import ProfilePanel      from '@/components/v2/ProfilePanel';
 import ReminderModal     from '@/components/v2/ReminderModal';
+import PricingModal      from '@/components/v2/PricingModal';
+import DuitkuModal       from '@/components/v2/DuitkuModal';
 import { getProfile, getSessionId, getAccessToken, getValidAccessToken, SUPABASE_URL, SUPABASE_ANON_KEY } from '@/lib/config';
 import { handleOAuthRedirectCallback, syncSocialAccountsToSupabase, getStoredAccounts } from '@/lib/connectSocial';
 
@@ -33,6 +35,13 @@ export default function DapurV2() {
   const [files,      setFiles]      = useState([]);   /* { url, type, name }[] */
   const [persona,    setPersona]    = useState(null); /* detected master persona */
   const [caption,    setCaption]    = useState('');
+
+  /* ── Paywall & Pricing State ── */
+  const [showPricing, setShowPricing] = useState(false);
+  const [pricingTitle, setPricingTitle] = useState('Masa Trial Selesai!');
+  const [pricingDesc, setPricingDesc] = useState('7 hari gratis Anda telah berakhir. Pilih paket untuk mulai berlangganan:');
+  const [showDuitku, setShowDuitku] = useState(false);
+  const [duitkuDetails, setDuitkuDetails] = useState(null);
 
   /* ── PWA install prompt ── */
   const [installPrompt,  setInstallPrompt]  = useState(null);
@@ -79,7 +88,7 @@ export default function DapurV2() {
 
   /* ── Flow State: Splash -> Install -> Auth ── */
   const [showSplash, setShowSplash] = useState(true); // Start with splash active or checking
-  const [showInstall, setShowInstall] = useState(false);
+  const [showInstallModal, setShowInstallModal] = useState(false);
 
   useEffect(() => {
     /* Handle iOS PWA OAuth redirect callback */
@@ -203,7 +212,7 @@ export default function DapurV2() {
           const installDismissed = localStorage.getItem('larisi_install_dismissed');
           const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
           if (!isStandalone && !installDismissed) {
-             setShowInstall(true);
+             continueToAuth();
           } else {
              continueToAuth();
           }
@@ -218,6 +227,19 @@ export default function DapurV2() {
     })(); // tutup async IIFE
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  /* ── Effect: Tampilkan Modal Install PWA saat pertama kali masuk app ── */
+  useEffect(() => {
+    if (authState === 'app') {
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+      const dismissed = localStorage.getItem('larisi_install_dismissed');
+      if (!isStandalone && !dismissed) {
+        // Tunda sebentar biar user bisa melihat dashboard terlebih dahulu
+        const timer = setTimeout(() => setShowInstallModal(true), 2500);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [authState]);
 
   function applyLocation(p) {
     if (p?.kecamatan) {
@@ -312,6 +334,51 @@ export default function DapurV2() {
   };
 
   /* Callback setelah register berhasil */
+  /* ── Handler untuk Pricing Modal ── */
+  const triggerUpgrade = (title, desc) => {
+    setPricingTitle(title || 'Upgrade Paket Anda');
+    setPricingDesc(desc || 'Pilih paket yang sesuai untuk membuka fitur ini:');
+    setShowPricing(true);
+  };
+
+  const handleSelectPlan = async (selectedPlan, amount) => {
+    if (selectedPlan === 'freemium') {
+      setShowPricing(false);
+      return;
+    }
+
+    try {
+      if (window.showAnToast) window.showAnToast('Menghubungkan ke Duitku...', 'info');
+      
+      const email = profile?.email || '';
+      const name = profile?.business_name || profile?.full_name || 'Pelanggan Larisi';
+      const phone = profile?.phone || profile?.phone_number || '081234567890';
+      const orderId = 'LARISI-' + Date.now();
+
+      const resp = await fetch(SUPABASE_URL + '/functions/v1/duitku-invoice', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ plan: selectedPlan, amount, email, name, phone, orderId, userId: profile?.id || '' })
+      });
+
+      const result = await resp.json();
+      
+      if (result.vaNumber || result.paymentUrl) {
+        setShowPricing(false);
+        setDuitkuDetails({ ...result, plan: selectedPlan, amount, orderId });
+        setShowDuitku(true);
+      } else {
+        throw new Error(result.error || 'Gagal membuat invoice Duitku');
+      }
+    } catch(err) {
+      console.error('Duitku Error:', err);
+      if (window.showAnToast) window.showAnToast('Maaf, ' + err.message, 'error');
+    }
+  };
+
   const handleRegisterSuccess = ({ access_token, user, email, needsOtp: otp }) => {
     if (access_token) setAccessToken(access_token);
     setUserId(user?.id || null);
@@ -358,23 +425,6 @@ export default function DapurV2() {
   /* ── Initial Splash Screen ── */
   if (showSplash) {
     return <SplashScreen />;
-  }
-
-  /* ── PWA Install Screen ── */
-  if (showInstall) {
-    return (
-      <InstallScreen 
-        onSkip={() => {
-          setShowInstall(false);
-          localStorage.setItem('larisi_install_dismissed', '1');
-          const urlParams = new URLSearchParams(window.location.search);
-          const planParam = urlParams.get('plan');
-          const intent    = localStorage.getItem('larisi_intent');
-          setAuthState((planParam || intent === 'register') ? 'register' : 'login');
-        }} 
-        installPrompt={installPrompt} 
-      />
-    );
   }
 
   /* ── Loading state ── */
@@ -426,6 +476,15 @@ export default function DapurV2() {
 
   return (
     <div id="app-root" className="mobile-app-root">
+
+      {/* ── Modal PWA Install (Muncul di dalam App) ── */}
+      <InstallModal 
+        isOpen={showInstallModal} 
+        onClose={() => {
+          setShowInstallModal(false);
+          localStorage.setItem('larisi_install_dismissed', '1');
+        }} 
+      />
 
       {/* ── PWA Install Banner ── */}
       {showInstallBar && (
@@ -511,6 +570,7 @@ export default function DapurV2() {
             onBack={goBack}
             onUbahAset={() => goTo('aset')}
             onLaunchSuccess={() => setActiveNav('command')}
+            triggerUpgrade={triggerUpgrade}
           />
         )}
       </div>
@@ -531,6 +591,7 @@ export default function DapurV2() {
           userId={userId}
           onAvatarClick={() => setShowPanel(true)}
           onGoToDapur={() => setActiveNav('command')}
+          triggerUpgrade={triggerUpgrade}
         />
       )}
 
@@ -551,6 +612,23 @@ export default function DapurV2() {
         onOpenProfile={() => { setShowPanel(true); }}
       />
 
+      {/* ── Modals ── */}
+      <PricingModal 
+        isOpen={showPricing} 
+        onClose={() => setShowPricing(false)} 
+        onSelectPlan={handleSelectPlan}
+        currentPlan={profile?.selected_plan || 'freemium'}
+        title={pricingTitle}
+        description={pricingDesc}
+      />
+      
+      <DuitkuModal
+        isOpen={showDuitku}
+        onClose={() => setShowDuitku(false)}
+        paymentDetails={duitkuDetails}
+      />
+
+      {/* ── Bottom Nav ── */}
       <BottomNav activeNav={activeNav} onSwitch={setActiveNav} />
     </div>
   );
