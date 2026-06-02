@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>AI Kreatif - Prototype</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --m-brand: #791ADB;
+      --m-ink: #111827;
+      --m-ink-sub: #6B7280;
+      --m-font: 'Inter', sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--m-font); }
+    body { background: #E5E7EB; display: flex; justify-content: center; height: 100vh; overflow: hidden; }
+    
+    .mobile-container {
+      width: 100%; max-width: 480px; height: 100%; background: #fff;
+      display: flex; flex-direction: column; position: relative;
+    }
+    
+    .app-bg {
+      position: absolute; top: 0; left: 0; right: 0; height: 200px;
+      background: #888;
+      display: flex; flex-direction: column;
+    }
+
+    .modal-sheet {
+      position: absolute; top: 80px; left: 0; right: 0; bottom: 0;
+      background: #fff; border-radius: 24px 24px 0 0;
+      display: flex; flex-direction: column; overflow: hidden;
+    }
+
+    .sheet-handle {
+      width: 40px; height: 4px; background: #E4E4EB; border-radius: 2px;
+      margin: 12px auto;
+    }
+
+    .header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 20px 20px;
+    }
+    .header-left { display: flex; align-items: center; gap: 12px; }
+    .icon-box {
+      width: 40px; height: 40px; border-radius: 12px; background: #F3E8FF;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .title { font-size: 16px; font-weight: 800; color: var(--m-ink); }
+    .subtitle { font-size: 11px; color: var(--m-ink-sub); }
+    .close-btn {
+      width: 32px; height: 32px; border-radius: 50%; background: #F3F4F6;
+      display: flex; align-items: center; justify-content: center; border: none; cursor: pointer;
+    }
+
+    .content { flex: 1; overflow-y: auto; padding: 0 20px 100px; }
+
+    .section-title {
+      font-size: 11px; font-weight: 700; color: var(--m-ink-sub); letter-spacing: 0.5px;
+      margin-bottom: 12px; display: flex; align-items: center; gap: 4px;
+    }
+
+    .upload-box {
+      border: 2px dashed #E4E4EB; border-radius: 16px; padding: 32px 20px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      text-align: center; cursor: pointer; position: relative; overflow: hidden;
+      margin-bottom: 24px; transition: all 0.2s;
+    }
+    .upload-box.has-image { border: none; padding: 0; height: 200px; }
+    .upload-icon {
+      width: 48px; height: 48px; background: #F3F4F6; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center; margin-bottom: 12px;
+    }
+    .upload-title { font-size: 14px; font-weight: 700; color: var(--m-ink); margin-bottom: 4px; }
+    .upload-sub { font-size: 11px; color: var(--m-ink-sub); }
+    
+    #preview-image { width: 100%; height: 100%; object-fit: contain; background: #F9F9FA; display: none; }
+
+    .style-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
+    .style-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px; border: 1.5px solid #E4E4EB; border-radius: 16px; cursor: pointer;
+      transition: all 0.2s;
+    }
+    .style-item.active { border-color: var(--m-brand); background: #F9F5FF; }
+    .style-item-left { display: flex; align-items: center; gap: 12px; }
+    .style-icon { font-size: 24px; }
+    .style-name { font-size: 14px; font-weight: 700; color: var(--m-ink); margin-bottom: 2px; }
+    .style-desc { font-size: 12px; color: var(--m-ink-sub); }
+    .check-circle {
+      width: 24px; height: 24px; border-radius: 50%; background: var(--m-brand);
+      display: flex; align-items: center; justify-content: center; opacity: 0; transition: 0.2s;
+    }
+    .style-item.active .check-circle { opacity: 1; }
+
+    .bottom-bar {
+      position: absolute; bottom: 0; left: 0; right: 0; padding: 16px 20px 32px;
+      background: linear-gradient(to top, #fff 80%, rgba(255,255,255,0));
+    }
+    .btn-main {
+      width: 100%; padding: 16px; border-radius: 100px; border: none;
+      font-size: 15px; font-weight: 700; color: #fff; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s;
+    }
+    .btn-disabled { background: #E4E4EB; color: #9CA3AF; cursor: not-allowed; }
+    .btn-active { background: var(--m-brand); box-shadow: 0 4px 12px rgba(121, 26, 219, 0.3); }
+
+    /* Result State */
+    #result-view { display: none; padding: 0 20px 100px; }
+    .result-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+    .result-card {
+      width: 100%; border-radius: 16px; overflow: hidden; border: 2px solid transparent;
+      cursor: pointer; position: relative; transition: all 0.2s; background: #fff;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    .result-card.selected { border-color: var(--m-brand); }
+    .result-card img { width: 100%; height: auto; display: block; aspect-ratio: 1/1; object-fit: cover; }
+    .result-check {
+      position: absolute; top: 12px; right: 12px; width: 24px; height: 24px;
+      background: var(--m-brand); border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      opacity: 0; transform: scale(0.8); transition: all 0.2s;
+    }
+    .result-card.selected .result-check { opacity: 1; transform: scale(1); }
+
+    /* Master Persona Scanning UI */
+    .scan-container {
+      position: absolute; inset: 0; z-index: 30;
+      background: rgba(0,0,0,0.72); backdrop-filter: blur(3px);
+      display: none; flex-direction: column; align-items: center; justifyContent: center;
+      gap: 14px; overflow: hidden;
+    }
+    .ai-scan-line {
+      position: absolute; top: -50px; left: 0; width: 100%; height: 50px;
+      background: linear-gradient(to bottom, transparent, rgba(167,139,250,0.8) 95%, #a78bfa 100%);
+      animation: scanner-sweep 2.5s infinite linear;
+      box-shadow: 0px 4px 12px rgba(167,139,250,0.3);
+      z-index: 0;
+    }
+    @keyframes scanner-sweep {
+      0% { transform: translateY(-100%); opacity: 0; }
+      10% { opacity: 1; }
+      90% { opacity: 1; }
+      100% { transform: translateY(400px); opacity: 0; }
+    }
+    .scan-dot {
+      width: 6px; height: 6px; border-radius: 50%; opacity: 0.2;
+      animation: scan-pulse 1.4s infinite ease-in-out both;
+    }
+    .scan-dot:nth-child(1) { animation-delay: -0.32s; }
+    .scan-dot:nth-child(2) { animation-delay: -0.16s; }
+    @keyframes scan-pulse {
+      0%, 80%, 100% { transform: scale(0.6); opacity: 0.2; }
+      40% { transform: scale(1.1); opacity: 1; }
+    }
+    .scan-text-overlay {
+      color: #fff; font-size: 14px; font-weight: 700; letter-spacing: -0.3px;
+      font-family: var(--m-font); margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="mobile-container">
+    <div class="app-bg"></div>
+    
+    <div class="modal-sheet">
+      <div class="sheet-handle"></div>
+      
+      <div class="header">
+        <div class="header-left">
+          <div class="icon-box">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--m-brand)" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          </div>
+          <div>
+            <div class="title">AI Kreatif</div>
+            <div class="subtitle">Upload foto → AI bikin 3 variasi profesional</div>
+          </div>
+        </div>
+        <button class="close-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--m-ink)" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <div class="content" id="form-view">
+        <div class="section-title">1 &middot; FOTO PRODUKMU</div>
+        
+        <input type="file" id="file-input" accept="image/jpeg, image/png" style="display:none">
+        
+        <div class="upload-box" id="upload-box" onclick="document.getElementById('file-input').click()">
+          <div id="upload-placeholder">
+            <div class="upload-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--m-ink-sub)" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            </div>
+            <div class="upload-title">Tap untuk upload foto</div>
+            <div class="upload-sub">JPG atau PNG, max 10MB</div>
+          </div>
+          <img id="preview-image" src="" alt="Preview">
+          
+          <div class="scan-container" id="scan-overlay">
+            <div class="ai-scan-line"></div>
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 10px; z-index: 1; position: relative; margin-top: 60px;">
+              <div style="display: flex; gap: 6px; align-items: center;">
+                <div class="scan-dot" style="background: #a78bfa;"></div>
+                <div class="scan-dot" style="background: #a78bfa;"></div>
+                <div class="scan-dot" style="background: #a78bfa;"></div>
+              </div>
+              <div class="scan-text-overlay" id="scan-text">Membaca piksel produk...</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-title">2 &middot; PILIH STYLE</div>
+        <div class="style-list">
+          <div class="style-item active" onclick="selectStyle(this, 'studio')">
+            <div class="style-item-left">
+              <div class="style-icon">🏢</div>
+              <div>
+                <div class="style-name">Studio Pro</div>
+                <div class="style-desc">Latar putih bersih, profesional</div>
+              </div>
+            </div>
+            <div class="check-circle">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+          </div>
+          
+          <div class="style-item" onclick="selectStyle(this, 'lifestyle')">
+            <div class="style-item-left">
+              <div class="style-icon">☀️</div>
+              <div>
+                <div class="style-name">Lifestyle</div>
+                <div class="style-desc">Suasana natural & hangat</div>
+              </div>
+            </div>
+            <div class="check-circle">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+          </div>
+
+          <div class="style-item" onclick="selectStyle(this, 'flatlay')">
+            <div class="style-item-left">
+              <div class="style-icon">📐</div>
+              <div>
+                <div class="style-name">Flat Lay</div>
+                <div class="style-desc">Tampilan atas, rapi & minimalis</div>
+              </div>
+            </div>
+            <div class="check-circle">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="result-view">
+        <div class="section-title" style="margin-bottom: 16px;">HASIL AI KREATIF (PILIH 1)</div>
+        <div class="result-grid" id="result-grid"></div>
+      </div>
+
+      <div class="bottom-bar">
+        <button id="main-btn" class="btn-main btn-disabled">✨ Upload foto dulu</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let hasImage = false;
+    let selectedStyle = 'studio';
+    let selectedResultIndex = null;
+    let currentPhase = 'upload'; 
+
+    const fileInput = document.getElementById('file-input');
+    const uploadBox = document.getElementById('upload-box');
+    const previewImage = document.getElementById('preview-image');
+    const uploadPlaceholder = document.getElementById('upload-placeholder');
+    const mainBtn = document.getElementById('main-btn');
+    const scanOverlay = document.getElementById('scan-overlay');
+    const formView = document.getElementById('form-view');
+    const resultView = document.getElementById('result-view');
+    const resultGrid = document.getElementById('result-grid');
+    const scanText = document.getElementById('scan-text');
+
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const url = URL.createObjectURL(file);
+        previewImage.src = url;
+        previewImage.style.display = 'block';
+        uploadPlaceholder.style.display = 'none';
+        uploadBox.classList.add('has-image');
+        hasImage = true;
+        updateButton();
+      }
+    });
+
+    function selectStyle(el, styleId) {
+      if (currentPhase !== 'upload') return;
+      document.querySelectorAll('.style-item').forEach(n => n.classList.remove('active'));
+      el.classList.add('active');
+      selectedStyle = styleId;
+    }
+
+    function updateButton() {
+      if (currentPhase === 'upload') {
+        if (hasImage) {
+          mainBtn.className = 'btn-main btn-active';
+          mainBtn.innerHTML = '✨ Generate 3 Variasi';
+        } else {
+          mainBtn.className = 'btn-main btn-disabled';
+          mainBtn.innerHTML = '✨ Upload foto dulu';
+        }
+      } else if (currentPhase === 'result') {
+        if (selectedResultIndex !== null) {
+          mainBtn.className = 'btn-main btn-active';
+          mainBtn.innerHTML = '✓ Gunakan Foto Ini';
+        } else {
+          mainBtn.className = 'btn-main btn-disabled';
+          mainBtn.innerHTML = 'Pilih salah satu hasil';
+        }
+      }
+    }
+
+    mainBtn.addEventListener('click', async () => {
+      if (currentPhase === 'upload' && hasImage) {
+        currentPhase = 'scanning';
+        mainBtn.className = 'btn-main btn-disabled';
+        mainBtn.innerHTML = 'Memproses...';
+        
+        scanOverlay.style.display = 'flex';
+
+        // Cycling scanning text
+        const messages = ['Memisahkan background...', 'Menerapkan lighting...', 'Menyempurnakan bayangan...'];
+        let msgIndex = 0;
+        const interval = setInterval(() => {
+          msgIndex = (msgIndex + 1) % messages.length;
+          scanText.innerText = messages[msgIndex];
+        }, 1200);
+
+        setTimeout(() => {
+          clearInterval(interval);
+          showResults();
+        }, 4000);
+      } else if (currentPhase === 'result' && selectedResultIndex !== null) {
+        alert('Foto berhasil dipilih dan siap digunakan di Dapur Konten!');
+        window.location.reload();
+      }
+    });
+
+    function showResults() {
+      currentPhase = 'result';
+      formView.style.display = 'none';
+      resultView.style.display = 'block';
+      
+      const mocks = {
+        'studio': [
+          'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=500&q=80',
+          'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=500&q=80',
+          'https://images.unsplash.com/photo-1627384113743-6bd5a479fffd?auto=format&fit=crop&w=500&q=80'
+        ],
+        'lifestyle': [
+          'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=500&q=80',
+          'https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?auto=format&fit=crop&w=500&q=80',
+          'https://images.unsplash.com/photo-1503602642458-232111445657?auto=format&fit=crop&w=500&q=80'
+        ],
+        'flatlay': [
+          'https://images.unsplash.com/photo-1507101105822-7472b28e22ac?auto=format&fit=crop&w=500&q=80',
+          'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=500&q=80',
+          'https://images.unsplash.com/photo-1583394838336-acd977736f90?auto=format&fit=crop&w=500&q=80'
+        ]
+      };
+
+      const images = mocks[selectedStyle];
+      resultGrid.innerHTML = images.map((url, i) => `
+        <div class="result-card" onclick="selectResult(${i})">
+          <img src="${url}" alt="Hasil ${i}">
+          <div class="result-check">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+        </div>
+      `).join('');
+
+      updateButton();
+    }
+
+    function selectResult(index) {
+      selectedResultIndex = index;
+      document.querySelectorAll('.result-card').forEach((el, i) => {
+        if (i === index) el.classList.add('selected');
+        else el.classList.remove('selected');
+      });
+      updateButton();
+    }
+  </script>
+</body>
+</html>

@@ -687,7 +687,7 @@ export default function PerformaScreen({ sessionId, accessToken, profile, userId
                 <input type="text" value={compInput} onChange={e => setCompInput(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && !compLoading && handleAnalyzeCompetitor()}
                   placeholder="Paste link atau @handle pesaing..."
-                  style={{ flex:1, padding:'12px 16px', background:'#F5F5F7', border:'none', borderRadius:'12px', outline:'none', fontFamily:'var(--m-font)', fontSize:'13px' }} />
+                  style={{ flex:1, padding:'12px 16px', background:'#F5F5F7', border:'none', borderRadius:'12px', outline:'none', fontFamily:'var(--m-font)', fontSize:'16px' }} />
                 <button onClick={handleAnalyzeCompetitor} disabled={compLoading || !compInput.trim()}
                   style={{ padding:'12px 20px', background:'#1A1A1A', color:'#fff', border:'none', borderRadius:'12px', fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'700', cursor:'pointer', opacity: compLoading || !compInput.trim() ? 0.6 : 1, display:'flex', alignItems:'center', gap:'6px' }}>
                   {compLoading ? (
@@ -704,13 +704,13 @@ export default function PerformaScreen({ sessionId, accessToken, profile, userId
                   </div>
                   {/* Compare grid */}
                   <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'8px', marginBottom:'12px' }}>
-                    <div style={{ background:'#fff', borderRadius:'12px', padding:'12px' }}>
+                    <div style={{ background:'#fff', borderRadius:'12px', padding:'12px', border:'1px solid #E5E7EB' }}>
                       <div style={{ fontFamily:'var(--m-font)', fontSize:'10px', fontWeight:'800', color:'var(--m-ink-sub)', marginBottom:'6px' }}>KAMU</div>
                       {agg?.avgER && <div style={{ fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'700', color:'var(--m-brand)', marginBottom:'4px' }}>ER {agg.avgER.toFixed(1)}%</div>}
                       <div style={{ fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)' }}>{agg?.active || 0} iklan aktif</div>
                       <div style={{ fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)' }}>Reach {anFmtK(agg?.totalReach || 0)}</div>
                     </div>
-                    <div style={{ background:'#fff', borderRadius:'12px', padding:'12px' }}>
+                    <div style={{ background:'#fff', borderRadius:'12px', padding:'12px', border:'1px solid #E5E7EB' }}>
                       <div style={{ fontFamily:'var(--m-font)', fontSize:'10px', fontWeight:'800', color:'var(--m-ink-sub)', marginBottom:'6px' }}>PESAING · {compResult.comp_handle || compInput}</div>
                       {compResult.comp_er && <div style={{ fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'700', color:'#E1306C', marginBottom:'4px' }}>Est. ER {compResult.comp_er}</div>}
                       {compResult.comp_followers && <div style={{ fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)' }}>{compResult.comp_followers} followers</div>}
@@ -720,11 +720,11 @@ export default function PerformaScreen({ sessionId, accessToken, profile, userId
                   </div>
                   {/* Insights */}
                   {compResult.insights?.map((ins, i) => (
-                    <div key={i} style={{ background:'#F9F9FA', borderRadius:'12px', padding:'12px 14px', marginBottom:'6px', display:'flex', gap:'8px', alignItems:'flex-start' }}>
-                      <span style={{ fontSize:'12px', flexShrink:0, marginTop:'1px' }}>
+                    <div key={i} style={{ background:'#fff', borderRadius:'12px', padding:'14px', marginBottom:'10px', display:'flex', gap:'12px', alignItems:'flex-start', border:'1px solid #D1D5DB', boxShadow:'0 2px 4px rgba(0,0,0,0.02)' }}>
+                      <span style={{ fontSize:'16px', flexShrink:0, marginTop:'2px' }}>
                         {ins.type === 'green' ? '💡' : ins.type === 'amber' ? '⚠️' : '🔍'}
                       </span>
-                      <div style={{ fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink)', lineHeight:'1.5' }}>{ins.text}</div>
+                      <div style={{ fontFamily:'var(--m-font)', fontSize:'13px', color:'var(--m-ink)', lineHeight:'1.5' }}>{ins.text}</div>
                     </div>
                   ))}
                   {/* Save button */}
