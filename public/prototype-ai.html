@@ -383,24 +383,25 @@
   };
 
   // ── HuggingFace direct from browser ──
+  // Pakai FLUX.1-schnell — cepat, free, reliable
   async function runHuggingFace(prompt) {
-    const HF_MODEL = 'stabilityai/stable-diffusion-xl-base-1.0';
+    const HF_MODEL = 'black-forest-labs/FLUX.1-schnell';
     const seeds = [42, 1234, 7777];
-    const headers = {
-      'Authorization': `Bearer ${hfKey}`,
-      'Content-Type': 'application/json',
-      'x-wait-for-model': 'true',
-    };
 
-    // Generate 3 variasi secara sequential (free tier lebih stabil)
     const imageUrls = [];
-    for (const seed of seeds) {
+    for (let i = 0; i < seeds.length; i++) {
+      const seed = seeds[i];
+      document.getElementById('scan-text').textContent = `Membuat variasi ${i+1} dari 3...`;
+
       const resp = await fetch(`https://api-inference.huggingface.co/models/${HF_MODEL}`, {
         method: 'POST',
-        headers,
+        headers: {
+          'Authorization': `Bearer ${hfKey}`,
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
           inputs: prompt,
-          parameters: { seed, num_inference_steps: 25, guidance_scale: 7 }
+          parameters: { seed, num_inference_steps: 4, guidance_scale: 0 }
         }),
       });
 
@@ -409,12 +410,15 @@
         let errMsg = `HuggingFace error ${resp.status}.`;
         try {
           const errJson = JSON.parse(errText);
-          if (errJson.error?.toLowerCase().includes('loading')) {
-            errMsg = 'Model sedang loading di server HF. Tunggu 30 detik lalu coba lagi.';
-          } else if (errJson.error?.toLowerCase().includes('token')) {
-            errMsg = 'Token tidak valid. Pastikan format: hf_xxxx';
-          } else if (errJson.estimated_time) {
-            errMsg = `Model loading, estimasi ${Math.ceil(errJson.estimated_time)} detik. Coba lagi sebentar.`;
+          if (errJson.error?.toLowerCase().includes('loading') || errJson.estimated_time) {
+            const secs = errJson.estimated_time ? Math.ceil(errJson.estimated_time) : 30;
+            errMsg = `Model loading di server HF. Tunggu ${secs} detik lalu coba lagi.`;
+          } else if (resp.status === 401) {
+            errMsg = 'Token tidak valid. Pastikan format: hf_xxxx dan sudah punya akses Inference.';
+          } else if (resp.status === 403) {
+            errMsg = 'Akses ditolak. Cek permission token di huggingface.co/settings/tokens';
+          } else if (errJson.error) {
+            errMsg = errJson.error;
           }
         } catch(e) {}
         throw new Error(errMsg);
