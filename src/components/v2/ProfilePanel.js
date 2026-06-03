@@ -63,6 +63,7 @@ export default function ProfilePanel({
   onClose,
   onLogout,
   onSaved,
+  onCancelSubscription,
   profile,
   accessToken,
   userId,
@@ -497,6 +498,48 @@ export default function ProfilePanel({
             </button>
           </div>
         </div>
+
+        {/* ── Paket Aktif + Cancel Subscription (hanya untuk starter/pro) ── */}
+        {(plan === 'starter' || plan === 'pro') && (
+          <div style={{ padding: '0 12px' }}>
+            <div style={{
+              background: '#fff', borderRadius: '14px', border: '1px solid #E4E4EB',
+              padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px',
+            }}>
+              <div style={{ fontSize: '13px', fontWeight: '700', color: '#111827' }}>Paket Aktif</div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div>
+                  <div style={{ fontSize: '14px', fontWeight: '700', color: '#111827' }}>
+                    {plan === 'pro' ? 'Pro' : 'Starter'}
+                  </div>
+                  <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '2px' }}>
+                    {plan === 'pro' ? 'Rp 199.000 / bulan' : 'Rp 99.000 / bulan'}
+                  </div>
+                </div>
+                <div style={{
+                  background: plan === 'pro' ? '#7C3AED' : '#2563EB',
+                  color: '#fff', fontSize: '10px', fontWeight: '700',
+                  padding: '3px 8px', borderRadius: '999px',
+                }}>
+                  {plan === 'pro' ? 'PRO' : 'STARTER'}
+                </div>
+              </div>
+              <button
+                onClick={onCancelSubscription}
+                style={{
+                  width: '100%', padding: '11px', borderRadius: '10px',
+                  background: 'transparent', color: '#DC2626',
+                  border: '1px solid #FCA5A5', fontSize: '13px', fontWeight: '600',
+                  cursor: 'pointer', fontFamily: 'inherit', transition: 'background 0.2s',
+                }}
+                onMouseEnter={e => e.target.style.background = '#FEF2F2'}
+                onMouseLeave={e => e.target.style.background = 'transparent'}
+              >
+                Batalkan Subscription
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* ── Footer: version + logout ── */}
         <div style={{ padding: '12px', marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '8px' }}>

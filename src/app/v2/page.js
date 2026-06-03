@@ -625,6 +625,7 @@ export default function DapurV2() {
         onClose={() => setShowPanel(false)}
         onLogout={handleLogout}
         onSaved={handleProfileSaved}
+        onCancelSubscription={() => { setShowPanel(false); setShowCancelModal(true); }}
         profile={profile}
         accessToken={accessToken}
         userId={userId}
