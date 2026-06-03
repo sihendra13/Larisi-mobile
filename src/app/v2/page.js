@@ -27,7 +27,7 @@ function showMobileToast(message, type = 'success') {
   const toast = document.createElement('div');
   toast.id = 'm-page-toast';
   const bg = type === 'error' ? '#EF4444' : type === 'warning' ? '#F59E0B' : '#10B981';
-  toast.style.cssText = `position:fixed;top:24px;left:50%;transform:translateX(-50%) translateY(-80px);background:${bg};color:#fff;padding:14px 20px;border-radius:14px;font-size:14px;font-weight:700;font-family:-apple-system,sans-serif;box-shadow:0 4px 20px rgba(0,0,0,0.25);z-index:999999;white-space:nowrap;max-width:90vw;text-align:center;transition:transform 0.35s cubic-bezier(0.34,1.56,0.64,1),opacity 0.35s ease;opacity:0;pointer-events:none;`;
+  toast.style.cssText = `position:fixed;top:24px;left:50%;transform:translateX(-50%) translateY(-80px);background:${bg};color:#fff;padding:12px 20px;border-radius:14px;font-size:13px;font-weight:700;font-family:-apple-system,sans-serif;box-shadow:0 4px 20px rgba(0,0,0,0.25);z-index:999999;white-space:normal;max-width:80vw;text-align:center;line-height:1.4;transition:transform 0.35s cubic-bezier(0.34,1.56,0.64,1),opacity 0.35s ease;opacity:0;pointer-events:none;`;
   toast.textContent = message;
   document.body.appendChild(toast);
   requestAnimationFrame(() => requestAnimationFrame(() => {
