@@ -27,7 +27,7 @@
     .api-status.ok { color: #4ade80; }
     .api-status.empty { color: #f87171; }
 
-    .modal-sheet { position: absolute; top: 80px; left: 0; right: 0; bottom: 0; background: #fff; border-radius: 24px 24px 0 0; display: flex; flex-direction: column; overflow: hidden; }
+    .modal-sheet { position: absolute; top: 80px; left: 0; right: 0; bottom: 0; background: #fff; border-radius: 24px 24px 0 0; display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
     .sheet-handle { width: 40px; height: 4px; background: #E4E4EB; border-radius: 2px; margin: 12px auto; }
     .header { display: flex; align-items: center; justify-content: space-between; padding: 0 20px 16px; }
     .header-left { display: flex; align-items: center; gap: 12px; }
@@ -71,7 +71,7 @@
     .btn-active { background: var(--m-brand); box-shadow: 0 4px 12px rgba(121, 26, 219, 0.3); }
 
     /* Result */
-    #result-view { display: none; padding: 0 20px 100px; }
+    #result-view { display: none; padding: 0 20px 100px; overflow-y: auto; flex: 1; }
     .result-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
     .result-title { font-size: 11px; font-weight: 700; color: var(--m-ink-sub); letter-spacing: 0.5px; }
     .result-back { font-size: 12px; font-weight: 700; color: var(--m-brand); cursor: pointer; border: none; background: none; }
@@ -104,13 +104,20 @@
   <!-- API Provider Selector -->
   <div class="api-banner">
     <select id="provider-select" onchange="onProviderChange(this.value)" style="flex: 0.4; background: #333; border: none; border-radius: 8px; padding: 8px 10px; color: #fff; font-size: 12px; outline: none;">
+      <option value="runware">⚡ Runware</option>
       <option value="huggingface">🤗 HuggingFace</option>
       <option value="siliconflow">SiliconFlow</option>
       <option value="local-sd">Local SD</option>
     </select>
 
+    <!-- Runware Key Input -->
+    <div id="runware-input-group" style="flex: 1; display: flex; gap: 8px;">
+      <input type="password" id="runware-key-input" placeholder="Runware API Key (runware.ai)" oninput="onRunwareKeyChange(this.value)" style="flex: 1; background: #333; border: none; border-radius: 8px; padding: 8px 12px; color: #fff; font-size: 12px; outline: none;">
+      <span class="api-status empty" id="runware-status">⚠ Belum ada</span>
+    </div>
+
     <!-- HuggingFace Key Input -->
-    <div id="huggingface-input-group" style="flex: 1; display: flex; gap: 8px;">
+    <div id="huggingface-input-group" style="flex: 1; display: none; gap: 8px;">
       <input type="password" id="hf-key-input" placeholder="hf_xxxx... (gratis di huggingface.co)" oninput="onHfKeyChange(this.value)" style="flex: 1; background: #333; border: none; border-radius: 8px; padding: 8px 12px; color: #fff; font-size: 12px; outline: none;">
       <span class="api-status empty" id="hf-status">⚠ Belum ada</span>
     </div>
@@ -182,28 +189,22 @@
         </div>
       </div>
 
-      <div class="section-title">2 · PILIH STYLE</div>
-      <div class="style-list">
-        <div class="style-item active" onclick="selectStyle(this,'studio')">
-          <div class="style-item-left">
-            <div class="style-icon">🏢</div>
-            <div><div class="style-name">Studio Pro</div><div class="style-desc">Latar putih bersih, profesional</div></div>
-          </div>
-          <div class="check-circle"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+      <div class="section-title">2 · AI AKAN MENGHASILKAN 3 FOTO SEKALIGUS</div>
+      <div style="display:flex; gap:8px; margin-bottom:24px;">
+        <div style="flex:1; background:#F5F5F7; border-radius:12px; padding:12px 10px; text-align:center;">
+          <div style="font-size:20px; margin-bottom:4px;">🏢</div>
+          <div style="font-size:11px; font-weight:700; color:var(--m-ink);">Studio Pro</div>
+          <div style="font-size:10px; color:var(--m-ink-sub); margin-top:2px;">Latar putih</div>
         </div>
-        <div class="style-item" onclick="selectStyle(this,'lifestyle')">
-          <div class="style-item-left">
-            <div class="style-icon">☀️</div>
-            <div><div class="style-name">Lifestyle</div><div class="style-desc">Suasana natural & hangat</div></div>
-          </div>
-          <div class="check-circle"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <div style="flex:1; background:#F5F5F7; border-radius:12px; padding:12px 10px; text-align:center;">
+          <div style="font-size:20px; margin-bottom:4px;">☀️</div>
+          <div style="font-size:11px; font-weight:700; color:var(--m-ink);">Lifestyle</div>
+          <div style="font-size:10px; color:var(--m-ink-sub); margin-top:2px;">Natural & hangat</div>
         </div>
-        <div class="style-item" onclick="selectStyle(this,'flatlay')">
-          <div class="style-item-left">
-            <div class="style-icon">📐</div>
-            <div><div class="style-name">Flat Lay</div><div class="style-desc">Tampilan atas, rapi & minimalis</div></div>
-          </div>
-          <div class="check-circle"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <div style="flex:1; background:#F5F5F7; border-radius:12px; padding:12px 10px; text-align:center;">
+          <div style="font-size:20px; margin-bottom:4px;">📐</div>
+          <div style="font-size:11px; font-weight:700; color:var(--m-ink);">Flat Lay</div>
+          <div style="font-size:10px; color:var(--m-ink-sub); margin-top:2px;">Tampilan atas</div>
         </div>
       </div>
     </div>
@@ -245,7 +246,8 @@
   let currentMode = 'img2img';
   let apiKey = '';
   let hfKey = '';
-  let currentProvider = 'huggingface';
+  let runwareKey = '';
+  let currentProvider = 'runware';
   let localSdUrl = 'http://localhost:7860';
 
   const scanMessages = [
@@ -258,9 +260,23 @@
 
   function onProviderChange(provider) {
     currentProvider = provider;
+    document.getElementById('runware-input-group').style.display = provider === 'runware' ? 'flex' : 'none';
     document.getElementById('huggingface-input-group').style.display = provider === 'huggingface' ? 'flex' : 'none';
     document.getElementById('siliconflow-input-group').style.display = provider === 'siliconflow' ? 'flex' : 'none';
     document.getElementById('local-sd-input-group').style.display = provider === 'local-sd' ? 'flex' : 'none';
+    updateButton();
+  }
+
+  function onRunwareKeyChange(val) {
+    runwareKey = val.trim();
+    const statusEl = document.getElementById('runware-status');
+    if (runwareKey.length > 10) {
+      statusEl.textContent = '✓ Key siap';
+      statusEl.className = 'api-status ok';
+    } else {
+      statusEl.textContent = '⚠ Belum ada';
+      statusEl.className = 'api-status empty';
+    }
     updateButton();
   }
 
@@ -325,7 +341,8 @@
 
   function updateButton() {
     const btn = document.getElementById('main-btn');
-    const hasApiKey = currentProvider === 'huggingface' ? (hfKey.startsWith('hf_') && hfKey.length > 10)
+    const hasApiKey = currentProvider === 'runware' ? (runwareKey.length > 10)
+                    : currentProvider === 'huggingface' ? (hfKey.startsWith('hf_') && hfKey.length > 10)
                     : currentProvider === 'siliconflow' ? (apiKey.length > 20) : true;
     const ready = hasApiKey && (currentMode === 'img2img' ? hasImage : document.getElementById('custom-prompt').value.trim().length > 5);
     if (currentPhase === 'upload') {
@@ -360,13 +377,15 @@
     currentPhase = 'upload';
     selectedResultIndex = null;
     document.getElementById('result-view').style.display = 'none';
-    document.getElementById('form-view').style.display = 'block';
+    document.querySelector('.content').style.display = 'block';
     updateButton();
   }
 
   async function handleMainBtn() {
     if (currentPhase === 'upload') {
-      const hasKey = currentProvider === 'huggingface' ? (hfKey.startsWith('hf_') && hfKey.length > 10) : apiKey.length > 20;
+      const hasKey = currentProvider === 'runware' ? (runwareKey.length > 10)
+                   : currentProvider === 'huggingface' ? (hfKey.startsWith('hf_') && hfKey.length > 10)
+                   : apiKey.length > 20;
       const ready = hasKey && (currentMode === 'img2img' ? hasImage : document.getElementById('custom-prompt').value.trim().length > 5);
       if (!ready) return;
       await runGenerate();
@@ -441,8 +460,10 @@
     const scanSubEl = document.getElementById('scan-sub');
     let msgIdx = 0;
     scanTextEl.textContent = scanMessages[0];
-    scanSubEl.textContent = currentProvider === 'huggingface'
-      ? 'HuggingFace SDXL sedang generate. Gratis, biasanya 20–60 detik.'
+    scanSubEl.textContent = currentProvider === 'runware'
+      ? 'Runware FLUX.2 sedang generate. Biasanya 10–20 detik.'
+      : currentProvider === 'huggingface'
+      ? 'HuggingFace sedang generate. Biasanya 20–60 detik.'
       : 'SiliconFlow FLUX sedang bekerja. Biasanya 15–30 detik.';
 
     const msgInterval = setInterval(() => {
@@ -457,40 +478,23 @@
 
       let imageUrls = [];
 
-      if (currentProvider === 'huggingface') {
-        // ── Direct browser call ke HuggingFace ──
-        imageUrls = await runHuggingFace(prompt);
+      // ── Semua provider lewat Next.js API route (server-side, no CORS/DNS issue) ──
+      const body = { style: selectedStyle, provider: currentProvider };
+      if (currentProvider === 'runware') body.apiKey = runwareKey;
+      else if (currentProvider === 'huggingface') body.apiKey = hfKey;
+      else if (currentProvider === 'siliconflow') body.apiKey = apiKey;
+      else if (currentProvider === 'local-sd') body.localSdUrl = document.getElementById('local-sd-url').value.trim() || 'http://localhost:7860';
+      if (currentMode === 'img2img' && imageBase64) body.imageBase64 = imageBase64;
+      else body.customPrompt = userDesc;
 
-      } else if (currentProvider === 'siliconflow') {
-        // ── SiliconFlow via API route (butuh dev server) ──
-        const body = { style: selectedStyle, provider: 'siliconflow', apiKey };
-        if (currentMode === 'img2img' && imageBase64) body.imageBase64 = imageBase64;
-        else body.customPrompt = userDesc;
-
-        const resp = await fetch('/api/ai-kreatif', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
-        });
-        const data = await resp.json();
-        if (!resp.ok || data.error) throw new Error(data.error || 'SiliconFlow error');
-        imageUrls = data.images || [];
-
-      } else if (currentProvider === 'local-sd') {
-        const localUrl = document.getElementById('local-sd-url').value.trim() || 'http://localhost:7860';
-        const body = { style: selectedStyle, provider: 'local-sd', localSdUrl: localUrl };
-        if (currentMode === 'img2img' && imageBase64) body.imageBase64 = imageBase64;
-        else body.customPrompt = userDesc;
-
-        const resp = await fetch('/api/ai-kreatif', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
-        });
-        const data = await resp.json();
-        if (!resp.ok || data.error) throw new Error(data.error || 'Local SD error');
-        imageUrls = data.images || [];
-      }
+      const resp = await fetch('/api/ai-kreatif', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const data = await resp.json();
+      if (!resp.ok || data.error) throw new Error(data.error || 'Generate gagal');
+      imageUrls = data.images || [];
 
       clearInterval(msgInterval);
       overlay.style.display = 'none';
@@ -510,16 +514,20 @@
   function showResults(imageUrls) {
     currentPhase = 'result';
     selectedResultIndex = null;
-    document.getElementById('form-view').style.display = 'none';
-    document.getElementById('result-view').style.display = 'block';
+    // Sembunyikan .content (bukan hanya form-view) agar result-view dapat flex:1 penuh
+    document.querySelector('.content').style.display = 'none';
+    document.getElementById('result-view').style.display = 'flex';
+    document.getElementById('result-view').style.flexDirection = 'column';
 
-    const styleLabels = { studio: 'Studio Pro', lifestyle: 'Lifestyle', flatlay: 'Flat Lay' };
+    // 3 style berbeda — label sesuai urutan generate dari server
+    const styleOrder = ['Studio Pro', 'Lifestyle', 'Flat Lay'];
+    const styleIcons = ['🏢', '☀️', '📐'];
     const grid = document.getElementById('result-grid');
     grid.innerHTML = imageUrls.map((url, i) =>
       `<div class="result-card" onclick="selectResult(${i})">
-        <img src="${url}" alt="Variasi ${i+1}" onerror="this.parentElement.querySelector('.result-card-label').textContent='⚠ Gagal load gambar'">
+        <img src="${url}" alt="${styleOrder[i] || 'Variasi ' + (i+1)}" onerror="this.parentElement.querySelector('.result-card-label').textContent='⚠ Gagal load gambar'">
         <div class="result-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
-        <div class="result-card-label">Variasi ${i+1} · ${styleLabels[selectedStyle]}</div>
+        <div class="result-card-label">${styleIcons[i] || '✨'} ${styleOrder[i] || 'Variasi ' + (i+1)}</div>
       </div>`
     ).join('');
     updateButton();

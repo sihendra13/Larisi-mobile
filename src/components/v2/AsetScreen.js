@@ -1161,32 +1161,20 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
                   )}
                 </div>
               </div>
-              {/* Step 2 */}
+              {/* Step 2 — Info only, AI generate semua 3 style sekaligus */}
               <div style={{ marginBottom: '24px' }}>
                 <div style={{ fontFamily: 'var(--m-font)', fontSize: '13px', fontWeight: '700', color: 'var(--m-ink-sub)', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  2 · Pilih Style
+                  2 · AI Menghasilkan 3 Style Sekaligus
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div style={{ display: 'flex', gap: '8px' }}>
                   {AI_STYLES.map(s => (
-                    <div key={s.id} onClick={() => setAiStyle(s.id)} style={{
-                      display: 'flex', alignItems: 'center', gap: '12px',
-                      padding: '12px 14px', borderRadius: '12px', cursor: 'pointer',
-                      border: aiStyle === s.id ? '2px solid var(--m-brand)' : '1.5px solid #E4E4EB',
-                      background: aiStyle === s.id ? 'var(--m-brand-soft)' : '#fff',
-                      transition: 'all .15s',
+                    <div key={s.id} style={{
+                      flex: 1, background: '#F5F5F7', borderRadius: '12px',
+                      padding: '12px 8px', textAlign: 'center',
                     }}>
-                      <span style={{ fontSize: '22px', flexShrink: 0 }}>{s.emoji}</span>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontFamily: 'var(--m-font)', fontSize: '14px', fontWeight: '700', color: aiStyle === s.id ? 'var(--m-brand)' : 'var(--m-ink)' }}>{s.label}</div>
-                        <div style={{ fontFamily: 'var(--m-font)', fontSize: '12px', color: 'var(--m-ink-sub)', marginTop: '1px' }}>{s.desc}</div>
-                      </div>
-                      {aiStyle === s.id && (
-                        <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: 'var(--m-brand)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ width: '11px', height: '11px' }}>
-                            <polyline points="20 6 9 17 4 12"/>
-                          </svg>
-                        </div>
-                      )}
+                      <div style={{ fontSize: '20px', marginBottom: '4px' }}>{s.emoji}</div>
+                      <div style={{ fontFamily: 'var(--m-font)', fontSize: '11px', fontWeight: '700', color: 'var(--m-ink)' }}>{s.label}</div>
+                      <div style={{ fontFamily: 'var(--m-font)', fontSize: '10px', color: 'var(--m-ink-sub)', marginTop: '2px' }}>{s.desc}</div>
                     </div>
                   ))}
                 </div>

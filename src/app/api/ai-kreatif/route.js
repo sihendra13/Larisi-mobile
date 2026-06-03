@@ -15,7 +15,10 @@ export async function POST(request) {
     const basePrompt = prompts[style] || prompts.studio;
     const prompt = customPrompt ? `${customPrompt}, ${basePrompt}` : basePrompt;
 
-    if (provider === 'local-sd') {
+    if (provider === 'runware') {
+      if (!apiKey) return Response.json({ error: 'Runware API key tidak ada' }, { status: 400 });
+      return handleRunware(imageBase64, prompt, apiKey);
+    } else if (provider === 'local-sd') {
       return handleLocalSD(imageBase64, prompt, localSdUrl);
     } else if (provider === 'huggingface') {
       if (!apiKey) return Response.json({ error: 'HuggingFace token tidak ada' }, { status: 400 });
@@ -34,93 +37,88 @@ export async function POST(request) {
   }
 }
 
-async function handleHuggingFace(imageBase64, prompt, apiKey) {
-  // Model: stabilityai/stable-diffusion-xl-base-1.0 untuk txt2img
-  // Untuk img2img, gunakan model yang support image input
-  const headers = {
-    'Authorization': `Bearer ${apiKey}`,
-    'Content-Type': 'application/json',
-    'x-wait-for-model': 'true',
+async function handleRunware(imageBase64, prompt, apiKey) {
+  const stylePrompts = {
+    studio:    'professional product photography, clean white studio background, soft box lighting, sharp focus, commercial photography, high resolution',
+    lifestyle: 'product lifestyle photography, warm wooden table, soft morning sunlight, cozy atmosphere, bokeh background, natural tones, Instagram aesthetic',
+    flatlay:   'flat lay product photography, top down bird eye view, minimalist pastel background, neat symmetrical arrangement, clean composition, fashion magazine style',
   };
 
-  // Generate 3 variasi secara parallel dengan seed berbeda
-  const seeds = [42, 123, 777];
+  try {
+    let seedImageUUID = null;
 
-  if (imageBase64) {
-    // img2img: gunakan model SDXL dengan image input via Inference API
-    // Convert base64 ke binary
-    const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
-
-    const requests = seeds.map(seed =>
-      fetch('https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-refiner-1.0', {
+    // ── Step 1: Upload foto jika ada (img2img) ──
+    if (imageBase64) {
+      const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
+      const uploadResp = await fetch('https://api.runware.ai/v1', {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json', 'x-wait-for-model': 'true' },
-        body: JSON.stringify({
-          inputs: prompt,
-          parameters: { seed, num_inference_steps: 30, guidance_scale: 7.5 }
-        }),
-      })
-    );
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify([
+          { taskType: 'authentication', apiKey },
+          { taskType: 'imageUpload', taskUUID: crypto.randomUUID(), image: base64Data },
+        ]),
+      });
 
-    const responses = await Promise.all(requests);
-    const imageUrls = [];
+      const uploadData = await uploadResp.json();
+      const uploadResult = uploadData?.data?.find(r => r.taskType === 'imageUpload') || uploadData?.[0];
+      seedImageUUID = uploadResult?.imageUUID;
 
-    for (const resp of responses) {
-      if (!resp.ok) {
-        const errText = await resp.text();
-        console.error('[hf] error:', resp.status, errText);
-        // Coba parse error message
-        try {
-          const errJson = JSON.parse(errText);
-          if (errJson.error?.includes('loading')) {
-            return Response.json({ error: 'Model sedang loading, coba lagi dalam 30 detik.' }, { status: 503 });
-          }
-        } catch(e) {}
-        return Response.json({ error: `HuggingFace error ${resp.status}. Cek token dan coba lagi.` }, { status: resp.status });
+      if (!seedImageUUID) {
+        const errMsg = uploadData?.errors?.[0]?.message || 'Gagal upload foto ke Runware';
+        return Response.json({ error: errMsg }, { status: 500 });
       }
-      const blob = await resp.blob();
-      const arrayBuffer = await blob.arrayBuffer();
-      const base64 = Buffer.from(arrayBuffer).toString('base64');
-      imageUrls.push(`data:image/jpeg;base64,${base64}`);
     }
+
+    // ── Step 2: Generate 3 style sekaligus dalam 1 request ──
+    const inferenceTasks = Object.entries(stylePrompts).map(([style, stylePrompt]) => ({
+      taskType: 'imageInference',
+      taskUUID: crypto.randomUUID(),
+      model: 'runware:101@1', // FLUX.2 dev — support img2img
+      positivePrompt: stylePrompt,
+      negativePrompt: 'blurry, low quality, distorted, watermark, text, deformed',
+      width: 1024,
+      height: 1024,
+      steps: 28,
+      CFGScale: 3.5,
+      outputFormat: 'JPEG',
+      includeCost: true,
+      ...(seedImageUUID ? { seedImage: seedImageUUID, strength: 0.75 } : {}),
+    }));
+
+    const payload = [
+      { taskType: 'authentication', apiKey },
+      ...inferenceTasks,
+    ];
+
+    const genResp = await fetch('https://api.runware.ai/v1', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    const genData = await genResp.json();
+
+    // Handle error dari Runware
+    if (genData?.errors?.length) {
+      const errMsg = genData.errors[0]?.message || 'Runware error';
+      return Response.json({ error: errMsg }, { status: 400 });
+    }
+
+    const results = (genData?.data || []).filter(r => r.taskType === 'imageInference' && r.imageURL);
+
+    if (!results.length) {
+      return Response.json({ error: 'Tidak ada gambar yang dihasilkan dari Runware' }, { status: 500 });
+    }
+
+    const imageUrls = results.map(r => r.imageURL);
+    const totalCost = results.reduce((sum, r) => sum + (r.cost || 0), 0);
+    console.log(`[runware] ${imageUrls.length} gambar, total cost: $${totalCost.toFixed(6)}`);
 
     return Response.json({ images: imageUrls });
 
-  } else {
-    // txt2img: SDXL Lightning (lebih cepat, gratis)
-    const requests = seeds.map(seed =>
-      fetch('https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          inputs: prompt,
-          parameters: { seed, num_inference_steps: 30, guidance_scale: 7 }
-        }),
-      })
-    );
-
-    const responses = await Promise.all(requests);
-    const imageUrls = [];
-
-    for (const resp of responses) {
-      if (!resp.ok) {
-        const errText = await resp.text();
-        console.error('[hf] txt2img error:', resp.status, errText);
-        try {
-          const errJson = JSON.parse(errText);
-          if (errJson.error?.includes('loading')) {
-            return Response.json({ error: 'Model sedang loading, tunggu 30 detik dan coba lagi.' }, { status: 503 });
-          }
-        } catch(e) {}
-        return Response.json({ error: `HuggingFace error ${resp.status}.` }, { status: resp.status });
-      }
-      const blob = await resp.blob();
-      const arrayBuffer = await blob.arrayBuffer();
-      const base64 = Buffer.from(arrayBuffer).toString('base64');
-      imageUrls.push(`data:image/jpeg;base64,${base64}`);
-    }
-
-    return Response.json({ images: imageUrls });
+  } catch (e) {
+    console.error('[runware] error:', e);
+    return Response.json({ error: `Runware error: ${e.message}` }, { status: 500 });
   }
 }
 
@@ -216,61 +214,75 @@ async function handleLocalSD(imageBase64, prompt, localSdUrl) {
 }
 
 async function handleHuggingFace(imageBase64, prompt, apiKey) {
-  const modelId = 'SG161222/RealVisXL_V4.0';
-  const url = `https://api-inference.huggingface.co/models/${modelId}`;
+  const headers = {
+    'Authorization': `Bearer ${apiKey}`,
+    'Content-Type': 'application/json',
+    'x-wait-for-model': 'true',
+  };
 
   const seeds = [
-    Math.floor(Math.random() * 1000000),
-    Math.floor(Math.random() * 1000000),
-    Math.floor(Math.random() * 1000000)
+    Math.floor(Math.random() * 999999) + 1,
+    Math.floor(Math.random() * 999999) + 1,
+    Math.floor(Math.random() * 999999) + 1,
   ];
 
   try {
-    const promises = seeds.map(async (seed) => {
-      let headers = {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json'
-      };
+    let url, makeBody;
 
-      const body = JSON.stringify({
-        inputs: prompt,
+    if (imageBase64) {
+      // ── img2img: FLUX.1-Kontext via fal-ai provider ──
+      // Endpoint confirmed reachable: router.huggingface.co/fal-ai/flux-kontext-dev
+      url = 'https://router.huggingface.co/fal-ai/flux-kontext-dev';
+      makeBody = (seed) => JSON.stringify({
+        inputs: imageBase64,
         parameters: {
-          seed: seed,
-          guidance_scale: 7.5,
-          num_inference_steps: 30
+          prompt,
+          seed,
+          num_inference_steps: 28,
+          guidance_scale: 2.5,
         }
       });
-
-      const resp = await fetch(url, {
-        method: 'POST',
-        headers,
-        body
+    } else {
+      // ── txt2img: FLUX.1-schnell — generate dari deskripsi ──
+      url = 'https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell';
+      makeBody = (seed) => JSON.stringify({
+        inputs: prompt,
+        parameters: { seed, num_inference_steps: 4, guidance_scale: 0 }
       });
+    }
+
+    // Sequential — lebih stabil di free tier
+    const imageUrls = [];
+    for (const seed of seeds) {
+      const resp = await fetch(url, { method: 'POST', headers, body: makeBody(seed) });
 
       if (!resp.ok) {
-        const errJson = await resp.json().catch(() => ({}));
-        if (errJson.error && errJson.error.includes('loading')) {
-          throw new Error(`MODEL_LOADING:${errJson.estimated_time || 30}`);
-        }
-        throw new Error(errJson.error || `HTTP error ${resp.status}`);
+        const errText = await resp.text();
+        console.error('[hf] error:', resp.status, errText);
+        let errMsg = `HuggingFace error ${resp.status}.`;
+        try {
+          const errJson = JSON.parse(errText);
+          if (errJson.estimated_time || errJson.error?.toLowerCase().includes('loading')) {
+            const secs = errJson.estimated_time ? Math.ceil(errJson.estimated_time) : 30;
+            errMsg = `Model loading di server HF. Tunggu ${secs} detik lalu coba lagi.`;
+          } else if (resp.status === 401) {
+            errMsg = 'Token HuggingFace tidak valid.';
+          } else if (errJson.error) {
+            errMsg = errJson.error;
+          }
+        } catch(e) {}
+        return Response.json({ error: errMsg }, { status: resp.status });
       }
 
       const buffer = await resp.arrayBuffer();
       const base64 = Buffer.from(buffer).toString('base64');
-      return `data:image/jpeg;base64,${base64}`;
-    });
+      imageUrls.push(`data:image/png;base64,${base64}`);
+    }
 
-    const imageUrls = await Promise.all(promises);
     return Response.json({ images: imageUrls });
 
   } catch (e) {
-    if (e.message.startsWith('MODEL_LOADING:')) {
-      const seconds = e.message.split(':')[1];
-      return Response.json({
-        error: `Model Hugging Face (${modelId}) sedang memuat di server mereka. Coba lagi dalam ${Math.round(seconds)} detik.`
-      }, { status: 503 });
-    }
-    console.error('[ai-kreatif] Hugging Face error:', e);
-    return Response.json({ error: `Hugging Face error: ${e.message}` }, { status: 500 });
+    console.error('[ai-kreatif] HuggingFace error:', e);
+    return Response.json({ error: `HuggingFace error: ${e.message}` }, { status: 500 });
   }
 }
