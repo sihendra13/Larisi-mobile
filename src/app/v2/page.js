@@ -20,6 +20,27 @@ import DuitkuModal       from '@/components/v2/DuitkuModal';
 import { getProfile, getSessionId, getAccessToken, getValidAccessToken, SUPABASE_URL, SUPABASE_ANON_KEY } from '@/lib/config';
 import { handleOAuthRedirectCallback, syncSocialAccountsToSupabase, getStoredAccounts } from '@/lib/connectSocial';
 
+/* ── Mobile Toast Helper ── */
+function showMobileToast(message, type = 'success') {
+  const existing = document.getElementById('m-page-toast');
+  if (existing) existing.remove();
+  const toast = document.createElement('div');
+  toast.id = 'm-page-toast';
+  const bg = type === 'error' ? '#EF4444' : type === 'warning' ? '#F59E0B' : '#10B981';
+  toast.style.cssText = `position:fixed;top:24px;left:50%;transform:translateX(-50%) translateY(-80px);background:${bg};color:#fff;padding:14px 20px;border-radius:14px;font-size:14px;font-weight:700;font-family:-apple-system,sans-serif;box-shadow:0 4px 20px rgba(0,0,0,0.25);z-index:999999;white-space:nowrap;max-width:90vw;text-align:center;transition:transform 0.35s cubic-bezier(0.34,1.56,0.64,1),opacity 0.35s ease;opacity:0;pointer-events:none;`;
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    toast.style.transform = 'translateX(-50%) translateY(0)';
+    toast.style.opacity = '1';
+  }));
+  setTimeout(() => {
+    toast.style.transform = 'translateX(-50%) translateY(-80px)';
+    toast.style.opacity = '0';
+    setTimeout(() => toast.remove(), 400);
+  }, 3500);
+}
+
 export default function DapurV2() {
   const [screen,     setScreen]     = useState('platform');
   const [activeNav,  setActiveNav]  = useState('command');
@@ -394,10 +415,10 @@ export default function DapurV2() {
 
       setShowCancelModal(false);
       setShowPricing(false);
-      if (window.showAnToast) window.showAnToast('✓ Subscription berhasil dibatalkan. Anda sekarang menggunakan Freemium.', 'success');
+      showMobileToast('✓ Subscription dibatalkan. Anda sekarang di paket Freemium (10 iklan/bulan).');
     } catch(err) {
       console.error('Cancel Subscription Error:', err);
-      if (window.showAnToast) window.showAnToast('Maaf, ' + err.message, 'error');
+      showMobileToast('Gagal membatalkan subscription. Coba lagi.', 'error');
     } finally {
       setIsCancelLoading(false);
     }

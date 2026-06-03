@@ -30,7 +30,7 @@ function PlatIcon({ plat }) {
 /* ════════════════════════════════════════
    Main Component
    ════════════════════════════════════════ */
-export default function KelolaScreen({ sessionId, accessToken, profile, onAvatarClick }) {
+export default function KelolaScreen({ sessionId, accessToken, profile, onAvatarClick, onNavigateToDapur }) {
   const [campaigns,   setCampaigns]   = useState([]);
   const [loading,     setLoading]     = useState(true);
   const [activeTab,   setActiveTab]   = useState('Semua');
@@ -42,7 +42,24 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
   const [realReach,   setRealReach]   = useState({});
   const [showSiLaris, setShowSiLaris] = useState(false);
   const [isFabExpanded, setIsFabExpanded] = useState(true);
+  const [socialAccounts, setSocialAccounts] = useState([]);
+  const [showPlatformSheet, setShowPlatformSheet] = useState(false);
+  const [animatePlatformSheet, setAnimatePlatformSheet] = useState(false);
   const lastScrollY = useRef(0);
+
+  const handleOpenPlatformSheet = () => {
+    const accounts = (() => {
+      try { return JSON.parse(localStorage.getItem('radar_social_accounts') || '[]'); } catch { return []; }
+    })();
+    setSocialAccounts(accounts);
+    setShowPlatformSheet(true);
+    setTimeout(() => setAnimatePlatformSheet(true), 10);
+  };
+
+  const handleClosePlatformSheet = () => {
+    setAnimatePlatformSheet(false);
+    setTimeout(() => setShowPlatformSheet(false), 300);
+  };
 
   /* ── Load campaigns on mount, lalu fetch real reach dari PostForMe ── */
   useEffect(() => {
@@ -432,13 +449,174 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
         {/* CTA Buat Iklan Baru */}
         {!loading && (
           <div style={{ paddingBottom:'24px', marginTop: filtered.length === 0 ? '0' : '-8px' }}>
-            <button style={{ width:'100%', padding:'16px', borderRadius:'16px', background:'#202434', color:'#fff', border:'none', cursor:'pointer', fontFamily:'var(--m-font)', fontSize:'15px', fontWeight:'800', display:'flex', alignItems:'center', justifyContent:'center', gap:'8px', boxShadow:'0 4px 14px rgba(32,36,52,0.15)' }}>
+            <button
+              onClick={handleOpenPlatformSheet}
+              style={{ width:'100%', padding:'16px', borderRadius:'16px', background:'#202434', color:'#fff', border:'none', cursor:'pointer', fontFamily:'var(--m-font)', fontSize:'15px', fontWeight:'800', display:'flex', alignItems:'center', justifyContent:'center', gap:'8px', boxShadow:'0 4px 14px rgba(32,36,52,0.15)' }}
+            >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg>
               Buat Iklan Baru
             </button>
           </div>
         )}
       </main>
+
+      {/* Floating Action Button (FAB) */}
+      {!loading && !selectedCamp && (
+        <button
+          onClick={handleOpenPlatformSheet}
+          style={{
+            position: 'fixed',
+            bottom: '96px',
+            right: '20px',
+            width: '56px',
+            height: '56px',
+            borderRadius: '50%',
+            background: 'var(--m-brand)',
+            color: '#fff',
+            border: 'none',
+            cursor: 'pointer',
+            boxShadow: '0 4px 16px rgba(121, 26, 219, 0.3)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 200,
+            transition: 'transform 0.2s',
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+          onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+        </button>
+      )}
+
+      {/* ── Platform Selection Bottom Sheet ── */}
+      {showPlatformSheet && (
+        <>
+          {/* Backdrop */}
+          <div
+            onClick={handleClosePlatformSheet}
+            style={{
+              position: 'fixed', inset: 0, zIndex: 9998,
+              background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)',
+              opacity: animatePlatformSheet ? 1 : 0, transition: 'opacity 0.3s ease-out'
+            }}
+          />
+          {/* Sheet */}
+          <div
+            style={{
+              position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 9999,
+              background: '#fff', borderRadius: '24px 24px 0 0',
+              padding: '24px 16px calc(32px + env(safe-area-inset-bottom))',
+              transform: animatePlatformSheet ? 'translateY(0)' : 'translateY(100%)',
+              transition: 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.1)',
+              display: 'flex', flexDirection: 'column',
+              maxHeight: '85vh',
+            }}
+          >
+            <div style={{ width: '40px', height: '4px', background: '#e5e7eb', borderRadius: '2px', margin: '0 auto 20px' }} />
+
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '20px' }}>
+              <div>
+                <h3 style={{ fontFamily: 'var(--m-font)', fontSize: '18px', fontWeight: '800', color: 'var(--m-ink)', marginBottom: '4px' }}>Pilih Platform Iklan</h3>
+                <p style={{ fontFamily: 'var(--m-font)', fontSize: '13px', color: 'var(--m-ink-sub)' }}>Pilih platform media sosial untuk mulai membuat iklan baru</p>
+              </div>
+              <button onClick={handleClosePlatformSheet} style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#F5F5F7', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--m-ink)" strokeWidth="2.5" strokeLinecap="round">
+                  <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', overflowY: 'auto', paddingBottom: '16px' }}>
+              {['instagram', 'facebook', 'tiktok', 'youtube'].map(platId => {
+                const acc = socialAccounts.find(a => a.platform === platId);
+                const isConn = !!acc;
+
+                const config = {
+                  instagram: {
+                    label: 'Instagram',
+                    softBg: '#FFF0F3', softBorder: '#FFD6E0',
+                    icon: (
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E1306C" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5" /><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" /><line x1="17.5" y1="6.5" x2="17.51" y2="6.5" /></svg>
+                    )
+                  },
+                  facebook: {
+                    label: 'Facebook',
+                    softBg: '#EEF4FF', softBorder: '#C9DDFF',
+                    icon: (
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" fill="#1877F2" /></svg>
+                    )
+                  },
+                  tiktok: {
+                    label: 'TikTok',
+                    softBg: '#F5F5F5', softBorder: '#E0E0E0',
+                    icon: (
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="#000000"><path d="M12.53.02C13.84 0 15 1 15 2.3c.02 2.3 1.5 3.3 3.5 3.3v3c-1.3-.1-2.5-.7-3.3-1.6v8.4c.1 4.5-4.4 7-8.2 4.4C3 16.6 3.6 11 8.2 11.1v3.2c-2.4 0-3.3 2-2.3 3.4 1 1.4 3.7.8 3.5-1.9V0h3.1z" /></svg>
+                    )
+                  },
+                  youtube: {
+                    label: 'YouTube',
+                    softBg: '#FFF2F2', softBorder: '#FFD0D0',
+                    icon: (
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="#FF0000"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+                    )
+                  }
+                }[platId];
+
+                return (
+                  <div
+                    key={platId}
+                    onClick={() => {
+                      handleClosePlatformSheet();
+                      if (onNavigateToDapur) {
+                        onNavigateToDapur(platId);
+                      }
+                    }}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '12px',
+                      padding: '14px 16px', borderRadius: '16px',
+                      background: isConn ? '#fff' : '#FAF9FC',
+                      border: isConn ? '1.5px solid #10B981' : '1.5px solid #EBEBF0',
+                      cursor: 'pointer', transition: 'all 0.2s ease',
+                      opacity: isConn ? 1 : 0.65,
+                    }}
+                  >
+                    <div style={{
+                      width: '44px', height: '44px', borderRadius: '12px',
+                      background: config.softBg, border: `1px solid ${config.softBorder}`,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
+                    }}>
+                      {config.icon}
+                    </div>
+
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontFamily: 'var(--m-font)', fontSize: '14px', fontWeight: '700', color: 'var(--m-ink)' }}>
+                        {config.label} {isConn && acc.username ? `(@${acc.username})` : ''}
+                      </div>
+                      <div style={{ fontFamily: 'var(--m-font)', fontSize: '11px', color: 'var(--m-ink-sub)' }}>
+                        {isConn ? 'Terhubung & Siap Posting' : 'Belum Terhubung'}
+                      </div>
+                    </div>
+
+                    {isConn ? (
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '22px', height: '22px', borderRadius: '50%', background: '#E6F4EA' }}>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                      </div>
+                    ) : (
+                      <span style={{ fontFamily: 'var(--m-font)', fontSize: '11px', fontWeight: '700', color: 'var(--m-brand)' }}>Hubungkan →</span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </>
+      )}
 
       {/* ── Archive Confirm Modal — sama seperti desktop deleteConfirmOverlay ── */}
       {archiveTarget && (
