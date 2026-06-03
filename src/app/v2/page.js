@@ -351,7 +351,7 @@ export default function DapurV2() {
 
       if (result.vaNumber || result.paymentUrl) {
         setShowPricing(false);
-        setDuitkuDetails({ ...result, plan: selectedPlan, amount, orderId });
+        setDuitkuDetails({ ...result, plan: selectedPlan, originalAmount: amount, amount: result.amount || amount, orderId });
         setShowDuitku(true);
       } else {
         throw new Error(result.error || 'Gagal membuat invoice Duitku');

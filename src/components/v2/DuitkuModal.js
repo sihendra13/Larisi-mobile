@@ -240,8 +240,8 @@ export default function DuitkuModal({ isOpen, onClose, paymentDetails }) {
             </div>
             {/* Identity */}
             <div style={{ padding: '20px', textAlign: 'center', background: '#f0ecf8' }}>
-              <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: '#111827', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 8px' }}>
-                <span style={{ color: '#fff', fontWeight: 700, fontSize: '16px' }}>L</span>
+              <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: '#111827', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 8px', overflow: 'hidden' }}>
+                <img src="/logo-dashboard.png" alt="Larisi" style={{ width: '38px', height: '38px', objectFit: 'contain' }} />
               </div>
               <div style={{ fontWeight: 700, fontSize: '14px', marginBottom: '16px' }}>LARISI</div>
               <div style={{ display: 'flex', justifyContent: 'space-between', textAlign: 'left', gap: '8px' }}>
