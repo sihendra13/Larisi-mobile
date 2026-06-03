@@ -104,12 +104,19 @@
   <!-- API Provider Selector -->
   <div class="api-banner">
     <select id="provider-select" onchange="onProviderChange(this.value)" style="flex: 0.4; background: #333; border: none; border-radius: 8px; padding: 8px 10px; color: #fff; font-size: 12px; outline: none;">
+      <option value="huggingface">🤗 HuggingFace</option>
       <option value="siliconflow">SiliconFlow</option>
       <option value="local-sd">Local SD</option>
     </select>
 
+    <!-- HuggingFace Key Input -->
+    <div id="huggingface-input-group" style="flex: 1; display: flex; gap: 8px;">
+      <input type="password" id="hf-key-input" placeholder="hf_xxxx... (gratis di huggingface.co)" oninput="onHfKeyChange(this.value)" style="flex: 1; background: #333; border: none; border-radius: 8px; padding: 8px 12px; color: #fff; font-size: 12px; outline: none;">
+      <span class="api-status empty" id="hf-status">⚠ Belum ada</span>
+    </div>
+
     <!-- SiliconFlow Key Input -->
-    <div id="siliconflow-input-group" style="flex: 1; display: flex; gap: 8px;">
+    <div id="siliconflow-input-group" style="flex: 1; display: none; gap: 8px;">
       <input type="password" id="api-key-input" placeholder="SiliconFlow API Key..." oninput="onApiKeyChange(this.value)" style="flex: 1; background: #333; border: none; border-radius: 8px; padding: 8px 12px; color: #fff; font-size: 12px; outline: none;">
       <span class="api-status empty" id="api-status">⚠ Belum ada</span>
     </div>
@@ -237,7 +244,8 @@
   let currentPhase = 'upload';
   let currentMode = 'img2img';
   let apiKey = '';
-  let currentProvider = 'siliconflow';
+  let hfKey = '';
+  let currentProvider = 'huggingface';
   let localSdUrl = 'http://localhost:7860';
 
   const scanMessages = [
@@ -250,8 +258,22 @@
 
   function onProviderChange(provider) {
     currentProvider = provider;
+    document.getElementById('huggingface-input-group').style.display = provider === 'huggingface' ? 'flex' : 'none';
     document.getElementById('siliconflow-input-group').style.display = provider === 'siliconflow' ? 'flex' : 'none';
     document.getElementById('local-sd-input-group').style.display = provider === 'local-sd' ? 'flex' : 'none';
+    updateButton();
+  }
+
+  function onHfKeyChange(val) {
+    hfKey = val.trim();
+    const statusEl = document.getElementById('hf-status');
+    if (hfKey.startsWith('hf_') && hfKey.length > 10) {
+      statusEl.textContent = '✓ Key siap';
+      statusEl.className = 'api-status ok';
+    } else {
+      statusEl.textContent = '⚠ Format: hf_xxx';
+      statusEl.className = 'api-status empty';
+    }
     updateButton();
   }
 
@@ -303,10 +325,14 @@
 
   function updateButton() {
     const btn = document.getElementById('main-btn');
-    const hasApiKey = currentProvider === 'siliconflow' ? (apiKey.length > 20) : true;
+    const hasApiKey = currentProvider === 'huggingface' ? (hfKey.startsWith('hf_') && hfKey.length > 10)
+                    : currentProvider === 'siliconflow' ? (apiKey.length > 20) : true;
     const ready = hasApiKey && (currentMode === 'img2img' ? hasImage : document.getElementById('custom-prompt').value.trim().length > 5);
     if (currentPhase === 'upload') {
-      if (currentProvider === 'siliconflow' && (!apiKey || apiKey.length <= 20)) {
+      if (currentProvider === 'huggingface' && !hasApiKey) {
+        btn.className = 'btn-main btn-disabled';
+        btn.innerHTML = '🔑 Masukkan HuggingFace Token';
+      } else if (currentProvider === 'siliconflow' && (!apiKey || apiKey.length <= 20)) {
         btn.className = 'btn-main btn-disabled';
         btn.innerHTML = '🔑 Masukkan SiliconFlow Key';
       } else if (!ready) {
@@ -361,6 +387,8 @@
     scanTextEl.textContent = scanMessages[0];
     if (currentProvider === 'local-sd') {
       scanSubEl.textContent = 'Stable Diffusion lokal sedang process. Bisa 30–120 detik tergantung GPU.';
+    } else if (currentProvider === 'huggingface') {
+      scanSubEl.textContent = 'HuggingFace sedang generate. Biasanya 20–60 detik (gratis, mungkin antri).';
     } else {
       scanSubEl.textContent = 'SiliconFlow FLUX sedang bekerja. Biasanya 15–30 detik.';
     }
@@ -375,7 +403,9 @@
         provider: currentProvider,
       };
 
-      if (currentProvider === 'siliconflow') {
+      if (currentProvider === 'huggingface') {
+        body.apiKey = hfKey;
+      } else if (currentProvider === 'siliconflow') {
         body.apiKey = apiKey;
       } else if (currentProvider === 'local-sd') {
         body.localSdUrl = document.getElementById('local-sd-url').value.trim() || 'http://localhost:7860';

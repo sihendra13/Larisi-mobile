@@ -17,6 +17,9 @@ export async function POST(request) {
 
     if (provider === 'local-sd') {
       return handleLocalSD(imageBase64, prompt, localSdUrl);
+    } else if (provider === 'huggingface') {
+      if (!apiKey) return Response.json({ error: 'HuggingFace token tidak ada' }, { status: 400 });
+      return handleHuggingFace(imageBase64, prompt, apiKey);
     } else {
       // Default: SiliconFlow
       if (!apiKey) {
@@ -28,6 +31,96 @@ export async function POST(request) {
   } catch (e) {
     console.error('[ai-kreatif] exception:', e);
     return Response.json({ error: e.message }, { status: 500 });
+  }
+}
+
+async function handleHuggingFace(imageBase64, prompt, apiKey) {
+  // Model: stabilityai/stable-diffusion-xl-base-1.0 untuk txt2img
+  // Untuk img2img, gunakan model yang support image input
+  const headers = {
+    'Authorization': `Bearer ${apiKey}`,
+    'Content-Type': 'application/json',
+    'x-wait-for-model': 'true',
+  };
+
+  // Generate 3 variasi secara parallel dengan seed berbeda
+  const seeds = [42, 123, 777];
+
+  if (imageBase64) {
+    // img2img: gunakan model SDXL dengan image input via Inference API
+    // Convert base64 ke binary
+    const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
+
+    const requests = seeds.map(seed =>
+      fetch('https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-refiner-1.0', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json', 'x-wait-for-model': 'true' },
+        body: JSON.stringify({
+          inputs: prompt,
+          parameters: { seed, num_inference_steps: 30, guidance_scale: 7.5 }
+        }),
+      })
+    );
+
+    const responses = await Promise.all(requests);
+    const imageUrls = [];
+
+    for (const resp of responses) {
+      if (!resp.ok) {
+        const errText = await resp.text();
+        console.error('[hf] error:', resp.status, errText);
+        // Coba parse error message
+        try {
+          const errJson = JSON.parse(errText);
+          if (errJson.error?.includes('loading')) {
+            return Response.json({ error: 'Model sedang loading, coba lagi dalam 30 detik.' }, { status: 503 });
+          }
+        } catch(e) {}
+        return Response.json({ error: `HuggingFace error ${resp.status}. Cek token dan coba lagi.` }, { status: resp.status });
+      }
+      const blob = await resp.blob();
+      const arrayBuffer = await blob.arrayBuffer();
+      const base64 = Buffer.from(arrayBuffer).toString('base64');
+      imageUrls.push(`data:image/jpeg;base64,${base64}`);
+    }
+
+    return Response.json({ images: imageUrls });
+
+  } else {
+    // txt2img: SDXL Lightning (lebih cepat, gratis)
+    const requests = seeds.map(seed =>
+      fetch('https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          inputs: prompt,
+          parameters: { seed, num_inference_steps: 30, guidance_scale: 7 }
+        }),
+      })
+    );
+
+    const responses = await Promise.all(requests);
+    const imageUrls = [];
+
+    for (const resp of responses) {
+      if (!resp.ok) {
+        const errText = await resp.text();
+        console.error('[hf] txt2img error:', resp.status, errText);
+        try {
+          const errJson = JSON.parse(errText);
+          if (errJson.error?.includes('loading')) {
+            return Response.json({ error: 'Model sedang loading, tunggu 30 detik dan coba lagi.' }, { status: 503 });
+          }
+        } catch(e) {}
+        return Response.json({ error: `HuggingFace error ${resp.status}.` }, { status: resp.status });
+      }
+      const blob = await resp.blob();
+      const arrayBuffer = await blob.arrayBuffer();
+      const base64 = Buffer.from(arrayBuffer).toString('base64');
+      imageUrls.push(`data:image/jpeg;base64,${base64}`);
+    }
+
+    return Response.json({ images: imageUrls });
   }
 }
 
