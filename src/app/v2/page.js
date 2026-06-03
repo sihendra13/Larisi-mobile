@@ -365,7 +365,7 @@ export default function DapurV2() {
   const handleCancelSubscription = async () => {
     try {
       setIsCancelLoading(true);
-      const tok = getValidAccessToken(accessToken);
+      const tok = await getValidAccessToken(accessToken) || accessToken;
       if (!tok) throw new Error('Akses token tidak valid');
 
       const resp = await fetch(SUPABASE_URL + '/rest/v1/profiles?id=eq.' + profile?.id, {
@@ -605,6 +605,11 @@ export default function DapurV2() {
           accessToken={accessToken}
           profile={profile}
           onAvatarClick={() => setShowPanel(true)}
+          onNavigateToDapur={(plat) => {
+            setPlatform(plat);
+            setScreen('audiens');
+            setActiveNav('command');
+          }}
         />
       )}
       {activeNav === 'analytics' && (
