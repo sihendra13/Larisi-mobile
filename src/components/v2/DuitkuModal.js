@@ -89,7 +89,7 @@ export default function DuitkuModal({ isOpen, onClose, paymentDetails }) {
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div style={{ background: 'var(--m-brand)', padding: '20px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ background: '#111827', padding: '20px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
             <div style={{ color: '#fff', fontSize: '18px', fontWeight: 700 }}>LARISI</div>
             <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '13px', marginTop: '4px' }}>
