@@ -458,7 +458,7 @@ export default function CaptionScreen({
 
   /* ── Initialize quota warning banner ── */
   useEffect(() => {
-    if (!profile?.selected_plan) return;
+    if (!profile) return;
 
     const plan = profile.selected_plan || 'freemium';
     const quota = profile?.ai_launch_count ?? 10;
