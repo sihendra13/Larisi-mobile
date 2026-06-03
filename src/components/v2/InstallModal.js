@@ -70,8 +70,8 @@ export default function InstallModal({ isOpen, onClose }) {
           </svg>
         </div>
 
-        <h2 style={{ fontFamily: 'var(--m-font)', fontSize: '20px', fontWeight: '800', color: 'var(--m-ink)', marginBottom: '8px' }}>
-          Akses Lebih Cepat!
+        <h2 style={{ fontFamily: 'var(--m-font)', fontSize: '18px', fontWeight: '800', color: 'var(--m-ink)', marginBottom: '12px', lineHeight: '1.3' }}>
+          Tambah ke Layar Utama / Add to Home Screen
         </h2>
         
         {!showManual && !isIOS && (

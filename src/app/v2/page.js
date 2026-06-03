@@ -87,7 +87,7 @@ export default function DapurV2() {
   const [showPanel,  setShowPanel]  = useState(false);
 
   /* ── Flow State: Splash -> Install -> Auth ── */
-  const [showSplash, setShowSplash] = useState(true); // Start with splash active or checking
+  const [showSplash, setShowSplash] = useState(false);
   const [showInstallModal, setShowInstallModal] = useState(false);
 
   useEffect(() => {
@@ -201,24 +201,14 @@ export default function DapurV2() {
       }
     };
 
-    if (!splashShown) {
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+
+    if (isStandalone && !splashShown) {
       setShowSplash(true);
       setTimeout(() => {
         setShowSplash(false);
         localStorage.setItem('larisi_splash_shown', '1');
-
-
-        if (!tok) {
-          const installDismissed = localStorage.getItem('larisi_install_dismissed');
-          const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
-          if (!isStandalone && !installDismissed) {
-             continueToAuth();
-          } else {
-             continueToAuth();
-          }
-        } else {
-           continueToAuth();
-        }
+        continueToAuth();
       }, 4500);
     } else {
       setShowSplash(false);

@@ -499,13 +499,11 @@ export default function CaptionScreen({
     // Cek Kuota Tayang Iklan
     const plan = profile?.selected_plan || 'freemium';
     let quota = 0;
-    if (plan === 'freemium') {
-      quota = typeof profile?.ai_launch_count === 'number' ? profile.ai_launch_count : parseInt(localStorage.getItem('larisi_freemium_quota') || '10');
-    } else if (plan === 'starter') {
-      quota = typeof profile?.ai_launch_count === 'number' ? profile.ai_launch_count : parseInt(localStorage.getItem('larisi_starter_quota') || '50');
-    } else {
-      quota = 999999;
-    }
+
+    // 🔒 SECURITY FIX: Always validate quota from Supabase, never trust localStorage
+    // Use sensible defaults per plan if profile.ai_launch_count is undefined
+    const quotaDefaults = { freemium: 10, starter: 50, pro: 999999 };
+    quota = typeof profile?.ai_launch_count === 'number' ? profile.ai_launch_count : (quotaDefaults[plan] || 10);
 
     if (quota <= 0) {
       if (triggerUpgrade) {
@@ -669,23 +667,15 @@ export default function CaptionScreen({
       // Kurangi kuota jika bukan pro
       const plan = profile?.selected_plan || 'freemium';
       if (plan !== 'pro' && profile?.id) {
-        let currentQuota = 10;
-        if (plan === 'freemium') {
-          currentQuota = typeof profile?.ai_launch_count === 'number' ? profile.ai_launch_count : parseInt(localStorage.getItem('larisi_freemium_quota') || '10');
-        } else if (plan === 'starter') {
-          currentQuota = typeof profile?.ai_launch_count === 'number' ? profile.ai_launch_count : parseInt(localStorage.getItem('larisi_starter_quota') || '50');
-        }
-        
+        // 🔒 SECURITY FIX: Always use Supabase as single source of truth
+        // Remove localStorage dependency completely
+        const quotaDefaults = { freemium: 10, starter: 50 };
+        const currentQuota = typeof profile?.ai_launch_count === 'number' ? profile.ai_launch_count : (quotaDefaults[plan] || 10);
+
         const newQuota = Math.max(0, currentQuota - 1);
         profile.ai_launch_count = newQuota;
-        
-        if (plan === 'freemium') {
-          localStorage.setItem('larisi_freemium_quota', newQuota.toString());
-        } else {
-          localStorage.setItem('larisi_starter_quota', newQuota.toString());
-        }
 
-        // Update DB (non-blocking)
+        // 🔒 Update ONLY to Supabase (don't trust client localStorage)
         fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${profile.id}`, {
           method: 'PATCH',
           headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${accessToken || SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
