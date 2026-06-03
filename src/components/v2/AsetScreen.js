@@ -1153,23 +1153,56 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
             )}
 
             {/* AI ✨ */}
-            <button
-              onClick={openAISheet}
-              style={{
-                flexShrink: 0,
-                width: '52px', height: '48px', borderRadius: '14px',
-                background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
-                border: 'none',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                cursor: 'pointer',
-                boxShadow: '0 2px 12px rgba(124,58,237,0.55)',
-                WebkitTapHighlightColor: 'transparent',
-              }}
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ width: '18px', height: '18px' }}>
-                <path d="M12 2L9.5 9.5 2 12l7.5 2.5L12 22l2.5-7.5L22 12l-7.5-2.5z"/>
-              </svg>
-            </button>
+            <div style={{ position: 'relative', flexShrink: 0 }}>
+              <button
+                onClick={openAISheet}
+                style={{
+                  width: '52px', height: '48px', borderRadius: '14px',
+                  background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
+                  border: 'none',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 12px rgba(124,58,237,0.55)',
+                  WebkitTapHighlightColor: 'transparent',
+                }}
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ width: '18px', height: '18px' }}>
+                  <path d="M12 2L9.5 9.5 2 12l7.5 2.5L12 22l2.5-7.5L22 12l-7.5-2.5z"/>
+                </svg>
+              </button>
+
+              {/* Coach Mark Tooltip */}
+              <div style={{
+                position: 'absolute',
+                bottom: 'calc(100% + 8px)',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                background: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)',
+                color: '#fff',
+                padding: '4px 8px',
+                borderRadius: '8px',
+                fontSize: '9px',
+                fontWeight: '800',
+                whiteSpace: 'nowrap',
+                boxShadow: '0 4px 10px rgba(220,38,38,0.3)',
+                fontFamily: 'var(--m-font)',
+                pointerEvents: 'none',
+                zIndex: 100,
+              }}>
+                Baru! ✨
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  width: '0',
+                  height: '0',
+                  borderLeft: '4px solid transparent',
+                  borderRight: '4px solid transparent',
+                  borderTop: '4px solid #DC2626',
+                }} />
+              </div>
+            </div>
 
             {/* Lanjut → */}
             <button
@@ -1257,7 +1290,7 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
                     {aiScanText}
                   </div>
                   <div style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '12px', marginTop: '4px', textAlign: 'center', padding: '0 32px', fontFamily: 'var(--m-font)', lineHeight: '1.4' }}>
-                    Runware FLUX.2 sedang generate. Biasanya 10-20 detik.
+                    SiLaris AI sedang generate. Biasanya 10-20 detik.
                   </div>
                   <div className="scan-dots" style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
                     <div className="scan-dot" style={{ width: '8px', height: '8px', background: '#a78bfa' }} />
