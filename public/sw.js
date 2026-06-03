@@ -19,8 +19,8 @@ self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   const url = new URL(e.request.url);
 
-  /* Skip API calls */
-  if (url.hostname.includes('supabase') || url.hostname.includes('nominatim')) return;
+  /* Skip API calls & external services */
+  if (url.hostname.includes('supabase') || url.hostname.includes('nominatim') || url.hostname.includes('huggingface') || url.hostname.includes('siliconflow') || !url.hostname.includes('localhost') && !url.hostname.includes('larisi')) return;
 
   /* Network-first untuk HTML — pastikan selalu dapat JS terbaru */
   if (e.request.mode === 'navigate' || e.request.destination === 'document') {
