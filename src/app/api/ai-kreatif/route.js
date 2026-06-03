@@ -214,3 +214,63 @@ async function handleLocalSD(imageBase64, prompt, localSdUrl) {
 
   return Response.json({ images: imageUrls, seed: data.seed });
 }
+
+async function handleHuggingFace(imageBase64, prompt, apiKey) {
+  const modelId = 'SG161222/RealVisXL_V4.0';
+  const url = `https://api-inference.huggingface.co/models/${modelId}`;
+
+  const seeds = [
+    Math.floor(Math.random() * 1000000),
+    Math.floor(Math.random() * 1000000),
+    Math.floor(Math.random() * 1000000)
+  ];
+
+  try {
+    const promises = seeds.map(async (seed) => {
+      let headers = {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      };
+
+      const body = JSON.stringify({
+        inputs: prompt,
+        parameters: {
+          seed: seed,
+          guidance_scale: 7.5,
+          num_inference_steps: 30
+        }
+      });
+
+      const resp = await fetch(url, {
+        method: 'POST',
+        headers,
+        body
+      });
+
+      if (!resp.ok) {
+        const errJson = await resp.json().catch(() => ({}));
+        if (errJson.error && errJson.error.includes('loading')) {
+          throw new Error(`MODEL_LOADING:${errJson.estimated_time || 30}`);
+        }
+        throw new Error(errJson.error || `HTTP error ${resp.status}`);
+      }
+
+      const buffer = await resp.arrayBuffer();
+      const base64 = Buffer.from(buffer).toString('base64');
+      return `data:image/jpeg;base64,${base64}`;
+    });
+
+    const imageUrls = await Promise.all(promises);
+    return Response.json({ images: imageUrls });
+
+  } catch (e) {
+    if (e.message.startsWith('MODEL_LOADING:')) {
+      const seconds = e.message.split(':')[1];
+      return Response.json({
+        error: `Model Hugging Face (${modelId}) sedang memuat di server mereka. Coba lagi dalam ${Math.round(seconds)} detik.`
+      }, { status: 503 });
+    }
+    console.error('[ai-kreatif] Hugging Face error:', e);
+    return Response.json({ error: `Hugging Face error: ${e.message}` }, { status: 500 });
+  }
+}
