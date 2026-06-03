@@ -170,7 +170,7 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
   const [aiGenerating,   setAiGenerating]   = useState(false);
   const [aiResults,      setAiResults]      = useState([]);
   const [aiError,        setAiError]        = useState('');
-  const [selectedAIResultIdx, setSelectedAIResultIdx] = useState(0);
+  const [selectedAIResultIdx, setSelectedAIResultIdx] = useState(null);
   const [aiScanText,     setAiScanText]     = useState('');
 
   const fileToBase64 = (file) => new Promise((resolve, reject) => {
@@ -187,11 +187,11 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
     setAiResults([]);
 
     const aiScanMessages = [
-      'SiLaris AI sedang menganalisis foto produkmu...',
-      'Menyesuaikan pencahayaan studio foto...',
-      'Mengatur latar belakang estetik...',
-      'Menghasilkan 3 variasi style profesional sekaligus...',
-      'Menyempurnakan detail resolusi gambar...',
+      'Membaca detail produk...',
+      'Menerapkan style pilihan...',
+      'Menyempurnakan pencahayaan...',
+      'Menghasilkan 3 variasi...',
+      'Hampir selesai...'
     ];
     setAiScanText(aiScanMessages[0]);
     let msgIdx = 0;
@@ -219,7 +219,7 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
       }
       if (data.images && data.images.length > 0) {
         setAiResults(data.images);
-        setSelectedAIResultIdx(0);
+        setSelectedAIResultIdx(null);
       } else {
         throw new Error('Tidak ada gambar yang dihasilkan.');
       }
@@ -1241,32 +1241,28 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
               {aiGenerating && (
                 <div style={{
                   position: 'absolute', inset: 0,
-                  background: 'rgba(255, 255, 255, 0.9)',
+                  background: 'rgba(0, 0, 0, 0.82)',
                   backdropFilter: 'blur(4px)',
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  zIndex: 10,
+                  gap: '14px',
+                  zIndex: 30,
                 }}>
-                  <div className="ai-scan-line" style={{ top: 0, height: '100%', background: 'linear-gradient(to bottom, transparent, rgba(124, 58, 237, 0.04), rgba(124, 58, 237, 0.25), transparent)' }} />
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', zIndex: 11 }}>
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                      <div className="scan-dot" style={{ background: '#7C3AED', width: '8px', height: '8px' }} />
-                      <div className="scan-dot" style={{ background: '#7C3AED', width: '8px', height: '8px' }} />
-                      <div className="scan-dot" style={{ background: '#7C3AED', width: '8px', height: '8px' }} />
-                    </div>
-                    <div style={{
-                      fontFamily: 'var(--m-font)',
-                      fontSize: '14px',
-                      fontWeight: '600',
-                      color: '#111827',
-                      textAlign: 'center',
-                      padding: '0 32px',
-                      lineHeight: '1.5'
-                    }}>
-                      {aiScanText}
-                    </div>
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="1.5">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                  </svg>
+                  <div style={{ color: '#fff', fontSize: '15px', fontWeight: '700', fontFamily: 'var(--m-font)', textAlign: 'center' }}>
+                    {aiScanText}
+                  </div>
+                  <div style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '12px', marginTop: '4px', textAlign: 'center', padding: '0 32px', fontFamily: 'var(--m-font)', lineHeight: '1.4' }}>
+                    Runware FLUX.2 sedang generate. Biasanya 10-20 detik.
+                  </div>
+                  <div className="scan-dots" style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                    <div className="scan-dot" style={{ width: '8px', height: '8px', background: '#a78bfa' }} />
+                    <div className="scan-dot" style={{ width: '8px', height: '8px', background: '#a78bfa' }} />
+                    <div className="scan-dot" style={{ width: '8px', height: '8px', background: '#a78bfa' }} />
                   </div>
                 </div>
               )}
@@ -1347,81 +1343,49 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
                   </div>
                 </>
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  <div style={{ fontFamily: 'var(--m-font)', fontSize: '13px', fontWeight: '700', color: 'var(--m-ink-sub)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                    Pilih Hasil Style Kreatif
-                  </div>
-                  
-                  {/* Results Grid */}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', paddingBottom: '20px' }}>
+                  {/* Results Grid - Vertically Stacked scrollable */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                     {aiResults.map((url, idx) => {
-                      const styleInfo = AI_STYLES[idx] || { label: 'Variasi ' + (idx + 1) };
+                      const styleInfo = AI_STYLES[idx] || { label: 'Variasi ' + (idx + 1), emoji: '✨' };
                       const isSelected = selectedAIResultIdx === idx;
                       return (
                         <div key={idx} onClick={() => setSelectedAIResultIdx(idx)} style={{
-                          position: 'relative',
+                          width: '100%',
                           borderRadius: '16px',
                           overflow: 'hidden',
-                          aspectRatio: '1',
-                          border: isSelected ? '3px solid #7C3AED' : '1px solid #E4E4EB',
+                          border: isSelected ? '2px solid var(--m-brand)' : '2px solid transparent',
                           cursor: 'pointer',
-                          background: '#F9F9FB',
-                          boxShadow: isSelected ? '0 4px 12px rgba(124, 58, 237, 0.15)' : 'none',
+                          position: 'relative',
+                          background: '#F9F9FA',
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+                          transition: 'all 0.2s',
                         }}>
-                          <img src={url} alt={styleInfo.label} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                          <div style={{
-                            position: 'absolute',
-                            bottom: 0, left: 0, right: 0,
-                            background: 'linear-gradient(to top, rgba(0,0,0,0.8), transparent)',
-                            padding: '16px 8px 6px',
-                            textAlign: 'center',
-                          }}>
-                            <span style={{ fontFamily: 'var(--m-font)', fontSize: '11px', fontWeight: '700', color: '#fff' }}>
-                              {styleInfo.label}
-                            </span>
-                          </div>
+                          {/* Image */}
+                          <img src={url} alt={styleInfo.label} style={{ width: '100%', aspectRatio: '1/1', objectFit: 'cover', display: 'block' }} />
                           
-                          {/* Selection Checkmark Bubble */}
+                          {/* Checkmark bubble */}
                           {isSelected && (
                             <div style={{
-                              position: 'absolute', top: '8px', right: '8px',
-                              width: '22px', height: '22px', borderRadius: '50%',
-                              background: '#7C3AED', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              position: 'absolute', top: '12px', right: '12px',
+                              width: '28px', height: '28px', backgroundColor: 'var(--m-brand)',
+                              borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
                               boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
                             }}>
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                                 <polyline points="20 6 9 17 4 12"/>
                               </svg>
                             </div>
                           )}
+                          
+                          {/* Label bottom bar */}
+                          <div style={{ padding: '10px 14px', fontSize: '12px', fontWeight: '600', color: 'var(--m-ink-sub)', display: 'flex', alignItems: 'center', gap: '6px', background: '#fff' }}>
+                            <span>{styleInfo.emoji}</span>
+                            <span>{styleInfo.label}</span>
+                          </div>
                         </div>
                       );
                     })}
-                  </div>
-
-                  {/* Large Preview of the Selected Result */}
-                  <div style={{
-                    borderRadius: '16px',
-                    overflow: 'hidden',
-                    background: '#000',
-                    height: '220px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    border: '1px solid #E4E4EB',
-                    position: 'relative'
-                  }}>
-                    <img src={aiResults[selectedAIResultIdx]} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                    <div style={{
-                      position: 'absolute', top: '12px', left: '12px',
-                      background: 'rgba(0,0,0,0.6)', borderRadius: '20px', padding: '6px 12px',
-                      display: 'flex', alignItems: 'center', gap: '6px'
-                    }}>
-                      <span style={{ fontSize: '14px' }}>{AI_STYLES[selectedAIResultIdx]?.emoji || '✨'}</span>
-                      <span style={{ fontFamily: 'var(--m-font)', fontSize: '12px', fontWeight: '600', color: '#fff' }}>
-                        {AI_STYLES[selectedAIResultIdx]?.label}
-                      </span>
-                    </div>
                   </div>
                 </div>
               )}
@@ -1468,20 +1432,10 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
                   {aiPhoto ? 'Generate 3 Variasi' : 'Upload foto dulu'}
                 </button>
               ) : (
-                <div style={{ display: 'flex', gap: '10px' }}>
-                  <button onClick={() => {
-                    setAiResults([]);
-                    setSelectedAIResultIdx(0);
-                    setAiError('');
-                  }} style={{
-                    flex: 1, padding: '16px', borderRadius: '16px', border: '1.5px solid #E4E4EB',
-                    background: '#fff', color: '#374151',
-                    fontFamily: 'var(--m-font)', fontSize: '15px', fontWeight: '700',
-                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}>
-                    Generate Ulang
-                  </button>
-                  <button onClick={() => {
+                <button
+                  disabled={selectedAIResultIdx === null}
+                  onClick={() => {
+                    if (selectedAIResultIdx === null) return;
                     const selectedUrl = aiResults[selectedAIResultIdx];
                     const styleLabel = AI_STYLES[selectedAIResultIdx]?.label || 'AI-Kreatif';
                     const newFile = {
@@ -1494,15 +1448,19 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
                     onFilesChange(combined);
                     setSelectedIdx(combined.length - 1);
                     closeAISheet();
-                  }} style={{
-                    flex: 2, padding: '16px', borderRadius: '16px', border: 'none',
-                    background: '#111827', color: '#fff',
+                  }}
+                  style={{
+                    width: '100%', padding: '16px', borderRadius: '16px', border: 'none',
+                    background: selectedAIResultIdx !== null ? 'var(--m-brand)' : '#E4E4EB',
+                    color: selectedAIResultIdx !== null ? '#fff' : '#9CA3AF',
                     fontFamily: 'var(--m-font)', fontSize: '15px', fontWeight: '700',
-                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}>
-                    Gunakan Foto Ini
-                  </button>
-                </div>
+                    cursor: selectedAIResultIdx !== null ? 'pointer' : 'not-allowed',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    transition: 'background 0.2s',
+                  }}
+                >
+                  {selectedAIResultIdx !== null ? '✓ Gunakan Foto Ini' : 'Pilih salah satu hasil'}
+                </button>
               )}
             </div>
           </div>
