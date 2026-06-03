@@ -1286,12 +1286,16 @@ export default function CaptionScreen({
                   </div>
                 )}
                 <button
-                  onClick={handleTayangkan}
-                  disabled={!caption || posting}
+                  onClick={isOutOfQuota ? () => { if (triggerUpgrade) triggerUpgrade('Kuota Habis', 'Pilih paket untuk menambah kuota tayang iklan Anda:'); } : handleTayangkan}
+                  disabled={posting || (!isOutOfQuota && !caption)}
                   style={{
                     padding:'10px 16px', borderRadius:'12px', flexShrink:0,
-                    background: (!caption || posting) ? '#9CA3AF' : (isOutOfQuota ? '#EF4444' : '#1A1A1A'),
-                    color:'#fff', border:'none', cursor: (!caption || posting) ? 'not-allowed' : 'pointer',
+                    background: posting ? '#9CA3AF'
+                      : isOutOfQuota ? '#7C3AED'
+                      : !caption ? '#9CA3AF'
+                      : '#1A1A1A',
+                    color:'#fff', border:'none',
+                    cursor: (posting || (!isOutOfQuota && !caption)) ? 'not-allowed' : 'pointer',
                     fontFamily:'var(--m-font)', fontSize:'14px', fontWeight:'700',
                     display:'flex', alignItems:'center', gap:'6px',
                     transition:'background 0.2s',
@@ -1299,14 +1303,16 @@ export default function CaptionScreen({
                 >
                   {posting ? (
                     <div style={{width:'14px', height:'14px', border:'2px solid rgba(255,255,255,0.4)', borderTopColor:'#fff', borderRadius:'50%', animation:'spin 0.7s linear infinite'}} />
-                  ) : (
-                    !isOutOfQuota && (
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none">
-                        <polygon points="5 3 19 12 5 21 5 3"/>
-                      </svg>
-                    )
+                  ) : isOutOfQuota ? (
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+                    </svg>
+                  ) : !caption ? null : (
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                      <polygon points="5 3 19 12 5 21 5 3"/>
+                    </svg>
                   )}
-                  {posting ? 'Memposting…' : (isOutOfQuota ? 'Upgrade Tayang' : 'Tayangkan')}
+                  {posting ? 'Memposting…' : isOutOfQuota ? 'Upgrade' : 'Tayangkan'}
                 </button>
               </>
             );
