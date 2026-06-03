@@ -442,9 +442,32 @@ export default function CaptionScreen({
   };
 
   /* ── Auto-generate on first mount only when files are present ── */
+  /* Skip jika quota/akses habis — jangan buang token AI */
   if (!hasGenerated) {
     setHasGenerated(true);
-    if (files.length > 0) setTimeout(handleGenerate, 400);
+    const _plan = profile?.selected_plan || 'freemium';
+    const _quota = typeof profile?.ai_launch_count === 'number' ? profile.ai_launch_count : 10;
+    const _paymentStatus = profile?.payment_status || 'trial';
+    const _isResetDay = new Date().getDate() === 1;
+    const _trialStart = profile?.trial_start ? new Date(profile.trial_start) : new Date(profile?.created_at || Date.now());
+    const _paidDays = Math.floor((Date.now() - _trialStart) / (1000 * 60 * 60 * 24));
+    const _trialDays = profile?.trial_days || 7;
+    const _createdAt = profile?.created_at ? new Date(profile.created_at) : new Date();
+    const _diffDays = Math.floor((Date.now() - _createdAt) / (1000 * 60 * 60 * 24));
+
+    let _isBlocked = false;
+    if (_plan === 'freemium' || (_plan !== 'pro' && _plan !== 'starter')) {
+      _isBlocked = _quota <= 0 && !_isResetDay;
+    } else if (_plan === 'starter') {
+      _isBlocked = (_quota <= 0 && !_isResetDay) ||
+                   (_paymentStatus === 'trial' && _diffDays >= _trialDays) ||
+                   (_paymentStatus === 'paid' && _paidDays >= 30);
+    } else if (_plan === 'pro') {
+      _isBlocked = (_paymentStatus === 'trial' && _diffDays >= _trialDays) ||
+                   (_paymentStatus === 'paid' && _paidDays >= 30);
+    }
+
+    if (files.length > 0 && !_isBlocked) setTimeout(handleGenerate, 400);
   }
 
   /* ── Clear caption when all assets are removed ── */
