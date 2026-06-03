@@ -126,19 +126,9 @@ export default function DapurV2() {
       if (!tok) {
         /* Cek intent register dari localStorage */
         const intent = localStorage.getItem('larisi_intent');
-        /* iOS PWA: localStorage Safari & PWA terpisah — intent tidak terbaca.
-           Solusi: kalau standalone (buka dari home screen) & tidak ada token
-           → asumsikan new user → Register. Returning user bisa tap "Masuk di sini". */
-        const isStandalone = window.matchMedia('(display-mode: standalone)').matches
-                          || window.navigator.standalone;
-        const goToRegister = planParam || intent === 'register' || isStandalone;
-
-        /* iOS PWA: localStorage Safari & PWA terpisah — plan hilang setelah install.
-           Kalau standalone & plan belum ada → set default 'pro' agar badge tetap muncul
-           di Register (asumsi user datang dari tombol Coba Gratis landing page). */
-        if (isStandalone && !localStorage.getItem('larisi_selected_plan')) {
-          localStorage.setItem('larisi_selected_plan', planParam || 'pro');
-        }
+        /* Arahkan ke pendaftaran (register) jika dipicu oleh parameter plan dari landing page 
+           atau jika ada niat (intent) register. Jika tidak, default selalu ke halaman masuk (login). */
+        const goToRegister = planParam || intent === 'register';
 
         setAuthState(goToRegister ? 'register' : 'login');
         return;

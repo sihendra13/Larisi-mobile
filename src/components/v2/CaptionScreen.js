@@ -1116,11 +1116,10 @@ export default function CaptionScreen({
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
           {(() => {
             const plan = profile?.selected_plan || 'freemium';
+            const quotaDefaults = { freemium: 10, starter: 50, pro: 999999 };
             let currentQuota = null;
-            if (plan === 'freemium') {
-              currentQuota = typeof profile?.ai_launch_count === 'number' ? profile.ai_launch_count : parseInt(localStorage.getItem('larisi_freemium_quota') || '10');
-            } else if (plan === 'starter') {
-              currentQuota = typeof profile?.ai_launch_count === 'number' ? profile.ai_launch_count : parseInt(localStorage.getItem('larisi_starter_quota') || '50');
+            if (plan === 'freemium' || plan === 'starter' || plan === 'pro') {
+              currentQuota = typeof profile?.ai_launch_count === 'number' ? profile.ai_launch_count : quotaDefaults[plan];
             }
             const isOutOfQuota = currentQuota !== null && currentQuota <= 0;
 
