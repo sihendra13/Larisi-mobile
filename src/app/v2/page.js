@@ -352,7 +352,7 @@ export default function DapurV2() {
     }
 
     try {
-      if (window.showAnToast) window.showAnToast('Menghubungkan ke Duitku...', 'info');
+      showMobileToast('Menghubungkan ke Duitku...', 'warning');
 
       const email = profile?.email || '';
       const name = profile?.business_name || profile?.full_name || 'Pelanggan Larisi';
@@ -379,7 +379,7 @@ export default function DapurV2() {
       }
     } catch(err) {
       console.error('Duitku Error:', err);
-      if (window.showAnToast) window.showAnToast('Maaf, ' + err.message, 'error');
+      showMobileToast('Maaf, ' + err.message, 'error');
     }
   };
 
