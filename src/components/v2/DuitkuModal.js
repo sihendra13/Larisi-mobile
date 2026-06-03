@@ -10,6 +10,7 @@ export default function DuitkuModal({ isOpen, onClose, paymentDetails }) {
   const [isVisible, setIsVisible] = useState(false);
   const [timeLeft, setTimeLeft] = useState(60 * 60); // 1 hour in seconds
   const [isCopied, setIsCopied] = useState(false);
+  const [showDetail, setShowDetail] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -41,9 +42,16 @@ export default function DuitkuModal({ isOpen, onClose, paymentDetails }) {
   
   const vaNumber = paymentDetails.vaNumber || '';
   const amount = paymentDetails.amount || 0;
+  const originalAmount = paymentDetails.originalAmount || paymentDetails.amount || 0;
+  const svcFee = Math.max(0, parseInt(amount) - parseInt(originalAmount));
   const bankCode = paymentDetails.paymentCode || paymentDetails.bankCode || '';
   const bankName = DUITKU_BANK_NAMES[bankCode] || 'Virtual Account';
   const plan = paymentDetails.plan || '';
+  const orderId = paymentDetails.orderId || '';
+
+  const today = new Date();
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const dateStr = `${today.getDate()}-${months[today.getMonth()]}-${today.getFullYear()}`;
 
   const minutes = Math.floor(timeLeft / 60);
   const seconds = timeLeft % 60;
@@ -183,13 +191,94 @@ export default function DuitkuModal({ isOpen, onClose, paymentDetails }) {
             {timeLeft > 0 ? 'Menunggu Pembayaran...' : 'Invoice Kadaluarsa'}
           </div>
           
-          <div style={{ textAlign: 'center', marginTop: '20px' }}>
+          {/* Detail Transaksi Button */}
+          <button
+            onClick={() => setShowDetail(true)}
+            style={{
+              width: '100%',
+              marginTop: '12px',
+              padding: '12px',
+              border: '1.5px solid #111827',
+              borderRadius: '10px',
+              background: '#fff',
+              color: '#111827',
+              fontSize: '14px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              fontFamily: 'var(--m-font)'
+            }}
+          >
+            Lihat Detail Transaksi
+          </button>
+
+          <div style={{ textAlign: 'center', marginTop: '16px' }}>
             <span style={{ fontSize: '12px', color: '#6b7280' }}>
               Pembayaran diproses otomatis oleh Duitku
             </span>
           </div>
         </div>
       </div>
+
+      {/* Detail Transaksi Modal */}
+      {showDetail && (
+        <div
+          onClick={() => setShowDetail(false)}
+          style={{
+            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
+            zIndex: 100001, display: 'flex', alignItems: 'center',
+            justifyContent: 'center', padding: '16px'
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{ background: '#fff', borderRadius: '12px', width: '100%', maxWidth: '380px', overflow: 'hidden', fontFamily: 'var(--m-font)' }}
+          >
+            {/* Header */}
+            <div style={{ background: '#f5f5f5', padding: '14px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontWeight: 700, fontSize: '15px' }}>Detail Transaksi</span>
+              <button onClick={() => setShowDetail(false)} style={{ background: 'none', border: 'none', fontSize: '22px', cursor: 'pointer', color: '#888', lineHeight: 1 }}>×</button>
+            </div>
+            {/* Identity */}
+            <div style={{ padding: '20px', textAlign: 'center', background: '#f0ecf8' }}>
+              <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: '#111827', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 8px' }}>
+                <span style={{ color: '#fff', fontWeight: 700, fontSize: '16px' }}>L</span>
+              </div>
+              <div style={{ fontWeight: 700, fontSize: '14px', marginBottom: '16px' }}>LARISI</div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', textAlign: 'left', gap: '8px' }}>
+                <div>
+                  <div style={{ color: '#888', fontSize: '11px' }}>Invoice number</div>
+                  <div style={{ fontWeight: 600, fontSize: '12px', wordBreak: 'break-all' }}>{orderId}</div>
+                </div>
+                <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                  <div style={{ color: '#888', fontSize: '11px' }}>Transaction Date</div>
+                  <div style={{ fontWeight: 600, fontSize: '12px' }}>{dateStr}</div>
+                </div>
+              </div>
+            </div>
+            {/* Breakdown */}
+            <div style={{ padding: '0 20px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid #f0f0f0' }}>
+                <span style={{ color: '#555', fontSize: '14px' }}>Sub Total</span>
+                <span style={{ fontWeight: 600, fontSize: '14px' }}>{formatRupiah(originalAmount)}</span>
+              </div>
+              {svcFee > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid #f0f0f0' }}>
+                  <div>
+                    <div style={{ color: '#555', fontSize: '14px' }}>Biaya Layanan</div>
+                    <div style={{ color: '#aaa', fontSize: '11px' }}>Biaya Virtual Account Duitku</div>
+                  </div>
+                  <span style={{ fontWeight: 600, fontSize: '14px' }}>{formatRupiah(svcFee)}</span>
+                </div>
+              )}
+            </div>
+            {/* Total */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '14px 20px', background: '#111827' }}>
+              <span style={{ color: '#fff', fontWeight: 700, fontSize: '14px' }}>Total Amount</span>
+              <span style={{ color: '#fff', fontWeight: 700, fontSize: '14px' }}>{formatRupiah(amount)}</span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
