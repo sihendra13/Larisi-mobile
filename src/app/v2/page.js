@@ -442,7 +442,7 @@ export default function DapurV2() {
     setShowPanel(false);
   };
 
-  const BACK = { audiens:'platform', aset:'audiens', caption:'aset' };
+  const BACK = { audiens:'platform', aset:'audiens', caption:'platform' };
   const goTo   = (s) => setScreen(s);
   const goBack = () => { if (BACK[screen]) goTo(BACK[screen]); };
 
