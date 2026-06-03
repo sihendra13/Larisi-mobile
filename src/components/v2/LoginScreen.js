@@ -36,14 +36,23 @@ export default function LoginScreen({ onLoginSuccess, onGoRegister }) {
       );
       const authData = await authResp.json();
 
-      if (!authResp.ok || authData.error) {
-        const msg = authData.error_description || authData.error || 'Login gagal';
-        if (msg.includes('Invalid login') || msg.includes('invalid_grant'))
+      if (!authResp.ok || authData.error || authData.error_code || authData.msg) {
+        const rawMsg = authData.error_description || authData.msg || authData.error || authData.error_code || 'Login gagal';
+        const msg = typeof rawMsg === 'string' ? rawMsg : JSON.stringify(rawMsg);
+        const lowMsg = msg.toLowerCase();
+        
+        if (
+          lowMsg.includes('invalid login') || 
+          lowMsg.includes('invalid_grant') || 
+          lowMsg.includes('invalid_credentials') ||
+          lowMsg.includes('invalid credentials')
+        ) {
           setError('Email atau password salah. Periksa kembali dan coba lagi.');
-        else if (msg.includes('Email not confirmed'))
+        } else if (lowMsg.includes('email not confirmed')) {
           setError('Email belum dikonfirmasi. Cek inbox kamu.');
-        else
+        } else {
           setError(msg);
+        }
         setLoading(false);
         return;
       }
