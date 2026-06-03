@@ -366,7 +366,8 @@
 
   async function handleMainBtn() {
     if (currentPhase === 'upload') {
-      const ready = apiKey.length > 20 && (currentMode === 'img2img' ? hasImage : document.getElementById('custom-prompt').value.trim().length > 5);
+      const hasKey = currentProvider === 'huggingface' ? (hfKey.startsWith('hf_') && hfKey.length > 10) : apiKey.length > 20;
+      const ready = hasKey && (currentMode === 'img2img' ? hasImage : document.getElementById('custom-prompt').value.trim().length > 5);
       if (!ready) return;
       await runGenerate();
     } else if (currentPhase === 'result' && selectedResultIndex !== null) {
@@ -374,82 +375,129 @@
     }
   }
 
+  // ── Prompt per style ──
+  const stylePrompts = {
+    studio: 'professional product photography, clean white studio background, soft box lighting, sharp focus, commercial photography, high resolution',
+    lifestyle: 'product lifestyle photography, warm wooden table, soft morning sunlight, cozy atmosphere, bokeh background, natural tones, Instagram aesthetic',
+    flatlay: 'flat lay product photography, top down bird eye view, minimalist pastel background, neat symmetrical arrangement, clean composition, fashion magazine style',
+  };
+
+  // ── HuggingFace direct from browser ──
+  async function runHuggingFace(prompt) {
+    const HF_MODEL = 'stabilityai/stable-diffusion-xl-base-1.0';
+    const seeds = [42, 1234, 7777];
+    const headers = {
+      'Authorization': `Bearer ${hfKey}`,
+      'Content-Type': 'application/json',
+      'x-wait-for-model': 'true',
+    };
+
+    // Generate 3 variasi secara sequential (free tier lebih stabil)
+    const imageUrls = [];
+    for (const seed of seeds) {
+      const resp = await fetch(`https://api-inference.huggingface.co/models/${HF_MODEL}`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          inputs: prompt,
+          parameters: { seed, num_inference_steps: 25, guidance_scale: 7 }
+        }),
+      });
+
+      if (!resp.ok) {
+        const errText = await resp.text();
+        let errMsg = `HuggingFace error ${resp.status}.`;
+        try {
+          const errJson = JSON.parse(errText);
+          if (errJson.error?.toLowerCase().includes('loading')) {
+            errMsg = 'Model sedang loading di server HF. Tunggu 30 detik lalu coba lagi.';
+          } else if (errJson.error?.toLowerCase().includes('token')) {
+            errMsg = 'Token tidak valid. Pastikan format: hf_xxxx';
+          } else if (errJson.estimated_time) {
+            errMsg = `Model loading, estimasi ${Math.ceil(errJson.estimated_time)} detik. Coba lagi sebentar.`;
+          }
+        } catch(e) {}
+        throw new Error(errMsg);
+      }
+
+      const blob = await resp.blob();
+      const url = URL.createObjectURL(blob);
+      imageUrls.push(url);
+    }
+    return imageUrls;
+  }
+
   async function runGenerate() {
     currentPhase = 'scanning';
     updateButton();
 
-    // Tampilkan loading
     const overlay = document.getElementById('scan-overlay');
     overlay.style.display = 'flex';
     const scanTextEl = document.getElementById('scan-text');
     const scanSubEl = document.getElementById('scan-sub');
     let msgIdx = 0;
     scanTextEl.textContent = scanMessages[0];
-    if (currentProvider === 'local-sd') {
-      scanSubEl.textContent = 'Stable Diffusion lokal sedang process. Bisa 30–120 detik tergantung GPU.';
-    } else if (currentProvider === 'huggingface') {
-      scanSubEl.textContent = 'HuggingFace sedang generate. Biasanya 20–60 detik (gratis, mungkin antri).';
-    } else {
-      scanSubEl.textContent = 'SiliconFlow FLUX sedang bekerja. Biasanya 15–30 detik.';
-    }
+    scanSubEl.textContent = currentProvider === 'huggingface'
+      ? 'HuggingFace SDXL sedang generate. Gratis, biasanya 20–60 detik.'
+      : 'SiliconFlow FLUX sedang bekerja. Biasanya 15–30 detik.';
+
     const msgInterval = setInterval(() => {
       msgIdx = (msgIdx + 1) % scanMessages.length;
       scanTextEl.textContent = scanMessages[msgIdx];
-    }, 2500);
+    }, 3000);
 
     try {
-      const body = {
-        style: selectedStyle,
-        provider: currentProvider,
-      };
+      const userDesc = currentMode === 'txt2img' ? document.getElementById('custom-prompt').value.trim() : '';
+      const basePrompt = stylePrompts[selectedStyle] || stylePrompts.studio;
+      const prompt = userDesc ? `${userDesc}, ${basePrompt}` : basePrompt;
+
+      let imageUrls = [];
 
       if (currentProvider === 'huggingface') {
-        body.apiKey = hfKey;
+        // ── Direct browser call ke HuggingFace ──
+        imageUrls = await runHuggingFace(prompt);
+
       } else if (currentProvider === 'siliconflow') {
-        body.apiKey = apiKey;
+        // ── SiliconFlow via API route (butuh dev server) ──
+        const body = { style: selectedStyle, provider: 'siliconflow', apiKey };
+        if (currentMode === 'img2img' && imageBase64) body.imageBase64 = imageBase64;
+        else body.customPrompt = userDesc;
+
+        const resp = await fetch('/api/ai-kreatif', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        const data = await resp.json();
+        if (!resp.ok || data.error) throw new Error(data.error || 'SiliconFlow error');
+        imageUrls = data.images || [];
+
       } else if (currentProvider === 'local-sd') {
-        body.localSdUrl = document.getElementById('local-sd-url').value.trim() || 'http://localhost:7860';
-      }
+        const localUrl = document.getElementById('local-sd-url').value.trim() || 'http://localhost:7860';
+        const body = { style: selectedStyle, provider: 'local-sd', localSdUrl: localUrl };
+        if (currentMode === 'img2img' && imageBase64) body.imageBase64 = imageBase64;
+        else body.customPrompt = userDesc;
 
-      if (currentMode === 'img2img' && imageBase64) {
-        body.imageBase64 = imageBase64;
-      } else {
-        // Text-to-image: tambahkan deskripsi user ke prompt
-        const userDesc = document.getElementById('custom-prompt').value.trim();
-        body.customPrompt = userDesc;
+        const resp = await fetch('/api/ai-kreatif', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        const data = await resp.json();
+        if (!resp.ok || data.error) throw new Error(data.error || 'Local SD error');
+        imageUrls = data.images || [];
       }
-
-      const resp = await fetch('/api/ai-kreatif', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
 
       clearInterval(msgInterval);
       overlay.style.display = 'none';
 
-      const data = await resp.json();
-
-      if (!resp.ok || data.error) {
-        showError(data.error || 'Gagal generate. Cek API key dan coba lagi.');
-        currentPhase = 'upload';
-        updateButton();
-        return;
-      }
-
-      if (!data.images || data.images.length === 0) {
-        showError('Tidak ada gambar yang dihasilkan. Coba lagi.');
-        currentPhase = 'upload';
-        updateButton();
-        return;
-      }
-
-      showResults(data.images);
+      if (!imageUrls.length) throw new Error('Tidak ada gambar yang dihasilkan.');
+      showResults(imageUrls);
 
     } catch(e) {
       clearInterval(msgInterval);
       overlay.style.display = 'none';
-      showError('Error: ' + e.message + '. Pastikan dev server Next.js jalan di localhost:3000');
+      showError(e.message);
       currentPhase = 'upload';
       updateButton();
     }
