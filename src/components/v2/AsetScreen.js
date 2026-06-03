@@ -1171,36 +1171,24 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
                 </svg>
               </button>
 
-              {/* Coach Mark Tooltip */}
+              {/* Coach Mark Badge (Overlapping Top-Right) */}
               <div style={{
                 position: 'absolute',
-                bottom: 'calc(100% + 8px)',
-                left: '50%',
-                transform: 'translateX(-50%)',
+                top: '-6px',
+                right: '-6px',
                 background: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)',
                 color: '#fff',
-                padding: '4px 8px',
+                padding: '2px 6px',
                 borderRadius: '8px',
-                fontSize: '9px',
-                fontWeight: '800',
+                fontSize: '8px',
+                fontWeight: '900',
                 whiteSpace: 'nowrap',
-                boxShadow: '0 4px 10px rgba(220,38,38,0.3)',
+                boxShadow: '0 2px 6px rgba(220,38,38,0.4)',
                 fontFamily: 'var(--m-font)',
                 pointerEvents: 'none',
-                zIndex: 100,
+                zIndex: 10,
               }}>
-                Baru! ✨
-                <div style={{
-                  position: 'absolute',
-                  top: '100%',
-                  left: '50%',
-                  transform: 'translateX(-50%)',
-                  width: '0',
-                  height: '0',
-                  borderLeft: '4px solid transparent',
-                  borderRight: '4px solid transparent',
-                  borderTop: '4px solid #DC2626',
-                }} />
+                NEW
               </div>
             </div>
 
