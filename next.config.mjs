@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'export',        // Static HTML untuk Cloudflare Pages
+  // output: 'export',     // Dimatikan sementara agar API routes aktif di dev
   trailingSlash: true,
   images: { unoptimized: true },
 };

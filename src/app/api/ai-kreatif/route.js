@@ -16,8 +16,11 @@ export async function POST(request) {
     const prompt = customPrompt ? `${customPrompt}, ${basePrompt}` : basePrompt;
 
     if (provider === 'runware') {
-      if (!apiKey) return Response.json({ error: 'Runware API key tidak ada' }, { status: 400 });
-      return handleRunware(imageBase64, prompt, apiKey);
+      const runwareKey = apiKey || process.env.RUNWARE_API_KEY;
+      if (!runwareKey || runwareKey === 'YOUR_RUNWARE_API_KEY_HERE') {
+        return Response.json({ error: 'Runware API key tidak ada' }, { status: 400 });
+      }
+      return handleRunware(imageBase64, customPrompt, runwareKey);
     } else if (provider === 'local-sd') {
       return handleLocalSD(imageBase64, prompt, localSdUrl);
     } else if (provider === 'huggingface') {
@@ -37,7 +40,7 @@ export async function POST(request) {
   }
 }
 
-async function handleRunware(imageBase64, prompt, apiKey) {
+async function handleRunware(imageBase64, customPrompt, apiKey) {
   const stylePrompts = {
     studio:    'professional product photography, clean white studio background, soft box lighting, sharp focus, commercial photography, high resolution',
     lifestyle: 'product lifestyle photography, warm wooden table, soft morning sunlight, cozy atmosphere, bokeh background, natural tones, Instagram aesthetic',
@@ -70,24 +73,27 @@ async function handleRunware(imageBase64, prompt, apiKey) {
     }
 
     // ── Step 2: Generate 3 style sekaligus dalam 1 request ──
-    const inferenceTasks = Object.entries(stylePrompts).map(([style, stylePrompt]) => ({
-      taskType: 'imageInference',
-      taskUUID: crypto.randomUUID(),
-      model: 'runware:101@1', // FLUX.2 dev — support img2img
-      positivePrompt: stylePrompt,
-      negativePrompt: 'blurry, low quality, distorted, watermark, text, deformed',
-      width: 1024,
-      height: 1024,
-      steps: 28,
-      CFGScale: 3.5,
-      outputFormat: 'JPEG',
-      includeCost: true,
-      ...(seedImageUUID ? { seedImage: seedImageUUID, strength: 0.75 } : {}),
-    }));
+    const inferenceTasks = Object.entries(stylePrompts).map(([style, stylePrompt]) => {
+      const positivePrompt = customPrompt ? `${customPrompt}, ${stylePrompt}` : stylePrompt;
+      return {
+        taskType: 'imageInference',
+        taskUUID: crypto.randomUUID(),
+        model: 'runware:100@1', // FLUX.1 schnell or dev: model ID runware:100@1 is Schnell, runware:101@1 is Dev. Let's stick with 101@1 or 100@1. Let's use 100@1 (schnell) which is faster and cheaper, or 101@1 (dev) which is better.
+        positivePrompt,
+        negativePrompt: 'blurry, low quality, distorted, watermark, text, deformed',
+        width: 1024,
+        height: 1024,
+        steps: 4, // Schnell only needs 4 steps. Dev needs 28 steps. Since model is 101@1, let's keep it as 101@1 and steps 28, or let's use schnell (100@1) with steps 4 for speed. Let's keep 101@1 and steps 28 as originally implemented, but let's change to schnell for cost/speed if preferred. Actually, let's stick with the original 101@1 and 28 steps to maintain the high quality.
+        CFGScale: 3.5,
+        outputFormat: 'JPEG',
+        includeCost: true,
+        ...(seedImageUUID ? { seedImage: seedImageUUID, strength: 0.75 } : {}),
+      };
+    });
 
     const payload = [
       { taskType: 'authentication', apiKey },
-      ...inferenceTasks,
+      ...inferenceTasks.map(t => ({ ...t, model: 'runware:101@1', steps: 28 })), // Keep high quality dev
     ];
 
     const genResp = await fetch('https://api.runware.ai/v1', {
