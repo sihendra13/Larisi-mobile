@@ -445,19 +445,6 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
             ))}
           </div>
         )}
-
-        {/* CTA Buat Iklan Baru */}
-        {!loading && (
-          <div style={{ paddingBottom:'24px', marginTop: filtered.length === 0 ? '0' : '-8px' }}>
-            <button
-              onClick={handleOpenPlatformSheet}
-              style={{ width:'100%', padding:'16px', borderRadius:'16px', background:'#202434', color:'#fff', border:'none', cursor:'pointer', fontFamily:'var(--m-font)', fontSize:'15px', fontWeight:'800', display:'flex', alignItems:'center', justifyContent:'center', gap:'8px', boxShadow:'0 4px 14px rgba(32,36,52,0.15)' }}
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg>
-              Buat Iklan Baru
-            </button>
-          </div>
-        )}
       </main>
 
       {/* Floating Action Button (FAB) */}
@@ -539,6 +526,10 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
                   instagram: {
                     label: 'Instagram',
                     softBg: '#FFF0F3', softBorder: '#FFD6E0',
+                    badgeBg: 'linear-gradient(135deg,#f09433,#bc1888)',
+                    iconBadge: (
+                      <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/></svg>
+                    ),
                     icon: (
                       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E1306C" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5" /><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" /><line x1="17.5" y1="6.5" x2="17.51" y2="6.5" /></svg>
                     )
@@ -546,6 +537,10 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
                   facebook: {
                     label: 'Facebook',
                     softBg: '#EEF4FF', softBorder: '#C9DDFF',
+                    badgeBg: '#1877F2',
+                    iconBadge: (
+                      <svg width="8" height="8" viewBox="0 0 24 24" fill="none"><path d="M13.5 8h2V5.5h-2C11.57 5.5 10 7.07 10 9v1.5H8V13h2v7h3v-7h2l.5-2.5H13V9c0-.28.22-.5.5-.5z" fill="white"/></svg>
+                    ),
                     icon: (
                       <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" fill="#1877F2" /></svg>
                     )
@@ -553,6 +548,10 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
                   tiktok: {
                     label: 'TikTok',
                     softBg: '#F5F5F5', softBorder: '#E0E0E0',
+                    badgeBg: '#0E0E12',
+                    iconBadge: (
+                      <svg width="8" height="8" viewBox="0 0 24 24" fill="none"><path d="M16 8c.55.73 1.4 1.2 2.35 1.25v2.1a4.55 4.55 0 01-2.35-.65v5.8a4.1 4.1 0 11-4.1-4.1h.27v2.1H12a2 2 0 102 2V8z" fill="white"/></svg>
+                    ),
                     icon: (
                       <svg width="24" height="24" viewBox="0 0 24 24" fill="#000000"><path d="M12.53.02C13.84 0 15 1 15 2.3c.02 2.3 1.5 3.3 3.5 3.3v3c-1.3-.1-2.5-.7-3.3-1.6v8.4c.1 4.5-4.4 7-8.2 4.4C3 16.6 3.6 11 8.2 11.1v3.2c-2.4 0-3.3 2-2.3 3.4 1 1.4 3.7.8 3.5-1.9V0h3.1z" /></svg>
                     )
@@ -560,6 +559,10 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
                   youtube: {
                     label: 'YouTube',
                     softBg: '#FFF2F2', softBorder: '#FFD0D0',
+                    badgeBg: '#FF0000',
+                    iconBadge: (
+                      <svg width="8" height="8" viewBox="0 0 24 24" fill="none"><path d="M21.8 8s-.2-1.4-.8-2c-.8-.8-1.6-.8-2-.9C16.8 5 12 5 12 5s-4.8 0-7 .1c-.4.1-1.2.1-2 .9-.6.6-.8 2-.8 2S2 9.6 2 11.2v1.5c0 1.6.2 3.2.2 3.2s.2 1.4.8 2c.8.8 1.8.8 2.3.9C6.8 19 12 19 12 19s4.8 0 7-.2c.4-.1 1.2-.1 2-.9.6-.6.8-2 .8-2s.2-1.6.2-3.2v-1.5C22 9.6 21.8 8 21.8 8z" fill="white"/><path d="M9.5 8.5l4 2.5-4 2.5V8.5z" fill="#FF0000"/></svg>
+                    ),
                     icon: (
                       <svg width="24" height="24" viewBox="0 0 24 24" fill="#FF0000"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
                     )
@@ -579,18 +582,38 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
                       display: 'flex', alignItems: 'center', gap: '12px',
                       padding: '14px 16px', borderRadius: '16px',
                       background: isConn ? '#fff' : '#FAF9FC',
-                      border: isConn ? '1.5px solid #10B981' : '1.5px solid #EBEBF0',
+                      border: isConn ? '1.5px solid #D1FAE5' : '1.5px solid #EBEBF0',
                       cursor: 'pointer', transition: 'all 0.2s ease',
                       opacity: isConn ? 1 : 0.65,
                     }}
                   >
-                    <div style={{
-                      width: '44px', height: '44px', borderRadius: '12px',
-                      background: config.softBg, border: `1px solid ${config.softBorder}`,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
-                    }}>
-                      {config.icon}
-                    </div>
+                    {isConn ? (
+                      <div style={{position:'relative',width:'44px',height:'44px',flexShrink:0}}>
+                        {acc.avatar_url ? (
+                          <img src={acc.avatar_url} alt={acc.username || config.label}
+                            style={{width:'44px',height:'44px',borderRadius:'12px',objectFit:'cover'}}
+                            onError={e => { e.target.style.display='none'; }}
+                          />
+                        ) : (
+                          <div style={{width:'44px',height:'44px',borderRadius:'12px',background:config.badgeBg,display:'flex',alignItems:'center',justifyContent:'center'}}>
+                            <span style={{color:'#fff',fontFamily:'var(--m-font)',fontSize:'16px',fontWeight:'700'}}>
+                              {(acc.username || config.label).charAt(0).toUpperCase()}
+                            </span>
+                          </div>
+                        )}
+                        <div style={{position:'absolute',bottom:'-3px',right:'-3px',width:'18px',height:'18px',borderRadius:'50%',background:config.badgeBg,border:'2px solid #fff',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                          {config.iconBadge}
+                        </div>
+                      </div>
+                    ) : (
+                      <div style={{
+                        width: '44px', height: '44px', borderRadius: '12px',
+                        background: config.softBg, border: `1px solid ${config.softBorder}`,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
+                      }}>
+                        {config.icon}
+                      </div>
+                    )}
 
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontFamily: 'var(--m-font)', fontSize: '14px', fontWeight: '700', color: 'var(--m-ink)' }}>
@@ -601,13 +624,7 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
                       </div>
                     </div>
 
-                    {isConn ? (
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '22px', height: '22px', borderRadius: '50%', background: '#E6F4EA' }}>
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="20 6 9 17 4 12" />
-                        </svg>
-                      </div>
-                    ) : (
+                    {!isConn && (
                       <span style={{ fontFamily: 'var(--m-font)', fontSize: '11px', fontWeight: '700', color: 'var(--m-brand)' }}>Hubungkan →</span>
                     )}
                   </div>
