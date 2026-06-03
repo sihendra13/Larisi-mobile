@@ -1,5 +1,5 @@
 'use client';
-import { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { analyzeImageCategory } from '@/lib/vision';
 import { detectPersona, personaDB } from '@/data/personas';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/lib/config';
@@ -1380,7 +1380,9 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
                           
                           {/* Label bottom bar */}
                           <div style={{ padding: '10px 14px', fontSize: '12px', fontWeight: '600', color: 'var(--m-ink-sub)', display: 'flex', alignItems: 'center', gap: '6px', background: '#fff' }}>
-                            <span>{styleInfo.emoji}</span>
+                            <span style={{ color: styleInfo.iconColor, display: 'inline-flex', alignItems: 'center' }}>
+                              {styleInfo.icon ? React.cloneElement(styleInfo.icon, { width: '16', height: '16' }) : <span>{styleInfo.emoji}</span>}
+                            </span>
                             <span>{styleInfo.label}</span>
                           </div>
                         </div>
