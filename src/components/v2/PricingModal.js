@@ -1,6 +1,14 @@
 import React, { useState, useEffect } from 'react';
 
-export default function PricingModal({ isOpen, onClose, onSelectPlan, currentPlan = 'freemium', title = "Masa Trial Selesai!", description = "7 hari gratis Anda telah berakhir. Pilih paket untuk mulai berlangganan:" }) {
+export default function PricingModal({
+  isOpen,
+  onClose,
+  onSelectPlan,
+  onCancelClick,
+  currentPlan = 'freemium',
+  title = "Masa Trial Selesai!",
+  description = "7 hari gratis Anda telah berakhir. Pilih paket untuk mulai berlangganan:"
+}) {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
@@ -107,7 +115,7 @@ export default function PricingModal({ isOpen, onClose, onSelectPlan, currentPla
             <span style={{ fontSize: '13px', fontWeight: 500, color: '#6b7280' }}>Rp 99.000 / bulan</span>
           </button>
           
-          <button 
+          <button
             onClick={onClose}
             style={{
               background: 'transparent',
@@ -124,7 +132,42 @@ export default function PricingModal({ isOpen, onClose, onSelectPlan, currentPla
             Tetap di Paket Freemium (Gratis)
           </button>
         </div>
-        
+
+        {/* Divider */}
+        <div style={{ margin: '20px 0', borderTop: '1px solid #e5e7eb' }} />
+
+        {/* Cancel Subscription (if user is on paid plan) */}
+        {currentPlan !== 'freemium' && (
+          <div>
+            <p style={{ fontSize: '12px', fontWeight: 600, color: '#6b7280', margin: '0 0 12px', textAlign: 'center' }}>
+              Ingin Mengelola Subscription?
+            </p>
+            <button
+              onClick={onCancelClick}
+              style={{
+                width: '100%',
+                background: 'transparent',
+                color: '#DC2626',
+                border: '1px solid #FCA5A5',
+                borderRadius: '16px',
+                padding: '12px',
+                fontSize: '13px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.background = '#FEE2E2';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.background = 'transparent';
+              }}
+            >
+              Batalkan Subscription
+            </button>
+          </div>
+        )}
+
         <p style={{ fontSize: '12px', color: '#9ca3af', margin: '20px 0 0', textAlign: 'center' }}>
           Tidak ada biaya tersembunyi. Batalkan kapan saja.
         </p>

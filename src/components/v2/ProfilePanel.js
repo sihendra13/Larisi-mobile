@@ -241,7 +241,7 @@ export default function ProfilePanel({
   const initials = (ownerName || profile?.full_name || 'P')
     .trim().split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
   const plan     = profile?.selected_plan || 'freemium';
-  const planLabel= { pro: 'PRO', starter: 'STARTER', freemium: 'GRATIS' }[plan] || 'GRATIS';
+  const planLabel= { pro: 'PRO', starter: 'STARTER', freemium: 'FREEMIUM' }[plan] || 'FREEMIUM';
 
   const inputStyle = {
     width: '100%', padding: '11px 13px', fontSize: '14px',
@@ -332,8 +332,10 @@ export default function ProfilePanel({
             </div>
           </div>
           <div style={{
-            background: plan === 'pro' ? '#7C3AED' : plan === 'starter' ? '#2563EB' : '#6b7280',
-            color: '#fff', fontSize: '10px', fontWeight: '700',
+            background: plan === 'pro' ? '#791ADB' : plan === 'starter' ? '#10b981' : '#f3f4f6',
+            color: (plan === 'pro' || plan === 'starter') ? '#fff' : '#6b7280',
+            border: (plan === 'pro' || plan === 'starter') ? 'none' : '1px solid #E4E4EB',
+            fontSize: '10px', fontWeight: '700',
             padding: '3px 8px', borderRadius: '999px', flexShrink: 0,
           }}>
             {planLabel}

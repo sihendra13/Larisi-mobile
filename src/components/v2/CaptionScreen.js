@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
+import QuotaWarningBanner from './QuotaWarningBanner';
 
 const PLATFORM_ICONS = {
   instagram: (
@@ -378,6 +379,9 @@ export default function CaptionScreen({
   const sheetSwipeRef = useRef(null);
   const textareaRef   = useRef(null);
 
+  /* ── Warning banner states ── */
+  const [warningBanner,   setWarningBanner]   = useState({ visible: false, type: 'warning', message: '' });
+
   const reach     = computeReach(locPop, radius, localOn, travelerOn);
   const reachText = fmtReach(reach);
   const maxChar   = MAX_CHAR[platform] || 2200;
@@ -452,6 +456,83 @@ export default function CaptionScreen({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [files.length]);
 
+  /* ── Initialize quota warning banner ── */
+  useEffect(() => {
+    if (!profile?.selected_plan) return;
+
+    const plan = profile.selected_plan || 'freemium';
+    const quota = profile?.ai_launch_count ?? 10;
+    const paymentStatus = profile?.payment_status || 'trial';
+    const createdAt = profile?.created_at ? new Date(profile.created_at) : new Date();
+    const trialStart = profile?.trial_start ? new Date(profile.trial_start) : createdAt;
+    const trialDays = profile?.trial_days || 7;
+    const now = new Date();
+    const isResetDay = now.getDate() === 1;
+
+    const diffDays = Math.floor((now - createdAt) / (1000 * 60 * 60 * 24));
+    const paidDays = Math.floor((now - trialStart) / (1000 * 60 * 60 * 24));
+    const remainingTrialDays = trialDays - diffDays;
+    const remainingPaidDays = 30 - paidDays;
+
+    let message = '';
+    let type = 'warning';
+
+    // ── A. ERROR (RED) ──
+    if (plan === 'freemium') {
+      if (quota <= 0 && !isResetDay) {
+        message = `⚠️ Kuota iklan gratis Anda habis. Akan diisi kembali otomatis pada <b>1 bulan depan</b>. <button onclick="window._upgradeClick?.()" style="color:#A8341A;font-weight:700;text-decoration:underline;background:none;border:none;cursor:pointer;font-size:inherit;">Upgrade ke Pro Sekarang</button>`;
+        type = 'danger';
+      }
+    } else if (plan === 'starter') {
+      if (quota <= 0 && !isResetDay) {
+        message = `⚠️ Jatah iklan paket <b>STARTER</b> Anda habis. <button onclick="window._upgradeClick?.()" style="color:#A8341A;font-weight:700;text-decoration:underline;background:none;border:none;cursor:pointer;font-size:inherit;">Isi Ulang / Upgrade ke Pro</button>`;
+        type = 'danger';
+      } else if (paymentStatus === 'paid' && paidDays >= 30 && !isResetDay) {
+        message = `⚠️ Masa aktif paket <b>STARTER</b> Anda sudah habis. <button onclick="window._upgradeClick?.()" style="color:#A8341A;font-weight:700;text-decoration:underline;background:none;border:none;cursor:pointer;font-size:inherit;">Perpanjang Sekarang</button>`;
+        type = 'danger';
+      }
+    } else if (plan === 'pro') {
+      if (paymentStatus === 'paid' && paidDays >= 30 && !isResetDay) {
+        message = `⚠️ Masa aktif paket <b>PRO</b> Anda sudah habis. <button onclick="window._upgradeClick?.()" style="color:#A8341A;font-weight:700;text-decoration:underline;background:none;border:none;cursor:pointer;font-size:inherit;">Perpanjang Sekarang</button>`;
+        type = 'danger';
+      }
+    }
+
+    // ── B. WARNING (YELLOW) — hanya jika belum ada error ──
+    if (!message) {
+      if (plan !== 'pro' && quota > 0 && quota <= 2) {
+        message = `⚠️ Jatah iklan sisa <b>${quota}</b> lagi. <button onclick="window._upgradeClick?.()" style="color:#A8761A;font-weight:700;text-decoration:underline;background:none;border:none;cursor:pointer;font-size:inherit;">Upgrade ke Pro Sekarang</button>`;
+        type = 'warning';
+      } else if (plan !== 'freemium' && paymentStatus === 'trial' && remainingTrialDays > 0 && remainingTrialDays <= 2) {
+        const timeText = remainingTrialDays === 1 ? '24 jam' : '2 hari';
+        message = `⚠️ Masa trial berakhir dalam <b>${timeText}</b>. <button onclick="window._upgradeClick?.()" style="color:#A8761A;font-weight:700;text-decoration:underline;background:none;border:none;cursor:pointer;font-size:inherit;">Upgrade ke Pro Sekarang</button>`;
+        type = 'warning';
+      } else if (paymentStatus === 'paid' && remainingPaidDays > 0 && remainingPaidDays <= 3) {
+        const label = plan === 'pro' ? 'Masa aktif' : 'Masa langganan';
+        message = `⚠️ ${label} paket <b>${plan.toUpperCase()}</b> sisa <b>${remainingPaidDays} hari</b> lagi. <button onclick="window._upgradeClick?.()" style="color:#A8761A;font-weight:700;text-decoration:underline;background:none;border:none;cursor:pointer;font-size:inherit;">Perpanjang Sekarang</button>`;
+        type = 'warning';
+      }
+    }
+
+    // ── Auto-hide pada tanggal 1 (Jadwal Reset) ──
+    if (isResetDay && quota <= 0) {
+      message = '';
+    }
+
+    setWarningBanner({ visible: !!message, type, message });
+
+    // ── Setup global function untuk upgrade button di warning banner ──
+    window._upgradeClick = () => {
+      if (triggerUpgrade) {
+        triggerUpgrade('Upgrade Paket', 'Tingkatkan paket Anda untuk mendapatkan akses lebih banyak fitur dan kuota iklan tanpa batas.');
+      }
+    };
+
+    return () => {
+      delete window._upgradeClick;
+    };
+  }, [profile, triggerUpgrade]);
+
   /* ── Keyboard offset via visualViewport (iOS Safari fix) ── */
   useEffect(() => {
     if (!showEditSheet) { setSheetBottom(0); return; }
@@ -496,26 +577,52 @@ export default function CaptionScreen({
   const handleTayangkan = () => {
     if (!caption || posting) return;
 
-    // Cek Kuota Tayang Iklan
     const plan = profile?.selected_plan || 'freemium';
-    let quota = 0;
-
-    // 🔒 SECURITY FIX: Always validate quota from Supabase, never trust localStorage
-    // Use sensible defaults per plan if profile.ai_launch_count is undefined
+    const paymentStatus = profile?.payment_status || 'trial';
     const quotaDefaults = { freemium: 10, starter: 50, pro: 999999 };
-    quota = typeof profile?.ai_launch_count === 'number' ? profile.ai_launch_count : (quotaDefaults[plan] || 10);
+    const quota = typeof profile?.ai_launch_count === 'number' ? profile.ai_launch_count : (quotaDefaults[plan] || 10);
 
-    if (quota <= 0) {
-      if (triggerUpgrade) {
-        triggerUpgrade(
-          'Kuota Tayang Habis!',
-          'Anda telah mencapai batas maksimal tayang iklan. Pilih paket yang sesuai untuk menambah kuota tayang dan terus kembangkan bisnis Anda:'
-        );
+    const createdAt = profile?.created_at ? new Date(profile.created_at) : new Date();
+    const trialStart = profile?.trial_start ? new Date(profile.trial_start) : createdAt;
+    const trialDays = profile?.trial_days || 7;
+    const now = new Date();
+    const isResetDay = now.getDate() === 1;
+
+    const diffDays = Math.floor((now - createdAt) / (1000 * 60 * 60 * 24));
+    const paidDays = Math.floor((now - trialStart) / (1000 * 60 * 60 * 24));
+
+    // ── A. Freemium ──
+    if (plan === 'freemium' || (plan !== 'pro' && plan !== 'starter')) {
+      if (quota <= 0 && !isResetDay) {
+        triggerUpgrade('Kuota Habis', 'Kuota iklan gratis Anda telah habis. Upgrade ke paket premium untuk tayang lebih banyak.');
+        return;
       }
-      return;
+    }
+    // ── B. Starter / Pro ──
+    else if (plan === 'starter' || plan === 'pro') {
+      // 1. Cek Kuota (Starter harus check quota)
+      if (plan === 'starter' && quota <= 0 && !isResetDay) {
+        triggerUpgrade('Kuota Habis', 'Jatah iklan Starter Anda sudah habis. Isi ulang atau upgrade ke Pro untuk tayang lebih banyak.');
+        return;
+      }
+
+      // 2. Cek Trial (7 hari pertama)
+      if (paymentStatus === 'trial') {
+        if (diffDays >= trialDays) {
+          triggerUpgrade('Trial Berakhir', 'Masa trial 7 hari Anda telah selesai. Pilih paket untuk terus menikmati akses penuh.');
+          return;
+        }
+      }
+      // 3. Cek Paid (30 hari)
+      else if (paymentStatus === 'paid') {
+        if (paidDays >= 30) {
+          triggerUpgrade('Langganan Expired', 'Periode langganan 30 hari Anda telah berakhir. Perpanjang untuk terus menggunakan.');
+          return;
+        }
+      }
     }
 
-    // Pre-fill nama campaign: personaName · locShort (sama seperti desktop)
+    // ── Pre-fill nama campaign ──
     const personaName = persona?.name || profile?.category || 'Iklan Baru';
     const locShort    = locName ? locName.split(',')[0].trim() : '';
     setCampName(personaName + (locShort ? ' · ' + locShort : ''));
@@ -767,6 +874,21 @@ export default function CaptionScreen({
 
   return (
     <div style={{display:'flex', flexDirection:'column', flex:1, minHeight:0, overflow:'hidden', background:'var(--m-bg)'}}>
+      {/* Warning Banner */}
+      <QuotaWarningBanner
+        isVisible={warningBanner.visible}
+        type={warningBanner.type}
+        message={warningBanner.message}
+        onClose={() => {
+          localStorage.setItem('hide_quota_banner_session', 'true');
+          setWarningBanner(prev => ({ ...prev, visible: false }));
+        }}
+        onUpgradeClick={() => {
+          if (triggerUpgrade) {
+            triggerUpgrade('Upgrade Paket', 'Tingkatkan paket Anda untuk mendapatkan akses lebih banyak fitur dan kuota iklan tanpa batas.');
+          }
+        }}
+      />
 
       {/* ── Screen header ── */}
       <div style={{background:'var(--m-bg)', paddingTop:'12px', flexShrink:0}}>

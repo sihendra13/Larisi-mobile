@@ -15,6 +15,7 @@ import InstallModal      from '@/components/v2/InstallModal';
 import ProfilePanel      from '@/components/v2/ProfilePanel';
 import ReminderModal     from '@/components/v2/ReminderModal';
 import PricingModal      from '@/components/v2/PricingModal';
+import CancelSubscriptionModal from '@/components/v2/CancelSubscriptionModal';
 import DuitkuModal       from '@/components/v2/DuitkuModal';
 import { getProfile, getSessionId, getAccessToken, getValidAccessToken, SUPABASE_URL, SUPABASE_ANON_KEY } from '@/lib/config';
 import { handleOAuthRedirectCallback, syncSocialAccountsToSupabase, getStoredAccounts } from '@/lib/connectSocial';
@@ -42,6 +43,8 @@ export default function DapurV2() {
   const [pricingDesc, setPricingDesc] = useState('7 hari gratis Anda telah berakhir. Pilih paket untuk mulai berlangganan:');
   const [showDuitku, setShowDuitku] = useState(false);
   const [duitkuDetails, setDuitkuDetails] = useState(null);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [isCancelLoading, setIsCancelLoading] = useState(false);
 
   /* ── PWA install prompt ── */
   const [installPrompt,  setInstallPrompt]  = useState(null);
@@ -329,7 +332,7 @@ export default function DapurV2() {
 
     try {
       if (window.showAnToast) window.showAnToast('Menghubungkan ke Duitku...', 'info');
-      
+
       const email = profile?.email || '';
       const name = profile?.business_name || profile?.full_name || 'Pelanggan Larisi';
       const phone = profile?.phone || profile?.phone_number || '081234567890';
@@ -345,7 +348,7 @@ export default function DapurV2() {
       });
 
       const result = await resp.json();
-      
+
       if (result.vaNumber || result.paymentUrl) {
         setShowPricing(false);
         setDuitkuDetails({ ...result, plan: selectedPlan, amount, orderId });
@@ -356,6 +359,47 @@ export default function DapurV2() {
     } catch(err) {
       console.error('Duitku Error:', err);
       if (window.showAnToast) window.showAnToast('Maaf, ' + err.message, 'error');
+    }
+  };
+
+  const handleCancelSubscription = async () => {
+    try {
+      setIsCancelLoading(true);
+      const tok = getValidAccessToken(accessToken);
+      if (!tok) throw new Error('Akses token tidak valid');
+
+      const resp = await fetch(SUPABASE_URL + '/rest/v1/profiles?id=eq.' + profile?.id, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': 'Bearer ' + tok,
+          'apikey': SUPABASE_ANON_KEY,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          selected_plan: 'freemium',
+          payment_status: 'cancelled',
+          ai_launch_count: 10
+        })
+      });
+
+      if (!resp.ok) throw new Error('Gagal membatalkan subscription');
+
+      // Update local profile
+      setProfile({
+        ...profile,
+        selected_plan: 'freemium',
+        payment_status: 'cancelled',
+        ai_launch_count: 10
+      });
+
+      setShowCancelModal(false);
+      setShowPricing(false);
+      if (window.showAnToast) window.showAnToast('✓ Subscription berhasil dibatalkan. Anda sekarang menggunakan Freemium.', 'success');
+    } catch(err) {
+      console.error('Cancel Subscription Error:', err);
+      if (window.showAnToast) window.showAnToast('Maaf, ' + err.message, 'error');
+    } finally {
+      setIsCancelLoading(false);
     }
   };
 
@@ -593,15 +637,24 @@ export default function DapurV2() {
       />
 
       {/* ── Modals ── */}
-      <PricingModal 
-        isOpen={showPricing} 
-        onClose={() => setShowPricing(false)} 
+      <PricingModal
+        isOpen={showPricing}
+        onClose={() => setShowPricing(false)}
         onSelectPlan={handleSelectPlan}
+        onCancelClick={() => setShowCancelModal(true)}
         currentPlan={profile?.selected_plan || 'freemium'}
         title={pricingTitle}
         description={pricingDesc}
       />
-      
+
+      <CancelSubscriptionModal
+        isOpen={showCancelModal}
+        onClose={() => setShowCancelModal(false)}
+        onConfirm={handleCancelSubscription}
+        currentPlan={profile?.selected_plan || 'freemium'}
+        isLoading={isCancelLoading}
+      />
+
       <DuitkuModal
         isOpen={showDuitku}
         onClose={() => setShowDuitku(false)}
