@@ -202,9 +202,12 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
 
     try {
       const base64 = await fileToBase64(aiPhoto.file);
-      const res = await fetch('/api/ai-kreatif', {
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/ai-kreatif`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+        },
         body: JSON.stringify({
           imageBase64: base64,
           provider: 'runware'
