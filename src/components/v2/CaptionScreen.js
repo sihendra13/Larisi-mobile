@@ -519,6 +519,12 @@ export default function CaptionScreen({
       message = '';
     }
 
+    // ── Jika warning (yellow) sudah ditutup user di sesi ini, jangan tampilkan lagi ──
+    // Tapi danger (red/quota habis) selalu tampil — tidak bisa ditutup
+    if (message && type === 'warning' && localStorage.getItem('hide_quota_banner_session') === 'true') {
+      message = '';
+    }
+
     setWarningBanner({ visible: !!message, type, message });
 
     // ── Setup global function untuk upgrade button di warning banner ──
@@ -591,10 +597,12 @@ export default function CaptionScreen({
     const diffDays = Math.floor((now - createdAt) / (1000 * 60 * 60 * 24));
     const paidDays = Math.floor((now - trialStart) / (1000 * 60 * 60 * 24));
 
+    const _triggerUpgrade = (title, desc) => { if (triggerUpgrade) triggerUpgrade(title, desc); };
+
     // ── A. Freemium ──
     if (plan === 'freemium' || (plan !== 'pro' && plan !== 'starter')) {
       if (quota <= 0 && !isResetDay) {
-        triggerUpgrade('Kuota Habis', 'Kuota iklan gratis Anda telah habis. Upgrade ke paket premium untuk tayang lebih banyak.');
+        _triggerUpgrade('Kuota Habis', 'Kuota iklan gratis Anda telah habis. Upgrade ke paket premium untuk tayang lebih banyak.');
         return;
       }
     }
@@ -602,21 +610,21 @@ export default function CaptionScreen({
     else if (plan === 'starter' || plan === 'pro') {
       // 1. Cek Kuota (Starter harus check quota)
       if (plan === 'starter' && quota <= 0 && !isResetDay) {
-        triggerUpgrade('Kuota Habis', 'Jatah iklan Starter Anda sudah habis. Isi ulang atau upgrade ke Pro untuk tayang lebih banyak.');
+        _triggerUpgrade('Kuota Habis', 'Jatah iklan Starter Anda sudah habis. Isi ulang atau upgrade ke Pro untuk tayang lebih banyak.');
         return;
       }
 
       // 2. Cek Trial (7 hari pertama)
       if (paymentStatus === 'trial') {
         if (diffDays >= trialDays) {
-          triggerUpgrade('Trial Berakhir', 'Masa trial 7 hari Anda telah selesai. Pilih paket untuk terus menikmati akses penuh.');
+          _triggerUpgrade('Trial Berakhir', 'Masa trial 7 hari Anda telah selesai. Pilih paket untuk terus menikmati akses penuh.');
           return;
         }
       }
       // 3. Cek Paid (30 hari)
       else if (paymentStatus === 'paid') {
         if (paidDays >= 30) {
-          triggerUpgrade('Langganan Expired', 'Periode langganan 30 hari Anda telah berakhir. Perpanjang untuk terus menggunakan.');
+          _triggerUpgrade('Langganan Expired', 'Periode langganan 30 hari Anda telah berakhir. Perpanjang untuk terus menggunakan.');
           return;
         }
       }
@@ -1238,18 +1246,20 @@ export default function CaptionScreen({
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
           {(() => {
             const plan = profile?.selected_plan || 'freemium';
-            const quotaDefaults = { freemium: 10, starter: 50, pro: 999999 };
+            const quotaDefaults = { freemium: 10, starter: 50 };
+            // Pro tidak tampil quota counter — unlimited
             let currentQuota = null;
-            if (plan === 'freemium' || plan === 'starter' || plan === 'pro') {
+            if (plan === 'freemium' || plan === 'starter') {
               currentQuota = typeof profile?.ai_launch_count === 'number' ? profile.ai_launch_count : quotaDefaults[plan];
             }
             const isOutOfQuota = currentQuota !== null && currentQuota <= 0;
+            const quotaMax = plan === 'starter' ? 50 : 10;
 
             return (
               <>
                 {currentQuota !== null && (
                   <div style={{ fontFamily: 'var(--m-font)', fontSize: '10px', fontWeight: '800', color: isOutOfQuota ? '#EF4444' : 'var(--m-ink-sub)' }}>
-                    SISA KUOTA: {currentQuota}/{plan === 'freemium' ? '10' : '50'}
+                    SISA KUOTA: {currentQuota}/{quotaMax}
                   </div>
                 )}
                 <button

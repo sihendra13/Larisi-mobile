@@ -129,7 +129,7 @@ export default function PricingModal({
               marginTop: '4px'
             }}
           >
-            Tetap di Paket Freemium (Gratis)
+            {currentPlan === 'freemium' ? 'Tetap di Paket Freemium (Gratis)' : 'Tutup'}
           </button>
         </div>
 
