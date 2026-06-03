@@ -415,7 +415,7 @@ export default function DapurV2() {
 
       setShowCancelModal(false);
       setShowPricing(false);
-      showMobileToast('✓ Subscription dibatalkan. Anda sekarang di paket Freemium (10 iklan/bulan).');
+      showMobileToast('✓ Subscription dibatalkan. Kembali ke Freemium.');
     } catch(err) {
       console.error('Cancel Subscription Error:', err);
       showMobileToast('Gagal membatalkan subscription. Coba lagi.', 'error');
