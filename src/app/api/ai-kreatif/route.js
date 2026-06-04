@@ -239,9 +239,11 @@ async function handleHuggingFace(imageBase64, prompt, apiKey) {
     const url = 'https://router.huggingface.co/hf-inference/models/runwayml/stable-diffusion-v1-5';
     let makeBody;
 
+    const cleanBase64 = imageBase64 ? imageBase64.replace(/^data:image\/\w+;base64,/, '') : '';
+
     if (imageBase64) {
       makeBody = (seed) => JSON.stringify({
-        inputs: imageBase64,
+        inputs: cleanBase64,
         parameters: {
           prompt,
           negative_prompt: 'blurry, low quality, distorted, watermark, text, deformed',

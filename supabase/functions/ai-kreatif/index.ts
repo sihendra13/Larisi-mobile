@@ -65,11 +65,13 @@ serve(async (req: Request) => {
 
     const url = "https://router.huggingface.co/hf-inference/models/runwayml/stable-diffusion-v1-5";
 
+    const cleanBase64 = imageBase64.replace(/^data:image\/\w+;base64,/, "");
+
     // Request 3 styles in parallel
     const promises = Object.entries(stylePrompts).map(async ([styleKey, stylePrompt]) => {
       const seed = Math.floor(Math.random() * 999999) + 1;
       const bodyObj = {
-        inputs: imageBase64,
+        inputs: cleanBase64,
         parameters: {
           prompt: stylePrompt,
           negative_prompt: "blurry, low quality, distorted, watermark, text, deformed",
