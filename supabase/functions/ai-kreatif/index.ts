@@ -63,7 +63,7 @@ serve(async (req: Request) => {
       "x-wait-for-model": "true",
     };
 
-    const url = "https://router.huggingface.co/hf-inference/models/SG161222/RealVisXL_V4.0";
+    const url = "https://router.huggingface.co/hf-inference/models/runwayml/stable-diffusion-v1-5";
 
     // Request 3 styles in parallel
     const promises = Object.entries(stylePrompts).map(async ([styleKey, stylePrompt]) => {

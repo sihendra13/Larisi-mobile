@@ -236,7 +236,7 @@ async function handleHuggingFace(imageBase64, prompt, apiKey) {
   ];
 
   try {
-    const url = 'https://router.huggingface.co/hf-inference/models/SG161222/RealVisXL_V4.0';
+    const url = 'https://router.huggingface.co/hf-inference/models/runwayml/stable-diffusion-v1-5';
     let makeBody;
 
     if (imageBase64) {
