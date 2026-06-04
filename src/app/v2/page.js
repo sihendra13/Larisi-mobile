@@ -232,13 +232,15 @@ export default function DapurV2() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  /* ── Effect: Tampilkan Modal Install PWA saat pertama kali masuk app ── */
+  /* ── Effect: Tampilkan Modal Install PWA saat pertama kali masuk app (Khusus iOS) ── */
   useEffect(() => {
     if (authState === 'app') {
+      const isIOS = /iPad|iPhone|iPod/.test(window.navigator.userAgent) && !window.MSStream;
       const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
       const dismissed = localStorage.getItem('larisi_install_dismissed');
-      if (!isStandalone && !dismissed) {
-        // Tunda sebentar biar user bisa melihat dashboard terlebih dahulu
+      
+      // Khusus iOS: Tampilkan modal panduan karena Safari tidak mendukung install banner otomatis
+      if (isIOS && !isStandalone && !dismissed) {
         const timer = setTimeout(() => setShowInstallModal(true), 2500);
         return () => clearTimeout(timer);
       }
@@ -467,6 +469,20 @@ export default function DapurV2() {
   const goTo   = (s) => setScreen(s);
   const goBack = () => { if (BACK[screen]) goTo(BACK[screen]); };
 
+  const handleLaunchSuccess = () => {
+    const isIOS = /iPad|iPhone|iPod/.test(window.navigator.userAgent) && !window.MSStream;
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+    const dismissed = localStorage.getItem('larisi_install_dismissed');
+
+    // Android/Desktop: Tampilkan modal besar di tengah setelah berhasil launch postingan pertama
+    if (!isIOS && !isStandalone && !dismissed) {
+      setShowInstallModal(true);
+    }
+
+    setScreen('platform');
+    setActiveNav('command');
+  };
+
   /* ── Initial Splash Screen ── */
   if (showSplash) {
     return <SplashScreen />;
@@ -534,7 +550,7 @@ export default function DapurV2() {
       {/* ── PWA Install Banner ── */}
       {showInstallBar && (
         <div style={{
-          position: 'fixed', bottom: '72px', left: '12px', right: '12px', zIndex: 1000,
+          position: 'fixed', top: '12px', left: '12px', right: '12px', zIndex: 10000,
           background: '#111827', borderRadius: '14px',
           padding: '12px 14px', display: 'flex', alignItems: 'center', gap: '10px',
           boxShadow: '0 4px 20px rgba(0,0,0,0.25)',
@@ -614,7 +630,7 @@ export default function DapurV2() {
             userId={userId}
             onBack={goBack}
             onUbahAset={() => goTo('aset')}
-            onLaunchSuccess={() => setActiveNav('command')}
+            onLaunchSuccess={handleLaunchSuccess}
             triggerUpgrade={triggerUpgrade}
           />
         )}
