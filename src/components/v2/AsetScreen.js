@@ -210,7 +210,7 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
         },
         body: JSON.stringify({
           imageBase64: base64,
-          provider: 'runware'
+          provider: 'huggingface'
         })
       });
       const data = await res.json();
@@ -1153,44 +1153,46 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
             )}
 
             {/* AI ✨ */}
-            <div style={{ position: 'relative', flexShrink: 0 }}>
-              <button
-                onClick={openAISheet}
-                style={{
-                  width: '52px', height: '48px', borderRadius: '14px',
-                  background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
-                  border: 'none',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  cursor: 'pointer',
-                  boxShadow: '0 2px 12px rgba(124,58,237,0.55)',
-                  WebkitTapHighlightColor: 'transparent',
-                }}
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ width: '18px', height: '18px' }}>
-                  <path d="M12 2L9.5 9.5 2 12l7.5 2.5L12 22l2.5-7.5L22 12l-7.5-2.5z"/>
-                </svg>
-              </button>
+            {process.env.NODE_ENV === 'development' && (
+              <div style={{ position: 'relative', flexShrink: 0 }}>
+                <button
+                  onClick={openAISheet}
+                  style={{
+                    width: '52px', height: '48px', borderRadius: '14px',
+                    background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
+                    border: 'none',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    cursor: 'pointer',
+                    boxShadow: '0 2px 12px rgba(124,58,237,0.55)',
+                    WebkitTapHighlightColor: 'transparent',
+                  }}
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ width: '18px', height: '18px' }}>
+                    <path d="M12 2L9.5 9.5 2 12l7.5 2.5L12 22l2.5-7.5L22 12l-7.5-2.5z"/>
+                  </svg>
+                </button>
 
-              {/* Coach Mark Badge (Overlapping Top-Right) */}
-              <div style={{
-                position: 'absolute',
-                top: '-6px',
-                right: '-6px',
-                background: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)',
-                color: '#fff',
-                padding: '2px 6px',
-                borderRadius: '8px',
-                fontSize: '8px',
-                fontWeight: '900',
-                whiteSpace: 'nowrap',
-                boxShadow: '0 2px 6px rgba(220,38,38,0.4)',
-                fontFamily: 'var(--m-font)',
-                pointerEvents: 'none',
-                zIndex: 10,
-              }}>
-                NEW
+                {/* Coach Mark Badge (Overlapping Top-Right) */}
+                <div style={{
+                  position: 'absolute',
+                  top: '-6px',
+                  right: '-6px',
+                  background: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)',
+                  color: '#fff',
+                  padding: '2px 6px',
+                  borderRadius: '8px',
+                  fontSize: '8px',
+                  fontWeight: '900',
+                  whiteSpace: 'nowrap',
+                  boxShadow: '0 2px 6px rgba(220,38,38,0.4)',
+                  fontFamily: 'var(--m-font)',
+                  pointerEvents: 'none',
+                  zIndex: 10,
+                }}>
+                  NEW
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Lanjut → */}
             <button

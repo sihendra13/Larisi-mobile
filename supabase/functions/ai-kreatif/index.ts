@@ -8,6 +8,7 @@
 // ─────────────────────────────────────────────────────────────
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { encode } from "https://deno.land/std@0.168.0/encoding/base64.ts";
 
 const allowedOrigins = [
   "http://localhost:3000",
@@ -40,85 +41,64 @@ serve(async (req: Request) => {
   }
 
   try {
-    const RUNWARE_API_KEY = Deno.env.get("RUNWARE_API_KEY");
-    if (!RUNWARE_API_KEY) {
+    const HUGGINGFACE_API_KEY = Deno.env.get("HUGGINGFACE_API_KEY");
+    if (!HUGGINGFACE_API_KEY) {
       return new Response(
-        JSON.stringify({ error: "RUNWARE_API_KEY belum di-set di Supabase Secrets" }),
+        JSON.stringify({ error: "HUGGINGFACE_API_KEY belum di-set di Supabase Secrets" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     const { imageBase64 } = await req.json();
-
-    let seedImageUUID: string | null = null;
-
-    // ── Step 1: Upload foto jika ada (img2img) ──
-    if (imageBase64) {
-      const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, "");
-      const uploadResp = await fetch("https://api.runware.ai/v1", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify([
-          { taskType: "authentication", apiKey: RUNWARE_API_KEY },
-          { taskType: "imageUpload", taskUUID: crypto.randomUUID(), image: base64Data },
-        ]),
-      });
-
-      const uploadData = await uploadResp.json();
-      const uploadResult = uploadData?.data?.find((r: any) => r.taskType === "imageUpload") || uploadData?.[0];
-      seedImageUUID = uploadResult?.imageUUID || null;
-
-      if (!seedImageUUID) {
-        const errMsg = uploadData?.errors?.[0]?.message || "Gagal upload foto ke Runware";
-        return new Response(
-          JSON.stringify({ error: errMsg }),
-          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-    }
-
-    // ── Step 2: Generate 3 style sekaligus dalam 1 request ──
-    const inferenceTasks = Object.entries(stylePrompts).map(([_, stylePrompt]) => ({
-      taskType: "imageInference",
-      taskUUID: crypto.randomUUID(),
-      model: "runware:101@1",
-      positivePrompt: stylePrompt,
-      negativePrompt: "blurry, low quality, distorted, watermark, text, deformed",
-      width: 1024,
-      height: 1024,
-      steps: 28,
-      CFGScale: 3.5,
-      outputFormat: "JPEG",
-      includeCost: true,
-      ...(seedImageUUID ? { seedImage: seedImageUUID, strength: 0.75 } : {}),
-    }));
-
-    const payload = [
-      { taskType: "authentication", apiKey: RUNWARE_API_KEY },
-      ...inferenceTasks,
-    ];
-
-    const genResp = await fetch("https://api.runware.ai/v1", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-
-    const genData = await genResp.json();
-
-    if (genData?.errors?.length) {
-      const errMsg = genData.errors[0]?.message || "Runware error";
+    if (!imageBase64) {
       return new Response(
-        JSON.stringify({ error: errMsg }),
+        JSON.stringify({ error: "Image input base64 tidak boleh kosong" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const results = (genData?.data || []).filter((r: any) => r.taskType === "imageInference" && r.imageURL);
-    const imageUrls = results.map((r: any) => r.imageURL);
-    const totalCost = results.reduce((sum: number, r: any) => sum + (r.cost || 0), 0);
+    const headers = {
+      "Authorization": `Bearer ${HUGGINGFACE_API_KEY}`,
+      "Content-Type": "application/json",
+      "x-wait-for-model": "true",
+    };
 
-    console.log(`[ai-kreatif] ${imageUrls.length} gambar, cost: $${totalCost.toFixed(6)}`);
+    const url = "https://api-inference.huggingface.co/models/SG161222/RealVisXL_V4.0";
+
+    // Request 3 styles in parallel
+    const promises = Object.entries(stylePrompts).map(async ([styleKey, stylePrompt]) => {
+      const seed = Math.floor(Math.random() * 999999) + 1;
+      const bodyObj = {
+        inputs: imageBase64,
+        parameters: {
+          prompt: stylePrompt,
+          negative_prompt: "blurry, low quality, distorted, watermark, text, deformed",
+          seed,
+          num_inference_steps: 30,
+          guidance_scale: 7.5,
+          strength: 0.75
+        }
+      };
+
+      const resp = await fetch(url, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(bodyObj)
+      });
+
+      if (!resp.ok) {
+        const errText = await resp.text();
+        console.error(`[hf-${styleKey}] error:`, resp.status, errText);
+        throw new Error(`HF error (${styleKey}): ${resp.status} - ${errText}`);
+      }
+
+      const buffer = await resp.arrayBuffer();
+      const base64Str = encode(new Uint8Array(buffer));
+      return `data:image/png;base64,${base64Str}`;
+    });
+
+    const imageUrls = await Promise.all(promises);
+    console.log(`[ai-kreatif] Berhasil generate ${imageUrls.length} gambar via HuggingFace`);
 
     return new Response(
       JSON.stringify({ images: imageUrls }),

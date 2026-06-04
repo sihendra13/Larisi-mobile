@@ -15,6 +15,8 @@ export async function POST(request) {
     const basePrompt = prompts[style] || prompts.studio;
     const prompt = customPrompt ? `${customPrompt}, ${basePrompt}` : basePrompt;
 
+    const hfKey = apiKey || process.env.HUGGINGFACE_API_KEY;
+
     if (provider === 'runware') {
       const runwareKey = apiKey || process.env.RUNWARE_API_KEY;
       if (!runwareKey || runwareKey === 'YOUR_RUNWARE_API_KEY_HERE') {
@@ -23,15 +25,16 @@ export async function POST(request) {
       return handleRunware(imageBase64, customPrompt, runwareKey);
     } else if (provider === 'local-sd') {
       return handleLocalSD(imageBase64, prompt, localSdUrl);
-    } else if (provider === 'huggingface') {
-      if (!apiKey) return Response.json({ error: 'HuggingFace token tidak ada' }, { status: 400 });
-      return handleHuggingFace(imageBase64, prompt, apiKey);
+    } else if (provider === 'siliconflow') {
+      const sfKey = apiKey || process.env.SILICONFLOW_API_KEY;
+      if (!sfKey) return Response.json({ error: 'SiliconFlow API key tidak ada' }, { status: 400 });
+      return handleSiliconFlow(imageBase64, prompt, sfKey);
     } else {
-      // Default: SiliconFlow
-      if (!apiKey) {
-        return Response.json({ error: 'API key tidak ada' }, { status: 400 });
+      // Default: Hugging Face
+      if (!hfKey) {
+        return Response.json({ error: 'HuggingFace API key tidak ada' }, { status: 400 });
       }
-      return handleSiliconFlow(imageBase64, prompt, apiKey);
+      return handleHuggingFace(imageBase64, prompt, hfKey);
     }
 
   } catch (e) {
@@ -233,27 +236,30 @@ async function handleHuggingFace(imageBase64, prompt, apiKey) {
   ];
 
   try {
-    let url, makeBody;
+    const url = 'https://api-inference.huggingface.co/models/SG161222/RealVisXL_V4.0';
+    let makeBody;
 
     if (imageBase64) {
-      // ── img2img: FLUX.1-Kontext via fal-ai provider ──
-      // Endpoint confirmed reachable: router.huggingface.co/fal-ai/flux-kontext-dev
-      url = 'https://router.huggingface.co/fal-ai/flux-kontext-dev';
       makeBody = (seed) => JSON.stringify({
         inputs: imageBase64,
         parameters: {
           prompt,
+          negative_prompt: 'blurry, low quality, distorted, watermark, text, deformed',
           seed,
-          num_inference_steps: 28,
-          guidance_scale: 2.5,
+          num_inference_steps: 30,
+          guidance_scale: 7.5,
+          strength: 0.75
         }
       });
     } else {
-      // ── txt2img: FLUX.1-schnell — generate dari deskripsi ──
-      url = 'https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell';
       makeBody = (seed) => JSON.stringify({
         inputs: prompt,
-        parameters: { seed, num_inference_steps: 4, guidance_scale: 0 }
+        parameters: {
+          negative_prompt: 'blurry, low quality, distorted, watermark, text, deformed',
+          seed,
+          num_inference_steps: 30,
+          guidance_scale: 7.5
+        }
       });
     }
 
