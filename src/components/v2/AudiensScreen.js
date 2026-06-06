@@ -8,14 +8,25 @@ const DEFAULT_LNG = 110.3695;
 
 const PLATFORM_LABELS = { instagram:'Instagram', facebook:'Facebook', tiktok:'TikTok', youtube:'YouTube' };
 
-function computeReach(locPop, radius, localOn, travelerOn) {
-  if (!localOn && !travelerOn) return 0;
-  const areaFactor  = Math.PI * radius * radius;
-  const densityBase = locPop / (Math.PI * 5 * 5);
-  const areaPop     = Math.round(densityBase * areaFactor);
-  const localPop    = localOn    ? areaPop                    : 0;
-  const travPop     = travelerOn ? Math.round(areaPop * 0.22) : 0;
-  return localPop + travPop;
+// Sama persis dengan desktop (state.js)
+const PLATFORM_PENETRATION_RATES = {
+  instagram: 0.731,
+  tiktok:    0.632,
+  youtube:   0.877,
+  facebook:  0.830,
+};
+
+function computeReach(locPop, radius, localOn, travelerOn, platform) {
+  if (!localOn && !travelerOn) return { lo: 0, hi: 0 };
+  const areaFactor    = Math.PI * radius * radius;
+  const densityBase   = locPop / (Math.PI * 5 * 5);
+  const areaPop       = Math.round(densityBase * areaFactor);
+  const totalPop      = (localOn ? areaPop : 0) + (travelerOn ? Math.round(areaPop * 0.22) : 0);
+  const internetUsers = Math.round(totalPop * 0.795);
+  const penetration   = PLATFORM_PENETRATION_RATES[platform] || PLATFORM_PENETRATION_RATES.instagram;
+  const hi = Math.min(Math.round(internetUsers * penetration), internetUsers);
+  const lo = Math.round(hi * 0.65);
+  return { lo, hi };
 }
 
 function fmtReach(n) {
@@ -151,8 +162,8 @@ export default function AudiensScreen({
   });
 
   /* ── Reach ── */
-  const reach     = computeReach(locPop, radius, localOn, travelerOn);
-  const reachText = reach === 0 ? 'Jangkauan: 0 orang' : `Jangkauan: ${fmtReach(reach)} orang`;
+  const reach     = computeReach(locPop, radius, localOn, travelerOn, platform);
+  const reachText = (!reach.hi) ? 'Jangkauan: 0 orang' : `Jangkauan: ${fmtReach(reach.lo)}–${fmtReach(reach.hi)} orang`;
 
   function popupHtml(name, rText) {
     return `<div style="text-align:center;padding:2px 4px;min-width:130px;">
@@ -305,8 +316,8 @@ export default function AudiensScreen({
     }
     document.body.style.overflow = 'hidden';
     const { lat:bLat, lng:bLng, locName:bName, locPop:bPop, radius:bRad } = snapRef.current;
-    const r2 = computeReach(bPop || locPop, bRad || radius, localOn, travelerOn);
-    const rT2 = r2 === 0 ? 'Jangkauan: 0 orang' : `Jangkauan: ${fmtReach(r2)} orang`;
+    const r2 = computeReach(bPop || locPop, bRad || radius, localOn, travelerOn, platform);
+    const rT2 = (!r2.hi) ? 'Jangkauan: 0 orang' : `Jangkauan: ${fmtReach(r2.lo)}–${fmtReach(r2.hi)} orang`;
 
     const timer = setTimeout(() => {
       if (!bottomSheetMapRef.current || bottomSheetLeafRef.current) return;
@@ -536,10 +547,10 @@ export default function AudiensScreen({
           </div>
           <div style={{display:'flex', alignItems:'center', gap:'4px', marginTop:'2px', minWidth:0}}>
             <span style={{fontFamily:'var(--m-font)', fontSize:'16px', fontWeight:'800', color:'var(--m-brand)', flexShrink:0}}>
-              {reach > 0 ? `~${fmtReach(reach)}` : '0'}
+              {reach.hi ? `${fmtReach(reach.lo)}–${fmtReach(reach.hi)}` : '0'}
             </span>
             <span style={{fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'500', color:'var(--m-ink-sub)', display:'flex', alignItems:'center', flex:1, minWidth:0}}>
-              {reach > 0 ? (
+              {reach.hi ? (
                 <>
                   {localOn && <span style={{whiteSpace:'nowrap', flexShrink:0}}>warga&nbsp;</span>}
                   {localOn && (
