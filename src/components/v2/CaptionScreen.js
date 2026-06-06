@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import QuotaWarningBanner from './QuotaWarningBanner';
+import { ID_LOCATIONS } from '@/data/locations';
 
 const PLATFORM_ICONS = {
   instagram: (
@@ -61,12 +62,27 @@ const PLATFORM_LABELS = { instagram:'Instagram', facebook:'Facebook', tiktok:'Ti
 const FORMAT_LABELS   = { post:'Post', reel:'Reel', story:'Story' };
 
 /* ── Reach formula ── */
-function computeReach(locPop, radius, localOn, travelerOn) {
+// Sama persis dengan desktop (state.js) — penetrasi platform per populasi internet
+const PLATFORM_PENETRATION_RATES = {
+  instagram: 0.731,
+  tiktok:    0.632,
+  youtube:   0.877,
+  facebook:  0.830,
+};
+
+function computeReach(locPop, radius, localOn, travelerOn, platform) {
   if (!localOn && !travelerOn) return 0;
   const areaFactor  = Math.PI * radius * radius;
   const densityBase = locPop / (Math.PI * 5 * 5);
   const areaPop     = Math.round(densityBase * areaFactor);
-  return (localOn ? areaPop : 0) + (travelerOn ? Math.round(areaPop * 0.22) : 0);
+  const totalPop    = (localOn ? areaPop : 0) + (travelerOn ? Math.round(areaPop * 0.22) : 0);
+
+  // Sama dengan desktop: totalPop × 79.5% internet users × penetration rate platform
+  const internetUsers = Math.round(totalPop * 0.795);
+  const penetration   = PLATFORM_PENETRATION_RATES[platform] || PLATFORM_PENETRATION_RATES.instagram;
+  const hi = Math.min(Math.round(internetUsers * penetration), internetUsers);
+  const lo = Math.round(hi * 0.65);
+  return { lo, hi };
 }
 function fmtReach(n) {
   if (!n) return '0';
@@ -351,13 +367,17 @@ function buildSystemPrompt(profile, persona, platform, format, locName, locFull,
 
 const MAX_CHAR = { instagram:2200, facebook:63206, tiktok:2200, youtube:5000 };
 
+
+
+
 export default function CaptionScreen({
-  platform, format, files,
-  locName, locFull, locPop, radius, localOn, travelerOn,
+  platform, setPlatform, format, setFormat, files,
+  locName, setLocName, locFull, setLocFull, locPop, setLocPop, radius, setRadius, localOn, setLocalOn, travelerOn, setTravelerOn,
   persona, profile,
   caption, setCaption,
   accessToken, sessionId, userId,
   onBack, onUbahAset, onLaunchSuccess, triggerUpgrade,
+  isGenZ,
 }) {
   const [stitchOn,        setStitchOn]        = useState(true);
   const [generating,      setGenerating]      = useState(false);
@@ -366,6 +386,156 @@ export default function CaptionScreen({
   const [launchPhase,     setLaunchPhase]     = useState(null); // null | 'loading' | 'success'
   const [showConfirm,     setShowConfirm]     = useState(false);
   const [campName,        setCampName]        = useState('');
+
+  /* Geographic state for accordion */
+  const [accordionOpen,   setAccordionOpen]   = useState(false);
+  const [searchVal,       setSearchVal]       = useState('');
+  const [searchResults,   setSearchResults]   = useState([]);
+  const [showDropdown,    setShowDropdown]    = useState(false);
+
+  const mapRef = useRef(null);
+  const leafletMapRef = useRef(null);
+  const markerRef = useRef(null);
+  const circleRef = useRef(null);
+  const searchTimerRef = useRef(null);
+
+  const findNearest = (lat, lng) => {
+    let nearest = null, minDist = Infinity;
+    ID_LOCATIONS.forEach(loc => {
+      const d = Math.hypot(loc.lat - lat, loc.lng - lng);
+      if (d < minDist) { minDist = d; nearest = loc; }
+    });
+    return nearest;
+  };
+
+  const reverseGeocode = async (lat, lng) => {
+    try {
+      const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=id`);
+      const d = await r.json();
+      const a = d.address || {};
+      const name = a.village || a.suburb || a.neighbourhood || a.city_district || '';
+      const city = a.city || a.county || a.state_district || a.state || '';
+      if (name) {
+        const loc = name + (city && name !== city ? ', ' + city : '');
+        setLocName?.(name);
+        setLocFull?.(loc || name);
+      } else if (city) {
+        setLocName?.(city);
+        setLocFull?.(city);
+      }
+    } catch (_) {}
+  };
+
+  const movePinTo = (lat, lng) => {
+    if (markerRef.current) markerRef.current.setLatLng([lat, lng]);
+    if (circleRef.current) circleRef.current.setLatLng([lat, lng]);
+    if (leafletMapRef.current) leafletMapRef.current.flyTo([lat, lng], 13, { duration: 1.2 });
+    const nearest = findNearest(lat, lng);
+    if (nearest?.pop) setLocPop?.(nearest.pop);
+  };
+
+  const handleSearchInput = (val) => {
+    setSearchVal(val);
+    if (!val || val.length < 2) { setShowDropdown(false); setSearchResults([]); return; }
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    searchTimerRef.current = setTimeout(() => {
+      const lower = val.toLowerCase();
+      const results = ID_LOCATIONS.filter(l => l.n.toLowerCase().includes(lower)).slice(0, 7);
+      setSearchResults(results);
+      setShowDropdown(results.length > 0);
+    }, 300);
+  };
+
+  const selectCity = (loc) => {
+    setShowDropdown(false);
+    const shortName = loc.n.split(',')[0].trim();
+    const shortFull = loc.n.split(',').slice(0, 2).join(', ').trim();
+    setSearchVal(shortName);
+    setLocName?.(shortName);
+    setLocFull?.(shortFull);
+    if (loc.pop) setLocPop?.(loc.pop);
+    movePinTo(loc.lat, loc.lng);
+  };
+
+  useEffect(() => {
+    if (!isGenZ || !accordionOpen || !mapRef.current) return;
+
+    const buildMap = () => {
+      if (!mapRef.current || leafletMapRef.current) return;
+      const L = window.L;
+      if (!L) return;
+      const map = L.map(mapRef.current, {
+        center: [-7.7956, 110.3695], zoom: 13,
+        zoomControl: true, attributionControl: false,
+      });
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { subdomains: 'abcd', maxZoom: 19 }).addTo(map);
+
+      const icon = L.divIcon({
+        className: '',
+        html: `<div style="width:14px;height:14px;border-radius:50%;background:#6d28d9;border:2px solid #fff;box-shadow:0 0 0 3px rgba(109,40,217,0.35)"></div>`,
+        iconSize: [14, 14], iconAnchor: [7, 7],
+      });
+      markerRef.current = L.marker([-7.7956, 110.3695], { icon })
+        .addTo(map)
+        .bindPopup(popupHtml(locName || 'Lokasi', 'Jangkauan iklan'), { closeButton: false, autoClose: false, closeOnClick: false, offset: [0, -4] })
+        .openPopup();
+
+      circleRef.current = L.circle([-7.7956, 110.3695], {
+        radius: radius * 1000, color: '#6d28d9', fillColor: '#6d28d9', fillOpacity: 0.12, weight: 1.5,
+      }).addTo(map);
+
+      map.on('click', (e) => { movePinTo(e.latlng.lat, e.latlng.lng); reverseGeocode(e.latlng.lat, e.latlng.lng); });
+      leafletMapRef.current = map;
+
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            movePinTo(pos.coords.latitude, pos.coords.longitude);
+            reverseGeocode(pos.coords.latitude, pos.coords.longitude);
+          },
+          null,
+          { timeout: 8000 }
+        );
+      }
+    };
+
+    function popupHtml(name, rText) {
+      return `<div style="text-align:center;padding:2px 4px;min-width:130px;">
+        <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;font-weight:700;color:#1C1C28;">${name || 'Lokasiku'}</div>
+        <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:11px;font-weight:700;color:#6d28d9;margin-top:2px;">${rText}</div>
+      </div>`;
+    }
+
+    if (!document.getElementById('leaflet-css')) {
+      const css = document.createElement('link');
+      css.id = 'leaflet-css'; css.rel = 'stylesheet';
+      css.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+      document.head.appendChild(css);
+    }
+    if (window.L) { buildMap(); }
+    else if (!document.getElementById('leaflet-js')) {
+      const s = document.createElement('script');
+      s.id = 'leaflet-js'; s.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+      s.onload = buildMap; document.head.appendChild(s);
+    }
+
+    return () => {
+      if (leafletMapRef.current) {
+        leafletMapRef.current.remove();
+        leafletMapRef.current = null; markerRef.current = null; circleRef.current = null;
+      }
+    };
+  }, [isGenZ, accordionOpen]);
+
+  useEffect(() => {
+    if (circleRef.current) circleRef.current.setRadius(radius * 1000);
+  }, [radius]);
+
+  useEffect(() => {
+    if (isGenZ && hasGenerated) {
+      handleGenerate();
+    }
+  }, [platform, format]);
 
   /* ── AI call counter — naik tiap Generate, untuk rotasi hook style ── */
   const aiCallCountRef = useRef(0);
@@ -382,8 +552,8 @@ export default function CaptionScreen({
   /* ── Warning banner states ── */
   const [warningBanner,   setWarningBanner]   = useState({ visible: false, type: 'warning', message: '' });
 
-  const reach     = computeReach(locPop, radius, localOn, travelerOn);
-  const reachText = fmtReach(reach);
+  const reach     = computeReach(locPop, radius, localOn, travelerOn, platform);
+  const reachText = reach ? `${fmtReach(reach.lo)} – ${fmtReach(reach.hi)}` : '0';
   const maxChar   = MAX_CHAR[platform] || 2200;
 
   /* ── Real AI caption generation via Supabase Edge Function silaris-chat ── */
@@ -771,7 +941,7 @@ export default function CaptionScreen({
       })();
 
       if (effectiveSessionId && accessToken) {
-        const reachVal  = computeReach(locPop, radius, localOn, travelerOn);
+        const reachVal  = computeReach(locPop, radius, localOn, travelerOn, platform);
         const finalName = (overrideName && overrideName.trim()) ? overrideName.trim() : campName;
         const dbResp = await fetch(`${SUPABASE_URL}/rest/v1/campaigns`, {
           method: 'POST',
@@ -783,8 +953,8 @@ export default function CaptionScreen({
             platforms:           [sp],
             format:              format || 'post',
             status:              'active',
-            estimated_reach_min: reachVal,
-            estimated_reach_max: Math.round(reachVal * 1.5),
+            estimated_reach_min: reachVal?.lo || 0,
+            estimated_reach_max: reachVal?.hi || 0,
             post_id:             postId          || null,
             post_url:            postUrl         || null,
             thumb_url:           thumbUrl || null,
@@ -953,6 +1123,67 @@ export default function CaptionScreen({
         padding:'14px 16px 16px',
         display:'flex', flexDirection:'column', gap:'12px',
       }}>
+
+        {isGenZ && (
+          <div className="panel" style={{boxShadow:'none', border:'1px solid #E4E4EB', padding:'14px', flexShrink:0, display:'flex', flexDirection:'column', gap:'12px'}}>
+            <div>
+              <div style={{fontFamily:'var(--m-font)', fontSize:'11px', fontWeight:'700', color:'var(--m-ink-sub)', textTransform:'uppercase', letterSpacing:'.5px', marginBottom:'8px'}}>
+                PILIH PLATFORM
+              </div>
+              <div style={{display:'flex', gap:'8px'}}>
+                {[
+                  { id: 'instagram', label: 'Instagram', icon: PLATFORM_ICONS_SM.instagram },
+                  { id: 'facebook', label: 'Facebook', icon: PLATFORM_ICONS_SM.facebook },
+                  { id: 'tiktok', label: 'TikTok', icon: PLATFORM_ICONS_SM.tiktok }
+                ].map(p => (
+                  <button
+                    key={p.id}
+                    onClick={() => setPlatform?.(p.id)}
+                    style={{
+                      flex: 1, padding: '10px 6px', borderRadius: '10px',
+                      border: platform === p.id ? '2px solid var(--m-ink)' : '1px solid #E4E4EB',
+                      background: platform === p.id ? 'var(--m-ink)' : '#fff',
+                      color: platform === p.id ? '#fff' : 'var(--m-ink)',
+                      fontFamily: 'var(--m-font)', fontSize: '12px', fontWeight: '700',
+                      cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px'
+                    }}
+                  >
+                    {p.icon}
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <div style={{fontFamily:'var(--m-font)', fontSize:'11px', fontWeight:'700', color:'var(--m-ink-sub)', textTransform:'uppercase', letterSpacing:'.5px', marginBottom:'8px'}}>
+                PILIH FORMAT
+              </div>
+              <div style={{display:'flex', gap:'8px'}}>
+                {[
+                  { id: 'post', label: 'Post' },
+                  { id: 'reel', label: 'Reel' },
+                  { id: 'story', label: 'Story' }
+                ].map(f => (
+                  <button
+                    key={f.id}
+                    onClick={() => setFormat?.(f.id)}
+                    style={{
+                      flex: 1, padding: '10px 6px', borderRadius: '10px',
+                      border: format === f.id ? '2px solid var(--m-ink)' : '1px solid #E4E4EB',
+                      background: format === f.id ? 'var(--m-ink)' : '#fff',
+                      color: format === f.id ? '#fff' : 'var(--m-ink)',
+                      fontFamily: 'var(--m-font)', fontSize: '12px', fontWeight: '700',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* ── Mini preview card ── */}
         <div className="panel" style={{boxShadow:'none', border:'1px solid #E4E4EB', padding:'14px', flexShrink:0}}>
@@ -1222,6 +1453,135 @@ export default function CaptionScreen({
             </div>
           )}
         </div>
+        {/* ── Accordion Target Lokasi (Gen Z only) ── */}
+        {isGenZ && (
+          <div className="panel" style={{boxShadow:'none', border:'1px solid #E4E4EB', padding:0, overflow:'visible', flexShrink:0}}>
+            {/* Accordion Header */}
+            <div
+              onClick={() => setAccordionOpen(p => !p)}
+              style={{
+                display:'flex', alignItems:'center', justifyContent:'space-between',
+                padding:'14px', cursor:'pointer', userSelect:'none'
+              }}
+            >
+              <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
+                <span style={{fontSize:'18px'}}>📍</span>
+                <span style={{fontFamily:'var(--m-font)', fontSize:'14px', fontWeight:'700', color:'var(--m-ink)'}}>
+                  Pengaturan Iklan / Target Lokasi (Opsional)
+                </span>
+              </div>
+              <svg width="14" height="8" viewBox="0 0 14 8" fill="none" stroke="var(--m-ink-sub)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                style={{
+                  transform: accordionOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                  transition: 'transform 0.2s ease'
+                }}
+              >
+                <polyline points="1 1 7 7 13 1"/>
+              </svg>
+            </div>
+
+            {/* Accordion Content */}
+            {accordionOpen && (
+              <div style={{borderTop:'1px solid #E4E4EB', padding:'14px', display:'flex', flexDirection:'column', gap:'14px', position:'relative'}}>
+                {/* Search Target */}
+                <div>
+                  <label style={{fontFamily:'var(--m-font)', fontSize:'12px', fontWeight:'700', color:'var(--m-ink-sub)', display:'block', marginBottom:'6px'}}>
+                    Cari Kecamatan / Kota
+                  </label>
+                  <div style={{display:'flex', alignItems:'center', gap:'8px', background:'#F4F4F7', borderRadius:'8px', padding:'0 12px', height:'42px', position:'relative'}} onClick={e => e.stopPropagation()}>
+                    <input
+                      value={searchVal}
+                      onChange={e => handleSearchInput(e.target.value)}
+                      placeholder="Cari kecamatan..."
+                      style={{border:'none', background:'none', outline:'none', flex:1, fontFamily:'var(--m-font)', fontSize:'14px', color:'var(--m-ink)'}}
+                    />
+                    {searchVal && (
+                      <button onClick={() => { setSearchVal(''); setShowDropdown(false); setSearchResults([]); }} style={{background:'none', border:'none', cursor:'pointer', color:'var(--m-ink-sub)', fontSize:'18px', padding:0}}>×</button>
+                    )}
+                  </div>
+                  {showDropdown && searchResults.length > 0 && (
+                    <div style={{
+                      position:'absolute', left:'14px', right:'14px', background:'#fff', borderRadius:'8px',
+                      boxShadow:'0 4px 16px rgba(0,0,0,0.12)', zIndex:5000, overflow:'hidden', marginTop:'4px', border:'1px solid #E4E4EB'
+                    }}>
+                      {searchResults.map((loc, i) => (
+                        <div key={i} onClick={() => selectCity(loc)}
+                          style={{
+                            padding:'10px 14px', fontSize:'13px', cursor:'pointer',
+                            fontFamily:'var(--m-font)', color:'var(--m-ink)',
+                            borderBottom: i < searchResults.length-1 ? '1px solid #F4F4F7' : 'none'
+                          }}
+                        >{loc.n}</div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Map Container */}
+                <div>
+                  <label style={{fontFamily:'var(--m-font)', fontSize:'12px', fontWeight:'700', color:'var(--m-ink-sub)', display:'block', marginBottom:'6px'}}>
+                    Titik Target Iklan
+                  </label>
+                  <div ref={mapRef} style={{width:'100%', height:'180px', borderRadius:'12px', overflow:'hidden', border:'1px solid #E4E4EB'}} />
+                </div>
+
+                {/* Radius Slider */}
+                <div>
+                  <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'6px'}}>
+                    <span style={{fontFamily:'var(--m-font)', fontSize:'12px', fontWeight:'700', color:'var(--m-ink-sub)'}}>Radius Target</span>
+                    <span style={{fontFamily:'var(--m-font)', fontSize:'12px', fontWeight:'700', color:'var(--m-brand)'}}>{radius.toFixed(1)} KM</span>
+                  </div>
+                  <input
+                    type="range" min="0.5" max="10" step="0.5"
+                    value={radius}
+                    onChange={e => setRadius?.(parseFloat(e.target.value))}
+                    style={{width:'100%', accentColor:'var(--m-brand)'}}
+                  />
+                </div>
+
+                {/* Targets (Local / Traveler) */}
+                <div style={{display:'flex', flexDirection:'column', gap:'10px'}}>
+                  <div style={{display:'flex', alignItems:'center', justifyContent:'space-between'}}>
+                    <div>
+                      <div style={{fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'600', color:'var(--m-ink)'}}>Warga Sekitar</div>
+                      <div style={{fontFamily:'var(--m-font)', fontSize:'11px', color:'var(--m-ink-sub)'}}>Orang yang tinggal di area target</div>
+                    </div>
+                    <button
+                      onClick={() => setLocalOn?.(!localOn)}
+                      style={{
+                        width:'44px', height:'24px', borderRadius:'99px', border:'none',
+                        background: localOn ? 'var(--m-brand)' : '#D7D7DE', cursor:'pointer', position:'relative', padding:0
+                      }}
+                    >
+                      <div style={{
+                        position:'absolute', top:'3px', left: localOn ? 'calc(100% - 21px)' : '3px',
+                        width:'18px', height:'18px', borderRadius:'50%', background:'#fff', transition:'left .2s'
+                      }} />
+                    </button>
+                  </div>
+                  <div style={{display:'flex', alignItems:'center', justifyContent:'space-between'}}>
+                    <div>
+                      <div style={{fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'600', color:'var(--m-ink)'}}>Pengunjung</div>
+                      <div style={{fontFamily:'var(--m-font)', fontSize:'11px', color:'var(--m-ink-sub)'}}>Orang yang sedang mengunjungi area target</div>
+                    </div>
+                    <button
+                      onClick={() => setTravelerOn?.(!travelerOn)}
+                      style={{
+                        width:'44px', height:'24px', borderRadius:'99px', border:'none',
+                        background: travelerOn ? 'var(--m-brand)' : '#D7D7DE', cursor:'pointer', position:'relative', padding:0
+                      }}
+                    >
+                      <div style={{
+                        position:'absolute', top:'3px', left: travelerOn ? 'calc(100% - 21px)' : '3px',
+                        width:'18px', height:'18px', borderRadius:'50%', background:'#fff', transition:'left .2s'
+                      }} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </main>
 
       {/* ── Bottom bar: Estimasi + Tayangkan
@@ -1241,10 +1601,10 @@ export default function CaptionScreen({
           </div>
           <div style={{display:'flex', alignItems:'center', gap:'4px', marginTop:'2px', minWidth:0}}>
             <span style={{fontFamily:'var(--m-font)', fontSize:'16px', fontWeight:'800', color:'var(--m-brand)', flexShrink:0}}>
-              {reach > 0 ? `~${reachText}` : '0'}
+              {reach ? reachText : '0'}
             </span>
             <span style={{fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'500', color:'var(--m-ink-sub)', display:'flex', alignItems:'center', flex:1, minWidth:0}}>
-              {reach > 0 ? (
+              {reach ? (
                 <>
                   {localOn && <span style={{whiteSpace:'nowrap', flexShrink:0}}>warga&nbsp;</span>}
                   {localOn && (
