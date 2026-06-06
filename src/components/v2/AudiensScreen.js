@@ -17,16 +17,17 @@ const PLATFORM_PENETRATION_RATES = {
 };
 
 function computeReach(locPop, radius, localOn, travelerOn, platform) {
-  if (!localOn && !travelerOn) return { lo: 0, hi: 0 };
+  if (!localOn && !travelerOn) return { totalPop: 0, lo: 0, hi: 0 };
   const areaFactor    = Math.PI * radius * radius;
   const densityBase   = locPop / (Math.PI * 5 * 5);
   const areaPop       = Math.round(densityBase * areaFactor);
   const totalPop      = (localOn ? areaPop : 0) + (travelerOn ? Math.round(areaPop * 0.22) : 0);
+  // Desktop: popup = totalPop, footer = lo–hi setelah platform penetration
   const internetUsers = Math.round(totalPop * 0.795);
   const penetration   = PLATFORM_PENETRATION_RATES[platform] || PLATFORM_PENETRATION_RATES.instagram;
   const hi = Math.min(Math.round(internetUsers * penetration), internetUsers);
   const lo = Math.round(hi * 0.65);
-  return { lo, hi };
+  return { totalPop, lo, hi };
 }
 
 function fmtReach(n) {
@@ -163,7 +164,8 @@ export default function AudiensScreen({
 
   /* ── Reach ── */
   const reach     = computeReach(locPop, radius, localOn, travelerOn, platform);
-  const reachText = (!reach.hi) ? 'Jangkauan: 0 orang' : `Jangkauan: ${fmtReach(reach.lo)}–${fmtReach(reach.hi)} orang`;
+  // Map popup = totalPop (raw), sticky bar = lo–hi (sama dengan desktop)
+  const reachText = (!reach.totalPop) ? 'Jangkauan: 0 orang' : `Jangkauan: ${reach.totalPop.toLocaleString('id-ID')} orang`;
 
   function popupHtml(name, rText) {
     return `<div style="text-align:center;padding:2px 4px;min-width:130px;">
@@ -317,7 +319,7 @@ export default function AudiensScreen({
     document.body.style.overflow = 'hidden';
     const { lat:bLat, lng:bLng, locName:bName, locPop:bPop, radius:bRad } = snapRef.current;
     const r2 = computeReach(bPop || locPop, bRad || radius, localOn, travelerOn, platform);
-    const rT2 = (!r2.hi) ? 'Jangkauan: 0 orang' : `Jangkauan: ${fmtReach(r2.lo)}–${fmtReach(r2.hi)} orang`;
+    const rT2 = (!r2.totalPop) ? 'Jangkauan: 0 orang' : `Jangkauan: ${r2.totalPop.toLocaleString('id-ID')} orang`;
 
     const timer = setTimeout(() => {
       if (!bottomSheetMapRef.current || bottomSheetLeafRef.current) return;
