@@ -1,7 +1,8 @@
 import { SUPABASE_URL, SUPABASE_ANON_KEY, getValidAccessToken } from './config';
 
 function normalizeAccount(a, defaultPlatform) {
-  let apiAvatarUrl = a.profile_photo_url
+  let apiAvatarUrl = a.avatar_url
+                   || a.profile_photo_url
                    || a.profile_picture_url || a.picture || a.avatar
                    || a.profile_image_url   || a.photo_url || a.image_url
                    || a.profile_photo       || a.profile_pic
@@ -11,9 +12,22 @@ function normalizeAccount(a, defaultPlatform) {
     apiAvatarUrl = apiAvatarUrl.data?.url || apiAvatarUrl.url || '';
   }
   let apiUsername = a.username || a.handle || a.name || a.title || '';
+
+  let rawPlatform = defaultPlatform || a.platform || '';
+  let normalizedPlatform = rawPlatform.toLowerCase();
+  if (normalizedPlatform.startsWith('facebook') || normalizedPlatform.startsWith('meta')) {
+    normalizedPlatform = 'facebook';
+  } else if (normalizedPlatform.startsWith('instagram')) {
+    normalizedPlatform = 'instagram';
+  } else if (normalizedPlatform.startsWith('tiktok')) {
+    normalizedPlatform = 'tiktok';
+  } else if (normalizedPlatform.startsWith('youtube')) {
+    normalizedPlatform = 'youtube';
+  }
+
   return {
     id: a.id,
-    platform: defaultPlatform || a.platform || '',
+    platform: normalizedPlatform || rawPlatform,
     username: apiUsername,
     avatar_url: apiAvatarUrl
   };

@@ -528,7 +528,24 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext, onS
                 const acc = accounts.find(a => a.platform === p.id);
                 return (
                   <div key={p.id} style={{display:'flex',alignItems:'center',gap:'12px',padding:'12px',borderRadius:'14px',background:'#F9F9FB',border:'1.5px solid #EBEBF0'}}>
-                    <SoftIcon platform={p} size={48} />
+                    {/* Avatar */}
+                    <div style={{position:'relative',width:'48px',height:'48px',flexShrink:0}}>
+                      {acc?.avatar_url ? (
+                        <img src={acc.avatar_url} alt={acc.username || p.label}
+                          style={{width:'48px',height:'48px',borderRadius:'12px',objectFit:'cover'}}
+                          onError={e => { e.target.style.display='none'; }}
+                        />
+                      ) : (
+                        <div style={{width:'48px',height:'48px',borderRadius:'12px',background:p.badgeBg,display:'flex',alignItems:'center',justifyContent:'center'}}>
+                          <span style={{color:'#fff',fontFamily:'var(--m-font)',fontSize:'18px',fontWeight:'700'}}>
+                            {(acc?.username || p.label).charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                      )}
+                      <div style={{position:'absolute',bottom:'-3px',right:'-3px',width:'20px',height:'20px',borderRadius:'50%',background:p.badgeBg,border:'2px solid #fff',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                        {p.iconBadge}
+                      </div>
+                    </div>
                     <div style={{flex:1,minWidth:0}}>
                       <div style={{fontFamily:'var(--m-font)',fontSize:'14px',fontWeight:'700',color:'var(--m-ink)'}}>{p.label}</div>
                       <div style={{fontFamily:'var(--m-font)',fontSize:'12px',color:'var(--m-ink-sub)'}}>
@@ -614,7 +631,24 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext, onS
                   <div style={{display:'flex',alignItems:'center',gap:'14px',padding:'14px 16px',marginBottom:'16px',border:'1.5px solid #e5e7eb',borderRadius:'12px',background:'#f9fafb'}}>
                     {disconnectPlat && (
                       <>
-                        <SoftIcon platform={disconnectPlat} size={48} />
+                        {/* Avatar */}
+                        <div style={{position:'relative',width:'48px',height:'48px',flexShrink:0}}>
+                          {disconnectAcc?.avatar_url ? (
+                            <img src={disconnectAcc.avatar_url} alt={disconnectAcc.username || disconnectPlat.label}
+                              style={{width:'48px',height:'48px',borderRadius:'12px',objectFit:'cover'}}
+                              onError={e => { e.target.style.display='none'; }}
+                            />
+                          ) : (
+                            <div style={{width:'48px',height:'48px',borderRadius:'12px',background:disconnectPlat.badgeBg,display:'flex',alignItems:'center',justifyContent:'center'}}>
+                              <span style={{color:'#fff',fontFamily:'var(--m-font)',fontSize:'18px',fontWeight:'700'}}>
+                                {(disconnectAcc?.username || disconnectPlat.label).charAt(0).toUpperCase()}
+                              </span>
+                            </div>
+                          )}
+                          <div style={{position:'absolute',bottom:'-3px',right:'-3px',width:'20px',height:'20px',borderRadius:'50%',background:disconnectPlat.badgeBg,border:'2px solid #fff',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                            {disconnectPlat.iconBadge}
+                          </div>
+                        </div>
                         <div style={{flex:1}}>
                           <div style={{fontSize:'14px',fontWeight:'600',color:'#111827'}}>{disconnectPlat.label}</div>
                           <div style={{fontSize:'12px',color:'#6b7280'}}>
