@@ -2176,11 +2176,17 @@ export default function CaptionScreen({
         /* Sembunyikan chevron bawaan browser agar bersih dan seragam di Android & iOS */
         .premium-datetime-input::-webkit-calendar-picker-indicator {
           display: none !important;
+          opacity: 0 !important;
+          width: 0px !important;
+          height: 0px !important;
+          padding: 0 !important;
+          margin: 0 !important;
           -webkit-appearance: none !important;
         }
-        /* Paksa teks rata kiri di iOS Safari */
+        /* Paksa teks rata kiri di iOS Safari dan geser agar tidak menumpuk dengan ikon */
         .premium-datetime-input::-webkit-date-and-time-value {
           text-align: left !important;
+          margin-left: 28px !important;
           min-height: 1.2em;
         }
       `}</style>
