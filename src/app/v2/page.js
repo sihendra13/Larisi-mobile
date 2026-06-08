@@ -114,6 +114,18 @@ export default function DapurV2() {
   const [showSplash, setShowSplash] = useState(false);
   const [showInstallModal, setShowInstallModal] = useState(false);
 
+  const handleCloseInstallModal = () => {
+    setShowInstallModal(false);
+    localStorage.setItem('larisi_install_dismissed', '1');
+
+    const intent = localStorage.getItem('larisi_intent');
+    const tok = getAccessToken();
+    if (!tok && intent === 'register') {
+      sessionStorage.setItem('larisi_new_user_installed', '1');
+      setAuthState('register');
+    }
+  };
+
   useEffect(() => {
     /* Handle iOS PWA OAuth redirect callback */
     handleOAuthRedirectCallback().then(result => {
@@ -154,7 +166,23 @@ export default function DapurV2() {
            atau jika ada niat (intent) register. Jika tidak, default selalu ke halaman masuk (login). */
         const goToRegister = planParam || intent === 'register';
 
-        setAuthState(goToRegister ? 'register' : 'login');
+        if (goToRegister) {
+          const finishedInstallFlow = sessionStorage.getItem('larisi_new_user_installed');
+          const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+
+          if (!finishedInstallFlow && !isStandalone) {
+            setShowSplash(true);
+            setTimeout(() => {
+              setShowSplash(false);
+              setShowInstallModal(true);
+            }, 3000);
+            return;
+          } else {
+            setAuthState('register');
+          }
+        } else {
+          setAuthState('login');
+        }
         return;
       }
       const pCached = getProfile();
@@ -492,11 +520,18 @@ export default function DapurV2() {
   if (authState === 'loading') {
     return (
       <div style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F9F9FA' }}>
-        <div style={{ textAlign: 'center', fontFamily: 'var(--m-font, sans-serif)' }}>
-          <div style={{ width: '32px', height: '32px', border: '3px solid #E4E4EB', borderTopColor: '#111827', borderRadius: '50%', animation: 'spin 0.7s linear infinite', margin: '0 auto 12px' }} />
-          <div style={{ fontSize: '13px', color: '#9ca3af' }}>Memuat...</div>
-          <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
-        </div>
+        {showInstallModal ? (
+          <InstallModal 
+            isOpen={showInstallModal} 
+            onClose={handleCloseInstallModal} 
+          />
+        ) : (
+          <div style={{ textAlign: 'center', fontFamily: 'var(--m-font, sans-serif)' }}>
+            <div style={{ width: '32px', height: '32px', border: '3px solid #E4E4EB', borderTopColor: '#111827', borderRadius: '50%', animation: 'spin 0.7s linear infinite', margin: '0 auto 12px' }} />
+            <div style={{ fontSize: '13px', color: '#9ca3af' }}>Memuat...</div>
+            <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+          </div>
+        )}
       </div>
     );
   }
@@ -541,10 +576,7 @@ export default function DapurV2() {
       {/* ── Modal PWA Install (Muncul di dalam App) ── */}
       <InstallModal 
         isOpen={showInstallModal} 
-        onClose={() => {
-          setShowInstallModal(false);
-          localStorage.setItem('larisi_install_dismissed', '1');
-        }} 
+        onClose={handleCloseInstallModal} 
       />
 
       {/* ── PWA Install Banner ── */}
