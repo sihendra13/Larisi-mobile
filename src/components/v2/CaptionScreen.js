@@ -2173,10 +2173,15 @@ export default function CaptionScreen({
 
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
+        /* Sembunyikan chevron bawaan browser agar bersih dan seragam di Android & iOS */
         .premium-datetime-input::-webkit-calendar-picker-indicator {
-          cursor: pointer;
-          padding: 4px;
-          margin-right: 4px;
+          display: none !important;
+          -webkit-appearance: none !important;
+        }
+        /* Paksa teks rata kiri di iOS Safari */
+        .premium-datetime-input::-webkit-date-and-time-value {
+          text-align: left !important;
+          min-height: 1.2em;
         }
       `}</style>
     </div>
