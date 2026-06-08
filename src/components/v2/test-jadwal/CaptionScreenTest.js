@@ -2092,7 +2092,7 @@ export default function CaptionScreen({
                   className="premium-datetime-input"
                   style={{
                     width:'100%', 
-                    padding:'12px 14px 12px 42px', 
+                    padding:'12px 14px', 
                     borderRadius:'12px', 
                     border:'1.5px solid #E4E4EB', 
                     fontFamily:'var(--m-font)', 
@@ -2102,7 +2102,9 @@ export default function CaptionScreen({
                     outline:'none', 
                     background:'#F9F9FA', 
                     boxSizing:'border-box',
-                    textAlign:'left'
+                    textAlign:'left',
+                    WebkitAppearance:'none',
+                    appearance:'none'
                   }}
                 />
                 <div style={{position:'absolute', left:'14px', top:'50%', transform:'translateY(-50%)', display:'flex', alignItems:'center', pointerEvents:'none', color:'var(--m-ink-sub)'}}>
@@ -2127,7 +2129,7 @@ export default function CaptionScreen({
                   className="premium-datetime-input"
                   style={{
                     width:'100%', 
-                    padding:'12px 14px 12px 42px', 
+                    padding:'12px 14px', 
                     borderRadius:'12px', 
                     border:'1.5px solid #E4E4EB', 
                     fontFamily:'var(--m-font)', 
@@ -2137,7 +2139,9 @@ export default function CaptionScreen({
                     outline:'none', 
                     background:'#F9F9FA', 
                     boxSizing:'border-box',
-                    textAlign:'left'
+                    textAlign:'left',
+                    WebkitAppearance:'none',
+                    appearance:'none'
                   }}
                 />
                 <div style={{position:'absolute', left:'14px', top:'50%', transform:'translateY(-50%)', display:'flex', alignItems:'center', pointerEvents:'none', color:'var(--m-ink-sub)'}}>
