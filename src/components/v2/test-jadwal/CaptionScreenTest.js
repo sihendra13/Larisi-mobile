@@ -1126,7 +1126,22 @@ export default function CaptionScreen({
       showToast('⏳ Pilih tanggal dan waktu terlebih dahulu', 'warning');
       return;
     }
-    const schedDateTime = new Date(schedDate + 'T' + schedTime);
+
+    const dateParts = String(schedDate).split('-');
+    const timeParts = String(schedTime).split(/:|\./);
+
+    if (dateParts.length < 3 || timeParts.length < 2) {
+      showToast('⏳ Format tanggal atau waktu tidak valid', 'warning');
+      return;
+    }
+
+    const year = parseInt(dateParts[0], 10);
+    const month = parseInt(dateParts[1], 10) - 1; // 0-indexed month
+    const day = parseInt(dateParts[2], 10);
+    const hours = parseInt(timeParts[0], 10);
+    const minutes = parseInt(timeParts[1], 10);
+
+    const schedDateTime = new Date(year, month, day, hours, minutes);
     if (isNaN(schedDateTime.getTime())) {
       showToast('⏳ Format tanggal atau waktu tidak valid', 'warning');
       return;
@@ -2069,23 +2084,69 @@ export default function CaptionScreen({
             {/* Input Tanggal */}
             <div style={{marginBottom:'16px'}}>
               <label style={{fontFamily:'var(--m-font)', fontSize:'12px', fontWeight:'700', color:'var(--m-ink-sub)', display:'block', marginBottom:'8px', textTransform:'uppercase', letterSpacing:'0.5px'}}>Tanggal</label>
-              <input
-                type="date"
-                value={schedDate}
-                onChange={e => setSchedDate(e.target.value)}
-                style={{width:'100%', padding:'12px 14px', borderRadius:'12px', border:'1.5px solid #E4E4EB', fontFamily:'var(--m-font)', fontSize:'16px', fontWeight:'600', color:'var(--m-ink)', outline:'none', background:'#F9F9FA', boxSizing:'border-box'}}
-              />
+              <div style={{position:'relative'}}>
+                <input
+                  type="date"
+                  value={schedDate}
+                  onChange={e => setSchedDate(e.target.value)}
+                  className="premium-datetime-input"
+                  style={{
+                    width:'100%', 
+                    padding:'12px 14px 12px 42px', 
+                    borderRadius:'12px', 
+                    border:'1.5px solid #E4E4EB', 
+                    fontFamily:'var(--m-font)', 
+                    fontSize:'16px', 
+                    fontWeight:'600', 
+                    color:'var(--m-ink)', 
+                    outline:'none', 
+                    background:'#F9F9FA', 
+                    boxSizing:'border-box',
+                    textAlign:'left'
+                  }}
+                />
+                <div style={{position:'absolute', left:'14px', top:'50%', transform:'translateY(-50%)', display:'flex', alignItems:'center', pointerEvents:'none', color:'var(--m-ink-sub)'}}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                    <line x1="16" y1="2" x2="16" y2="6"/>
+                    <line x1="8" y1="2" x2="8" y2="6"/>
+                    <line x1="3" y1="10" x2="21" y2="10"/>
+                  </svg>
+                </div>
+              </div>
             </div>
 
             {/* Input Waktu */}
             <div style={{marginBottom:'20px'}}>
               <label style={{fontFamily:'var(--m-font)', fontSize:'12px', fontWeight:'700', color:'var(--m-ink-sub)', display:'block', marginBottom:'8px', textTransform:'uppercase', letterSpacing:'0.5px'}}>Waktu</label>
-              <input
-                type="time"
-                value={schedTime}
-                onChange={e => setSchedTime(e.target.value)}
-                style={{width:'100%', padding:'12px 14px', borderRadius:'12px', border:'1.5px solid #E4E4EB', fontFamily:'var(--m-font)', fontSize:'16px', fontWeight:'600', color:'var(--m-ink)', outline:'none', background:'#F9F9FA', boxSizing:'border-box'}}
-              />
+              <div style={{position:'relative'}}>
+                <input
+                  type="time"
+                  value={schedTime}
+                  onChange={e => setSchedTime(e.target.value)}
+                  className="premium-datetime-input"
+                  style={{
+                    width:'100%', 
+                    padding:'12px 14px 12px 42px', 
+                    borderRadius:'12px', 
+                    border:'1.5px solid #E4E4EB', 
+                    fontFamily:'var(--m-font)', 
+                    fontSize:'16px', 
+                    fontWeight:'600', 
+                    color:'var(--m-ink)', 
+                    outline:'none', 
+                    background:'#F9F9FA', 
+                    boxSizing:'border-box',
+                    textAlign:'left'
+                  }}
+                />
+                <div style={{position:'absolute', left:'14px', top:'50%', transform:'translateY(-50%)', display:'flex', alignItems:'center', pointerEvents:'none', color:'var(--m-ink-sub)'}}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <polyline points="12 6 12 12 16 14"/>
+                  </svg>
+                </div>
+              </div>
             </div>
 
             {/* Nama Iklan */}
@@ -2110,7 +2171,14 @@ export default function CaptionScreen({
         </div>
       )}
 
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .premium-datetime-input::-webkit-calendar-picker-indicator {
+          cursor: pointer;
+          padding: 4px;
+          margin-right: 4px;
+        }
+      `}</style>
     </div>
   );
 }
