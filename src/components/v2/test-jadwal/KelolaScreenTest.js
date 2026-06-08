@@ -1,6 +1,6 @@
 'use client';
 import { useState, useRef, useEffect, useCallback } from 'react';
-import SiLarisScreen from './SiLarisScreen';
+import SiLarisScreen from './SiLarisScreenTest';
 import MobileHeader from '@/components/layout/MobileHeader';
 import { SUPABASE_URL, SUPABASE_ANON_KEY, fmtViews } from '@/lib/config';
 

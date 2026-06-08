@@ -144,8 +144,283 @@ const AI_STYLES = [
   }
 ];
 
-export default function AsetScreen({ platform, format, onFormatChange, files, onFilesChange, onBack, onNext }) {
+export default function AsetScreen({ platform, format, onFormatChange, files, onFilesChange, onBack, onNext, isGenZ, autoOpenStory, onStoryOpened }) {
   const [selectedIdx,    setSelectedIdx]    = useState(0);
+
+  const [showStorySheet, setShowStorySheet] = useState(false);
+  const [animateStory, setAnimateStory] = useState(false);
+  const [storyText, setStoryText] = useState('Suka banget sama produknya! Desainnya estetik dan pengirimannya super cepat. Next order lagi! ⭐⭐⭐⭐⭐');
+  const [storyTemplate, setStoryTemplate] = useState('polaroid'); // 'polaroid' | 'bento' | 'minimalist'
+  const [storyBgColor, setStoryBgColor] = useState('peach'); // 'peach' | 'mint' | 'lavender' | 'sunset' | 'white'
+  const storyCanvasRef = useRef(null);
+
+  const openStorySheet = () => {
+    setShowStorySheet(true);
+    setTimeout(() => setAnimateStory(true), 10);
+  };
+
+  const closeStorySheet = () => {
+    setAnimateStory(false);
+    setTimeout(() => {
+      setShowStorySheet(false);
+      setStoryText('Suka banget sama produknya! Desainnya estetik dan pengirimannya super cepat. Next order lagi! ⭐⭐⭐⭐⭐');
+      setStoryTemplate('polaroid');
+      setStoryBgColor('peach');
+    }, 320);
+  };
+
+  useEffect(() => {
+    if (isGenZ && autoOpenStory) {
+      openStorySheet();
+      onStoryOpened?.();
+    }
+  }, [autoOpenStory, isGenZ]);
+
+  const handleUseStoryDesign = () => {
+    const canvas = storyCanvasRef.current;
+    if (!canvas) return;
+    const url = canvas.toDataURL('image/jpeg', 0.95);
+    const newFile = {
+      url: url,
+      type: 'photo',
+      name: `story-maker-${storyTemplate}.jpg`,
+    };
+    onFilesChange([newFile]);
+    setSelectedIdx(0);
+    closeStorySheet();
+  };
+
+  const renderStoryCanvas = () => {
+    const canvas = storyCanvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    
+    // Canvas dimensions (aspect ratio 9:16)
+    canvas.width = 1080;
+    canvas.height = 1920;
+    
+    // 1. Draw Background Gradient
+    const grds = {
+      peach: ['#ffecd2', '#fcb69f'],
+      mint: ['#d4fc79', '#96e6a1'],
+      lavender: ['#e0c3fc', '#8ec5fc'],
+      sunset: ['#f6d365', '#fda085'],
+      white: ['#ffffff', '#f1f1f1']
+    };
+    const activeGrd = grds[storyBgColor] || grds.peach;
+    const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    gradient.addColorStop(0, activeGrd[0]);
+    gradient.addColorStop(1, activeGrd[1]);
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Load and draw product image
+    const drawProductImg = (imgObj, dx, dy, dw, dh, radius = 0) => {
+      if (radius > 0) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(dx + radius, dy);
+        ctx.lineTo(dx + dw - radius, dy);
+        ctx.quadraticCurveTo(dx + dw, dy, dx + dw, dy + radius);
+        ctx.lineTo(dx + dw, dy + dh - radius);
+        ctx.quadraticCurveTo(dx + dw, dy + dh, dx + dw - radius, dy + dh);
+        ctx.lineTo(dx + radius, dy + dh);
+        ctx.quadraticCurveTo(dx, dy + dh, dx, dy + dh - radius);
+        ctx.lineTo(dx, dy + radius);
+        ctx.quadraticCurveTo(dx, dy, dx + radius, dy);
+        ctx.closePath();
+        ctx.clip();
+      }
+      ctx.drawImage(imgObj, dx, dy, dw, dh);
+      if (radius > 0) ctx.restore();
+    };
+
+    const drawTextWrapped = (text, x, y, maxWidth, lineHeight, fontStyle = '36px sans-serif') => {
+      ctx.font = fontStyle;
+      ctx.fillStyle = '#111827';
+      const words = text.split(' ');
+      let line = '';
+      let currentY = y;
+      
+      for (let n = 0; n < words.length; n++) {
+        let testLine = line + words[n] + ' ';
+        let metrics = ctx.measureText(testLine);
+        let testWidth = metrics.width;
+        if (testWidth > maxWidth && n > 0) {
+          ctx.fillText(line, x, currentY);
+          line = words[n] + ' ';
+          currentY += lineHeight;
+        } else {
+          line = testLine;
+        }
+      }
+      ctx.fillText(line, x, currentY);
+      return currentY + lineHeight;
+    };
+
+    const runRender = (img) => {
+      if (storyTemplate === 'polaroid') {
+        // Polaroid Frame
+        const frameW = 860;
+        const frameH = 1100;
+        const frameX = (canvas.width - frameW) / 2;
+        const frameY = 280;
+
+        // Shadow
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.15)';
+        ctx.shadowBlur = 40;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 20;
+
+        // White card background
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.roundRect(frameX, frameY, frameW, frameH, 24);
+        ctx.fill();
+
+        ctx.shadowColor = 'transparent'; // reset shadow
+
+        // Inner photo box
+        const innerMargin = 60;
+        const photoW = frameW - (innerMargin * 2);
+        const photoH = photoW; // Square aspect ratio inside polaroid
+        const photoX = frameX + innerMargin;
+        const photoY = frameY + innerMargin;
+
+        ctx.fillStyle = '#f3f4f6';
+        ctx.fillRect(photoX, photoY, photoW, photoH);
+
+        if (img) {
+          drawProductImg(img, photoX, photoY, photoW, photoH);
+        } else {
+          // Placeholder
+          ctx.fillStyle = '#9ca3af';
+          ctx.font = 'bold 40px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('Foto Produk', photoX + photoW/2, photoY + photoH/2);
+        }
+
+        // Polaroid caption area
+        const textX = frameX + innerMargin;
+        const textY = photoY + photoH + 80;
+        
+        ctx.textAlign = 'left';
+        drawTextWrapped(storyText, textX, textY, photoW, 52, 'italic 38px Georgia, serif');
+      } 
+      else if (storyTemplate === 'bento') {
+        // Bento grid card 1 (Product Photo)
+        const c1X = 110;
+        const c1Y = 250;
+        const c1W = 860;
+        const c1H = 750;
+
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.roundRect(c1X, c1Y, c1W, c1H, 36);
+        ctx.fill();
+
+        if (img) {
+          drawProductImg(img, c1X + 30, c1Y + 30, c1W - 60, c1H - 60, 24);
+        }
+
+        // Bento grid card 2 (Testimonial Card)
+        const c2X = 110;
+        const c2Y = 1040;
+        const c2W = 860;
+        const c2H = 500;
+
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.roundRect(c2X, c2Y, c2W, c2H, 36);
+        ctx.fill();
+
+        // Stars
+        ctx.font = '40px sans-serif';
+        ctx.fillText('⭐⭐⭐⭐⭐', c2X + 50, c2Y + 80);
+
+        // Quote
+        drawTextWrapped(storyText, c2X + 50, c2Y + 160, c2W - 100, 52, 'bold 36px sans-serif');
+
+        // Bento grid card 3 (Footer/Brand tag)
+        const c3X = 110;
+        const c3Y = 1580;
+        const c3W = 860;
+        const c3H = 150;
+
+        ctx.fillStyle = '#111827';
+        ctx.beginPath();
+        ctx.roundRect(c3X, c3Y, c3W, c3H, 24);
+        ctx.fill();
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 36px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Rekomendasi Terbaik Hari Ini ✨', c3X + c3W/2, c3Y + 88);
+      }
+      else if (storyTemplate === 'minimalist') {
+        // Big Quotation marks
+        ctx.font = '280px Georgia, serif';
+        ctx.fillStyle = 'rgba(17, 24, 39, 0.08)';
+        ctx.fillText('“', 110, 500);
+
+        // Quote Text centered
+        ctx.textAlign = 'center';
+        const nextY = drawTextWrapped(
+          `"${storyText}"`,
+          canvas.width / 2,
+          580,
+          860,
+          64,
+          'italic 50px Georgia, serif'
+        );
+
+        // Small floating bubble with product photo at the bottom
+        const bubbleR = 150;
+        const bubbleX = canvas.width / 2;
+        const bubbleY = Math.max(nextY + 150, 1250);
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(bubbleX, bubbleY, bubbleR, 0, Math.PI * 2);
+        ctx.closePath();
+        ctx.clip();
+
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(bubbleX - bubbleR, bubbleY - bubbleR, bubbleR * 2, bubbleR * 2);
+
+        if (img) {
+          ctx.drawImage(img, bubbleX - bubbleR, bubbleY - bubbleR, bubbleR * 2, bubbleR * 2);
+        }
+        ctx.restore();
+
+        // Border around bubble
+        ctx.beginPath();
+        ctx.arc(bubbleX, bubbleY, bubbleR, 0, Math.PI * 2);
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 12;
+        ctx.stroke();
+      }
+    };
+
+    // Trigger image load if files exist
+    const selectedFile = files[selectedIdx];
+    if (selectedFile) {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        runRender(img);
+      };
+      img.src = selectedFile.url;
+    } else {
+      runRender(null);
+    }
+  };
+
+  useEffect(() => {
+    if (showStorySheet) {
+      setTimeout(renderStoryCanvas, 50);
+    }
+  }, [showStorySheet, storyTemplate, storyBgColor, storyText, files, selectedIdx]);
 
   /* ── Upload-mode & mixing validation (V1 port) ── */
   const [uploadMode,     setUploadMode]     = useState(null);
@@ -202,15 +477,21 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
 
     try {
       const base64 = await fileToBase64(aiPhoto.file);
-      const res = await fetch(`${SUPABASE_URL}/functions/v1/ai-kreatif`, {
+      const isLocal = typeof window !== 'undefined' && 
+        (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.includes('192.168.'));
+      
+      const apiUrl = isLocal ? '/api/ai-kreatif' : `${SUPABASE_URL}/functions/v1/ai-kreatif`;
+      const providerVal = isLocal ? 'local-sd' : 'huggingface';
+
+      const res = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+          ...(!isLocal ? { 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` } : {})
         },
         body: JSON.stringify({
           imageBase64: base64,
-          provider: 'huggingface'
+          provider: providerVal
         })
       });
       const data = await res.json();
@@ -294,7 +575,16 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
 
   /* ── AI sheet helpers ── */
   const openAISheet  = () => { setShowAISheet(true);  setTimeout(() => setAnimateAI(true),  10); };
-  const closeAISheet = () => { setAnimateAI(false);   setTimeout(() => setShowAISheet(false), 320); };
+  const closeAISheet = () => { 
+    setAnimateAI(false);   
+    setTimeout(() => {
+      setShowAISheet(false);
+      setAiPhoto(null);
+      setAiResults([]);
+      setAiError('');
+      setSelectedAIResultIdx(null);
+    }, 320); 
+  };
 
   /* ── showScanningOnly: persona already locked ── */
   const showScanningOnly = useCallback(() => {
@@ -1152,11 +1442,11 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
               </button>
             )}
 
-            {/* AI ✨ */}
-            {process.env.NODE_ENV === 'development' && (
+            {/* AI ✨ / Story Maker Trigger */}
+            {(isGenZ || process.env.NODE_ENV === 'development') && (
               <div style={{ position: 'relative', flexShrink: 0 }}>
                 <button
-                  onClick={openAISheet}
+                  onClick={isGenZ ? openStorySheet : openAISheet}
                   style={{
                     width: '52px', height: '48px', borderRadius: '14px',
                     background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
@@ -1166,6 +1456,7 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
                     boxShadow: '0 2px 12px rgba(124,58,237,0.55)',
                     WebkitTapHighlightColor: 'transparent',
                   }}
+                  title={isGenZ ? "Story Maker" : "AI Kreatif"}
                 >
                   <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ width: '18px', height: '18px' }}>
                     <path d="M12 2L9.5 9.5 2 12l7.5 2.5L12 22l2.5-7.5L22 12l-7.5-2.5z"/>
@@ -1189,7 +1480,7 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
                   pointerEvents: 'none',
                   zIndex: 10,
                 }}>
-                  NEW
+                  {isGenZ ? 'STORY' : 'NEW'}
                 </div>
               </div>
             )}
@@ -1457,36 +1748,220 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
                   {aiPhoto ? 'Generate 3 Variasi' : 'Upload foto dulu'}
                 </button>
               ) : (
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <button
+                    onClick={() => {
+                      setAiResults([]);
+                      setAiPhoto(null);
+                      setAiError('');
+                      setSelectedAIResultIdx(null);
+                    }}
+                    style={{
+                      flex: 1, padding: '16px', borderRadius: '16px', border: '1px solid #D7D7DE',
+                      background: '#fff', color: '#111827',
+                      fontFamily: 'var(--m-font)', fontSize: '15px', fontWeight: '700',
+                      cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}
+                  >
+                    Reset
+                  </button>
+                  <button
+                    disabled={selectedAIResultIdx === null}
+                    onClick={() => {
+                      if (selectedAIResultIdx === null) return;
+                      const selectedUrl = aiResults[selectedAIResultIdx];
+                      const styleLabel = AI_STYLES[selectedAIResultIdx]?.label || 'AI-Kreatif';
+                      const newFile = {
+                        url: selectedUrl,
+                        type: 'photo',
+                        name: `AI-Kreatif-${styleLabel}.jpg`
+                      };
+                      const isFirst = files.length === 0;
+                      const combined = isFirst ? [newFile] : [...files, newFile].slice(0, MAX_FILES);
+                      onFilesChange(combined);
+                      setSelectedIdx(combined.length - 1);
+                      closeAISheet();
+                    }}
+                    style={{
+                      flex: 2, padding: '16px', borderRadius: '16px', border: 'none',
+                      background: selectedAIResultIdx !== null ? 'var(--m-brand)' : '#E4E4EB',
+                      color: selectedAIResultIdx !== null ? '#fff' : '#9CA3AF',
+                      fontFamily: 'var(--m-font)', fontSize: '15px', fontWeight: '700',
+                      cursor: selectedAIResultIdx !== null ? 'pointer' : 'not-allowed',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      transition: 'background 0.2s',
+                    }}
+                  >
+                    {selectedAIResultIdx !== null ? '✓ Gunakan Foto Ini' : 'Pilih salah satu hasil'}
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* ══ Story Maker Bottom Sheet ══ */}
+      {showStorySheet && (
+        <>
+          <div onClick={closeStorySheet} style={{
+            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9998,
+            opacity: animateStory ? 1 : 0, transition: 'opacity 0.3s ease-out',
+          }} />
+          <div style={{
+            position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 9999,
+            background: '#fff', borderRadius: '20px 20px 0 0',
+            display: 'flex', flexDirection: 'column',
+            maxHeight: '92vh', overflow: 'hidden',
+            transform: animateStory ? 'translateY(0)' : 'translateY(100%)',
+            transition: 'transform 0.32s cubic-bezier(0.32,0.72,0,1)',
+          }}>
+            {/* Drag handle */}
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '10px 0 0', flexShrink: 0 }}>
+              <div style={{ width: '40px', height: '4px', borderRadius: '2px', background: '#E4E4EB' }} />
+            </div>
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px 0', flexShrink: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#FEE2E2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ width: '18px', height: '18px' }}>
+                    <path d="M12 2L9.5 9.5 2 12l7.5 2.5L12 22l2.5-7.5L22 12l-7.5-2.5z"/>
+                  </svg>
+                </div>
+                <div>
+                  <div style={{ fontFamily: 'var(--m-font)', fontSize: '15px', fontWeight: '700', color: 'var(--m-ink)' }}>Story Maker ✨</div>
+                  <div style={{ fontFamily: 'var(--m-font)', fontSize: '11px', color: 'var(--m-ink-sub)' }}>Ubah ulasan pembeli jadi konten estetik</div>
+                </div>
+              </div>
+              <button onClick={closeStorySheet} style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#F4F4F7', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="var(--m-ink)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: '16px', height: '16px' }}>
+                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            </div>
+            {/* Body */}
+            <div style={{ flex: 1, overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              {/* Canvas Preview */}
+              <div style={{ display: 'flex', justifyContent: 'center', background: '#F9F9FA', borderRadius: '16px', padding: '12px', border: '1px solid #ECECF1' }}>
+                <canvas ref={storyCanvasRef} style={{ maxWidth: '100%', height: '300px', objectFit: 'contain', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }} />
+              </div>
+
+              {/* Template Selector */}
+              <div>
+                <div style={{ fontFamily: 'var(--m-font)', fontSize: '13px', fontWeight: '700', color: 'var(--m-ink-sub)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Pilih Template
+                </div>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  {[
+                    { id: 'polaroid', label: 'Polaroid', icon: '📸' },
+                    { id: 'bento', label: 'Bento Grid', icon: '🍱' },
+                    { id: 'minimalist', label: 'Minimalist Quote', icon: '💬' }
+                  ].map(t => (
+                    <button
+                      key={t.id}
+                      onClick={() => setStoryTemplate(t.id)}
+                      style={{
+                        flex: 1, padding: '12px 8px', borderRadius: '12px',
+                        border: storyTemplate === t.id ? '2px solid var(--m-ink)' : '1px solid #E4E4EB',
+                        background: storyTemplate === t.id ? 'var(--m-ink)' : '#fff',
+                        color: storyTemplate === t.id ? '#fff' : 'var(--m-ink)',
+                        fontFamily: 'var(--m-font)', fontSize: '12px', fontWeight: '700',
+                        cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px'
+                      }}
+                    >
+                      <span style={{ fontSize: '18px' }}>{t.icon}</span>
+                      {t.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Color Customization */}
+              <div>
+                <div style={{ fontFamily: 'var(--m-font)', fontSize: '13px', fontWeight: '700', color: 'var(--m-ink-sub)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Pilih Warna Background
+                </div>
+                <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                  {[
+                    { id: 'peach', label: 'Peach', color: 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)' },
+                    { id: 'mint', label: 'Mint', color: 'linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%)' },
+                    { id: 'lavender', label: 'Lavender', color: 'linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%)' },
+                    { id: 'sunset', label: 'Sunset', color: 'linear-gradient(135deg, #f6d365 0%, #fda085 100%)' },
+                    { id: 'white', label: 'White', color: 'linear-gradient(135deg, #ffffff 0%, #f1f1f1 100%)' }
+                  ].map(c => (
+                    <button
+                      key={c.id}
+                      onClick={() => setStoryBgColor(c.id)}
+                      style={{
+                        width: '38px', height: '38px', borderRadius: '50%',
+                        background: c.color,
+                        border: storyBgColor === c.id ? '3px solid #111' : '1px solid #D7D7DE',
+                        cursor: 'pointer', outline: 'none',
+                        boxShadow: '0 2px 6px rgba(0,0,0,0.05)',
+                        position: 'relative'
+                      }}
+                      title={c.label}
+                    >
+                      {storyBgColor === c.id && (
+                        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#111" strokeWidth="4">
+                            <polyline points="20 6 9 17 4 12"/>
+                          </svg>
+                        </div>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Text Input */}
+              <div>
+                <div style={{ fontFamily: 'var(--m-font)', fontSize: '13px', fontWeight: '700', color: 'var(--m-ink-sub)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Teks Ulasan / Testimoni
+                </div>
+                <textarea
+                  value={storyText}
+                  onChange={e => setStoryText(e.target.value)}
+                  style={{
+                    width: '100%', height: '80px', padding: '12px', borderRadius: '12px',
+                    border: '1px solid #D7D7DE', fontFamily: 'var(--m-font)', fontSize: '14px',
+                    color: 'var(--m-ink)', outline: 'none', resize: 'none'
+                  }}
+                  placeholder="Tulis ulasan pembeli di sini..."
+                />
+              </div>
+            </div>
+
+            {/* Actions Footer */}
+            <div style={{ padding: '12px 16px', borderTop: '1px solid #F0F0F5', background: '#fff', flexShrink: 0, paddingBottom: 'calc(12px + env(safe-area-inset-bottom))' }}>
+              <div style={{ display: 'flex', gap: '12px' }}>
                 <button
-                  disabled={selectedAIResultIdx === null}
                   onClick={() => {
-                    if (selectedAIResultIdx === null) return;
-                    const selectedUrl = aiResults[selectedAIResultIdx];
-                    const styleLabel = AI_STYLES[selectedAIResultIdx]?.label || 'AI-Kreatif';
-                    const newFile = {
-                      url: selectedUrl,
-                      type: 'photo',
-                      name: `AI-Kreatif-${styleLabel}.jpg`
-                    };
-                    const isFirst = files.length === 0;
-                    const combined = isFirst ? [newFile] : [...files, newFile].slice(0, MAX_FILES);
-                    onFilesChange(combined);
-                    setSelectedIdx(combined.length - 1);
-                    closeAISheet();
+                    setStoryText('Suka banget sama produknya! Desainnya estetik dan pengirimannya super cepat. Next order lagi! ⭐⭐⭐⭐⭐');
+                    setStoryTemplate('polaroid');
+                    setStoryBgColor('peach');
                   }}
                   style={{
-                    width: '100%', padding: '16px', borderRadius: '16px', border: 'none',
-                    background: selectedAIResultIdx !== null ? 'var(--m-brand)' : '#E4E4EB',
-                    color: selectedAIResultIdx !== null ? '#fff' : '#9CA3AF',
+                    flex: 1, padding: '16px', borderRadius: '16px', border: '1px solid #D7D7DE',
+                    background: '#fff', color: '#111827',
                     fontFamily: 'var(--m-font)', fontSize: '15px', fontWeight: '700',
-                    cursor: selectedAIResultIdx !== null ? 'pointer' : 'not-allowed',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    transition: 'background 0.2s',
+                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
                   }}
                 >
-                  {selectedAIResultIdx !== null ? '✓ Gunakan Foto Ini' : 'Pilih salah satu hasil'}
+                  Reset
                 </button>
-              )}
+                <button
+                  onClick={handleUseStoryDesign}
+                  style={{
+                    flex: 2, padding: '16px', borderRadius: '16px', border: 'none',
+                    background: 'var(--m-brand)', color: '#fff',
+                    fontFamily: 'var(--m-font)', fontSize: '15px', fontWeight: '700',
+                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px'
+                  }}
+                >
+                  ✓ Gunakan Desain Ini
+                </button>
+              </div>
             </div>
           </div>
         </>

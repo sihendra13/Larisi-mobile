@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
-import QuotaWarningBanner from './QuotaWarningBanner';
+import QuotaWarningBanner from '../QuotaWarningBanner';
 import { ID_LOCATIONS } from '@/data/locations';
 
 const PLATFORM_ICONS = {

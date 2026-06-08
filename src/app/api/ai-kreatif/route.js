@@ -24,7 +24,63 @@ export async function POST(request) {
       }
       return handleRunware(imageBase64, customPrompt, runwareKey);
     } else if (provider === 'local-sd') {
-      return handleLocalSD(imageBase64, prompt, localSdUrl);
+      const url = localSdUrl || process.env.LOCAL_SD_URL || 'http://localhost:7860';
+      if (!style) {
+        // Generate 3 styles sequentially to match HF / Supabase behavior
+        const imageUrls = [];
+        let lastSeed = 0;
+        const styleKeys = ['studio', 'lifestyle', 'flatlay'];
+        const cleanBase64 = imageBase64 ? imageBase64.replace(/^data:image\/\w+;base64,/, '') : '';
+
+        for (const sk of styleKeys) {
+          const p = prompts[sk];
+          const payload = {
+            prompt: customPrompt ? `${customPrompt}, ${p}` : p,
+            negative_prompt: 'blurry, low quality, distorted',
+            steps: 20,
+            cfg_scale: 7,
+            denoising_strength: 0.75,
+            n_iter: 1,
+            batch_size: 1,
+            width: 1024,
+            height: 1024,
+          };
+
+          let sdResp;
+          if (cleanBase64) {
+            payload.init_images = [cleanBase64];
+            sdResp = await fetch(`${url}/sdapi/v1/img2img`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload),
+            });
+          } else {
+            sdResp = await fetch(`${url}/sdapi/v1/txt2img`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload),
+            });
+          }
+
+          if (!sdResp.ok) {
+            const errText = await sdResp.text();
+            console.error(`[ai-kreatif] Local SD ${sk} error:`, sdResp.status, errText);
+            return Response.json(
+              { error: `Local SD error (${url}) for style ${sk}: ${sdResp.status}` },
+              { status: sdResp.status }
+            );
+          }
+
+          const data = await sdResp.json();
+          if (data.images && data.images.length > 0) {
+            imageUrls.push(`data:image/png;base64,${data.images[0]}`);
+            lastSeed = data.seed;
+          }
+        }
+        return Response.json({ images: imageUrls, seed: lastSeed });
+      } else {
+        return handleLocalSD(imageBase64, prompt, url);
+      }
     } else if (provider === 'siliconflow') {
       const sfKey = apiKey || process.env.SILICONFLOW_API_KEY;
       if (!sfKey) return Response.json({ error: 'SiliconFlow API key tidak ada' }, { status: 400 });
@@ -168,7 +224,8 @@ async function handleSiliconFlow(imageBase64, prompt, apiKey) {
 }
 
 async function handleLocalSD(imageBase64, prompt, localSdUrl) {
-  const url = localSdUrl || 'http://localhost:7860';
+  const url = localSdUrl || process.env.LOCAL_SD_URL || 'http://localhost:7860';
+  const cleanBase64 = imageBase64 ? imageBase64.replace(/^data:image\/\w+;base64,/, '') : '';
 
   // Payload untuk Local Stable Diffusion
   const body = {
@@ -185,17 +242,17 @@ async function handleLocalSD(imageBase64, prompt, localSdUrl) {
 
   let sdResp;
 
-  if (imageBase64) {
-    // Image-to-image: gunakan /api/img2img
-    body.init_images = [imageBase64];
-    sdResp = await fetch(`${url}/api/img2img`, {
+  if (cleanBase64) {
+    // Image-to-image: gunakan /sdapi/v1/img2img
+    body.init_images = [cleanBase64];
+    sdResp = await fetch(`${url}/sdapi/v1/img2img`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
   } else {
-    // Text-to-image: gunakan /api/txt2img
-    sdResp = await fetch(`${url}/api/txt2img`, {
+    // Text-to-image: gunakan /sdapi/v1/txt2img
+    sdResp = await fetch(`${url}/sdapi/v1/txt2img`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),

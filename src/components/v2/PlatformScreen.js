@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import MobileHeader from '@/components/layout/MobileHeader';
 import { connectSocial, getStoredAccounts, syncSocialAccountsToSupabase, prefetchAuthUrl, refreshConnectedAccounts } from '@/lib/connectSocial';
 
@@ -143,11 +143,21 @@ function SoftIcon({ platform, size = 44 }) {
   );
 }
 
-export default function PlatformScreen({ platform, onSelectPlatform, onNext, profile, accessToken, userId, onAvatarClick }) {
+export default function PlatformScreen({ platform, onSelectPlatform, onNext, onStartStoryMaker, profile, accessToken, userId, onAvatarClick, isGenZ }) {
   const [showManage,     setShowManage]     = useState(false);
   const [animateManage,  setAnimateManage]  = useState(false);
   const [accounts,       setAccounts]       = useState(() => getStoredAccounts());
   const [socialBusy,     setSocialBusy]     = useState('');
+
+  const lastScrollY = useRef(0);
+  const [isFabExpanded, setIsFabExpanded] = useState(true);
+
+  const handleScroll = (e) => {
+    const y = e.target.scrollTop;
+    if (y > lastScrollY.current && y > 30) setIsFabExpanded(false);
+    else if (y < lastScrollY.current - 5) setIsFabExpanded(true);
+    lastScrollY.current = y;
+  };
   /* Modal "belum terhubung" */
   const [warnPlatform,   setWarnPlatform]   = useState(''); /* platform yang diklik tapi belum connect */
   const [showWarn,       setShowWarn]       = useState(false);
@@ -330,7 +340,7 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext, pro
         onAvatarClick={onAvatarClick}
       />
 
-      <main style={{flex:1,overflowY:'auto',padding:'0 16px',paddingBottom:'calc(80px + env(safe-area-inset-bottom))'}}>
+      <main onScroll={handleScroll} style={{flex:1,overflowY:'auto',padding:'0 16px',paddingBottom:'calc(80px + env(safe-area-inset-bottom))'}}>
 
         {/* Page title */}
         <div style={{padding:'32px 0 20px'}}>
@@ -760,6 +770,56 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext, pro
             </button>
           </div>
         </>
+      )}
+
+      {/* Floating Action Button (FAB) Story Maker */}
+      {isGenZ && connectedPlatforms.length > 0 && (
+        <button
+          onClick={onStartStoryMaker}
+          style={{
+            position: 'fixed',
+            bottom: '96px',
+            right: '20px',
+            background: 'linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%)',
+            color: '#fff',
+            borderRadius: '999px',
+            padding: isFabExpanded ? '12px 12px 12px 20px' : '16px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'flex-end',
+            gap: isFabExpanded ? '10px' : '0px',
+            border: 'none',
+            boxShadow: '0 4px 16px rgba(236, 72, 153, 0.4)',
+            cursor: 'pointer',
+            zIndex: 310,
+            transition: 'all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)',
+            overflow: 'hidden',
+            whiteSpace: 'nowrap',
+            maxWidth: isFabExpanded ? '280px' : '56px',
+            height: '56px',
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'flex-end',
+              textAlign: 'right',
+              opacity: isFabExpanded ? 1 : 0,
+              transition: 'opacity 0.2s',
+              width: isFabExpanded ? 'auto' : '0px',
+              overflow: 'hidden',
+            }}
+          >
+            <span style={{ fontFamily: 'var(--m-font)', fontSize: '14px', fontWeight: '800', color: '#fff' }}>
+              Story Maker
+            </span>
+          </div>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+        </button>
       )}
 
       {/* ── Toast Notification ── */}
