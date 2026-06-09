@@ -238,8 +238,15 @@ export default function AudiensScreen({
     const buildMap = () => {
       if (!mapRef.current || leafletMapRef.current) return;
       const L = window.L;
+
+      const initialLoc = (locName && ID_LOCATIONS.find(l => l.n.toLowerCase().includes(locName.toLowerCase())))
+                      || ID_LOCATIONS.find(l => l.n.toLowerCase().includes('sumbersari'))
+                      || { lat: DEFAULT_LAT, lng: DEFAULT_LNG, pop: 28000 };
+      const startLat = initialLoc.lat;
+      const startLng = initialLoc.lng;
+
       const map = L.map(mapRef.current, {
-        center:[DEFAULT_LAT, DEFAULT_LNG], zoom:13,
+        center:[startLat, startLng], zoom:13,
         zoomControl:true, attributionControl:false,
       });
       L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { subdomains:'abcd', maxZoom:19 }).addTo(map);
@@ -249,13 +256,13 @@ export default function AudiensScreen({
         html:`<div style="width:14px;height:14px;border-radius:50%;background:#6d28d9;border:2px solid #fff;box-shadow:0 0 0 3px rgba(109,40,217,0.35)"></div>`,
         iconSize:[14,14], iconAnchor:[7,7],
       });
-      markerRef.current = L.marker([DEFAULT_LAT, DEFAULT_LNG], { icon })
+      markerRef.current = L.marker([startLat, startLng], { icon })
         .addTo(map)
-        .bindPopup(popupHtml('Sumbersari', 'Jangkauan: 0 orang'), { closeButton:false, autoClose:false, closeOnClick:false, offset:[0,-4] })
+        .bindPopup(popupHtml(locName || initialLoc.n.split(',')[0], reachText), { closeButton:false, autoClose:false, closeOnClick:false, offset:[0,-4] })
         .openPopup();
 
-      circleRef.current = L.circle([DEFAULT_LAT, DEFAULT_LNG], {
-        radius:1000, color:'#6d28d9', fillColor:'#6d28d9', fillOpacity:0.12, weight:1.5,
+      circleRef.current = L.circle([startLat, startLng], {
+        radius:radius * 1000, color:'#6d28d9', fillColor:'#6d28d9', fillOpacity:0.12, weight:1.5,
       }).addTo(map);
 
       map.on('click', (e) => { movePinTo(e.latlng.lat, e.latlng.lng); reverseGeocode(e.latlng.lat, e.latlng.lng); });
