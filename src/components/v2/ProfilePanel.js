@@ -64,6 +64,7 @@ export default function ProfilePanel({
   onLogout,
   onSaved,
   onCancelSubscription,
+  onTriggerInstall,
   profile,
   accessToken,
   userId,
@@ -82,6 +83,14 @@ export default function ProfilePanel({
   const [saving,     setSaving]     = useState(false);
   const [error,      setError]      = useState('');
   const [saved,      setSaved]      = useState(false);
+  const [isStandalone, setIsStandalone] = useState(true);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const check = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+      setIsStandalone(!!check);
+    }
+  }, []);
 
   /* Nominatim */
   const [kecResults, setKecResults] = useState([]);
@@ -543,6 +552,27 @@ export default function ProfilePanel({
 
         {/* ── Footer: version + logout ── */}
         <div style={{ padding: '12px', marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {/* Install App (Only show when not in standalone PWA mode) */}
+          {!isStandalone && (
+            <button onClick={onTriggerInstall}
+              style={{
+                width: '100%', padding: '13px', borderRadius: '12px',
+                background: 'var(--m-brand, #791ADB)', color: '#fff',
+                border: 'none', fontSize: '14px', fontWeight: '700',
+                cursor: 'pointer', fontFamily: 'inherit',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                boxShadow: '0 4px 12px rgba(121,26,219,0.15)',
+              }}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              Pasang Aplikasi Larisi
+            </button>
+          )}
+
           {/* Logout */}
           <button onClick={handleLogout}
             style={{

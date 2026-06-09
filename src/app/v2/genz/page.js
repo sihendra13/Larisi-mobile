@@ -604,6 +604,7 @@ export default function GenZPage() {
         onLogout={handleLogout}
         onSaved={handleProfileSaved}
         onCancelSubscription={() => { setShowPanel(false); setShowCancelModal(true); }}
+        onTriggerInstall={() => { setShowPanel(false); setShowInstallModal(true); }}
         profile={profile}
         accessToken={accessToken}
         userId={userId}
