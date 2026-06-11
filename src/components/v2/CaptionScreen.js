@@ -1366,28 +1366,18 @@ export default function CaptionScreen({
           </div>
 
           {/* Caption display area */}
-          <div style={{
-            background:'#F5F5F7', borderRadius:'10px', padding:'12px',
-            marginBottom:'10px',
-          }}>
-            {caption ? (
-              <p style={{
-                margin:0, fontFamily:'var(--m-font)', fontSize:'13px',
-                color:'var(--m-ink)', lineHeight:'1.6',
-                whiteSpace:'pre-wrap', wordBreak:'break-word',
-              }}>
-                {caption}
-              </p>
-            ) : (
-              <p style={{
-                margin:0, fontFamily:'var(--m-font)', fontSize:'13px',
-                color:'var(--m-ink-sub)', lineHeight:'1.6', fontStyle:'italic',
-              }}>
-                {files.length > 0
-                  ? 'AI akan menuliskan caption untukmu…'
-                  : 'Upload foto atau video terlebih dahulu untuk menghasilkan caption.'}
-              </p>
-            )}
+          <div style={{ marginBottom:'10px' }}>
+            <textarea
+              value={caption}
+              onChange={e => setCaption(e.target.value)}
+              style={{
+                width: '100%', height: '140px', padding: '12px', borderRadius: '12px',
+                background: '#F5F5F7', border: '1.5px solid #E4E4EB', color: 'var(--m-ink)',
+                fontFamily: 'var(--m-font)', fontSize: '13px', lineHeight: '1.5',
+                outline: 'none', resize: 'none'
+              }}
+              placeholder="Tulis caption Anda..."
+            />
             <div style={{
               textAlign:'right', fontFamily:'var(--m-font)', fontSize:'11px', marginTop:'6px',
               color: caption.length > maxChar * 0.9 ? '#E53E3E' : 'var(--m-ink-sub)',
@@ -1396,14 +1386,14 @@ export default function CaptionScreen({
             </div>
           </div>
 
-          {/* Action buttons: Generate + Edit side by side */}
+          {/* Action buttons: Generate only */}
           <div style={{display:'flex', gap:'8px'}}>
             {/* Generate ulang */}
             <button
               onClick={handleGenerate}
               disabled={generating || files.length === 0}
               style={{
-                flex:1, padding:'13px 10px', borderRadius:'12px',
+                width: '100%', padding:'13px 10px', borderRadius:'12px',
                 background: (generating || files.length === 0) ? '#E4E4EB' : 'var(--m-ink)',
                 color: (generating || files.length === 0) ? 'var(--m-ink-sub)' : '#fff',
                 border:'none', cursor: (generating || files.length === 0) ? 'not-allowed' : 'pointer',
@@ -1418,89 +1408,69 @@ export default function CaptionScreen({
               </svg>
               {generating ? 'Menulis…' : 'Generate ulang'}
             </button>
-
-            {/* Edit */}
-            <button
-              onClick={openEditSheet}
-              disabled={!caption}
-              style={{
-                flex:1, padding:'13px 10px', borderRadius:'12px',
-                background: !caption ? '#F5F5F7' : '#fff',
-                color: !caption ? 'var(--m-ink-sub)' : 'var(--m-ink)',
-                border:`1.5px solid ${!caption ? '#E4E4EB' : 'var(--m-ink)'}`,
-                cursor: !caption ? 'not-allowed' : 'pointer',
-                fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'700',
-                display:'flex', alignItems:'center', justifyContent:'center', gap:'6px',
-                transition:'all .2s',
-              }}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0}}>
-                <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
-                <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
-              </svg>
-              Edit
-            </button>
           </div>
         </div>
 
         {/* ── Smart Geo Stitching card ── */}
-        <div className="panel" style={{boxShadow:'none', border:'1px solid #E4E4EB', padding:'14px', flexShrink:0}}>
-          <div style={{display:'flex', alignItems:'center', gap:'10px', marginBottom:'8px'}}>
-            <div style={{
-              width:'36px', height:'36px', borderRadius:'10px',
-              background:'var(--m-brand-soft)', display:'flex',
-              alignItems:'center', justifyContent:'center', flexShrink:0,
-            }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--m-brand)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/>
-                <circle cx="12" cy="10" r="3"/>
-              </svg>
-            </div>
-            <div style={{flex:1, minWidth:0}}>
-              <div style={{display:'flex', alignItems:'center', gap:'7px'}}>
-                <span style={{fontFamily:'var(--m-font)', fontSize:'14px', fontWeight:'700', color:'var(--m-ink)'}}>Smart Geo Stitching</span>
-                <span style={{
-                  fontFamily:'var(--m-font)', fontSize:'10px', fontWeight:'700', color:'var(--m-brand)',
-                  background:'var(--m-brand-soft)', padding:'2px 7px', borderRadius:'6px', flexShrink:0,
-                }}>BETA</span>
-              </div>
-            </div>
-            {/* Toggle */}
-            <button onClick={() => setStitchOn(v => !v)} style={{
-              width:'44px', height:'24px', borderRadius:'99px', border:'none',
-              background: stitchOn ? 'var(--m-brand)' : '#D7D7DE',
-              cursor:'pointer', position:'relative', flexShrink:0, padding:0,
-              transition:'background .2s',
-            }}>
+        {!isGenZ && (
+          <div className="panel" style={{boxShadow:'none', border:'1px solid #E4E4EB', padding:'14px', flexShrink:0}}>
+            <div style={{display:'flex', alignItems:'center', gap:'10px', marginBottom:'8px'}}>
               <div style={{
-                position:'absolute', top:'3px',
-                left: stitchOn ? 'calc(100% - 21px)' : '3px',
-                width:'18px', height:'18px', borderRadius:'50%', background:'#fff',
-                transition:'left .2s', boxShadow:'0 1px 3px rgba(0,0,0,0.2)',
-              }} />
-            </button>
-          </div>
-
-          <p style={{fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)', lineHeight:'1.6', marginBottom: stitchOn ? '10px' : '0'}}>
-            Sambungkan caption dengan dialek &amp; sapaan khas{' '}
-            <span style={{color:'var(--m-brand)', fontWeight:'700'}}>{locName}</span>{' '}
-            agar iklanmu terasa lebih lokal.
-          </p>
-
-          {stitchOn && (
-            <div style={{
-              background:'#FAFAFA', borderRadius:'8px', padding:'10px 12px',
-              border:'1px solid #F0F0F5', display:'flex', alignItems:'flex-start', gap:'8px',
-            }}>
-              <span style={{fontSize:'14px', flexShrink:0}}>💡</span>
-              <span style={{fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)', lineHeight:'1.5'}}>
-                Sapaan{' '}
-                <strong style={{color:'var(--m-ink)', fontWeight:'700'}}>&ldquo;Sugeng rawuh&rdquo;</strong>{' '}
-                akan otomatis ditambahkan di caption.
-              </span>
+                width:'36px', height:'36px', borderRadius:'10px',
+                background:'var(--m-brand-soft)', display:'flex',
+                alignItems:'center', justifyContent:'center', flexShrink:0,
+              }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--m-brand)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/>
+                  <circle cx="12" cy="10" r="3"/>
+                </svg>
+              </div>
+              <div style={{flex:1, minWidth:0}}>
+                <div style={{display:'flex', alignItems:'center', gap:'7px'}}>
+                  <span style={{fontFamily:'var(--m-font)', fontSize:'14px', fontWeight:'700', color:'var(--m-ink)'}}>Smart Geo Stitching</span>
+                  <span style={{
+                    fontFamily:'var(--m-font)', fontSize:'10px', fontWeight:'700', color:'var(--m-brand)',
+                    background:'var(--m-brand-soft)', padding:'2px 7px', borderRadius:'6px', flexShrink:0,
+                  }}>BETA</span>
+                </div>
+              </div>
+              {/* Toggle */}
+              <button onClick={() => setStitchOn(v => !v)} style={{
+                width:'44px', height:'24px', borderRadius:'99px', border:'none',
+                background: stitchOn ? 'var(--m-brand)' : '#D7D7DE',
+                cursor:'pointer', position:'relative', flexShrink:0, padding:0,
+                transition:'background .2s',
+              }}>
+                <div style={{
+                  position:'absolute', top:'3px',
+                  left: stitchOn ? 'calc(100% - 21px)' : '3px',
+                  width:'18px', height:'18px', borderRadius:'50%', background:'#fff',
+                  transition:'left .2s', boxShadow:'0 1px 3px rgba(0,0,0,0.2)',
+                }} />
+              </button>
             </div>
-          )}
-        </div>
+
+            <p style={{fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)', lineHeight:'1.6', marginBottom: stitchOn ? '10px' : '0'}}>
+              Sambungkan caption dengan dialek &amp; sapaan khas{' '}
+              <span style={{color:'var(--m-brand)', fontWeight:'700'}}>{locName}</span>{' '}
+              agar iklanmu terasa lebih lokal.
+            </p>
+
+            {stitchOn && (
+              <div style={{
+                background:'#FAFAFA', borderRadius:'8px', padding:'10px 12px',
+                border:'1px solid #F0F0F5', display:'flex', alignItems:'flex-start', gap:'8px',
+              }}>
+                <span style={{fontSize:'14px', flexShrink:0}}>💡</span>
+                <span style={{fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)', lineHeight:'1.5'}}>
+                  Sapaan{' '}
+                  <strong style={{color:'var(--m-ink)', fontWeight:'700'}}>&ldquo;Sugeng rawuh&rdquo;</strong>{' '}
+                  akan otomatis ditambahkan di caption.
+                </span>
+              </div>
+            )}
+          </div>
+        )}
         {/* ── Accordion Target Lokasi (Gen Z only) ── */}
         {isGenZ && (
           <div className="panel" style={{boxShadow:'none', border:'1px solid #E4E4EB', padding:0, overflow:'visible', flexShrink:0}}>
