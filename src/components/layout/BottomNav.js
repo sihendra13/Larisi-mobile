@@ -1,6 +1,6 @@
 'use client';
 
-export default function BottomNav({ activeNav, onSwitch }) {
+export default function BottomNav({ activeNav, onSwitch, isGenZ }) {
   const tabs = [
     {
       view: 'command', label: 'Dapur',
@@ -17,18 +17,33 @@ export default function BottomNav({ activeNav, onSwitch }) {
   ];
 
   return (
-    <nav className="mobile-tab-bar" role="navigation" aria-label="Navigasi utama">
-      {tabs.map(tab => (
-        <button
-          key={tab.view}
-          className={`mobile-nav-tab${activeNav === tab.view ? ' active' : ''}`}
-          onClick={() => onSwitch(tab.view)}
-          aria-label={tab.label}
-        >
-          {tab.icon}
-          <span>{tab.label}</span>
-        </button>
-      ))}
+    <nav
+      className="mobile-tab-bar"
+      role="navigation"
+      aria-label="Navigasi utama"
+      style={isGenZ ? {
+        background: '#0e0e12',
+        borderTop: '1px solid #1e1e24',
+        boxShadow: '0 -2px 12px rgba(0,0,0,0.4)'
+      } : {}}
+    >
+      {tabs.map(tab => {
+        const isActive = activeNav === tab.view;
+        return (
+          <button
+            key={tab.view}
+            className={`mobile-nav-tab${isActive ? ' active' : ''}`}
+            onClick={() => onSwitch(tab.view)}
+            aria-label={tab.label}
+            style={isGenZ ? {
+              color: isActive ? '#fff' : '#6b7280',
+            } : {}}
+          >
+            {tab.icon}
+            <span>{tab.label}</span>
+          </button>
+        );
+      })}
     </nav>
   );
 }

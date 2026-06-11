@@ -16,6 +16,8 @@ import ReminderModal     from '@/components/v2/ReminderModal';
 import PricingModal      from '@/components/v2/PricingModal';
 import CancelSubscriptionModal from '@/components/v2/CancelSubscriptionModal';
 import DuitkuModal       from '@/components/v2/DuitkuModal';
+import MemeEditorScreen  from '@/components/v2/MemeEditorScreen';
+import PublishMemeScreen from '@/components/v2/PublishMemeScreen';
 import { getProfile, getSessionId, getAccessToken, getValidAccessToken, SUPABASE_URL, SUPABASE_ANON_KEY } from '@/lib/config';
 import { handleOAuthRedirectCallback, syncSocialAccountsToSupabase } from '@/lib/connectSocial';
 
@@ -139,7 +141,17 @@ export default function GenZPage() {
         localStorage.removeItem('larisi_trial_start');
       }
 
-      const continueToAuth = () => {
+    const checkAndSetUserMode = (p) => {
+      if (p && p.category) {
+        const isCreator = p.category === 'konten_kreator' || p.category === 'genz_seller';
+        const mode = isCreator ? 'creator' : 'umkm';
+        localStorage.setItem('larisi_user_mode', mode);
+        return mode;
+      }
+      return localStorage.getItem('larisi_user_mode');
+    };
+
+    const continueToAuth = () => {
         if (!tok) {
           const intent = localStorage.getItem('larisi_intent');
           const goToRegister = planParam || intent === 'register';
@@ -147,6 +159,11 @@ export default function GenZPage() {
           return;
         }
         const pCached = getProfile();
+        const cachedMode = checkAndSetUserMode(pCached);
+        if (cachedMode === 'umkm') {
+          window.location.replace('/v2');
+          return;
+        }
         const sid     = getSessionId();
 
         let uid = null;
@@ -172,6 +189,11 @@ export default function GenZPage() {
           }).then(r => r.ok ? r.json() : null).then(rows => {
             const fresh = rows?.[0];
             if (!fresh) { if (!pCached) setAuthState('onboarding'); return; }
+            const freshMode = checkAndSetUserMode(fresh);
+            if (freshMode === 'umkm') {
+              window.location.replace('/v2');
+              return;
+            }
 
             localStorage.setItem('radar_user_profile', JSON.stringify(fresh));
             restoreSocialAccounts(fresh);
@@ -383,6 +405,15 @@ export default function GenZPage() {
     restoreSocialAccounts(p);
     setProfile(p);
     applyLocation(p);
+    
+    if (p && p.category) {
+      const isCreator = p.category === 'konten_kreator' || p.category === 'genz_seller';
+      if (!isCreator) {
+        localStorage.setItem('larisi_user_mode', 'umkm');
+        window.location.replace('/v2');
+        return;
+      }
+    }
     setAuthState('app');
   };
 
@@ -513,15 +544,58 @@ export default function GenZPage() {
             platform={platform}
             onSelectPlatform={setPlatform}
             onNext={() => goTo('aset')}
-            onStartStoryMaker={() => {
-              setScreen('aset');
-              setAutoOpenStory(true);
+            onStartStoryMaker={(tool, file) => {
+              if (file) {
+                setFiles([file]);
+              }
+              if (tool === 'meme') {
+                setScreen('meme-editor');
+              } else {
+                setScreen('aset');
+                setAutoOpenStory(tool || 'story');
+              }
             }}
             profile={profile}
             accessToken={accessToken}
             userId={userId}
             onAvatarClick={() => setShowPanel(true)}
             isGenZ={true}
+          />
+        )}
+
+        {screen === 'meme-editor' && (
+          <MemeEditorScreen
+            file={files[0]}
+            onBack={() => setScreen('platform')}
+            onSave={(dataUrl, generatedCaption) => {
+              setFiles([{ url: dataUrl, type: 'photo', name: 'meme-design.jpg' }]);
+              setCaption(generatedCaption);
+              setScreen('publish-meme');
+            }}
+            isGenZ={true}
+          />
+        )}
+
+        {screen === 'publish-meme' && (
+          <PublishMemeScreen
+            imageUrl={files[0]?.url}
+            caption={caption}
+            onBack={() => setScreen('meme-editor')}
+            profile={profile}
+            isGenZ={true}
+            accessToken={accessToken}
+            sessionId={sessionId}
+            userId={userId}
+            files={files}
+            locName={locName}
+            locFull={locFull}
+            locPop={locPop}
+            radius={radius}
+            setRadius={setRadius}
+            localOn={localOn}
+            travelerOn={travelerOn}
+            onLaunchSuccess={handleLaunchSuccess}
+            triggerUpgrade={triggerUpgrade}
           />
         )}
 
@@ -639,7 +713,7 @@ export default function GenZPage() {
         paymentDetails={duitkuDetails}
       />
 
-      <BottomNav activeNav={activeNav} onSwitch={setActiveNav} />
+      <BottomNav activeNav={activeNav} onSwitch={setActiveNav} isGenZ={true} />
     </div>
   );
 }

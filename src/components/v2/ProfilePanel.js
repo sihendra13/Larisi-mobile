@@ -5,6 +5,8 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/lib/config';
 const APP_VERSION = 'v2.1.0';
 
 const CATEGORIES = [
+  { value: 'konten_kreator',     label: 'Konten Kreator / Influencer' },
+  { value: 'genz_seller',        label: 'Reseller / Dropshipper / Gen Z Seller' },
   { value: 'fnb',                label: 'Kuliner (F&B)' },
   { value: 'kafe',               label: 'Kafe & Coffee Shop' },
   { value: 'fashion_wanita',     label: 'Fashion Wanita' },
@@ -351,6 +353,8 @@ export default function ProfilePanel({
             {planLabel}
           </div>
         </div>
+
+
 
         {/* ── Edit profil form ── */}
         <div style={{ padding: '12px 12px 0' }}>

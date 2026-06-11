@@ -7,6 +7,8 @@ import { connectSocial, getStoredAccounts, syncSocialAccountsToSupabase, refresh
    Data
 ───────────────────────────────────────── */
 const CATEGORIES = [
+  { value: 'konten_kreator',     label: 'Konten Kreator / Influencer' },
+  { value: 'genz_seller',        label: 'Reseller / Dropshipper / Gen Z Seller' },
   { value: 'fnb',                label: 'Kuliner (F&B)' },
   { value: 'kafe',               label: 'Kafe & Coffee Shop' },
   { value: 'fashion_wanita',     label: 'Fashion Wanita' },
@@ -162,6 +164,7 @@ export default function OnboardingScreen({
 
   const [step,       setStep]       = useState(startStep);
   const [token,      setToken]      = useState(accessToken || null);
+  const [onboardingRole, setOnboardingRole] = useState(null); // null | 'umkm' | 'creator'
 
   /* ── OTP State ── */
   const [otp,           setOtp]           = useState('');
@@ -169,6 +172,29 @@ export default function OnboardingScreen({
   const [otpError,      setOtpError]      = useState('');
   const [countdown,     setCountdown]     = useState(60);
   const [resendLoading, setResendLoading] = useState(false);
+
+  /* Dev Bypass OTP handler */
+  const handleDevBypassOtp = () => {
+    // Generate standard format of mock JWT with 3 parts separated by dots
+    const header = btoa(JSON.stringify({ alg: "HS256", typ: "JWT" }));
+    const payload = btoa(JSON.stringify({ sub: userId || "mock-user-id-123", email: email || "kreator@test.com", role: "authenticated" }));
+    const signature = "mock-signature";
+    const dummyJwtToken = `${header}.${payload}.${signature}`;
+
+    const session = {
+      access_token:  dummyJwtToken,
+      token_type:    'bearer',
+      expires_in:    3600,
+      expires_at:    Math.floor(Date.now() / 1000) + 3600,
+      refresh_token: 'mock-refresh-token',
+      user: { id: userId || "mock-user-id-123", email: email || "kreator@test.com" }
+    };
+
+    localStorage.setItem('sb-mojzmlrdihenvfhrwopd-auth-token', JSON.stringify(session));
+    setToken(dummyJwtToken);
+    onTokenReceived?.(dummyJwtToken);
+    setStep(1);
+  };
 
   /* ── Profil State ── */
   const [ownerName,    setOwnerName]    = useState('');
@@ -364,17 +390,25 @@ export default function OnboardingScreen({
     const plan = localStorage.getItem('larisi_selected_plan') || 'freemium';
     const quotaMap = { pro: 999, starter: 50, freemium: 10 };
 
+    const isCreator = onboardingRole === 'creator';
+    const finalBizName = isCreator ? `Kreator - ${ownerName.trim()}` : bizName.trim();
+    const finalKecamatan = isCreator ? '' : kecamatan;
+    const finalKabupaten = isCreator ? '' : kabupaten;
+    const finalProvinsi = isCreator ? '' : provinsi;
+    const finalDelivery = isCreator ? false : delivery === 'yes';
+    const finalUsp = isCreator ? '' : usp.trim();
+
     const profileData = {
       full_name:        ownerName.trim() || undefined,
       whatsapp:         whatsapp.trim()  || undefined,
-      business_name:    bizName.trim(),
+      business_name:    finalBizName,
       category,
-      kecamatan,
-      kabupaten,
-      provinsi,
-      city:             kabupaten || kecamatan,  /* backward compat user lama — identik desktop */
-      delivery_service: delivery === 'yes',
-      usp:              usp.trim(),
+      kecamatan:        finalKecamatan,
+      kabupaten:        finalKabupaten,
+      provinsi:         finalProvinsi,
+      city:             finalKabupaten || finalKecamatan,  /* backward compat user lama — identik desktop */
+      delivery_service: finalDelivery,
+      usp:              finalUsp,
       selected_plan:    plan,
       ai_launch_count:  quotaMap[plan] ?? 10,
     };
@@ -393,30 +427,41 @@ export default function OnboardingScreen({
           body: JSON.stringify(profileData),
         }
       );
-      if (!resp.ok) throw new Error('Gagal');
+      if (!resp.ok) {
+        const errText = await resp.text();
+        throw new Error(errText || 'HTTP error ' + resp.status);
+      }
       const updated    = await resp.json();
       const newProfile = (Array.isArray(updated) ? updated[0] : updated) || profileData;
+      const isCreatorMode = isCreator || category === 'konten_kreator' || category === 'genz_seller';
+      localStorage.setItem('larisi_user_mode', isCreatorMode ? 'creator' : 'umkm');
       localStorage.setItem('radar_user_profile', JSON.stringify({ ...newProfile, ...profileData }));
       setProfLoading(false);
       setStep(2);
-    } catch {
-      setProfError('Gagal menyimpan. Coba lagi.');
+    } catch (err) {
+      setProfError(`Gagal menyimpan: ${err.message || 'Coba lagi.'}`);
       setProfLoading(false);
     }
   };
 
   const handleSaveProfile = async () => {
-    if (!ownerName.trim()) { setProfError('Nama pemilik wajib diisi.');        return; }
+    if (!ownerName.trim()) { setProfError(onboardingRole === 'creator' ? 'Nama lengkap wajib diisi.' : 'Nama pemilik wajib diisi.'); return; }
     if (!whatsapp.trim())  { setProfError('Nomor WhatsApp wajib diisi.');       return; }
-    if (!bizName.trim())   { setProfError('Nama bisnis wajib diisi.');          return; }
-    if (!category)         { setProfError('Pilih kategori bisnis.');            return; }
-    if (!kecamatan)        { setProfError('Pilih kecamatan dari dropdown.');    return; }
+    
+    if (onboardingRole === 'umkm') {
+      if (!bizName.trim())   { setProfError('Nama bisnis wajib diisi.');          return; }
+      if (!category)         { setProfError('Pilih kategori bisnis.');            return; }
+      if (!kecamatan)        { setProfError('Pilih kecamatan dari dropdown.');    return; }
 
-    /* USP semi-wajib: tampilkan warning, user bisa pilih Tambahkan atau Lewati */
-    if (!usp.trim()) {
-      setUspWarning(true);
-      uspInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      return;
+      /* USP semi-wajib: tampilkan warning, user bisa pilih Tambahkan atau Lewati */
+      if (!usp.trim()) {
+        setUspWarning(true);
+        uspInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+    } else {
+      // For creator
+      if (!category)         { setProfError('Pilih niche konten.');               return; }
     }
 
     await doSaveProfile();
@@ -459,19 +504,27 @@ export default function OnboardingScreen({
     const tok  = token || accessToken;
     const plan = localStorage.getItem('larisi_selected_plan') || 'freemium';
 
+    const isCreator = onboardingRole === 'creator';
+    const finalBizName = isCreator ? `Kreator - ${ownerName.trim()}` : bizName.trim();
+    const finalKecamatan = isCreator ? '' : kecamatan.trim();
+    const finalKabupaten = isCreator ? '' : kabupaten.trim();
+    const finalProvinsi = isCreator ? '' : provinsi.trim();
+    const finalDelivery = isCreator ? false : (delivery === 'ya' ? true : false);
+    const finalUsp = isCreator ? '' : usp.trim();
+
     /* Save ALL profile fields to database — column names harus sama dengan desktop */
     const updates = {
       email:            email.trim(),
       full_name:        ownerName.trim(),
-      business_name:    bizName.trim(),
+      business_name:    finalBizName,
       whatsapp:         whatsapp.replace(/\D/g, ''),
       category:         category || null,
-      kecamatan:        kecamatan.trim(),
-      kabupaten:        kabupaten.trim(),
-      city:             kabupaten.trim(),
-      provinsi:         provinsi.trim(),
-      delivery_service: delivery === 'ya' ? true : false,
-      usp:              usp.trim(),
+      kecamatan:        finalKecamatan,
+      kabupaten:        finalKabupaten,
+      city:             finalKabupaten,
+      provinsi:         finalProvinsi,
+      delivery_service: finalDelivery,
+      usp:              finalUsp,
       onboarding_completed: true,
       ...(plan !== 'freemium' ? { trial_start: new Date().toISOString() } : {}),
     };
@@ -501,6 +554,8 @@ export default function OnboardingScreen({
 
     const profile = JSON.parse(localStorage.getItem('radar_user_profile') || '{}');
     const final   = { ...profile, ...updates };
+    const isCreatorMode = isCreator || final.category === 'konten_kreator' || final.category === 'genz_seller';
+    localStorage.setItem('larisi_user_mode', isCreatorMode ? 'creator' : 'umkm');
     localStorage.setItem('radar_user_profile', JSON.stringify(final));
     onComplete(final);
   };
@@ -542,6 +597,25 @@ export default function OnboardingScreen({
         background: '#FF007A', filter: 'blur(120px)', opacity: 0.1, borderRadius: '50%',
         animation: 'float 6s ease-in-out infinite reverse', zIndex: 0, pointerEvents: 'none'
       }} />
+
+      {/* Development Floating Reset Button */}
+      {process.env.NODE_ENV === 'development' && (
+        <button
+          onClick={() => {
+            localStorage.clear();
+            sessionStorage.clear();
+            window.location.reload();
+          }}
+          style={{
+            position: 'fixed', bottom: '20px', right: '20px', zIndex: 99999,
+            padding: '10px 14px', borderRadius: '30px', background: '#EF4444',
+            color: '#fff', border: 'none', fontSize: '11px', fontWeight: 'bold',
+            boxShadow: '0 4px 12px rgba(239,68,68,0.3)', cursor: 'pointer'
+          }}
+        >
+          Reset Session (Dev Only)
+        </button>
+      )}
 
       <div style={{ width: '100%', maxWidth: '440px', margin: 'auto', position: 'relative', zIndex: 10 }}>
         <div className="glass-card stagger-1" style={{
@@ -617,6 +691,8 @@ export default function OnboardingScreen({
                 {otpLoading ? 'Memverifikasi...' : 'Verifikasi'}
               </button>
 
+
+
               {/* Resend */}
               <div style={{ textAlign: 'center', fontSize: '13px', color: '#6b7280' }}>
                 Tidak menerima kode?{' '}
@@ -640,246 +716,363 @@ export default function OnboardingScreen({
             </div>
           )}
 
-          {/* ══════════════ STEP 1: PROFIL BISNIS ══════════════ */}
+          {/* ══════════════ STEP 1: PROFIL BISNIS / KREATOR ══════════════ */}
           {step === 1 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-              <div>
-                <h1 style={{ margin: 0, fontSize: '22px', fontWeight: '800', color: '#111827', letterSpacing: '-0.3px' }}>
-                  Profil Bisnis
-                </h1>
-                <p style={{ margin: '6px 0 0', fontSize: '13px', color: '#6b7280', lineHeight: '1.5' }}>
-                  Isi info bisnis kamu agar SiLaris bisa buat konten yang tepat sasaran.
-                </p>
-              </div>
+              {onboardingRole === null ? (
+                <>
+                  <div>
+                    <h1 style={{ margin: 0, fontSize: '22px', fontWeight: '800', color: '#111827', letterSpacing: '-0.3px' }}>
+                      Pilih Tipe Profil Anda
+                    </h1>
+                    <p style={{ margin: '6px 0 0', fontSize: '13px', color: '#6b7280', lineHeight: '1.5' }}>
+                      Pilih jenis profil yang paling sesuai dengan kebutuhan penggunaan Anda.
+                    </p>
+                  </div>
 
-              {/* Nama Pemilik */}
-              <div>
-                <label style={labelStyle}>Nama Pemilik <span style={{ color: '#DC2626' }}>*</span></label>
-                <input
-                  type="text" value={ownerName} onChange={e => { setOwnerName(e.target.value); setProfError(''); }}
-                  placeholder="Budi Santoso"
-                  style={inputStyle}
-                />
-              </div>
-
-              {/* WhatsApp */}
-              <div>
-                <label style={labelStyle}>Nomor WhatsApp <span style={{ color: '#DC2626' }}>*</span></label>
-                <input
-                  type="tel" value={whatsapp} onChange={e => setWhatsapp(e.target.value)}
-                  placeholder="08xxxxxxxxxx"
-                  style={inputStyle}
-                />
-              </div>
-
-              {/* Nama Bisnis */}
-              <div>
-                <label style={labelStyle}>Nama Bisnis <span style={{ color: '#DC2626' }}>*</span></label>
-                <input
-                  type="text" value={bizName} onChange={e => { setBizName(e.target.value); setProfError(''); }}
-                  placeholder="Warung Makan Berkah"
-                  style={inputStyle}
-                />
-              </div>
-
-              {/* Kategori */}
-              <div>
-                <label style={labelStyle}>Kategori Bisnis <span style={{ color: '#DC2626' }}>*</span></label>
-                <select
-                  value={category}
-                  onChange={e => { setCategory(e.target.value); setProfError(''); }}
-                  style={{
-                    ...inputStyle, appearance: 'none',
-                    backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'8\' viewBox=\'0 0 12 8\'%3E%3Cpath d=\'M1 1l5 5 5-5\' stroke=\'%236b7280\' strokeWidth=\'1.5\' fill=\'none\' strokeLinecap=\'round\'/%3E%3C/svg%3E")',
-                    backgroundRepeat: 'no-repeat', backgroundPosition: 'right 14px center',
-                    paddingRight: '36px',
-                    color: category ? '#111827' : '#9ca3af',
-                  }}
-                >
-                  <option value="">Pilih Kategori...</option>
-                  {CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
-                </select>
-              </div>
-
-              {/* Kecamatan */}
-              <div style={{ position: 'relative' }}>
-                <label style={labelStyle}>Kecamatan Lokasi Bisnis <span style={{ color: '#DC2626' }}>*</span></label>
-                <input
-                  type="text" value={kecQuery}
-                  onChange={e => { setKecQuery(e.target.value); searchKecamatan(e.target.value); }}
-                  onFocus={() => { if (kecQuery.length >= 2 && kecResults.length) setShowDrop(true); }}
-                  onBlur={() => setTimeout(() => setShowDrop(false), 200)}
-                  placeholder="Ketik nama kecamatan atau daerah..."
-                  autoComplete="off"
-                  style={inputStyle}
-                />
-                {showDrop && (kecLoading || kecResults.length > 0) && (
-                  <div style={{
-                    position: 'absolute', left: 0, right: 0, top: 'calc(100% + 4px)',
-                    background: '#fff', border: '1px solid #E4E4EB', borderRadius: '10px',
-                    zIndex: 200, boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
-                    maxHeight: '220px', overflowY: 'auto',
-                  }}>
-                    {/* Loading */}
-                    {kecLoading && (
-                      <div style={{ padding: '10px 14px', fontSize: '12px', color: '#6b7280' }}>
-                        Mencari...
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '8px' }}>
+                    {/* UMKM Card */}
+                    <div
+                      onClick={() => setOnboardingRole('umkm')}
+                      style={{
+                        padding: '20px', borderRadius: '16px', border: '1.5px solid #E4E4EB',
+                        cursor: 'pointer', background: '#fff', transition: 'all 0.2s',
+                        display: 'flex', flexDirection: 'column', gap: '6px',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.borderColor = '#7C3AED'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(124,58,237,0.08)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.borderColor = '#E4E4EB'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.04)'; }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div style={{
+                          width: '40px', height: '40px', borderRadius: '10px',
+                          background: 'linear-gradient(135deg, #F5F3FF 0%, #EDE9FE 100%)',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
+                        }}>
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                            <polyline points="9 22 9 12 15 12 15 22" />
+                          </svg>
+                        </div>
+                        <span style={{ fontSize: '16px', fontWeight: '700', color: '#111827' }}>UMKM / Pemilik Bisnis</span>
                       </div>
-                    )}
-                    {/* Results */}
-                    {!kecLoading && kecResults.map((r, i) => {
-                      if (r.error) return (
-                        <div key="err" style={{ padding: '10px 14px', fontSize: '12px', color: '#DC2626' }}>
-                          Gagal memuat. Periksa koneksi internet.
+                      <p style={{ margin: 0, fontSize: '12px', color: '#6b7280', lineHeight: '1.4' }}>
+                        Kelola bisnis, toko fisik, atau brand online. Lengkap dengan info pengiriman, lokasi, dan USP bisnis.
+                      </p>
+                    </div>
+
+                    {/* Creator Card */}
+                    <div
+                      onClick={() => setOnboardingRole('creator')}
+                      style={{
+                        padding: '20px', borderRadius: '16px', border: '1.5px solid #E4E4EB',
+                        cursor: 'pointer', background: '#fff', transition: 'all 0.2s',
+                        display: 'flex', flexDirection: 'column', gap: '6px',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.borderColor = '#7C3AED'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(124,58,237,0.08)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.borderColor = '#E4E4EB'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.04)'; }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div style={{
+                          width: '40px', height: '40px', borderRadius: '10px',
+                          background: 'linear-gradient(135deg, #FFF1F2 0%, #FFE4E6 100%)',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
+                        }}>
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F43F5E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                            <circle cx="12" cy="13" r="4" />
+                          </svg>
                         </div>
-                      );
-                      if (r.empty) return (
-                        <div key="empty" style={{ padding: '10px 14px', fontSize: '12px', color: '#6b7280' }}>
-                          Tidak ditemukan, coba kata lain
-                        </div>
-                      );
-                      const sub = [r.kabDisplay, r.prov].filter(Boolean).join(' — ');
-                      return (
-                        <div
-                          key={i}
-                          onMouseDown={() => selectKec(r)}
+                        <span style={{ fontSize: '16px', fontWeight: '700', color: '#111827' }}>Konten Kreator / Gen Z Seller</span>
+                      </div>
+                      <p style={{ margin: 0, fontSize: '12px', color: '#6b7280', lineHeight: '1.4' }}>
+                        Fokus buat konten kreatif, influencer, reseller, atau dropshipper. Alur pendaftaran cepat & instan.
+                      </p>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <button
+                      onClick={() => setOnboardingRole(null)}
+                      style={{
+                        background: 'none', border: 'none', cursor: 'pointer', padding: '4px',
+                        display: 'flex', alignItems: 'center', color: '#6b7280'
+                      }}
+                    >
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="19" y1="12" x2="5" y2="12"></line>
+                        <polyline points="12 19 5 12 12 5"></polyline>
+                      </svg>
+                    </button>
+                    <div>
+                      <h1 style={{ margin: 0, fontSize: '20px', fontWeight: '800', color: '#111827', letterSpacing: '-0.3px' }}>
+                        {onboardingRole === 'creator' ? 'Profil Kreator' : 'Profil Bisnis'}
+                      </h1>
+                    </div>
+                  </div>
+
+                  {/* Nama Pemilik / Lengkap */}
+                  <div>
+                    <label style={labelStyle}>
+                      {onboardingRole === 'creator' ? 'Nama Lengkap' : 'Nama Pemilik'} <span style={{ color: '#DC2626' }}>*</span>
+                    </label>
+                    <input
+                      type="text" value={ownerName} onChange={e => { setOwnerName(e.target.value); setProfError(''); }}
+                      placeholder={onboardingRole === 'creator' ? 'Nama Lengkap Anda' : 'Budi Santoso'}
+                      style={inputStyle}
+                    />
+                  </div>
+
+                  {/* WhatsApp */}
+                  <div>
+                    <label style={labelStyle}>Nomor WhatsApp <span style={{ color: '#DC2626' }}>*</span></label>
+                    <input
+                      type="tel" value={whatsapp} onChange={e => setWhatsapp(e.target.value)}
+                      placeholder="08xxxxxxxxxx"
+                      style={inputStyle}
+                    />
+                  </div>
+
+                  {onboardingRole === 'umkm' ? (
+                    <>
+                      {/* Nama Bisnis */}
+                      <div>
+                        <label style={labelStyle}>Nama Bisnis <span style={{ color: '#DC2626' }}>*</span></label>
+                        <input
+                          type="text" value={bizName} onChange={e => { setBizName(e.target.value); setProfError(''); }}
+                          placeholder="Warung Makan Berkah"
+                          style={inputStyle}
+                        />
+                      </div>
+
+                      {/* Kategori */}
+                      <div>
+                        <label style={labelStyle}>Kategori Bisnis <span style={{ color: '#DC2626' }}>*</span></label>
+                        <select
+                          value={category}
+                          onChange={e => { setCategory(e.target.value); setProfError(''); }}
                           style={{
-                            padding: '10px 14px', cursor: 'pointer',
-                            borderBottom: i < kecResults.length - 1 ? '1px solid #F3F4F6' : 'none',
-                            display: 'flex', flexDirection: 'column', gap: '2px',
+                            ...inputStyle, appearance: 'none',
+                            backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'8\' viewBox=\'0 0 12 8\'%3E%3Cpath d=\'M1 1l5 5 5-5\' stroke=\'%236b7280\' strokeWidth=\'1.5\' fill=\'none\' strokeLinecap=\'round\'/%3E%3C/svg%3E")',
+                            backgroundRepeat: 'no-repeat', backgroundPosition: 'right 14px center',
+                            paddingRight: '36px',
+                            color: category ? '#111827' : '#9ca3af',
                           }}
                         >
-                          <span style={{ fontSize: '13px', fontWeight: '600', color: '#111827' }}>{r.kec}</span>
-                          {sub && <span style={{ fontSize: '11px', color: '#9CA3AF' }}>{sub}</span>}
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
+                          <option value="">Pilih Kategori...</option>
+                          {CATEGORIES.filter(c => c.value !== 'konten_kreator' && c.value !== 'genz_seller').map(c => (
+                            <option key={c.value} value={c.value}>{c.label}</option>
+                          ))}
+                        </select>
+                      </div>
 
-              {/* Kabupaten/Kota — readonly, auto-fill setelah pilih kecamatan (identik desktop) */}
-              <input
-                type="text"
-                readOnly
-                value={kabupaten}
-                placeholder="Kabupaten/Kota (terisi otomatis setelah pilih kecamatan)"
-                style={{
-                  ...inputStyle,
-                  background: '#F9F9FA',
-                  color: '#374151',
-                  cursor: 'default',
-                }}
-              />
+                      {/* Kecamatan */}
+                      <div style={{ position: 'relative' }}>
+                        <label style={labelStyle}>Kecamatan Lokasi Bisnis <span style={{ color: '#DC2626' }}>*</span></label>
+                        <input
+                          type="text" value={kecQuery}
+                          onChange={e => { setKecQuery(e.target.value); searchKecamatan(e.target.value); }}
+                          onFocus={() => { if (kecQuery.length >= 2 && kecResults.length) setShowDrop(true); }}
+                          onBlur={() => setTimeout(() => setShowDrop(false), 200)}
+                          placeholder="Ketik nama kecamatan atau daerah..."
+                          autoComplete="off"
+                          style={inputStyle}
+                        />
+                        {showDrop && (kecLoading || kecResults.length > 0) && (
+                          <div style={{
+                            position: 'absolute', left: 0, right: 0, top: 'calc(100% + 4px)',
+                            background: '#fff', border: '1px solid #E4E4EB', borderRadius: '10px',
+                            zIndex: 200, boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                            maxHeight: '220px', overflowY: 'auto',
+                          }}>
+                            {/* Loading */}
+                            {kecLoading && (
+                              <div style={{ padding: '10px 14px', fontSize: '12px', color: '#6b7280' }}>
+                                Mencari...
+                              </div>
+                            )}
+                            {/* Results */}
+                            {!kecLoading && kecResults.map((r, i) => {
+                              if (r.error) return (
+                                <div key="err" style={{ padding: '10px 14px', fontSize: '12px', color: '#DC2626' }}>
+                                  Gagal memuat. Periksa koneksi internet.
+                                </div>
+                              );
+                              if (r.empty) return (
+                                <div key="empty" style={{ padding: '10px 14px', fontSize: '12px', color: '#6b7280' }}>
+                                  Tidak ditemukan, coba kata lain
+                                </div>
+                              );
+                              const sub = [r.kabDisplay, r.prov].filter(Boolean).join(' — ');
+                              return (
+                                <div
+                                  key={i}
+                                  onMouseDown={() => selectKec(r)}
+                                  style={{
+                                    padding: '10px 14px', cursor: 'pointer',
+                                    borderBottom: i < kecResults.length - 1 ? '1px solid #F3F4F6' : 'none',
+                                    display: 'flex', flexDirection: 'column', gap: '2px',
+                                  }}
+                                >
+                                  <span style={{ fontSize: '13px', fontWeight: '600', color: '#111827' }}>{r.kec}</span>
+                                  {sub && <span style={{ fontSize: '11px', color: '#9CA3AF' }}>{sub}</span>}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
 
-              {/* Delivery */}
-              <div>
-                <label style={labelStyle}>Apakah bisnis kamu melayani pengiriman?</label>
-                <div style={{ display: 'flex', gap: '12px' }}>
-                  {[
-                    { value: 'yes', label: 'Ya, melayani pengiriman' },
-                    { value: 'no',  label: 'Tidak (Hanya di tempat)' },
-                  ].map(opt => (
-                    <label
-                      key={opt.value}
-                      style={{
-                        flex: 1, padding: '10px 12px', borderRadius: '10px', cursor: 'pointer',
-                        border: `1.5px solid ${delivery === opt.value ? '#7C3AED' : '#E4E4EB'}`,
-                        background: delivery === opt.value ? '#F5F3FF' : '#fff',
-                        fontSize: '12px', fontWeight: '600',
-                        color: delivery === opt.value ? '#7C3AED' : '#6b7280',
-                        display: 'flex', alignItems: 'center', gap: '6px',
-                        transition: 'all 0.15s',
-                      }}
-                    >
+                      {/* Kabupaten/Kota — readonly */}
                       <input
-                        type="radio" name="delivery" value={opt.value}
-                        checked={delivery === opt.value}
-                        onChange={() => setDelivery(opt.value)}
-                        style={{ display: 'none' }}
+                        type="text"
+                        readOnly
+                        value={kabupaten}
+                        placeholder="Kabupaten/Kota (terisi otomatis setelah pilih kecamatan)"
+                        style={{
+                          ...inputStyle,
+                          background: '#F9F9FA',
+                          color: '#374151',
+                          cursor: 'default',
+                        }}
                       />
-                      {delivery === opt.value ? '✓ ' : ''}{opt.label}
-                    </label>
-                  ))}
-                </div>
-              </div>
 
-              {/* USP */}
-              <div>
-                <label style={labelStyle}>Apa yang bikin bisnis kamu spesial?</label>
-                <input
-                  ref={uspInputRef}
-                  type="text" value={usp} onChange={e => { setUsp(e.target.value); setUspWarning(false); }}
-                  placeholder={USP_PLACEHOLDERS[category] || 'Contoh: Apa yang paling sering dipuji pelanggan kamu?'}
-                  maxLength={80}
-                  style={inputStyle}
-                />
-                <div style={{ textAlign: 'right', fontSize: '11px', color: usp.length > 70 ? '#DC2626' : '#9ca3af', marginTop: '4px' }}>
-                  {usp.length}/80
-                </div>
-              </div>
+                      {/* Delivery */}
+                      <div>
+                        <label style={labelStyle}>Apakah bisnis kamu melayani pengiriman?</label>
+                        <div style={{ display: 'flex', gap: '12px' }}>
+                          {[
+                            { value: 'yes', label: 'Ya, melayani pengiriman' },
+                            { value: 'no',  label: 'Tidak (Hanya di tempat)' },
+                          ].map(opt => (
+                            <label
+                              key={opt.value}
+                              style={{
+                                flex: 1, padding: '10px 12px', borderRadius: '10px', cursor: 'pointer',
+                                border: `1.5px solid ${delivery === opt.value ? '#7C3AED' : '#E4E4EB'}`,
+                                background: delivery === opt.value ? '#F5F3FF' : '#fff',
+                                fontSize: '12px', fontWeight: '600',
+                                color: delivery === opt.value ? '#7C3AED' : '#6b7280',
+                                display: 'flex', alignItems: 'center', gap: '6px',
+                                transition: 'all 0.15s',
+                              }}
+                            >
+                              <input
+                                type="radio" name="delivery" value={opt.value}
+                                checked={delivery === opt.value}
+                                onChange={() => setDelivery(opt.value)}
+                                style={{ display: 'none' }}
+                              />
+                              {delivery === opt.value ? '✓ ' : ''}{opt.label}
+                            </label>
+                          ))}
+                        </div>
+                      </div>
 
-              {/* USP warning semi-wajib — identik dengan desktop */}
-              {uspWarning && (
-                <div style={{
-                  background: '#FFFBEB', border: '1px solid #FCD34D', borderRadius: '10px',
-                  padding: '12px 14px',
-                }}>
-                  <p style={{ margin: '0 0 10px', fontSize: '13px', color: '#92400E', lineHeight: '1.5' }}>
-                    💡 Bisnis dengan USP yang jelas menghasilkan caption jauh lebih tepat sasaran. Yuk isi dulu!
-                  </p>
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <button
-                      onClick={() => { setUspWarning(false); uspInputRef.current?.focus(); }}
-                      style={{
-                        flex: 1, padding: '9px', borderRadius: '8px',
-                        border: '1.5px solid #92400E', background: '#fff',
-                        color: '#92400E', fontSize: '13px', fontWeight: '600',
-                        cursor: 'pointer', fontFamily: 'inherit',
-                      }}
-                    >
-                      Tambahkan
-                    </button>
-                    <button
-                      onClick={doSaveProfile}
-                      style={{
-                        flex: 1, padding: '9px', borderRadius: '8px',
-                        border: '1.5px solid #D1D5DB', background: '#fff',
-                        color: '#6b7280', fontSize: '13px',
-                        cursor: 'pointer', fontFamily: 'inherit',
-                      }}
-                    >
-                      Lewati
-                    </button>
-                  </div>
-                </div>
+                      {/* USP */}
+                      <div>
+                        <label style={labelStyle}>Apa yang bikin bisnis kamu spesial?</label>
+                        <input
+                          ref={uspInputRef}
+                          type="text" value={usp} onChange={e => { setUsp(e.target.value); setUspWarning(false); }}
+                          placeholder={USP_PLACEHOLDERS[category] || 'Contoh: Apa yang paling sering dipuji pelanggan kamu?'}
+                          maxLength={80}
+                          style={inputStyle}
+                        />
+                        <div style={{ textAlign: 'right', fontSize: '11px', color: usp.length > 70 ? '#DC2626' : '#9ca3af', marginTop: '4px' }}>
+                          {usp.length}/80
+                        </div>
+                      </div>
+
+                      {/* USP warning semi-wajib */}
+                      {uspWarning && (
+                        <div style={{
+                          background: '#FFFBEB', border: '1px solid #FCD34D', borderRadius: '10px',
+                          padding: '12px 14px',
+                        }}>
+                          <p style={{ margin: '0 0 10px', fontSize: '13px', color: '#92400E', lineHeight: '1.5' }}>
+                            💡 Bisnis dengan USP yang jelas menghasilkan caption jauh lebih tepat sasaran. Yuk isi dulu!
+                          </p>
+                          <div style={{ display: 'flex', gap: '8px' }}>
+                            <button
+                              onClick={() => { setUspWarning(false); uspInputRef.current?.focus(); }}
+                              style={{
+                                flex: 1, padding: '9px', borderRadius: '8px',
+                                border: '1.5px solid #92400E', background: '#fff',
+                                color: '#92400E', fontSize: '13px', fontWeight: '600',
+                                cursor: 'pointer', fontFamily: 'inherit',
+                              }}
+                            >
+                              Tambahkan
+                            </button>
+                            <button
+                              onClick={doSaveProfile}
+                              style={{
+                                flex: 1, padding: '9px', borderRadius: '8px',
+                                border: '1.5px solid #D1D5DB', background: '#fff',
+                                color: '#6b7280', fontSize: '13px',
+                                cursor: 'pointer', fontFamily: 'inherit',
+                              }}
+                            >
+                              Lewati
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      {/* Niche Dropdown */}
+                      <div>
+                        <label style={labelStyle}>Niche / Fokus Konten <span style={{ color: '#DC2626' }}>*</span></label>
+                        <select
+                          value={category}
+                          onChange={e => { setCategory(e.target.value); setProfError(''); }}
+                          style={{
+                            ...inputStyle, appearance: 'none',
+                            backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'8\' viewBox=\'0 0 12 8\'%3E%3Cpath d=\'M1 1l5 5 5-5\' stroke=\'%236b7280\' strokeWidth=\'1.5\' fill=\'none\' strokeLinecap=\'round\'/%3E%3C/svg%3E")',
+                            backgroundRepeat: 'no-repeat', backgroundPosition: 'right 14px center',
+                            paddingRight: '36px',
+                            color: category ? '#111827' : '#9ca3af',
+                          }}
+                        >
+                          <option value="">Pilih Niche Konten...</option>
+                          {CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+                        </select>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Error */}
+                  {profError && (
+                    <div style={{
+                      background: '#FEF2F2', border: '1px solid #FCA5A5', borderRadius: '8px',
+                      padding: '10px 12px', fontSize: '13px', color: '#DC2626',
+                    }}>
+                      {profError}
+                    </div>
+                  )}
+
+                  {/* Next */}
+                  <button
+                    onClick={handleSaveProfile}
+                    disabled={profLoading}
+                    style={{
+                      width: '100%', padding: '14px', borderRadius: '12px',
+                      background: profLoading ? '#E4E4EB' : '#111827',
+                      color: profLoading ? '#9ca3af' : '#fff',
+                      border: 'none', fontSize: '15px', fontWeight: '700',
+                      cursor: profLoading ? 'not-allowed' : 'pointer',
+                      fontFamily: 'inherit',
+                    }}
+                  >
+                    {profLoading ? 'Menyimpan...' : 'Lanjutkan'}
+                  </button>
+                </>
               )}
-
-              {/* Error */}
-              {profError && (
-                <div style={{
-                  background: '#FEF2F2', border: '1px solid #FCA5A5', borderRadius: '8px',
-                  padding: '10px 12px', fontSize: '13px', color: '#DC2626',
-                }}>
-                  {profError}
-                </div>
-              )}
-
-              {/* Next */}
-              <button
-                onClick={handleSaveProfile}
-                disabled={profLoading}
-                style={{
-                  width: '100%', padding: '14px', borderRadius: '12px',
-                  background: profLoading ? '#E4E4EB' : '#111827',
-                  color: profLoading ? '#9ca3af' : '#fff',
-                  border: 'none', fontSize: '15px', fontWeight: '700',
-                  cursor: profLoading ? 'not-allowed' : 'pointer',
-                  fontFamily: 'inherit',
-                }}
-              >
-                {profLoading ? 'Menyimpan...' : 'Lanjutkan'}
-              </button>
             </div>
           )}
 

@@ -90,7 +90,10 @@ export function connectSocial({ platform, accessToken, userId, onStart, onDone, 
   /* Ambil atau buat external_id */
   let externalId = localStorage.getItem('radar_session_id');
   if (!externalId) {
-    const profile = JSON.parse(localStorage.getItem('radar_user_profile') || '{}');
+    let profile = {};
+    try {
+      profile = JSON.parse(localStorage.getItem('radar_user_profile') || '{}');
+    } catch (e) {}
     externalId = profile.postforme_external_id
       || ('radar_user_' + Math.random().toString(36).slice(2, 10));
     localStorage.setItem('radar_session_id', externalId);

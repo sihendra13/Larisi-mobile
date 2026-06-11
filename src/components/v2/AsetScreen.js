@@ -188,6 +188,9 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
     onFilesChange([newFile]);
     setSelectedIdx(0);
     closeStorySheet();
+    if (isGenZ && onNext) {
+      setTimeout(() => onNext(), 350);
+    }
   };
 
   const renderStoryCanvas = () => {
@@ -200,7 +203,13 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
     canvas.height = 1920;
     
     // 1. Draw Background Gradient
-    const grds = {
+    const grds = isGenZ ? {
+      peach: ['#1e1b4b', '#0f172a'],    // Night Indigo
+      mint: ['#064e3b', '#090d16'],     // Dark Teal
+      lavender: ['#311042', '#12051c'], // Deep Violet
+      sunset: ['#4c0519', '#180828'],   // Rose Wine
+      white: ['#1c1c24', '#0d0d11']     // Carbon Dark
+    } : {
       peach: ['#ffecd2', '#fcb69f'],
       mint: ['#d4fc79', '#96e6a1'],
       lavender: ['#e0c3fc', '#8ec5fc'],
@@ -237,7 +246,7 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
 
     const drawTextWrapped = (text, x, y, maxWidth, lineHeight, fontStyle = '36px sans-serif') => {
       ctx.font = fontStyle;
-      ctx.fillStyle = '#111827';
+      ctx.fillStyle = isGenZ ? '#ffffff' : '#111827';
       const words = text.split(' ');
       let line = '';
       let currentY = y;
@@ -272,8 +281,8 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
         ctx.shadowOffsetX = 0;
         ctx.shadowOffsetY = 20;
 
-        // White card background
-        ctx.fillStyle = '#ffffff';
+        // Dark or White card background
+        ctx.fillStyle = isGenZ ? '#1e1e24' : '#ffffff';
         ctx.beginPath();
         ctx.roundRect(frameX, frameY, frameW, frameH, 24);
         ctx.fill();
@@ -287,14 +296,14 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
         const photoX = frameX + innerMargin;
         const photoY = frameY + innerMargin;
 
-        ctx.fillStyle = '#f3f4f6';
+        ctx.fillStyle = isGenZ ? '#111115' : '#f3f4f6';
         ctx.fillRect(photoX, photoY, photoW, photoH);
 
         if (img) {
           drawProductImg(img, photoX, photoY, photoW, photoH);
         } else {
           // Placeholder
-          ctx.fillStyle = '#9ca3af';
+          ctx.fillStyle = isGenZ ? '#4b5563' : '#9ca3af';
           ctx.font = 'bold 40px sans-serif';
           ctx.textAlign = 'center';
           ctx.fillText('Foto Produk', photoX + photoW/2, photoY + photoH/2);
@@ -314,7 +323,7 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
         const c1W = 860;
         const c1H = 750;
 
-        ctx.fillStyle = '#ffffff';
+        ctx.fillStyle = isGenZ ? '#1e1e24' : '#ffffff';
         ctx.beginPath();
         ctx.roundRect(c1X, c1Y, c1W, c1H, 36);
         ctx.fill();
@@ -329,7 +338,7 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
         const c2W = 860;
         const c2H = 500;
 
-        ctx.fillStyle = '#ffffff';
+        ctx.fillStyle = isGenZ ? '#1e1e24' : '#ffffff';
         ctx.beginPath();
         ctx.roundRect(c2X, c2Y, c2W, c2H, 36);
         ctx.fill();
@@ -347,12 +356,12 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
         const c3W = 860;
         const c3H = 150;
 
-        ctx.fillStyle = '#111827';
+        ctx.fillStyle = isGenZ ? '#ffffff' : '#111827';
         ctx.beginPath();
         ctx.roundRect(c3X, c3Y, c3W, c3H, 24);
         ctx.fill();
 
-        ctx.fillStyle = '#ffffff';
+        ctx.fillStyle = isGenZ ? '#111827' : '#ffffff';
         ctx.font = 'bold 36px sans-serif';
         ctx.textAlign = 'center';
         ctx.fillText('Rekomendasi Terbaik Hari Ini ✨', c3X + c3W/2, c3Y + 88);
@@ -360,7 +369,7 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
       else if (storyTemplate === 'minimalist') {
         // Big Quotation marks
         ctx.font = '280px Georgia, serif';
-        ctx.fillStyle = 'rgba(17, 24, 39, 0.08)';
+        ctx.fillStyle = isGenZ ? 'rgba(255, 255, 255, 0.12)' : 'rgba(17, 24, 39, 0.08)';
         ctx.fillText('“', 110, 500);
 
         // Quote Text centered
@@ -385,7 +394,7 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
         ctx.closePath();
         ctx.clip();
 
-        ctx.fillStyle = '#ffffff';
+        ctx.fillStyle = isGenZ ? '#1e1e24' : '#ffffff';
         ctx.fillRect(bubbleX - bubbleR, bubbleY - bubbleR, bubbleR * 2, bubbleR * 2);
 
         if (img) {
@@ -396,7 +405,7 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
         // Border around bubble
         ctx.beginPath();
         ctx.arc(bubbleX, bubbleY, bubbleR, 0, Math.PI * 2);
-        ctx.strokeStyle = '#ffffff';
+        ctx.strokeStyle = isGenZ ? '#1e1e24' : '#ffffff';
         ctx.lineWidth = 12;
         ctx.stroke();
       }
@@ -988,7 +997,7 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
       display: 'flex', flexDirection: 'column',
       flex: 1, overflow: 'hidden',
       position: 'relative',
-      background: isEmpty ? 'var(--m-bg)' : '#000',
+      background: isEmpty ? (isGenZ ? '#0e0e12' : 'var(--m-bg)') : '#000',
       transition: 'background 0.3s ease',
     }}>
 
@@ -1073,18 +1082,18 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
           /* ── Empty state — light bg, dark content ── */
           <div style={{
             width: '100%', height: '100%',
-            background: 'var(--m-bg)',
+            background: isGenZ ? '#0e0e12' : 'var(--m-bg)',
             display: 'flex', flexDirection: 'column',
             alignItems: 'center', justifyContent: 'center', gap: '0',
           }}>
-            <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#C0C0CC" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: '12px' }}>
+            <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke={isGenZ ? '#4b5563' : '#C0C0CC'} strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: '12px' }}>
               <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
               <polyline points="21 15 16 10 5 21"/>
             </svg>
-            <div style={{ color: 'var(--m-ink-sub)', fontFamily: 'var(--m-font)', fontSize: '13px', fontWeight: '500', marginBottom: '6px' }}>
+            <div style={{ color: isGenZ ? '#9ca3af' : 'var(--m-ink-sub)', fontFamily: 'var(--m-font)', fontSize: '13px', fontWeight: '500', marginBottom: '6px' }}>
               Tap + untuk tambah foto atau video
             </div>
-            <div style={{ color: '#B0B0BC', fontFamily: 'var(--m-font)', fontSize: '12px', fontWeight: '500' }}>
+            <div style={{ color: isGenZ ? '#4b5563' : '#B0B0BC', fontFamily: 'var(--m-font)', fontSize: '12px', fontWeight: '500' }}>
               Maksimal 5 Foto dan 1 Video
             </div>
           </div>
@@ -1122,42 +1131,51 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
       <div style={{
         position: 'absolute', top: 0, left: 0, right: 0, zIndex: 20,
         background: isEmpty
-          ? 'var(--m-bg)'
+          ? (isGenZ ? '#0e0e12' : 'var(--m-bg)')
           : 'linear-gradient(to bottom, rgba(0,0,0,0.70) 0%, rgba(0,0,0,0.30) 65%, transparent 100%)',
         paddingTop: '12px',
-        borderBottom: isEmpty ? '1px solid #ECECF1' : 'none',
+        borderBottom: isEmpty ? (isGenZ ? '1px solid #1e1e24' : '1px solid #ECECF1') : 'none',
       }}>
         {/* Header row */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px 8px' }}>
           <button onClick={onBack} style={{
             width: '34px', height: '34px', borderRadius: '50%',
-            background: isEmpty ? '#fff' : 'rgba(0,0,0,0.35)',
+            background: isEmpty ? (isGenZ ? '#1e1e24' : '#fff') : 'rgba(0,0,0,0.35)',
             backdropFilter: isEmpty ? 'none' : 'blur(6px)',
-            border: isEmpty ? 'none' : '1px solid rgba(255,255,255,0.18)',
-            boxShadow: isEmpty ? '0 1px 4px rgba(0,0,0,0.10)' : 'none',
+            border: isEmpty ? (isGenZ ? '1px solid #2d2d39' : 'none') : '1px solid rgba(255,255,255,0.18)',
+            boxShadow: isEmpty ? (isGenZ ? 'none' : '0 1px 4px rgba(0,0,0,0.10)') : 'none',
             cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
           }}>
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none"
-              stroke={isEmpty ? 'var(--m-ink)' : '#fff'} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              stroke={isEmpty ? (isGenZ ? '#fff' : 'var(--m-ink)') : '#fff'} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M15 18l-6-6 6-6"/>
             </svg>
           </button>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
             {/* Platform icon: light mode = colour icon, dark = white icon */}
-            {isEmpty ? (
-              /* Colour icons for light bg */
-              platform === 'instagram' ? (
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E1306C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/>
-                  <circle cx="17.5" cy="6.5" r="0.8" fill="#E1306C" stroke="none"/>
-                </svg>
-              ) : PLATFORM_ICONS[platform]
-            ) : PLATFORM_ICONS[platform]}
+            {!isGenZ && (isEmpty ? (
+              /* Colour icons for light bg, white/gray for dark bg */
+              isGenZ ? (
+                platform === 'instagram' ? (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/>
+                    <circle cx="17.5" cy="6.5" r="0.8" fill="#fff" stroke="none"/>
+                  </svg>
+                ) : PLATFORM_ICONS[platform]
+              ) : (
+                platform === 'instagram' ? (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E1306C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/>
+                    <circle cx="17.5" cy="6.5" r="0.8" fill="#E1306C" stroke="none"/>
+                  </svg>
+                ) : PLATFORM_ICONS[platform]
+              )
+            ) : PLATFORM_ICONS[platform])}
             <span style={{
               fontFamily: 'var(--m-font)', fontSize: '15px', fontWeight: '700',
-              color: isEmpty ? 'var(--m-ink)' : '#fff',
+              color: isEmpty ? (isGenZ ? '#fff' : 'var(--m-ink)') : '#fff',
               textShadow: isEmpty ? 'none' : '0 1px 4px rgba(0,0,0,0.5)',
             }}>
               Aset Kreatif
@@ -1166,7 +1184,7 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
 
           <span style={{
             fontFamily: 'var(--m-font)', fontSize: '13px', fontWeight: '600',
-            color: isEmpty ? 'var(--m-ink-sub)' : 'rgba(255,255,255,0.55)',
+            color: isEmpty ? (isGenZ ? '#9ca3af' : 'var(--m-ink-sub)') : 'rgba(255,255,255,0.55)',
             textShadow: isEmpty ? 'none' : '0 1px 3px rgba(0,0,0,0.4)',
           }}>
             1/2
@@ -1179,14 +1197,14 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
             <div key={i} style={{
               flex: 1, height: '2.5px', borderRadius: '2px',
               background: i < 1
-                ? (isEmpty ? 'var(--m-brand)' : '#fff')
-                : (isEmpty ? '#E4E4EB' : 'rgba(255,255,255,0.25)'),
+                ? (isEmpty ? (isGenZ ? '#7c3aed' : 'var(--m-brand)') : '#fff')
+                : (isEmpty ? (isGenZ ? '#2d2d39' : '#E4E4EB') : 'rgba(255,255,255,0.25)'),
             }} />
           ))}
         </div>
 
         {/* Format chips — Instagram underline style */}
-        {(platform !== 'tiktok' && platform !== 'youtube') && (
+        {!isGenZ && (platform !== 'tiktok' && platform !== 'youtube') && (
           <div style={{ display: 'flex', justifyContent: 'center', gap: '0', paddingBottom: '4px' }}>
             {FORMATS.map(f => {
               const active = fmtLower === f.toLowerCase();
@@ -1200,10 +1218,10 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
                     fontFamily: 'var(--m-font)', fontSize: '14px',
                     fontWeight: active ? '700' : '500',
                     color: isEmpty
-                      ? (active ? 'var(--m-ink)' : 'var(--m-ink-sub)')
+                      ? (active ? (isGenZ ? '#fff' : 'var(--m-ink)') : (isGenZ ? '#6b7280' : 'var(--m-ink-sub)'))
                       : (active ? '#fff' : 'rgba(255,255,255,0.45)'),
                     borderBottom: active
-                      ? `2px solid ${isEmpty ? 'var(--m-ink)' : '#fff'}`
+                      ? `2px solid ${isEmpty ? (isGenZ ? '#fff' : 'var(--m-ink)') : '#fff'}`
                       : '2px solid transparent',
                     textShadow: isEmpty ? 'none' : '0 1px 3px rgba(0,0,0,0.4)',
                     WebkitTapHighlightColor: 'transparent',
@@ -1262,9 +1280,9 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
       <div style={{
         position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 20,
         background: isEmpty
-          ? 'var(--m-bg)'
+          ? (isGenZ ? '#0e0e12' : 'var(--m-bg)')
           : 'linear-gradient(to top, rgba(0,0,0,0.90) 0%, rgba(0,0,0,0.55) 55%, transparent 100%)',
-        borderTop: isEmpty ? '1px solid #ECECF1' : 'none',
+        borderTop: isEmpty ? (isGenZ ? '1px solid #1e1e24' : '1px solid #ECECF1') : 'none',
         paddingTop: isEmpty ? '14px' : '40px',
         paddingBottom: 'calc(80px + env(safe-area-inset-bottom))',
       }}>
@@ -1805,12 +1823,13 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
       {showStorySheet && (
         <>
           <div onClick={closeStorySheet} style={{
-            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9998,
+            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 9998,
             opacity: animateStory ? 1 : 0, transition: 'opacity 0.3s ease-out',
           }} />
           <div style={{
             position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 9999,
-            background: '#fff', borderRadius: '20px 20px 0 0',
+            background: isGenZ ? '#1e1e24' : '#fff', borderRadius: '20px 20px 0 0',
+            borderTop: isGenZ ? '1px solid #2d2d39' : 'none',
             display: 'flex', flexDirection: 'column',
             maxHeight: '92vh', overflow: 'hidden',
             transform: animateStory ? 'translateY(0)' : 'translateY(100%)',
@@ -1818,23 +1837,23 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
           }}>
             {/* Drag handle */}
             <div style={{ display: 'flex', justifyContent: 'center', padding: '10px 0 0', flexShrink: 0 }}>
-              <div style={{ width: '40px', height: '4px', borderRadius: '2px', background: '#E4E4EB' }} />
+              <div style={{ width: '40px', height: '4px', borderRadius: '2px', background: isGenZ ? '#374151' : '#E4E4EB' }} />
             </div>
             {/* Header */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px 0', flexShrink: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#FEE2E2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ width: '18px', height: '18px' }}>
+                <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: isGenZ ? '#2e1e2e' : '#FEE2E2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke={isGenZ ? '#d946ef' : '#EF4444'} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ width: '18px', height: '18px' }}>
                     <path d="M12 2L9.5 9.5 2 12l7.5 2.5L12 22l2.5-7.5L22 12l-7.5-2.5z"/>
                   </svg>
                 </div>
                 <div>
-                  <div style={{ fontFamily: 'var(--m-font)', fontSize: '15px', fontWeight: '700', color: 'var(--m-ink)' }}>Story Maker ✨</div>
-                  <div style={{ fontFamily: 'var(--m-font)', fontSize: '11px', color: 'var(--m-ink-sub)' }}>Ubah ulasan pembeli jadi konten estetik</div>
+                  <div style={{ fontFamily: 'var(--m-font)', fontSize: '15px', fontWeight: '700', color: isGenZ ? '#fff' : 'var(--m-ink)' }}>Story Maker ✨</div>
+                  <div style={{ fontFamily: 'var(--m-font)', fontSize: '11px', color: isGenZ ? '#9ca3af' : 'var(--m-ink-sub)' }}>Ubah ulasan pembeli jadi konten estetik</div>
                 </div>
               </div>
-              <button onClick={closeStorySheet} style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#F4F4F7', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="var(--m-ink)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: '16px', height: '16px' }}>
+              <button onClick={closeStorySheet} style={{ width: '32px', height: '32px', borderRadius: '50%', background: isGenZ ? '#2d2d39' : '#F4F4F7', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <svg viewBox="0 0 24 24" fill="none" stroke={isGenZ ? '#fff' : 'var(--m-ink)'} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: '16px', height: '16px' }}>
                   <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
                 </svg>
               </button>
@@ -1842,13 +1861,13 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
             {/* Body */}
             <div style={{ flex: 1, overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
               {/* Canvas Preview */}
-              <div style={{ display: 'flex', justifyContent: 'center', background: '#F9F9FA', borderRadius: '16px', padding: '12px', border: '1px solid #ECECF1' }}>
+              <div style={{ display: 'flex', justifyContent: 'center', background: isGenZ ? '#0e0e12' : '#F9F9FA', borderRadius: '16px', padding: '12px', border: isGenZ ? '1px solid #2d2d39' : '1px solid #ECECF1' }}>
                 <canvas ref={storyCanvasRef} style={{ maxWidth: '100%', height: '300px', objectFit: 'contain', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }} />
               </div>
 
               {/* Template Selector */}
               <div>
-                <div style={{ fontFamily: 'var(--m-font)', fontSize: '13px', fontWeight: '700', color: 'var(--m-ink-sub)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                <div style={{ fontFamily: 'var(--m-font)', fontSize: '13px', fontWeight: '700', color: isGenZ ? '#9ca3af' : 'var(--m-ink-sub)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                   Pilih Template
                 </div>
                 <div style={{ display: 'flex', gap: '8px' }}>
@@ -1856,46 +1875,55 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
                     { id: 'polaroid', label: 'Polaroid', icon: '📸' },
                     { id: 'bento', label: 'Bento Grid', icon: '🍱' },
                     { id: 'minimalist', label: 'Minimalist Quote', icon: '💬' }
-                  ].map(t => (
-                    <button
-                      key={t.id}
-                      onClick={() => setStoryTemplate(t.id)}
-                      style={{
-                        flex: 1, padding: '12px 8px', borderRadius: '12px',
-                        border: storyTemplate === t.id ? '2px solid var(--m-ink)' : '1px solid #E4E4EB',
-                        background: storyTemplate === t.id ? 'var(--m-ink)' : '#fff',
-                        color: storyTemplate === t.id ? '#fff' : 'var(--m-ink)',
-                        fontFamily: 'var(--m-font)', fontSize: '12px', fontWeight: '700',
-                        cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px'
-                      }}
-                    >
-                      <span style={{ fontSize: '18px' }}>{t.icon}</span>
-                      {t.label}
-                    </button>
-                  ))}
+                  ].map(t => {
+                    const isSelected = storyTemplate === t.id;
+                    return (
+                      <button
+                        key={t.id}
+                        onClick={() => setStoryTemplate(t.id)}
+                        style={{
+                          flex: 1, padding: '12px 8px', borderRadius: '12px',
+                          border: isSelected ? (isGenZ ? '2px solid #fff' : '2px solid var(--m-ink)') : (isGenZ ? '1px solid #374151' : '1px solid #E4E4EB'),
+                          background: isSelected ? (isGenZ ? '#fff' : 'var(--m-ink)') : (isGenZ ? '#2d2d39' : '#fff'),
+                          color: isSelected ? (isGenZ ? '#000' : '#fff') : (isGenZ ? '#fff' : 'var(--m-ink)'),
+                          fontFamily: 'var(--m-font)', fontSize: '12px', fontWeight: '700',
+                          cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px'
+                        }}
+                      >
+                        <span style={{ fontSize: '18px' }}>{t.icon}</span>
+                        {t.label}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
               {/* Color Customization */}
               <div>
-                <div style={{ fontFamily: 'var(--m-font)', fontSize: '13px', fontWeight: '700', color: 'var(--m-ink-sub)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                <div style={{ fontFamily: 'var(--m-font)', fontSize: '13px', fontWeight: '700', color: isGenZ ? '#9ca3af' : 'var(--m-ink-sub)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                   Pilih Warna Background
                 </div>
                 <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                  {[
+                  {(isGenZ ? [
+                    { id: 'peach', label: 'Night Indigo', color: 'linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%)' },
+                    { id: 'mint', label: 'Dark Teal', color: 'linear-gradient(135deg, #064e3b 0%, #090d16 100%)' },
+                    { id: 'lavender', label: 'Deep Violet', color: 'linear-gradient(135deg, #311042 0%, #12051c 100%)' },
+                    { id: 'sunset', label: 'Rose Wine', color: 'linear-gradient(135deg, #4c0519 0%, #180828 100%)' },
+                    { id: 'white', label: 'Carbon', color: 'linear-gradient(135deg, #1c1c24 0%, #0d0d11 100%)' }
+                  ] : [
                     { id: 'peach', label: 'Peach', color: 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)' },
                     { id: 'mint', label: 'Mint', color: 'linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%)' },
                     { id: 'lavender', label: 'Lavender', color: 'linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%)' },
                     { id: 'sunset', label: 'Sunset', color: 'linear-gradient(135deg, #f6d365 0%, #fda085 100%)' },
                     { id: 'white', label: 'White', color: 'linear-gradient(135deg, #ffffff 0%, #f1f1f1 100%)' }
-                  ].map(c => (
+                  ]).map(c => (
                     <button
                       key={c.id}
                       onClick={() => setStoryBgColor(c.id)}
                       style={{
                         width: '38px', height: '38px', borderRadius: '50%',
                         background: c.color,
-                        border: storyBgColor === c.id ? '3px solid #111' : '1px solid #D7D7DE',
+                        border: storyBgColor === c.id ? (isGenZ ? '3px solid #fff' : '3px solid #111') : (isGenZ ? '1px solid #4b5563' : '1px solid #D7D7DE'),
                         cursor: 'pointer', outline: 'none',
                         boxShadow: '0 2px 6px rgba(0,0,0,0.05)',
                         position: 'relative'
@@ -1916,7 +1944,7 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
 
               {/* Text Input */}
               <div>
-                <div style={{ fontFamily: 'var(--m-font)', fontSize: '13px', fontWeight: '700', color: 'var(--m-ink-sub)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                <div style={{ fontFamily: 'var(--m-font)', fontSize: '13px', fontWeight: '700', color: isGenZ ? '#9ca3af' : 'var(--m-ink-sub)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                   Teks Ulasan / Testimoni
                 </div>
                 <textarea
@@ -1924,8 +1952,11 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
                   onChange={e => setStoryText(e.target.value)}
                   style={{
                     width: '100%', height: '80px', padding: '12px', borderRadius: '12px',
-                    border: '1px solid #D7D7DE', fontFamily: 'var(--m-font)', fontSize: '14px',
-                    color: 'var(--m-ink)', outline: 'none', resize: 'none'
+                    border: isGenZ ? '1px solid #4b5563' : '1px solid #D7D7DE',
+                    background: isGenZ ? '#2d2d39' : '#fff',
+                    color: isGenZ ? '#fff' : 'var(--m-ink)',
+                    fontFamily: 'var(--m-font)', fontSize: '14px',
+                    outline: 'none', resize: 'none'
                   }}
                   placeholder="Tulis ulasan pembeli di sini..."
                 />
@@ -1933,7 +1964,7 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
             </div>
 
             {/* Actions Footer */}
-            <div style={{ padding: '12px 16px', borderTop: '1px solid #F0F0F5', background: '#fff', flexShrink: 0, paddingBottom: 'calc(12px + env(safe-area-inset-bottom))' }}>
+            <div style={{ padding: '12px 16px', borderTop: isGenZ ? '1px solid #2d2d39' : '1px solid #F0F0F5', background: isGenZ ? '#1e1e24' : '#fff', flexShrink: 0, paddingBottom: 'calc(12px + env(safe-area-inset-bottom))' }}>
               <div style={{ display: 'flex', gap: '12px' }}>
                 <button
                   onClick={() => {
@@ -1942,8 +1973,10 @@ export default function AsetScreen({ platform, format, onFormatChange, files, on
                     setStoryBgColor('peach');
                   }}
                   style={{
-                    flex: 1, padding: '16px', borderRadius: '16px', border: '1px solid #D7D7DE',
-                    background: '#fff', color: '#111827',
+                    flex: 1, padding: '16px', borderRadius: '16px',
+                    border: isGenZ ? '1px solid #4b5563' : '1px solid #D7D7DE',
+                    background: isGenZ ? '#2d2d39' : '#fff',
+                    color: isGenZ ? '#fff' : '#111827',
                     fontFamily: 'var(--m-font)', fontSize: '15px', fontWeight: '700',
                     cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
                   }}

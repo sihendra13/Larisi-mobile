@@ -158,12 +158,21 @@ export default function DapurV2() {
       localStorage.removeItem('larisi_trial_start');
     }
 
+    const checkAndSetUserMode = (p) => {
+      if (p && p.category) {
+        const isCreator = p.category === 'konten_kreator' || p.category === 'genz_seller';
+        const mode = isCreator ? 'creator' : 'umkm';
+        localStorage.setItem('larisi_user_mode', mode);
+        return mode;
+      }
+      return localStorage.getItem('larisi_user_mode');
+    };
+
     const continueToAuth = () => {
       if (!tok) {
         /* Cek intent register dari localStorage */
         const intent = localStorage.getItem('larisi_intent');
-        /* Arahkan ke pendaftaran (register) jika dipicu oleh parameter plan dari landing page 
-           atau jika ada niat (intent) register. Jika tidak, default selalu ke halaman masuk (login). */
+        /* Arahkan to register */
         const goToRegister = planParam || intent === 'register';
 
         if (goToRegister) {
@@ -186,6 +195,11 @@ export default function DapurV2() {
         return;
       }
       const pCached = getProfile();
+      const cachedMode = checkAndSetUserMode(pCached);
+      if (cachedMode === 'creator') {
+        window.location.replace('/v2/genz');
+        return;
+      }
       const sid     = getSessionId();
 
       let uid = null;
@@ -214,6 +228,11 @@ export default function DapurV2() {
         }).then(r => r.ok ? r.json() : null).then(rows => {
           const fresh = rows?.[0];
           if (!fresh) { if (!pCached) setAuthState('onboarding'); return; }
+          const freshMode = checkAndSetUserMode(fresh);
+          if (freshMode === 'creator') {
+            window.location.replace('/v2/genz');
+            return;
+          }
 
           localStorage.setItem('radar_user_profile', JSON.stringify(fresh));
           restoreSocialAccounts(fresh); // ← social_accounts dari Supabase, bukan cache
@@ -473,6 +492,15 @@ export default function DapurV2() {
     restoreSocialAccounts(p); // ← Restore social accounts
     setProfile(p);
     applyLocation(p);
+    
+    if (p && p.category) {
+      const isCreator = p.category === 'konten_kreator' || p.category === 'genz_seller';
+      if (isCreator) {
+        localStorage.setItem('larisi_user_mode', 'creator');
+        window.location.replace('/v2/genz');
+        return;
+      }
+    }
     setAuthState('app');
   };
 
