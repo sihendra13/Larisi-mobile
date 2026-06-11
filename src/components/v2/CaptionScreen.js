@@ -1231,66 +1231,7 @@ export default function CaptionScreen({
         display:'flex', flexDirection:'column', gap:'12px',
       }}>
 
-        {isGenZ && (
-          <div className="panel" style={{boxShadow:'none', border:'1px solid #E4E4EB', padding:'14px', flexShrink:0, display:'flex', flexDirection:'column', gap:'12px'}}>
-            <div>
-              <div style={{fontFamily:'var(--m-font)', fontSize:'11px', fontWeight:'700', color:'var(--m-ink-sub)', textTransform:'uppercase', letterSpacing:'.5px', marginBottom:'8px'}}>
-                PILIH PLATFORM
-              </div>
-              <div style={{display:'flex', gap:'8px'}}>
-                {[
-                  { id: 'instagram', label: 'Instagram', icon: PLATFORM_ICONS_SM.instagram },
-                  { id: 'facebook', label: 'Facebook', icon: PLATFORM_ICONS_SM.facebook },
-                  { id: 'tiktok', label: 'TikTok', icon: PLATFORM_ICONS_SM.tiktok }
-                ].map(p => (
-                  <button
-                    key={p.id}
-                    onClick={() => setPlatform?.(p.id)}
-                    style={{
-                      flex: 1, padding: '10px 6px', borderRadius: '10px',
-                      border: platform === p.id ? '2px solid var(--m-ink)' : '1px solid #E4E4EB',
-                      background: platform === p.id ? 'var(--m-ink)' : '#fff',
-                      color: platform === p.id ? '#fff' : 'var(--m-ink)',
-                      fontFamily: 'var(--m-font)', fontSize: '12px', fontWeight: '700',
-                      cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px'
-                    }}
-                  >
-                    {p.icon}
-                    {p.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <div style={{fontFamily:'var(--m-font)', fontSize:'11px', fontWeight:'700', color:'var(--m-ink-sub)', textTransform:'uppercase', letterSpacing:'.5px', marginBottom:'8px'}}>
-                PILIH FORMAT
-              </div>
-              <div style={{display:'flex', gap:'8px'}}>
-                {[
-                  { id: 'post', label: 'Post' },
-                  { id: 'reel', label: 'Reel' },
-                  { id: 'story', label: 'Story' }
-                ].map(f => (
-                  <button
-                    key={f.id}
-                    onClick={() => setFormat?.(f.id)}
-                    style={{
-                      flex: 1, padding: '10px 6px', borderRadius: '10px',
-                      border: format === f.id ? '2px solid var(--m-ink)' : '1px solid #E4E4EB',
-                      background: format === f.id ? 'var(--m-ink)' : '#fff',
-                      color: format === f.id ? '#fff' : 'var(--m-ink)',
-                      fontFamily: 'var(--m-font)', fontSize: '12px', fontWeight: '700',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    {f.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Hide Pilih Platform & Format for Gen Z as it is chosen upfront */}
 
         {/* ── Mini preview card ── */}
         <div className="panel" style={{boxShadow:'none', border:'1px solid #E4E4EB', padding:'14px', flexShrink:0}}>
