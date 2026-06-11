@@ -1181,7 +1181,7 @@ export default function CaptionScreen({
   const assetInfo = `${files.length > 0 ? files.length + ' foto' : 'Belum ada foto'} · ${locFull || locName}`;
 
   return (
-    <div style={{display:'flex', flexDirection:'column', flex:1, minHeight:0, overflow:'hidden', background:'var(--m-bg)'}}>
+    <div style={{display:'flex', flexDirection:'column', height:'100dvh', overflow:'hidden', background:'var(--m-bg)'}}>
       {/* Warning Banner */}
       <QuotaWarningBanner
         isVisible={warningBanner.visible}
