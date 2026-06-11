@@ -1471,133 +1471,26 @@ export default function CaptionScreen({
             )}
           </div>
         )}
-        {/* ── Accordion Target Lokasi (Gen Z only) ── */}
+        {/* ── Jangkauan Target Card (Gen Z only) ── */}
         {isGenZ && (
-          <div className="panel" style={{boxShadow:'none', border:'1px solid #E4E4EB', padding:0, overflow:'visible', flexShrink:0}}>
-            {/* Accordion Header */}
-            <div
-              onClick={() => setAccordionOpen(p => !p)}
-              style={{
-                display:'flex', alignItems:'center', justifyContent:'space-between',
-                padding:'14px', cursor:'pointer', userSelect:'none'
-              }}
-            >
-              <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
-                <span style={{fontSize:'18px'}}>📍</span>
-                <span style={{fontFamily:'var(--m-font)', fontSize:'14px', fontWeight:'700', color:'var(--m-ink)'}}>
-                  Pengaturan Iklan / Target Lokasi (Opsional)
-                </span>
-              </div>
-              <svg width="14" height="8" viewBox="0 0 14 8" fill="none" stroke="var(--m-ink-sub)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-                style={{
-                  transform: accordionOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-                  transition: 'transform 0.2s ease'
-                }}
-              >
-                <polyline points="1 1 7 7 13 1"/>
-              </svg>
+          <div className="panel" style={{boxShadow:'none', border:'1px solid #E4E4EB', padding:'16px', flexShrink:0, display:'flex', flexDirection:'column', gap:'12px'}}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontFamily: 'var(--m-font)', fontSize: '14px', fontWeight: '800', color: 'var(--m-ink)' }}>Jangkauan Target</span>
+              <span style={{ fontFamily: 'var(--m-font)', fontSize: '14px', fontWeight: '800', color: 'var(--m-brand)' }}>{radius.toFixed(1)} km</span>
             </div>
-
-            {/* Accordion Content */}
-            {accordionOpen && (
-              <div style={{borderTop:'1px solid #E4E4EB', padding:'14px', display:'flex', flexDirection:'column', gap:'14px', position:'relative'}}>
-                {/* Search Target */}
-                <div>
-                  <label style={{fontFamily:'var(--m-font)', fontSize:'12px', fontWeight:'700', color:'var(--m-ink-sub)', display:'block', marginBottom:'6px'}}>
-                    Cari Kecamatan / Kota
-                  </label>
-                  <div style={{display:'flex', alignItems:'center', gap:'8px', background:'#F4F4F7', borderRadius:'8px', padding:'0 12px', height:'42px', position:'relative'}} onClick={e => e.stopPropagation()}>
-                    <input
-                      value={searchVal}
-                      onChange={e => handleSearchInput(e.target.value)}
-                      placeholder="Cari kecamatan..."
-                      style={{border:'none', background:'none', outline:'none', flex:1, fontFamily:'var(--m-font)', fontSize:'14px', color:'var(--m-ink)'}}
-                    />
-                    {searchVal && (
-                      <button onClick={() => { setSearchVal(''); setShowDropdown(false); setSearchResults([]); }} style={{background:'none', border:'none', cursor:'pointer', color:'var(--m-ink-sub)', fontSize:'18px', padding:0}}>×</button>
-                    )}
-                  </div>
-                  {showDropdown && searchResults.length > 0 && (
-                    <div style={{
-                      position:'absolute', left:'14px', right:'14px', background:'#fff', borderRadius:'8px',
-                      boxShadow:'0 4px 16px rgba(0,0,0,0.12)', zIndex:5000, overflow:'hidden', marginTop:'4px', border:'1px solid #E4E4EB'
-                    }}>
-                      {searchResults.map((loc, i) => (
-                        <div key={i} onClick={() => selectCity(loc)}
-                          style={{
-                            padding:'10px 14px', fontSize:'13px', cursor:'pointer',
-                            fontFamily:'var(--m-font)', color:'var(--m-ink)',
-                            borderBottom: i < searchResults.length-1 ? '1px solid #F4F4F7' : 'none'
-                          }}
-                        >{loc.n}</div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Map Container */}
-                <div>
-                  <label style={{fontFamily:'var(--m-font)', fontSize:'12px', fontWeight:'700', color:'var(--m-ink-sub)', display:'block', marginBottom:'6px'}}>
-                    Titik Target Iklan
-                  </label>
-                  <div ref={mapRef} style={{width:'100%', height:'180px', borderRadius:'12px', overflow:'hidden', border:'1px solid #E4E4EB'}} />
-                </div>
-
-                {/* Radius Slider */}
-                <div>
-                  <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'6px'}}>
-                    <span style={{fontFamily:'var(--m-font)', fontSize:'12px', fontWeight:'700', color:'var(--m-ink-sub)'}}>Radius Target</span>
-                    <span style={{fontFamily:'var(--m-font)', fontSize:'12px', fontWeight:'700', color:'var(--m-brand)'}}>{radius.toFixed(1)} KM</span>
-                  </div>
-                  <input
-                    type="range" min="0.5" max="10" step="0.5"
-                    value={radius}
-                    onChange={e => setRadius?.(parseFloat(e.target.value))}
-                    style={{width:'100%', accentColor:'var(--m-brand)'}}
-                  />
-                </div>
-
-                {/* Targets (Local / Traveler) */}
-                <div style={{display:'flex', flexDirection:'column', gap:'10px'}}>
-                  <div style={{display:'flex', alignItems:'center', justifyContent:'space-between'}}>
-                    <div>
-                      <div style={{fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'600', color:'var(--m-ink)'}}>Warga Sekitar</div>
-                      <div style={{fontFamily:'var(--m-font)', fontSize:'11px', color:'var(--m-ink-sub)'}}>Orang yang tinggal di area target</div>
-                    </div>
-                    <button
-                      onClick={() => setLocalOn?.(!localOn)}
-                      style={{
-                        width:'44px', height:'24px', borderRadius:'99px', border:'none',
-                        background: localOn ? 'var(--m-brand)' : '#D7D7DE', cursor:'pointer', position:'relative', padding:0
-                      }}
-                    >
-                      <div style={{
-                        position:'absolute', top:'3px', left: localOn ? 'calc(100% - 21px)' : '3px',
-                        width:'18px', height:'18px', borderRadius:'50%', background:'#fff', transition:'left .2s'
-                      }} />
-                    </button>
-                  </div>
-                  <div style={{display:'flex', alignItems:'center', justifyContent:'space-between'}}>
-                    <div>
-                      <div style={{fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'600', color:'var(--m-ink)'}}>Pengunjung</div>
-                      <div style={{fontFamily:'var(--m-font)', fontSize:'11px', color:'var(--m-ink-sub)'}}>Orang yang sedang mengunjungi area target</div>
-                    </div>
-                    <button
-                      onClick={() => setTravelerOn?.(!travelerOn)}
-                      style={{
-                        width:'44px', height:'24px', borderRadius:'99px', border:'none',
-                        background: travelerOn ? 'var(--m-brand)' : '#D7D7DE', cursor:'pointer', position:'relative', padding:0
-                      }}
-                    >
-                      <div style={{
-                        position:'absolute', top:'3px', left: travelerOn ? 'calc(100% - 21px)' : '3px',
-                        width:'18px', height:'18px', borderRadius:'50%', background:'#fff', transition:'left .2s'
-                      }} />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
+            <input
+              type="range"
+              min="0.5"
+              max="10"
+              step="0.5"
+              value={radius}
+              onChange={e => setRadius?.(parseFloat(e.target.value))}
+              style={{ width: '100%', accentColor: 'var(--m-brand)', cursor: 'pointer' }}
+            />
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: '#6b7280', fontWeight: '700', fontFamily: 'var(--m-font)' }}>
+              <span>LOKAL (0.5KM)</span>
+              <span>LUAS (10KM)</span>
+            </div>
           </div>
         )}
       </main>
