@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import BottomNav         from '@/components/layout/BottomNav';
 import PlatformScreen    from '@/components/v2/PlatformScreen';
 import AsetScreen        from '@/components/v2/AsetScreen';
@@ -18,6 +18,9 @@ import CancelSubscriptionModal from '@/components/v2/CancelSubscriptionModal';
 import DuitkuModal       from '@/components/v2/DuitkuModal';
 import MemeEditorScreen  from '@/components/v2/MemeEditorScreen';
 import PublishMemeScreen from '@/components/v2/PublishMemeScreen';
+import StoryEditorScreen from '@/components/v2/StoryEditorScreen';
+import BentoEditorScreen from '@/components/v2/BentoEditorScreen';
+import VideoMotionEditorScreen from '@/components/v2/VideoMotionEditorScreen';
 import { getProfile, getSessionId, getAccessToken, getValidAccessToken, SUPABASE_URL, SUPABASE_ANON_KEY } from '@/lib/config';
 import { handleOAuthRedirectCallback, syncSocialAccountsToSupabase } from '@/lib/connectSocial';
 
@@ -45,6 +48,8 @@ function showMobileToast(message, type = 'success') {
 export default function GenZPage() {
   const [screen,     setScreen]     = useState('platform');
   const [activeNav,  setActiveNav]  = useState('command');
+  const [prevScreen, setPrevScreen] = useState('platform');
+
 
   /* ── Shared state (dioper antar screen) ── */
   const [platform,   setPlatform]   = useState('instagram');
@@ -548,17 +553,66 @@ export default function GenZPage() {
               if (file) {
                 setFiles([file]);
               }
+              setPrevScreen(tool + '-editor');
               if (tool === 'meme') {
                 setScreen('meme-editor');
+              } else if (tool === 'story') {
+                setScreen('story-editor');
+              } else if (tool === 'bento') {
+                setScreen('bento-editor');
+              } else if (tool === 'videomotion') {
+                setScreen('videomotion-editor');
               } else {
-                setScreen('aset');
-                setAutoOpenStory(tool || 'story');
+                setScreen('story-editor');
               }
             }}
             profile={profile}
             accessToken={accessToken}
             userId={userId}
             onAvatarClick={() => setShowPanel(true)}
+            isGenZ={true}
+          />
+        )}
+
+
+        {screen === 'story-editor' && (
+          <StoryEditorScreen
+            file={files[0]}
+            onBack={() => setScreen('platform')}
+            onSave={(dataUrl, generatedCaption) => {
+              setFiles([{ url: dataUrl, type: 'photo', name: 'story-design.jpg' }]);
+              setCaption(generatedCaption);
+              setPrevScreen('story-editor');
+              setScreen('publish-meme');
+            }}
+            isGenZ={true}
+          />
+        )}
+
+        {screen === 'bento-editor' && (
+          <BentoEditorScreen
+            file={files[0]}
+            onBack={() => setScreen('platform')}
+            onSave={(dataUrl, generatedCaption) => {
+              setFiles([{ url: dataUrl, type: 'photo', name: 'bento-design.jpg' }]);
+              setCaption(generatedCaption);
+              setPrevScreen('bento-editor');
+              setScreen('publish-meme');
+            }}
+            isGenZ={true}
+          />
+        )}
+
+        {screen === 'videomotion-editor' && (
+          <VideoMotionEditorScreen
+            file={files[0]}
+            onBack={() => setScreen('platform')}
+            onSave={(dataUrl, generatedCaption) => {
+              setFiles([{ url: dataUrl, type: 'photo', name: 'videomotion-design.jpg' }]);
+              setCaption(generatedCaption);
+              setPrevScreen('videomotion-editor');
+              setScreen('publish-meme');
+            }}
             isGenZ={true}
           />
         )}
@@ -570,6 +624,7 @@ export default function GenZPage() {
             onSave={(dataUrl, generatedCaption) => {
               setFiles([{ url: dataUrl, type: 'photo', name: 'meme-design.jpg' }]);
               setCaption(generatedCaption);
+              setPrevScreen('meme-editor');
               setScreen('publish-meme');
             }}
             isGenZ={true}
@@ -580,7 +635,7 @@ export default function GenZPage() {
           <PublishMemeScreen
             imageUrl={files[0]?.url}
             caption={caption}
-            onBack={() => setScreen('meme-editor')}
+            onBack={() => setScreen(prevScreen || 'meme-editor')}
             profile={profile}
             isGenZ={true}
             accessToken={accessToken}
@@ -658,6 +713,7 @@ export default function GenZPage() {
             setScreen('aset'); // Gen Z langsung lompat ke aset
             setActiveNav('command');
           }}
+          isGenZ={true}
         />
       )}
       {activeNav === 'analytics' && (
@@ -669,6 +725,7 @@ export default function GenZPage() {
           onAvatarClick={() => setShowPanel(true)}
           onGoToDapur={() => setActiveNav('command')}
           triggerUpgrade={triggerUpgrade}
+          isGenZ={true}
         />
       )}
 

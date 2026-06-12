@@ -91,10 +91,10 @@ function fmtReach(n) {
 }
 
 /* ── Progress bar ── */
-const ProgressBar = ({ step, total }) => (
-  <div style={{display:'flex', gap:'4px', padding:'0 16px', marginTop:'2px'}}>
+const ProgressBar = ({ step, total, isGenZ }) => (
+  <div style={{display:'flex', gap:'4px', padding:'0 16px', marginTop:'2px', marginBottom: isGenZ ? '12px' : '0'}}>
     {Array.from({length:total}).map((_,i) => (
-      <div key={i} style={{flex:1, height:'3px', borderRadius:'2px', background: i < step ? 'var(--m-brand)' : '#E4E4EB'}} />
+      <div key={i} style={{flex:1, height:'3px', borderRadius:'2px', background: i < step ? 'var(--m-brand)' : (isGenZ ? '#2d2d39' : '#E4E4EB')}} />
     ))}
   </div>
 );
@@ -1181,7 +1181,7 @@ export default function CaptionScreen({
   const assetInfo = `${files.length > 0 ? files.length + ' foto' : 'Belum ada foto'} · ${locFull || locName}`;
 
   return (
-    <div style={{display:'flex', flexDirection:'column', height:'100dvh', overflow:'hidden', background:'var(--m-bg)'}}>
+    <div style={{display:'flex', flexDirection:'column', height:'100dvh', overflow:'hidden', background: isGenZ ? '#0e0e12' : 'var(--m-bg)'}}>
       {/* Warning Banner */}
       <QuotaWarningBanner
         isVisible={warningBanner.visible}
@@ -1199,29 +1199,31 @@ export default function CaptionScreen({
       />
 
       {/* ── Screen header ── */}
-      <div style={{background:'var(--m-bg)', paddingTop:'12px', flexShrink:0}}>
+      <div style={{background: isGenZ ? '#0e0e12' : 'var(--m-bg)', paddingTop:'12px', flexShrink:0, borderBottom: isGenZ ? '1px solid #1e1e24' : 'none'}}>
         <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 16px 10px'}}>
           <button onClick={onBack} style={{
             width:'36px', height:'36px', borderRadius:'50%',
-            background:'#fff', border:'none', cursor:'pointer',
-            display:'flex', alignItems:'center', justifyContent:'center',
-            boxShadow:'0 1px 4px rgba(0,0,0,0.10)', flexShrink:0,
+            background: isGenZ ? '#1e1e24' : '#fff',
+            border: isGenZ ? '1px solid #2d2d39' : 'none',
+            color: isGenZ ? '#fff' : 'var(--m-ink)',
+            cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center',
+            boxShadow: isGenZ ? 'none' : '0 1px 4px rgba(0,0,0,0.10)', flexShrink:0,
           }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--m-ink)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M15 18l-6-6 6-6"/>
             </svg>
           </button>
 
           <div style={{display:'flex', alignItems:'center', gap:'8px'}}>
             {PLATFORM_ICONS[platform]}
-            <span style={{fontFamily:'var(--m-font)', fontSize:'16px', fontWeight:'700', color:'var(--m-ink)'}}>
+            <span style={{fontFamily:'var(--m-font)', fontSize:'16px', fontWeight:'700', color: isGenZ ? '#fff' : 'var(--m-ink)'}}>
               Caption & Tayang
             </span>
           </div>
 
-          <span style={{fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'600', color:'var(--m-ink-sub)'}}>2/2</span>
+          <span style={{fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'600', color: isGenZ ? '#9ca3af' : 'var(--m-ink-sub)'}}>2/2</span>
         </div>
-        <ProgressBar step={2} total={2} />
+        <ProgressBar step={2} total={2} isGenZ={isGenZ} />
       </div>
 
       {/* ── Scrollable content ── */}
@@ -1234,14 +1236,19 @@ export default function CaptionScreen({
         {/* Hide Pilih Platform & Format for Gen Z as it is chosen upfront */}
 
         {/* ── Mini preview card ── */}
-        <div className="panel" style={{boxShadow:'none', border:'1px solid #E4E4EB', padding:'14px', flexShrink:0}}>
+        <div className="panel" style={{
+          boxShadow:'none',
+          border: isGenZ ? '1px solid #2d2d39' : '1px solid #E4E4EB',
+          background: isGenZ ? '#1e1e24' : '#fff',
+          padding:'14px', flexShrink:0
+        }}>
           <div style={{display:'flex', alignItems:'center', gap:'14px'}}>
             {/* Small phone thumb */}
             <div style={{
               width:'64px', flexShrink:0,
               aspectRatio:'9/16',
               background:'#111', borderRadius:'10px',
-              overflow:'hidden', border:'1.5px solid #E4E4EB',
+              overflow:'hidden', border: isGenZ ? '1.5px solid #2d2d39' : '1.5px solid #E4E4EB',
               boxShadow:'none',
             }}>
               {thumb ? (
@@ -1254,7 +1261,7 @@ export default function CaptionScreen({
                 /* No asset — light grey with image icon */
                 <div style={{
                   width:'100%', height:'100%',
-                  background:'#ECECF1',
+                  background: isGenZ ? '#141418' : '#ECECF1',
                   display:'flex', alignItems:'center', justifyContent:'center',
                 }}>
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#B0B0BC" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -1267,21 +1274,22 @@ export default function CaptionScreen({
 
             {/* Meta info */}
             <div style={{flex:1, minWidth:0}}>
-              <div style={{fontFamily:'var(--m-font)', fontSize:'10px', fontWeight:'700', color:'var(--m-ink-sub)', textTransform:'uppercase', letterSpacing:'.5px', marginBottom:'4px'}}>
+              <div style={{fontFamily:'var(--m-font)', fontSize:'10px', fontWeight:'700', color: isGenZ ? '#9ca3af' : 'var(--m-ink-sub)', textTransform:'uppercase', letterSpacing:'.5px', marginBottom:'4px'}}>
                 PREVIEW
               </div>
-              <div style={{fontFamily:'var(--m-font)', fontSize:'15px', fontWeight:'700', color:'var(--m-ink)', marginBottom:'3px'}}>
+              <div style={{fontFamily:'var(--m-font)', fontSize:'15px', fontWeight:'700', color: isGenZ ? '#fff' : 'var(--m-ink)', marginBottom:'3px'}}>
                 {platLabel}{(platform !== 'tiktok' && platform !== 'youtube') ? ' · ' + fmtLabel : ''}
               </div>
-              <div style={{fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)', marginBottom:'10px', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis'}}>
+              <div style={{fontFamily:'var(--m-font)', fontSize:'12px', color: isGenZ ? '#9ca3af' : 'var(--m-ink-sub)', marginBottom:'10px', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis'}}>
                 {assetInfo}
               </div>
               <button onClick={onUbahAset} style={{
                 display:'flex', alignItems:'center', gap:'5px',
                 padding:'6px 12px', borderRadius:'8px',
-                border:'1.5px solid #E4E4EB', background:'transparent',
+                border: isGenZ ? '1.5px solid #2d2d39' : '1.5px solid #E4E4EB',
+                background: isGenZ ? '#141418' : 'transparent',
                 cursor:'pointer', fontFamily:'var(--m-font)', fontSize:'12px',
-                fontWeight:'600', color:'var(--m-ink)',
+                fontWeight:'600', color: isGenZ ? '#fff' : 'var(--m-ink)',
               }}>
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M15 18l-6-6 6-6"/>
@@ -1294,7 +1302,12 @@ export default function CaptionScreen({
 
         {/* ── Master Persona card — shown below preview, styled like other cards ── */}
         {persona && (
-          <div className="panel" style={{boxShadow:'none', border:'1px solid #E4E4EB', padding:'14px', flexShrink:0}}>
+          <div className="panel" style={{
+            boxShadow:'none',
+            border: isGenZ ? '1px solid #2d2d39' : '1px solid #E4E4EB',
+            background: isGenZ ? '#1e1e24' : '#fff',
+            padding:'14px', flexShrink:0
+          }}>
             {/* Top row */}
             <div style={{display:'flex', alignItems:'center', gap:'8px', marginBottom:'10px'}}>
               <div style={{
@@ -1305,7 +1318,7 @@ export default function CaptionScreen({
                   <polyline points="20 6 9 17 4 12"/>
                 </svg>
               </div>
-              <span style={{fontFamily:'var(--m-font)', fontSize:'11px', fontWeight:'700', color:'var(--m-ink-sub)', letterSpacing:'0.4px', textTransform:'uppercase'}}>
+              <span style={{fontFamily:'var(--m-font)', fontSize:'11px', fontWeight:'700', color: isGenZ ? '#9ca3af' : 'var(--m-ink-sub)', letterSpacing:'0.4px', textTransform:'uppercase'}}>
                 Master Persona Terdeteksi
               </span>
               <svg viewBox="0 0 24 24" fill="none" stroke="var(--m-brand)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{width:'13px', height:'13px', marginLeft:'auto', flexShrink:0}}>
@@ -1313,29 +1326,29 @@ export default function CaptionScreen({
               </svg>
             </div>
             {/* Persona name */}
-            <div style={{fontFamily:'var(--m-font)', fontSize:'17px', fontWeight:'800', color:'var(--m-ink)', marginBottom:'8px', letterSpacing:'-0.02em'}}>
+            <div style={{fontFamily:'var(--m-font)', fontSize:'17px', fontWeight:'800', color: isGenZ ? '#fff' : 'var(--m-ink)', marginBottom:'8px', letterSpacing:'-0.02em'}}>
               {persona.name}
             </div>
             {/* Target & age chips */}
             <div style={{display:'flex', flexWrap:'wrap', gap:'6px'}}>
               <span style={{
-                fontFamily:'var(--m-font)', fontSize:'11px', fontWeight:'600', color:'var(--m-ink)',
-                background:'#F0F0F5', padding:'3px 10px', borderRadius:'99px',
-                border:'1px solid #E4E4EB',
+                fontFamily:'var(--m-font)', fontSize:'11px', fontWeight:'600', color: isGenZ ? '#fff' : 'var(--m-ink)',
+                background: isGenZ ? '#141418' : '#F0F0F5', padding:'3px 10px', borderRadius:'99px',
+                border: isGenZ ? '1px solid #2d2d39' : '1px solid #E4E4EB',
               }}>
                 {persona.target}
               </span>
               <span style={{
-                fontFamily:'var(--m-font)', fontSize:'11px', fontWeight:'600', color:'var(--m-ink-sub)',
-                background:'#F7F7FA', padding:'3px 10px', borderRadius:'99px',
-                border:'1px solid #E4E4EB',
+                fontFamily:'var(--m-font)', fontSize:'11px', fontWeight:'600', color: isGenZ ? '#9ca3af' : 'var(--m-ink-sub)',
+                background: isGenZ ? '#141418' : '#F7F7FA', padding:'3px 10px', borderRadius:'99px',
+                border: isGenZ ? '1px solid #2d2d39' : '1px solid #E4E4EB',
               }}>
                 {persona.age || '18–45'} · {persona.gender || 'Mixed'}
               </span>
             </div>
             {/* Footer note */}
-            <div style={{marginTop:'10px', paddingTop:'10px', borderTop:'1px solid #F0F0F5'}}>
-              <span style={{fontFamily:'var(--m-font)', fontSize:'11px', color:'var(--m-ink-sub)'}}>
+            <div style={{marginTop:'10px', paddingTop:'10px', borderTop: isGenZ ? '1px solid #2d2d39' : '1px solid #F0F0F5'}}>
+              <span style={{fontFamily:'var(--m-font)', fontSize:'11px', color: isGenZ ? '#9ca3af' : 'var(--m-ink-sub)'}}>
                 Digunakan untuk mengoptimalkan targeting iklanmu
               </span>
             </div>
@@ -1343,20 +1356,25 @@ export default function CaptionScreen({
         )}
 
         {/* ── Caption card ── */}
-        <div className="panel" style={{boxShadow:'none', border:'1px solid #E4E4EB', padding:'14px', flexShrink:0}}>
+        <div className="panel" style={{
+          boxShadow:'none',
+          border: isGenZ ? '1px solid #2d2d39' : '1px solid #E4E4EB',
+          background: isGenZ ? '#1e1e24' : '#fff',
+          padding:'14px', flexShrink:0
+        }}>
           {/* Header row */}
           <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'12px'}}>
             <div style={{display:'flex', alignItems:'center', gap:'8px'}}>
               {/* Platform icon box */}
               <div style={{
                 width:'30px', height:'30px', borderRadius:'8px',
-                background:'#F4F4F7', display:'flex',
+                background: isGenZ ? '#141418' : '#F4F4F7', display:'flex',
                 alignItems:'center', justifyContent:'center', flexShrink:0,
               }}>
                 {PLATFORM_ICONS_SM[platform]}
               </div>
               {/* Title */}
-              <span style={{fontFamily:'var(--m-font)', fontSize:'14px', fontWeight:'700', color:'var(--m-ink)'}}>
+              <span style={{fontFamily:'var(--m-font)', fontSize:'14px', fontWeight:'700', color: isGenZ ? '#fff' : 'var(--m-ink)'}}>
                 Caption {platLabel}
               </span>
             </div>
@@ -1372,7 +1390,9 @@ export default function CaptionScreen({
               onChange={e => setCaption(e.target.value)}
               style={{
                 width: '100%', height: '140px', padding: '12px', borderRadius: '12px',
-                background: '#F5F5F7', border: '1.5px solid #E4E4EB', color: 'var(--m-ink)',
+                background: isGenZ ? '#141418' : '#F5F5F7',
+                border: isGenZ ? '1.5px solid #2d2d39' : '1.5px solid #E4E4EB',
+                color: isGenZ ? '#fff' : 'var(--m-ink)',
                 fontFamily: 'var(--m-font)', fontSize: '13px', lineHeight: '1.5',
                 outline: 'none', resize: 'none'
               }}
@@ -1498,22 +1518,22 @@ export default function CaptionScreen({
       {/* ── Bottom bar: Estimasi + Jadwalkan + Tayangkan ── */}
       <div style={{
         flexShrink:0,
-        background:'#fff',
-        borderTop:'1px solid #ECECF1',
+        background: isGenZ ? '#0e0e12' : '#fff',
+        borderTop: isGenZ ? '1px solid #1e1e24' : '1px solid #ECECF1',
         padding:'12px 16px',
         paddingBottom:'calc(12px + 78px + env(safe-area-inset-bottom))',
         display:'flex', alignItems:'center', justifyContent:'space-between',
       }}>
         {/* Left: Info */}
         <div style={{display:'flex', flexDirection:'column', flex:1, paddingRight:'8px', minWidth:0}}>
-          <div style={{fontFamily:'var(--m-font)', fontSize:'10px', fontWeight:'700', color:'var(--m-ink-sub)', textTransform:'uppercase', letterSpacing:'0.5px'}}>
+          <div style={{fontFamily:'var(--m-font)', fontSize:'10px', fontWeight:'700', color: isGenZ ? '#9ca3af' : 'var(--m-ink-sub)', textTransform:'uppercase', letterSpacing:'0.5px'}}>
             Estimasi Jangkauan <span style={{margin:'0 2px'}}>•</span> Radius {radius.toFixed(1)} KM
           </div>
           <div style={{display:'flex', alignItems:'center', gap:'4px', marginTop:'2px', minWidth:0}}>
-            <span style={{fontFamily:'var(--m-font)', fontSize:'16px', fontWeight:'800', color:'var(--m-brand)', flexShrink:0}}>
+            <span style={{fontFamily:'var(--m-font)', fontSize:'16px', fontWeight:'800', color: isGenZ ? '#a78bfa' : 'var(--m-brand)', flexShrink:0}}>
               {reach ? reachText : '0'}
             </span>
-            <span style={{fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'500', color:'var(--m-ink-sub)', display:'flex', alignItems:'center', flex:1, minWidth:0}}>
+            <span style={{fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'500', color: isGenZ ? '#9ca3af' : 'var(--m-ink-sub)', display:'flex', alignItems:'center', flex:1, minWidth:0}}>
               {reach ? (
                 <>
                   {localOn && <span style={{whiteSpace:'nowrap', flexShrink:0}}>warga&nbsp;</span>}
@@ -1550,7 +1570,7 @@ export default function CaptionScreen({
             return (
               <>
                 {currentQuota !== null && (
-                  <div style={{ fontFamily: 'var(--m-font)', fontSize: '10px', fontWeight: '800', color: isOutOfQuota ? '#EF4444' : 'var(--m-ink-sub)' }}>
+                  <div style={{ fontFamily: 'var(--m-font)', fontSize: '10px', fontWeight: '800', color: isOutOfQuota ? '#EF4444' : (isGenZ ? '#9ca3af' : 'var(--m-ink-sub)') }}>
                     SISA KUOTA: {currentQuota}/{quotaMax}
                   </div>
                 )}
@@ -1561,8 +1581,9 @@ export default function CaptionScreen({
                     disabled={posting || (!isOutOfQuota && !caption)}
                     style={{
                       width:'40px', height:'40px', borderRadius:'12px', flexShrink:0,
-                      background: '#fff',
-                      color:'#1A1A1A', border:'1.5px solid #E4E4EB',
+                      background: isGenZ ? '#1e1e24' : '#fff',
+                      color: isGenZ ? '#fff' : '#1A1A1A',
+                      border: isGenZ ? '1.5px solid #2d2d39' : '1.5px solid #E4E4EB',
                       cursor: (posting || (!isOutOfQuota && !caption)) ? 'not-allowed' : 'pointer',
                       display:'flex', alignItems:'center', justifyContent:'center',
                       transition:'all 0.2s',
@@ -1586,7 +1607,7 @@ export default function CaptionScreen({
                       background: posting ? '#9CA3AF'
                         : isOutOfQuota ? '#7C3AED'
                         : !caption ? '#9CA3AF'
-                        : '#1A1A1A',
+                        : (isGenZ ? 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)' : '#1A1A1A'),
                       color:'#fff', border:'none',
                       cursor: (posting || (!isOutOfQuota && !caption)) ? 'not-allowed' : 'pointer',
                       fontFamily:'var(--m-font)', fontSize:'14px', fontWeight:'700',

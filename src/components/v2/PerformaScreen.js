@@ -10,7 +10,7 @@ import {
   callSilarisCompetitor, anParseFollowers, anEstCompER, anExtractHandle,
 } from '@/lib/analyticsEngine';
 
-export default function PerformaScreen({ sessionId, accessToken, profile, userId: userIdProp, onAvatarClick, onGoToDapur, triggerUpgrade }) {
+export default function PerformaScreen({ sessionId, accessToken, profile, userId: userIdProp, onAvatarClick, onGoToDapur, triggerUpgrade, isGenZ }) {
   // userId dari JWT (paling akurat) — fallback ke profile.id
   const authUserId = userIdProp || profile?.id || null;
   const [activeTab, setActiveTab]       = useState('Insight');
@@ -228,13 +228,99 @@ export default function PerformaScreen({ sessionId, accessToken, profile, userId
   const postFreq = agg ? anPostingFreq(agg) : null;
 
   return (
-    <div style={{ display:'flex', flexDirection:'column', flex:1, overflow:'hidden', background:'var(--m-bg)' }}>
-      <MobileHeader
-        userName={profile?.full_name || profile?.business_name || 'Pengguna'}
-        userInitials={(profile?.full_name || profile?.business_name || 'P').trim().split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2)}
-        isPro={profile?.selected_plan === 'pro'}
-        onAvatarClick={onAvatarClick}
-      />
+    <div className={isGenZ ? 'genz-dark-root' : ''} style={{ display:'flex', flexDirection:'column', flex:1, overflow:'hidden', background: isGenZ ? '#0e0e12' : 'var(--m-bg)' }}>
+      {isGenZ && (
+        <style>{`
+          .genz-dark-root {
+            background: #0e0e12 !important;
+          }
+          .genz-dark-root h1, .genz-dark-root h2, .genz-dark-root h3, .genz-dark-root h4 {
+            color: #ffffff !important;
+          }
+          .genz-dark-root p {
+            color: #9ca3af !important;
+          }
+          .genz-dark-root div[style*="background:#fff"], 
+          .genz-dark-root div[style*="background: #fff"],
+          .genz-dark-root div[style*="background: rgb(255, 255, 255)"],
+          .genz-dark-root div[style*="background:white"],
+          .genz-dark-root div[style*="background: white"] {
+            background: #1e1e24 !important;
+            border: 1px solid #2d2d39 !important;
+          }
+          .genz-dark-root div[style*="border:1px solid #E4E4EB"], 
+          .genz-dark-root div[style*="border: 1px solid #E4E4EB"] {
+            border: 1px solid #2d2d39 !important;
+          }
+          .genz-dark-root button[style*="background:#fff"], 
+          .genz-dark-root button[style*="background: #fff"] {
+            background: #1e1e24 !important;
+            border: 1px solid #2d2d39 !important;
+            color: #ffffff !important;
+          }
+          .genz-dark-root div[style*="color:var(--m-ink)"], 
+          .genz-dark-root span[style*="color:var(--m-ink)"],
+          .genz-dark-root div[style*="color: var(--m-ink)"], 
+          .genz-dark-root span[style*="color: var(--m-ink)"] {
+            color: #ffffff !important;
+          }
+          .genz-dark-root div[style*="color:var(--m-ink-sub)"], 
+          .genz-dark-root span[style*="color:var(--m-ink-sub)"],
+          .genz-dark-root div[style*="color: var(--m-ink-sub)"], 
+          .genz-dark-root span[style*="color: var(--m-ink-sub)"] {
+            color: #9ca3af !important;
+          }
+          .genz-dark-root div[style*="background:#F9F9FA"],
+          .genz-dark-root div[style*="background: #F9F9FA"] {
+            background: #141418 !important;
+            border: 1px solid #2d2d39 !important;
+          }
+          .genz-dark-root div[style*="background:#F5F5F7"],
+          .genz-dark-root div[style*="background: #F5F5F7"] {
+            background: #1e1e24 !important;
+            border: 1px solid #2d2d39 !important;
+          }
+          .genz-dark-root button[style*="background:transparent"] {
+            color: #9ca3af !important;
+          }
+        `}</style>
+      )}
+
+      {isGenZ ? (
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '14px 16px', background: '#0e0e12', borderBottom: '1px solid #1e1e24',
+          flexShrink: 0
+        }}>
+          <button style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="18" x2="21" y2="18" />
+            </svg>
+          </button>
+          <span style={{ fontFamily: 'var(--m-font, sans-serif)', fontSize: '18px', fontWeight: '800', color: '#fff' }}>
+            Performa Iklan
+          </span>
+          <button onClick={onAvatarClick} style={{
+            background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+            width: '32px', height: '32px', borderRadius: '50%', overflow: 'hidden',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            backgroundColor: '#1e1e24', color: '#fff', fontWeight: 'bold', fontSize: '13px'
+          }}>
+            {profile?.avatar_url ? (
+              <img src={profile.avatar_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+              (profile?.full_name || profile?.business_name || 'P').trim().split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
+            )}
+          </button>
+        </div>
+      ) : (
+        <MobileHeader
+          userName={profile?.full_name || profile?.business_name || 'Pengguna'}
+          userInitials={(profile?.full_name || profile?.business_name || 'P').trim().split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2)}
+          isPro={profile?.selected_plan === 'pro'}
+          onAvatarClick={onAvatarClick}
+        />
+      )}
 
       <main style={{ flex:1, overflowY:'auto', padding:'0 16px', paddingBottom:'calc(80px + env(safe-area-inset-bottom))' }}>
 
@@ -262,12 +348,12 @@ export default function PerformaScreen({ sessionId, accessToken, profile, userId
         </div>
 
         {/* Tabs */}
-        <div style={{ position:'sticky', top:0, zIndex:190, background:'var(--m-bg)', paddingTop:'12px', paddingBottom:'16px', margin:'0 -16px', paddingLeft:'16px', paddingRight:'16px' }}>
-          <div style={{ display:'flex', alignItems:'center', background:'#F5F5F7', borderRadius:'999px', padding:'4px', overflowX:'auto', scrollbarWidth:'none', gap:'4px' }}>
+        <div style={{ position:'sticky', top:0, zIndex:190, background: isGenZ ? '#0e0e12' : 'var(--m-bg)', paddingTop:'12px', paddingBottom:'16px', margin:'0 -16px', paddingLeft:'16px', paddingRight:'16px' }}>
+          <div style={{ display:'flex', alignItems:'center', background: isGenZ ? '#1e1e24' : '#F5F5F7', borderRadius:'999px', padding:'4px', overflowX:'auto', scrollbarWidth:'none', gap:'4px', border: isGenZ ? '1px solid #2d2d39' : 'none' }}>
             {tabs.map(tab => {
               const active = tab === activeTab;
               return (
-                <button key={tab} onClick={() => setActiveTab(tab)} style={{ padding:'8px 16px', borderRadius:'999px', border:'none', flexShrink:0, background: active ? 'var(--m-brand)' : '#fff', color: active ? '#fff' : 'var(--m-ink-sub)', fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'700', cursor:'pointer', transition:'all 0.2s' }}>
+                <button key={tab} onClick={() => setActiveTab(tab)} style={{ padding:'8px 16px', borderRadius:'999px', border:'none', flexShrink:0, background: active ? (isGenZ ? '#a78bfa' : 'var(--m-brand)') : 'transparent', color: active ? (isGenZ ? '#000' : '#fff') : (isGenZ ? '#9ca3af' : 'var(--m-ink-sub)'), fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'700', cursor:'pointer', transition:'all 0.2s' }}>
                   {tab}
                 </button>
               );

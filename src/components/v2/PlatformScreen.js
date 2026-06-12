@@ -360,14 +360,14 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext, onS
   return (
     <div style={{
       display:'flex', flexDirection:'column', flex:1, overflow:'hidden', 
-      background: isGenZ ? '#0F172A' : 'var(--m-bg)'
+      background: isGenZ ? '#0e0e12' : 'var(--m-bg)'
     }}>
 
       {/* ── Header ── */}
       {isGenZ ? (
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '14px 16px', background: '#0F172A', borderBottom: '1px solid #1E293B',
+          padding: '14px 16px', background: '#0e0e12', borderBottom: '1px solid #1e1e24',
           flexShrink: 0
         }}>
           {/* Hamburger menu icon */}
@@ -387,7 +387,7 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext, onS
             background: 'none', border: 'none', cursor: 'pointer', padding: 0,
             width: '32px', height: '32px', borderRadius: '50%', overflow: 'hidden',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            backgroundColor: '#1E293B', color: '#fff', fontWeight: 'bold', fontSize: '13px'
+            backgroundColor: '#1e1e24', color: '#fff', fontWeight: 'bold', fontSize: '13px'
           }}>
             {profile?.avatar_url ? (
               <img src={profile.avatar_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -427,7 +427,7 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext, onS
                 handleToolClick('meme');
               }}
               style={{
-                background:'#1E293B', border:'1px solid #334155', borderRadius:'16px',
+                background:'#1e1e24', border:'1px solid #2d2d39', borderRadius:'16px',
                 padding:'20px 16px', display:'flex', flexDirection:'column', alignItems:'center',
                 gap:'12px', cursor:'pointer', textAlign:'center', transition:'all 0.2s', outline:'none'
               }}
@@ -456,7 +456,7 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext, onS
                 handleToolClick('story');
               }}
               style={{
-                background:'#1E293B', border:'1px solid #334155', borderRadius:'16px',
+                background:'#1e1e24', border:'1px solid #2d2d39', borderRadius:'16px',
                 padding:'20px 16px', display:'flex', flexDirection:'column', alignItems:'center',
                 gap:'12px', cursor:'pointer', textAlign:'center', transition:'all 0.2s', outline:'none'
               }}
@@ -487,7 +487,7 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext, onS
                 handleToolClick('bento');
               }}
               style={{
-                background:'#1E293B', border:'1px solid #334155', borderRadius:'16px',
+                background:'#1e1e24', border:'1px solid #2d2d39', borderRadius:'16px',
                 padding:'20px 16px', display:'flex', flexDirection:'column', alignItems:'center',
                 gap:'12px', cursor:'pointer', textAlign:'center', transition:'all 0.2s', outline:'none'
               }}
@@ -515,7 +515,7 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext, onS
                 handleToolClick('videomotion');
               }}
               style={{
-                background:'#1E293B', border:'1px solid #334155', borderRadius:'16px',
+                background:'#1e1e24', border:'1px solid #2d2d39', borderRadius:'16px',
                 padding:'20px 16px', display:'flex', flexDirection:'column', alignItems:'center',
                 gap:'12px', cursor:'pointer', textAlign:'center', transition:'all 0.2s', outline:'none'
               }}
@@ -539,7 +539,7 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext, onS
 
           {/* Akun Terhubung */}
           <div style={{
-            background:'#1E293B', border:'1px solid #334155', borderRadius:'16px', padding:'20px 16px'
+            background:'#1e1e24', border:'1px solid #2d2d39', borderRadius:'16px', padding:'20px 16px'
           }}>
             <div style={{fontFamily:'var(--m-font)', fontSize:'15px', fontWeight:'800', color:'#fff', marginBottom:'16px'}}>
               Akun Terhubung
@@ -1121,7 +1121,7 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext, onS
               <button
                 onClick={() => cameraInputRef.current?.click()}
                 style={{
-                  flex: 1, background: '#1e293b', border: '1px solid #334155', borderRadius: '16px',
+                  flex: 1, background: '#1e1e24', border: '1px solid #2d2d39', borderRadius: '16px',
                   padding: '20px 16px', display: 'flex', flexDirection: 'column', alignItems: 'center',
                   gap: '12px', cursor: 'pointer', textAlign: 'center', outline: 'none'
                 }}
@@ -1145,7 +1145,7 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext, onS
               <button
                 onClick={() => fileInputRef.current?.click()}
                 style={{
-                  flex: 1, background: '#1e293b', border: '1px solid #334155', borderRadius: '16px',
+                  flex: 1, background: '#1e1e24', border: '1px solid #2d2d39', borderRadius: '16px',
                   padding: '20px 16px', display: 'flex', flexDirection: 'column', alignItems: 'center',
                   gap: '12px', cursor: 'pointer', textAlign: 'center', outline: 'none'
                 }}

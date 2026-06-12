@@ -30,7 +30,7 @@ function PlatIcon({ plat }) {
 /* ════════════════════════════════════════
    Main Component
    ════════════════════════════════════════ */
-export default function KelolaScreen({ sessionId, accessToken, profile, onAvatarClick, onNavigateToDapur }) {
+export default function KelolaScreen({ sessionId, accessToken, profile, onAvatarClick, onNavigateToDapur, isGenZ }) {
   const [campaigns,   setCampaigns]   = useState([]);
   const [loading,     setLoading]     = useState(true);
   const [activeTab,   setActiveTab]   = useState('Semua');
@@ -46,6 +46,70 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
   const [showPlatformSheet, setShowPlatformSheet] = useState(false);
   const [animatePlatformSheet, setAnimatePlatformSheet] = useState(false);
   const lastScrollY = useRef(0);
+  const [mediaErrors, setMediaErrors] = useState({});
+  const repairingCampaignsRef = useRef(new Set());
+  const attemptedRepairsRef = useRef(new Set());
+
+  const isVideoUrl = (url) => {
+    if (!url) return false;
+    return url.toLowerCase().includes('.mp4') || 
+           url.toLowerCase().includes('.mov') || 
+           url.toLowerCase().includes('.webm') || 
+           url.startsWith('data:video');
+  };
+
+  const handleMediaError = useCallback(async (campId) => {
+    if (repairingCampaignsRef.current.has(campId) || attemptedRepairsRef.current.has(campId)) return;
+    repairingCampaignsRef.current.add(campId);
+    attemptedRepairsRef.current.add(campId);
+
+    try {
+      const camp = campaigns.find(c => c.id === campId);
+      if (!camp) return;
+
+      const accounts = (() => {
+        try { return JSON.parse(localStorage.getItem('radar_social_accounts') || '[]'); } catch { return []; }
+      })();
+      const platApiMap = { ig: 'instagram', meta: 'facebook', tiktok: 'tiktok', youtube: 'youtube' };
+      const sp = platApiMap[camp.platforms[0]] || camp.platforms[0];
+      const acc = accounts.find(a => a.platform === sp);
+      if (!acc?.id) return;
+
+      const posts = await fetchAnalytics(acc.id, accessToken);
+      const post = matchPost(posts, camp);
+      if (post) {
+        const feedThumb = post.thumbnail_url || post.media_url || post.thumb_url
+          || post.media?.[0]?.url || null;
+        
+        if (feedThumb && feedThumb !== camp.thumbUrl) {
+          console.log('[KelolaScreen] Auto-repaired thumbnail for campaign:', campId, feedThumb);
+          setCampaigns(prev => prev.map(c => c.id === campId ? { ...c, thumbUrl: feedThumb } : c));
+          setMediaErrors(prev => ({ ...prev, [campId]: false }));
+          if (selectedCamp && selectedCamp.id === campId) {
+            setSelectedCamp(prev => ({ ...prev, thumbUrl: feedThumb }));
+          }
+
+          const uid = profile?.id;
+          if (uid && accessToken) {
+            await fetch(
+              `${SUPABASE_URL}/rest/v1/campaigns?id=eq.${campId}&user_id=eq.${uid}`,
+              {
+                method: 'PATCH',
+                headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ thumb_url: feedThumb }),
+              }
+            ).catch(() => {});
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('[KelolaScreen] Auto-repair failed for campaign:', campId, e);
+    } finally {
+      setTimeout(() => {
+        repairingCampaignsRef.current.delete(campId);
+      }, 5000);
+    }
+  }, [campaigns, selectedCamp, accessToken, profile]);
 
   const handleOpenPlatformSheet = () => {
     const accounts = (() => {
@@ -236,30 +300,30 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
     const MetricCard = ({ label, value, sub, accent }) => {
       const isDisabled = c.status === 'scheduled';
       return (
-        <div style={{ background:'#fff', borderRadius:'16px', padding:'16px', border:'1px solid #E4E4EB', opacity: isDisabled ? 0.6 : 1 }}>
-          <div style={{ fontFamily:'var(--m-font)', fontSize:'10px', fontWeight:'800', color:'var(--m-ink-sub)', letterSpacing:'0.5px', marginBottom:'4px' }}>{label}</div>
-          <div style={{ fontFamily:'var(--m-font)', fontSize:'22px', fontWeight:'800', color: accent || 'var(--m-ink)', marginBottom:'4px' }}>
+        <div style={{ background: isGenZ ? '#1e1e24' : '#fff', borderRadius:'16px', padding:'16px', border: isGenZ ? '1px solid #2d2d39' : '1px solid #E4E4EB', opacity: isDisabled ? 0.6 : 1 }}>
+          <div style={{ fontFamily:'var(--m-font)', fontSize:'10px', fontWeight:'800', color: isGenZ ? '#9ca3af' : 'var(--m-ink-sub)', letterSpacing:'0.5px', marginBottom:'4px' }}>{label}</div>
+          <div style={{ fontFamily:'var(--m-font)', fontSize:'22px', fontWeight:'800', color: accent || (isGenZ ? '#fff' : 'var(--m-ink)'), marginBottom:'4px' }}>
             {isDisabled ? '0' : loadingAn ? '…' : (value != null ? fmtViews(value) : '—')}
           </div>
-          {sub && <div style={{ fontFamily:'var(--m-font)', fontSize:'11px', color:'var(--m-ink-sub)' }}>{sub}</div>}
+          {sub && <div style={{ fontFamily:'var(--m-font)', fontSize:'11px', color: isGenZ ? '#9ca3af' : 'var(--m-ink-sub)' }}>{sub}</div>}
         </div>
       );
     };
 
     return (
-      <div style={{ position:'fixed', top:0, left:0, right:0, bottom:0, background:'#F9F9FA', zIndex:9999, display:'flex', flexDirection:'column', overflow:'hidden' }}>
+      <div style={{ position:'fixed', top:0, left:0, right:0, bottom:0, background: isGenZ ? '#0e0e12' : '#F9F9FA', zIndex:9999, display:'flex', flexDirection:'column', overflow:'hidden' }}>
         {/* Header */}
-        <header style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'16px', background:'#F9F9FA' }}>
-          <button onClick={() => setSelectedCamp(null)} style={{ width:'40px', height:'40px', borderRadius:'50%', background:'#fff', border:'1px solid #ECECF1', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', boxShadow:'0 2px 8px rgba(0,0,0,0.04)' }}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--m-ink)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        <header style={{ display:'flex', alignItems:'center', justifycontent:'space-between', padding:'16px', background: isGenZ ? '#0e0e12' : '#F9F9FA', borderBottom: isGenZ ? '1px solid #1e1e24' : 'none' }}>
+          <button onClick={() => setSelectedCamp(null)} style={{ width:'40px', height:'40px', borderRadius:'50%', background: isGenZ ? '#1e1e24' : '#fff', border: isGenZ ? '1px solid #2d2d39' : '1px solid #ECECF1', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', color: isGenZ ? '#fff' : 'currentColor' }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
           </button>
-          <div style={{ fontFamily:'var(--m-font)', fontSize:'16px', fontWeight:'800', color:'var(--m-ink)' }}>Detail Iklan</div>
+          <div style={{ fontFamily:'var(--m-font)', fontSize:'16px', fontWeight:'800', color: isGenZ ? '#fff' : 'var(--m-ink)' }}>Detail Iklan</div>
           <button
             onClick={() => handleArchive(c)}
-            style={{ width:'40px', height:'40px', borderRadius:'50%', background:'#fff', border:'1px solid #ECECF1', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', boxShadow:'0 2px 8px rgba(0,0,0,0.04)' }}
+            style={{ width:'40px', height:'40px', borderRadius:'50%', background: isGenZ ? '#1e1e24' : '#fff', border: isGenZ ? '1px solid #2d2d39' : '1px solid #ECECF1', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', color: isGenZ ? '#fff' : 'currentColor' }}
             title="Arsipkan"
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--m-ink)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
           </button>
         </header>
 
@@ -267,7 +331,7 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
         <main onScroll={handleDetailScroll} style={{ flex:1, overflowY:'auto', padding:'0 16px 100px' }}>
 
           {/* Campaign Card */}
-          <div style={{ background:'#fff', border:'1px solid #E4E4EB', borderRadius:'20px', padding:'16px', marginBottom:'16px' }}>
+          <div style={{ background: isGenZ ? '#1e1e24' : '#fff', border: isGenZ ? '1px solid #2d2d39' : '1px solid #E4E4EB', borderRadius:'20px', padding:'16px', marginBottom:'16px' }}>
             <div style={{ display:'flex', alignItems:'flex-start', gap:'10px', marginBottom:'12px' }}>
               {/* Avatar akun IG — sama seperti desktop (avatar_url dari social account) */}
               <div style={{ position:'relative', flexShrink:0 }}>
@@ -287,18 +351,18 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
               <div style={{ flex:1, minWidth:0 }}>
                 {/* Judul + status badge */}
                 <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:'8px', marginBottom:'2px' }}>
-                  <div style={{ fontFamily:'var(--m-font)', fontSize:'15px', fontWeight:'800', color:'var(--m-ink)', lineHeight:'1.3', overflow:'hidden', display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical' }}>{c.name}</div>
-                  <div style={{ background: c.status === 'running' ? '#E6F4EA' : c.status === 'scheduled' ? '#F3E8FF' : '#FEF3C7', padding:'4px 10px', borderRadius:'999px', display:'flex', alignItems:'center', gap:'5px', flexShrink:0 }}>
+                  <div style={{ fontFamily:'var(--m-font)', fontSize:'15px', fontWeight:'800', color: isGenZ ? '#fff' : 'var(--m-ink)', lineHeight:'1.3', overflow:'hidden', display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical' }}>{c.name}</div>
+                  <div style={{ background: c.status === 'running' ? (isGenZ ? 'rgba(22, 163, 74, 0.15)' : '#E6F4EA') : c.status === 'scheduled' ? (isGenZ ? 'rgba(121, 26, 219, 0.15)' : '#F3E8FF') : (isGenZ ? 'rgba(217, 119, 6, 0.15)' : '#FEF3C7'), padding:'4px 10px', borderRadius:'999px', display:'flex', alignItems:'center', gap:'5px', flexShrink:0 }}>
                     <div style={{ width:'6px', height:'6px', borderRadius:'50%', background: statusColor }} />
                     <span style={{ fontFamily:'var(--m-font)', fontSize:'11px', fontWeight:'700', color: statusColor }}>{statusLbl}</span>
                   </div>
                 </div>
                 {/* Username akun + platform · format */}
                 
-                <div style={{ fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)', marginBottom:'2px' }}>
+                <div style={{ fontFamily:'var(--m-font)', fontSize:'12px', color: isGenZ ? '#9ca3af' : 'var(--m-ink-sub)', marginBottom:'2px' }}>
                   {c.username ? `@${c.username}` : platformLabel(c.platforms)} · {platformLabel(c.platforms)} · {(c.format || 'POST').toUpperCase()}
                 </div>
-                <div style={{ fontFamily:'var(--m-font)', fontSize:'12px', color:'var(--m-ink-sub)', marginBottom:'4px' }}>
+                <div style={{ fontFamily:'var(--m-font)', fontSize:'12px', color: isGenZ ? '#9ca3af' : 'var(--m-ink-sub)', marginBottom:'4px' }}>
                   {c.status === 'scheduled' ? (
                     <span style={{ display:'inline-flex', alignItems:'center', gap:'4px', color:'#791ADB', fontWeight:'700' }}>
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -331,10 +395,46 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
 
             {/* Thumbnail */}
             <div style={{ width:'100%', aspectRatio:'16/9', borderRadius:'12px', overflow:'hidden', background: '#E5E7EB', position:'relative' }}>
-              {c.thumbUrl
-                ? <img src={c.thumbUrl} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} onError={e => { e.target.style.display='none'; }} />
-                : <div style={{ position:'absolute', inset:0, animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite', background: '#D1D5DB' }} />
-              }
+              {c.thumbUrl && !mediaErrors[c.id] ? (
+                isVideoUrl(c.thumbUrl) ? (
+                  <video
+                    src={c.thumbUrl}
+                    style={{ width:'100%', height:'100%', objectFit:'cover' }}
+                    muted
+                    playsInline
+                    autoPlay
+                    loop
+                    onError={() => {
+                      setMediaErrors(prev => ({ ...prev, [c.id]: true }));
+                      handleMediaError(c.id);
+                    }}
+                  />
+                ) : (
+                  <img
+                    src={c.thumbUrl}
+                    alt=""
+                    style={{ width:'100%', height:'100%', objectFit:'cover' }}
+                    onError={() => {
+                      setMediaErrors(prev => ({ ...prev, [c.id]: true }));
+                      handleMediaError(c.id);
+                    }}
+                  />
+                )
+              ) : c.thumbUrl && mediaErrors[c.id] ? (
+                c.hasVideo ? (
+                  <div style={{ position:'absolute', inset:0, background: '#1a1a2e', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'6px' }}>
+                    <span style={{ fontSize:'28px', color:'#fff' }}>▶</span>
+                    <span style={{ color:'#fff', fontSize:'11px', fontWeight:'700', letterSpacing:'0.05em' }}>VIDEO</span>
+                  </div>
+                ) : (
+                  <div style={{ position:'absolute', inset:0, background: '#f3f4f6', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'6px' }}>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                    <span style={{ color:'#9ca3af', fontSize:'11px', fontWeight:'600' }}>Foto tidak tersedia</span>
+                  </div>
+                )
+              ) : (
+                <div style={{ position:'absolute', inset:0, animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite', background: '#D1D5DB' }} />
+              )}
               <div style={{ position:'absolute', bottom:'10px', left:'10px', background:'rgba(0,0,0,0.5)', color:'#fff', padding:'4px 8px', borderRadius:'6px', display:'flex', alignItems:'center', gap:'4px' }}>
                 {(c.hasVideo)
                   ? <svg width="12" height="12" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"/></svg>
@@ -395,28 +495,57 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
 
   /* ════════ LIST VIEW ════════ */
   return (
-    <div style={{ display:'flex', flexDirection:'column', flex:1, overflow:'hidden', background:'var(--m-bg)' }}>
-      <MobileHeader
-        userName={profile?.full_name || profile?.business_name || 'Pengguna'}
-        userInitials={(profile?.full_name || profile?.business_name || 'P').trim().split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2)}
-        isPro={profile?.selected_plan === 'pro'}
-        onAvatarClick={onAvatarClick}
-      />
+    <div style={{ display:'flex', flexDirection:'column', flex:1, overflow:'hidden', background: isGenZ ? '#0e0e12' : 'var(--m-bg)' }}>
+      {isGenZ ? (
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '14px 16px', background: '#0e0e12', borderBottom: '1px solid #1e1e24',
+          flexShrink: 0
+        }}>
+          <button style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="18" x2="21" y2="18" />
+            </svg>
+          </button>
+          <span style={{ fontFamily: 'var(--m-font, sans-serif)', fontSize: '18px', fontWeight: '800', color: '#fff' }}>
+            Kelola Iklan
+          </span>
+          <button onClick={onAvatarClick} style={{
+            background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+            width: '32px', height: '32px', borderRadius: '50%', overflow: 'hidden',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            backgroundColor: '#1e1e24', color: '#fff', fontWeight: 'bold', fontSize: '13px'
+          }}>
+            {profile?.avatar_url ? (
+              <img src={profile.avatar_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+              (profile?.full_name || profile?.business_name || 'P').trim().split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
+            )}
+          </button>
+        </div>
+      ) : (
+        <MobileHeader
+          userName={profile?.full_name || profile?.business_name || 'Pengguna'}
+          userInitials={(profile?.full_name || profile?.business_name || 'P').trim().split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2)}
+          isPro={profile?.selected_plan === 'pro'}
+          onAvatarClick={onAvatarClick}
+        />
+      )}
 
       <main style={{ flex:1, overflowY:'auto', padding:'0 16px', paddingBottom:'calc(100px + env(safe-area-inset-bottom))' }}>
 
         <div style={{ padding:'24px 0 20px' }}>
-          <h1 style={{ fontFamily:'var(--m-font)', fontSize:'28px', fontWeight:'800', color:'var(--m-ink)', lineHeight:'1.2', marginBottom:'6px' }}>Kelola Iklan</h1>
-          <p style={{ fontFamily:'var(--m-font)', fontSize:'14px', color:'var(--m-ink-sub)', lineHeight:'1.5' }}>Pantau performa konten yang sudah terposting</p>
+          <h1 style={{ fontFamily:'var(--m-font)', fontSize:'28px', fontWeight:'800', color: isGenZ ? '#fff' : 'var(--m-ink)', lineHeight:'1.2', marginBottom:'6px' }}>Kelola Iklan</h1>
+          <p style={{ fontFamily:'var(--m-font)', fontSize:'14px', color: isGenZ ? '#9ca3af' : 'var(--m-ink-sub)', lineHeight:'1.5' }}>Pantau performa konten yang sudah terposting</p>
         </div>
 
         {/* Tabs */}
-        <div style={{ position:'sticky', top:0, zIndex:190, background:'var(--m-bg)', display:'flex', alignItems:'center', paddingTop:'12px', paddingBottom:'16px', margin:'0 -16px', paddingLeft:'16px', paddingRight:'16px', marginBottom:'8px' }}>
-          <div style={{ display:'flex', alignItems:'center', background:'#F5F5F7', gap:'4px', borderRadius:'999px', padding:'4px', flex:1 }}>
+        <div style={{ position:'sticky', top:0, zIndex:190, background: isGenZ ? '#0e0e12' : 'var(--m-bg)', display:'flex', alignItems:'center', paddingTop:'12px', paddingBottom:'16px', margin:'0 -16px', paddingLeft:'16px', paddingRight:'16px', marginBottom:'8px' }}>
+          <div style={{ display:'flex', alignItems:'center', background: isGenZ ? '#1e1e24' : '#F5F5F7', gap:'4px', borderRadius:'999px', padding:'4px', flex:1, border: isGenZ ? '1px solid #2d2d39' : 'none' }}>
             {['Semua', 'Terjadwal', 'Diarsipkan'].map(tab => {
               const active = tab === activeTab;
               return (
-                <button key={tab} onClick={() => setActiveTab(tab)} style={{ flex:1, padding:'8px 0', borderRadius:'999px', border:'none', background: active ? 'var(--m-brand)' : 'transparent', color: active ? '#fff' : 'var(--m-ink-sub)', fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'700', cursor:'pointer', transition:'all 0.2s' }}>
+                <button key={tab} onClick={() => setActiveTab(tab)} style={{ flex:1, padding:'8px 0', borderRadius:'999px', border:'none', background: active ? 'var(--m-brand)' : 'transparent', color: active ? '#fff' : (isGenZ ? '#9ca3af' : 'var(--m-ink-sub)'), fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'700', cursor:'pointer', transition:'all 0.2s' }}>
                   {tab}
                 </button>
               );
@@ -448,15 +577,52 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
               <div
                 key={camp.id}
                 onClick={() => openDetail(camp)}
-                style={{ aspectRatio:'1/1', borderRadius:'16px', position:'relative', cursor:'pointer', overflow:'hidden', background: '#E5E7EB', boxShadow:'0 2px 8px rgba(0,0,0,0.08)' }}
+                style={{ aspectRatio:'1/1', borderRadius:'16px', position:'relative', cursor:'pointer', overflow:'hidden', background: isGenZ ? '#1e1e24' : '#E5E7EB', border: isGenZ ? '1px solid #2d2d39' : 'none', boxShadow:'0 2px 8px rgba(0,0,0,0.08)' }}
               >
                 {/* Skeleton Loader */}
                 {!camp.thumbUrl && (
                   <div style={{ position:'absolute', inset:0, animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite', background: '#D1D5DB' }} />
                 )}
-                {/* Thumbnail image */}
-                {camp.thumbUrl && (
-                  <img src={camp.thumbUrl} alt="" style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover' }} onError={e => { e.target.style.display='none'; }} />
+                {/* Media Renderer */}
+                {camp.thumbUrl && !mediaErrors[camp.id] && (
+                  isVideoUrl(camp.thumbUrl) ? (
+                    <video
+                      src={camp.thumbUrl}
+                      style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover' }}
+                      muted
+                      playsInline
+                      autoPlay
+                      loop
+                      onError={() => {
+                        setMediaErrors(prev => ({ ...prev, [camp.id]: true }));
+                        handleMediaError(camp.id);
+                      }}
+                    />
+                  ) : (
+                    <img
+                      src={camp.thumbUrl}
+                      alt=""
+                      style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover' }}
+                      onError={() => {
+                        setMediaErrors(prev => ({ ...prev, [camp.id]: true }));
+                        handleMediaError(camp.id);
+                      }}
+                    />
+                  )
+                )}
+                {/* Fallback Placeholder */}
+                {camp.thumbUrl && mediaErrors[camp.id] && (
+                  camp.hasVideo ? (
+                    <div style={{ position:'absolute', inset:0, background: '#1a1a2e', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'6px' }}>
+                      <span style={{ fontSize:'24px', color:'#fff' }}>▶</span>
+                      <span style={{ color:'#fff', fontSize:'10px', fontWeight:'700', letterSpacing:'0.05em' }}>VIDEO</span>
+                    </div>
+                  ) : (
+                    <div style={{ position:'absolute', inset:0, background: '#f3f4f6', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'6px' }}>
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                      <span style={{ color:'#9ca3af', fontSize:'11px', fontWeight:'600' }}>Foto tidak tersedia</span>
+                    </div>
+                  )
                 )}
 
                 {/* Format badge — ikon berdasarkan file type (video/foto), label berdasarkan format */}
@@ -553,7 +719,8 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
           <div
             style={{
               position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 9999,
-              background: '#fff', borderRadius: '24px 24px 0 0',
+              background: isGenZ ? '#0e0e12' : '#fff', borderRadius: '24px 24px 0 0',
+              borderTop: isGenZ ? '1px solid #1e1e24' : 'none',
               padding: '24px 16px calc(32px + env(safe-area-inset-bottom))',
               transform: animatePlatformSheet ? 'translateY(0)' : 'translateY(100%)',
               transition: 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.1)',
@@ -561,15 +728,15 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
               maxHeight: '85vh',
             }}
           >
-            <div style={{ width: '40px', height: '4px', background: '#e5e7eb', borderRadius: '2px', margin: '0 auto 20px' }} />
+            <div style={{ width: '40px', height: '4px', background: isGenZ ? '#374151' : '#e5e7eb', borderRadius: '2px', margin: '0 auto 20px' }} />
 
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '20px' }}>
               <div>
-                <h3 style={{ fontFamily: 'var(--m-font)', fontSize: '18px', fontWeight: '800', color: 'var(--m-ink)', marginBottom: '4px' }}>Pilih Platform Iklan</h3>
-                <p style={{ fontFamily: 'var(--m-font)', fontSize: '13px', color: 'var(--m-ink-sub)' }}>Pilih platform media sosial untuk mulai membuat iklan baru</p>
+                <h3 style={{ fontFamily: 'var(--m-font)', fontSize: '18px', fontWeight: '800', color: isGenZ ? '#fff' : 'var(--m-ink)', marginBottom: '4px' }}>Pilih Platform Iklan</h3>
+                <p style={{ fontFamily: 'var(--m-font)', fontSize: '13px', color: isGenZ ? '#9ca3af' : 'var(--m-ink-sub)' }}>Pilih platform media sosial untuk mulai membuat iklan baru</p>
               </div>
-              <button onClick={handleClosePlatformSheet} style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#F5F5F7', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--m-ink)" strokeWidth="2.5" strokeLinecap="round">
+              <button onClick={handleClosePlatformSheet} style={{ width: '32px', height: '32px', borderRadius: '50%', background: isGenZ ? '#1e1e24' : '#F5F5F7', border: isGenZ ? '1px solid #2d2d39' : 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={isGenZ ? '#fff' : 'var(--m-ink)'} strokeWidth="2.5" strokeLinecap="round">
                   <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
               </button>
@@ -639,8 +806,8 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
                     style={{
                       display: 'flex', alignItems: 'center', gap: '12px',
                       padding: '14px 16px', borderRadius: '16px',
-                      background: isConn ? '#fff' : '#FAF9FC',
-                      border: isConn ? '1.5px solid #D1FAE5' : '1.5px solid #EBEBF0',
+                      background: isConn ? (isGenZ ? '#1e1e24' : '#fff') : (isGenZ ? '#141418' : '#FAF9FC'),
+                      border: isConn ? (isGenZ ? '1.5px solid #16A34A' : '1.5px solid #D1FAE5') : (isGenZ ? '1.5px solid #2d2d39' : '1.5px solid #EBEBF0'),
                       cursor: 'pointer', transition: 'all 0.2s ease',
                       opacity: isConn ? 1 : 0.65,
                     }}
@@ -659,7 +826,7 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
                             </span>
                           </div>
                         )}
-                        <div style={{position:'absolute',bottom:'-3px',right:'-3px',width:'18px',height:'18px',borderRadius:'50%',background:config.badgeBg,border:'2px solid #fff',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                        <div style={{position:'absolute',bottom:'-3px',right:'-3px',width:'18px',height:'18px',borderRadius:'50%',background:config.badgeBg,border: isGenZ ? '2px solid #1e1e24' : '2px solid #fff',display:'flex',alignItems:'center',justifyContent:'center'}}>
                           {config.iconBadge}
                         </div>
                       </div>
@@ -674,10 +841,10 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
                     )}
 
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontFamily: 'var(--m-font)', fontSize: '14px', fontWeight: '700', color: 'var(--m-ink)' }}>
+                      <div style={{ fontFamily: 'var(--m-font)', fontSize: '14px', fontWeight: '700', color: isGenZ ? '#fff' : 'var(--m-ink)' }}>
                         {config.label} {isConn && acc.username ? `(@${acc.username})` : ''}
                       </div>
-                      <div style={{ fontFamily: 'var(--m-font)', fontSize: '11px', color: 'var(--m-ink-sub)' }}>
+                      <div style={{ fontFamily: 'var(--m-font)', fontSize: '11px', color: isGenZ ? '#9ca3af' : 'var(--m-ink-sub)' }}>
                         {isConn ? 'Terhubung & Siap Posting' : 'Belum Terhubung'}
                       </div>
                     </div>
