@@ -313,14 +313,14 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
     return (
       <div style={{ position:'fixed', top:0, left:0, right:0, bottom:0, background: isGenZ ? '#0e0e12' : '#F9F9FA', zIndex:9999, display:'flex', flexDirection:'column', overflow:'hidden' }}>
         {/* Header */}
-        <header style={{ display:'flex', alignItems:'center', justifycontent:'space-between', padding:'16px', background: isGenZ ? '#0e0e12' : '#F9F9FA', borderBottom: isGenZ ? '1px solid #1e1e24' : 'none' }}>
+        <header style={{ display:'flex', alignItems:'center', padding:'16px', background: isGenZ ? '#0e0e12' : '#F9F9FA', borderBottom: isGenZ ? '1px solid #1e1e24' : 'none' }}>
           <button onClick={() => setSelectedCamp(null)} style={{ width:'40px', height:'40px', borderRadius:'50%', background: isGenZ ? '#1e1e24' : '#fff', border: isGenZ ? '1px solid #2d2d39' : '1px solid #ECECF1', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', color: isGenZ ? '#fff' : 'currentColor' }}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
           </button>
-          <div style={{ fontFamily:'var(--m-font)', fontSize:'16px', fontWeight:'800', color: isGenZ ? '#fff' : 'var(--m-ink)' }}>Detail Iklan</div>
+          <div style={{ fontFamily:'var(--m-font)', fontSize:'16px', fontWeight:'800', color: isGenZ ? '#fff' : 'var(--m-ink)', marginLeft:'12px' }}>Detail Iklan</div>
           <button
             onClick={() => handleArchive(c)}
-            style={{ width:'40px', height:'40px', borderRadius:'50%', background: isGenZ ? '#1e1e24' : '#fff', border: isGenZ ? '1px solid #2d2d39' : '1px solid #ECECF1', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', color: isGenZ ? '#fff' : 'currentColor' }}
+            style={{ width:'40px', height:'40px', borderRadius:'50%', background: isGenZ ? '#1e1e24' : '#fff', border: isGenZ ? '1px solid #2d2d39' : '1px solid #ECECF1', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', color: isGenZ ? '#fff' : 'currentColor', marginLeft:'auto' }}
             title="Arsipkan"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
