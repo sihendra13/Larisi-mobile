@@ -186,6 +186,33 @@ function _moveToUserLocation() {
     },
     function(err) {
       console.warn('[map] geolocation error:', err.message);
+      /* Fallback: IP geolocation — tidak butuh izin, akurasi tingkat kota */
+      fetch('https://ipwho.is/')
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (!d.success || !d.latitude || !d.longitude) return;
+          var lat = d.latitude;
+          var lng = d.longitude;
+          currentLat = lat; currentLng = lng;
+          if (marker) marker.setLatLng([lat, lng]);
+          if (circle) circle.setLatLng([lat, lng]);
+          if (map)    map.flyTo([lat, lng], 13, { duration: 1.2 });
+          updatePopupPosition();
+          updateRadius(currentRadius);
+          fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat=' + lat + '&lon=' + lng + '&accept-language=id')
+            .then(function(r) { return r.json(); })
+            .then(function(nd) {
+              var a = nd.address || {};
+              var name = a.village || a.suburb || a.neighbourhood || a.city_district || a.city || a.county || '';
+              var city = a.city || a.county || a.state || '';
+              var loc  = name + (city && name !== city ? ', ' + city : '');
+              var pl = document.querySelector('.popup-loc');
+              if (pl && loc) pl.textContent = loc;
+              updateRegionAndRefresh(lat, lng);
+              if (currentPersona) { generateCaptionAI(); updateStitch(); }
+              console.log('[map] lokasi IP fallback:', loc, lat, lng);
+            }).catch(function() {});
+        }).catch(function() {});
     },
     { timeout: 8000, maximumAge: 60000 }
   );
