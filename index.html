@@ -977,7 +977,7 @@
       
       <div style="font-size:40px; margin-bottom:12px;">⏰</div>
       <h2 id="trial-modal-title" style="font-size:22px; font-weight:700; color:#1a1a1a; margin:0 0 8px;">Masa trial kamu sudah selesai!</h2>
-      <p id="trial-modal-desc" style="font-size:14px; color:#666; margin:0 0 8px;">7 hari gratis telah berakhir. Pilih langkah berikutnya:</p>
+      <p id="trial-modal-desc" style="font-size:14px; color:#666; margin:0 0 8px;">30 hari gratis telah berakhir. Pilih langkah berikutnya:</p>
       <div id="trial-modal-plan" style="display:inline-block; background:#f4f0ff; color:#5b17b7; font-size:12px; font-weight:600; padding:4px 12px; border-radius:20px; margin-bottom:24px;"></div>
 
       <div style="display:flex; flex-direction:column; gap:12px;">
@@ -1013,23 +1013,23 @@
 
       const now      = new Date();
       const diffDays = Math.floor((now - new Date(trialStart)) / 86400000);
-      const remaining = 7 - diffDays;
+      const remaining = 30 - diffDays;
 
       // Sync localStorage agar konsisten
       localStorage.setItem('larisi_trial_start', trialStart);
       localStorage.setItem('larisi_selected_plan', plan);
 
-      if (diffDays >= 7) {
+      if (diffDays >= 30) {
         // Trial benar-benar habis → tampilkan modal
         const modal = document.getElementById('trial-modal');
         const planBadge = document.getElementById('trial-modal-plan');
-        planBadge.textContent = 'Paket ' + plan.charAt(0).toUpperCase() + plan.slice(1) + ' — trial 7 hari berakhir';
+        planBadge.textContent = 'Paket ' + plan.charAt(0).toUpperCase() + plan.slice(1) + ' — trial 30 hari berakhir';
         if (plan === 'starter') {
           document.getElementById('trial-btn-starter').style.display = 'block';
           document.querySelector('#trial-modal button[onclick="choosePlan(\'pro\')"]').style.display = 'none';
         }
         modal.style.display = 'flex';
-      } else if (remaining <= 3) {
+      } else if (remaining <= 7) {
         // Sisa 1-3 hari → tampilkan banner pengingat saja
         const banner = document.getElementById('trial-banner');
         document.getElementById('trial-banner-text').textContent =
@@ -1090,10 +1090,10 @@
         if (btnFree) btnFree.textContent = 'Lanjut ke Freemium (Gratis Selamanya)';
       }
       // --- SKENARIO 2: TRIAL EXPIRED (7 HARI) ---
-      else if (paymentStatus === 'trial' && diffDays >= 7) {
+      else if (paymentStatus === 'trial' && diffDays >= 30) {
         _scenarioMatched = true;
         titleEl.textContent = "Masa Trial Selesai!";
-        descEl.textContent = "7 hari gratis Anda telah berakhir. Pilih paket untuk mulai berlangganan:";
+        descEl.textContent = "30 hari gratis Anda telah berakhir. Pilih paket untuk mulai berlangganan:";
 
         if (btnPro) btnPro.textContent = 'Mulai Berlangganan Pro — Rp 199rb/bln';
         if (btnStarter) btnStarter.textContent = 'Mulai Berlangganan Starter — Rp 99rb/bln';
@@ -1188,7 +1188,7 @@
         const closeBtn = banner ? banner.querySelector('.qb-close') : null;
         if (!banner || !textEl) return;
 
-        // Hitung sisa hari trial (7 hari dari created_at)
+        // Hitung sisa hari trial (30 hari dari created_at)
         let remainingDays = 99;
         if (profile.created_at) {
           const startDate = new Date(profile.created_at);

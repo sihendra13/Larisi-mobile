@@ -2624,15 +2624,15 @@ function showPricingModal() {
       })() +
       // Starter
       '<div class="an-pricing-card">' +
-        '<div class="an-pc-top"><div class="an-pc-name">Starter</div><div class="an-pc-price">Rp 99rb <span class="an-pc-period">/bulan</span></div><div class="an-pc-badge-free">Coba 7 hari gratis</div></div>' +
+        '<div class="an-pc-top"><div class="an-pc-name">Starter</div><div class="an-pc-price">Rp 99rb <span class="an-pc-period">/bulan</span></div><div class="an-pc-badge-free">Coba 30 hari gratis</div></div>' +
         '<ul class="an-pc-features"><li>50 AI Launch/bulan</li><li>Semua fitur Freemium</li><li>Dedicated Generate</li></ul>' +
-        '<button class="an-pc-btn an-pc-btn-outline" onclick="closePricingModal()">Coba Gratis 7 Hari</button>' +
+        '<button class="an-pc-btn an-pc-btn-outline" onclick="closePricingModal()">Coba Gratis 30 Hari</button>' +
       '</div>' +
       // Pro
       '<div class="an-pricing-card an-pricing-card-pro">' +
-        '<div class="an-pc-top"><div style="display:flex;align-items:center;gap:8px;"><div class="an-pc-name">Pro</div><div class="an-pc-badge-popular">Paling Populer</div></div><div class="an-pc-price">Rp 199rb <span class="an-pc-period">/bulan</span></div><div class="an-pc-badge-free">Coba 7 hari gratis</div></div>' +
+        '<div class="an-pc-top"><div style="display:flex;align-items:center;gap:8px;"><div class="an-pc-name">Pro</div><div class="an-pc-badge-popular">Paling Populer</div></div><div class="an-pc-price">Rp 199rb <span class="an-pc-period">/bulan</span></div><div class="an-pc-badge-free">Coba 30 hari gratis</div></div>' +
         '<ul class="an-pc-features"><li>Unlimited AI Launch</li><li>Competitor analysis tanpa batas</li><li>Data real-time per jam</li><li>Export laporan PDF</li></ul>' +
-        '<button class="an-pc-btn an-pc-btn-pro" onclick="closePricingModal()">Coba Gratis 7 Hari</button>' +
+        '<button class="an-pc-btn an-pc-btn-pro" onclick="closePricingModal()">Coba Gratis 30 Hari</button>' +
       '</div>' +
       // Enterprise
       '<div class="an-pricing-card">' +

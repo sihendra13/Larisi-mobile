@@ -355,7 +355,7 @@ async function launchRadar() {
     const quota = typeof window.freeCount !== 'undefined' ? window.freeCount : 10;
     
     const startDate = profile.trial_start ? new Date(profile.trial_start) : new Date(profile.created_at || Date.now());
-    const trialDays = profile.trial_days || 7;
+    const trialDays = profile.trial_days || 30;
     const now = new Date();
     const diffDays = Math.floor((now - startDate) / (1000 * 60 * 60 * 24));
     const isResetDay = now.getDate() === 1;
