@@ -47,6 +47,7 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
   const [animatePlatformSheet, setAnimatePlatformSheet] = useState(false);
   const lastScrollY = useRef(0);
   const [mediaErrors, setMediaErrors] = useState({});
+  const [mediaTypeFallback, setMediaTypeFallback] = useState({});
   const repairingCampaignsRef = useRef(new Set());
   const attemptedRepairsRef = useRef(new Set());
 
@@ -396,15 +397,28 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
             {/* Thumbnail */}
             <div style={{ width:'100%', aspectRatio:'16/9', borderRadius:'12px', overflow:'hidden', background: '#E5E7EB', position:'relative' }}>
               {c.thumbUrl && !mediaErrors[c.id] ? (
-                <img
-                  src={c.thumbUrl}
-                  alt=""
-                  style={{ width:'100%', height:'100%', objectFit:'cover' }}
-                  onError={() => {
-                    setMediaErrors(prev => ({ ...prev, [c.id]: true }));
-                    handleMediaError(c.id);
-                  }}
-                />
+                isVideoUrl(c.thumbUrl) || mediaTypeFallback[c.id] ? (
+                  <video
+                    src={c.thumbUrl + (isVideoUrl(c.thumbUrl) ? '' : '#t=0.001')}
+                    style={{ width:'100%', height:'100%', objectFit:'cover' }}
+                    muted
+                    playsInline
+                    preload="metadata"
+                    onError={() => {
+                      setMediaErrors(prev => ({ ...prev, [c.id]: true }));
+                      handleMediaError(c.id);
+                    }}
+                  />
+                ) : (
+                  <img
+                    src={c.thumbUrl}
+                    alt=""
+                    style={{ width:'100%', height:'100%', objectFit:'cover' }}
+                    onError={() => {
+                      setMediaTypeFallback(prev => ({ ...prev, [c.id]: true }));
+                    }}
+                  />
+                )
               ) : c.thumbUrl && mediaErrors[c.id] ? (
                 <div style={{ position:'absolute', inset:0, background: '#f3f4f6', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'6px' }}>
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
@@ -563,15 +577,28 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
                 )}
                 {/* Media Renderer */}
                 {camp.thumbUrl && !mediaErrors[camp.id] && (
-                  <img
-                    src={camp.thumbUrl}
-                    alt=""
-                    style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover' }}
-                    onError={() => {
-                      setMediaErrors(prev => ({ ...prev, [camp.id]: true }));
-                      handleMediaError(camp.id);
-                    }}
-                  />
+                  isVideoUrl(camp.thumbUrl) || mediaTypeFallback[camp.id] ? (
+                    <video
+                      src={camp.thumbUrl + (isVideoUrl(camp.thumbUrl) ? '' : '#t=0.001')}
+                      style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover' }}
+                      muted
+                      playsInline
+                      preload="metadata"
+                      onError={() => {
+                        setMediaErrors(prev => ({ ...prev, [camp.id]: true }));
+                        handleMediaError(camp.id);
+                      }}
+                    />
+                  ) : (
+                    <img
+                      src={camp.thumbUrl}
+                      alt=""
+                      style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover' }}
+                      onError={() => {
+                        setMediaTypeFallback(prev => ({ ...prev, [camp.id]: true }));
+                      }}
+                    />
+                  )
                 )}
                 {/* Fallback Placeholder */}
                 {camp.thumbUrl && mediaErrors[camp.id] && (
