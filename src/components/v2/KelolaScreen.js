@@ -48,6 +48,7 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
   const lastScrollY = useRef(0);
   const [mediaErrors, setMediaErrors] = useState({});
   const [mediaTypeFallback, setMediaTypeFallback] = useState({});
+  const [retroFetchComplete, setRetroFetchComplete] = useState(false);
   const repairingCampaignsRef = useRef(new Set());
   const attemptedRepairsRef = useRef(new Set());
 
@@ -198,6 +199,10 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
           }
         }
       }
+      setRetroFetchComplete(true);
+    }).catch(() => {
+      setLoading(false);
+      setRetroFetchComplete(true);
     });
   }, [sessionId, accessToken]);
 
@@ -419,7 +424,7 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
                     }}
                   />
                 )
-              ) : c.thumbUrl && mediaErrors[c.id] ? (
+              ) : (c.thumbUrl && mediaErrors[c.id]) || (!c.thumbUrl && retroFetchComplete) ? (
                 <div style={{ position:'absolute', inset:0, background: '#f3f4f6', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'6px' }}>
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
                   <span style={{ color:'#9ca3af', fontSize:'11px', fontWeight:'600' }}>Foto tidak tersedia</span>
@@ -572,7 +577,7 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
                 style={{ aspectRatio:'1/1', borderRadius:'16px', position:'relative', cursor:'pointer', overflow:'hidden', background: isGenZ ? '#1e1e24' : '#E5E7EB', border: isGenZ ? '1px solid #2d2d39' : 'none', boxShadow:'0 2px 8px rgba(0,0,0,0.08)' }}
               >
                 {/* Skeleton Loader */}
-                {!camp.thumbUrl && (
+                {!camp.thumbUrl && !retroFetchComplete && (
                   <div style={{ position:'absolute', inset:0, animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite', background: '#D1D5DB' }} />
                 )}
                 {/* Media Renderer */}
@@ -601,7 +606,7 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
                   )
                 )}
                 {/* Fallback Placeholder */}
-                {camp.thumbUrl && mediaErrors[camp.id] && (
+                {((camp.thumbUrl && mediaErrors[camp.id]) || (!camp.thumbUrl && retroFetchComplete)) && (
                   <div style={{ position:'absolute', inset:0, background: '#f3f4f6', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'6px' }}>
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
                     <span style={{ color:'#9ca3af', fontSize:'11px', fontWeight:'600' }}>Foto tidak tersedia</span>
