@@ -119,7 +119,7 @@ export async function fetchAnalytics(socialAccountId, accessToken) {
 }
 
 export function extractMetrics(post, platform) {
-  const m = post?.metrics || {};
+  const m = post?.metrics || post || {};
   const plat = (platform || '').toLowerCase();
 
   const _rbt = (m.reactions_by_type && typeof m.reactions_by_type === 'object') ? m.reactions_by_type : {};
