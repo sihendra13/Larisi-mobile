@@ -396,42 +396,20 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
             {/* Thumbnail */}
             <div style={{ width:'100%', aspectRatio:'16/9', borderRadius:'12px', overflow:'hidden', background: '#E5E7EB', position:'relative' }}>
               {c.thumbUrl && !mediaErrors[c.id] ? (
-                isVideoUrl(c.thumbUrl) ? (
-                  <video
-                    src={c.thumbUrl}
-                    style={{ width:'100%', height:'100%', objectFit:'cover' }}
-                    muted
-                    playsInline
-                    autoPlay
-                    loop
-                    onError={() => {
-                      setMediaErrors(prev => ({ ...prev, [c.id]: true }));
-                      handleMediaError(c.id);
-                    }}
-                  />
-                ) : (
-                  <img
-                    src={c.thumbUrl}
-                    alt=""
-                    style={{ width:'100%', height:'100%', objectFit:'cover' }}
-                    onError={() => {
-                      setMediaErrors(prev => ({ ...prev, [c.id]: true }));
-                      handleMediaError(c.id);
-                    }}
-                  />
-                )
+                <img
+                  src={c.thumbUrl}
+                  alt=""
+                  style={{ width:'100%', height:'100%', objectFit:'cover' }}
+                  onError={() => {
+                    setMediaErrors(prev => ({ ...prev, [c.id]: true }));
+                    handleMediaError(c.id);
+                  }}
+                />
               ) : c.thumbUrl && mediaErrors[c.id] ? (
-                c.hasVideo ? (
-                  <div style={{ position:'absolute', inset:0, background: '#1a1a2e', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'6px' }}>
-                    <span style={{ fontSize:'28px', color:'#fff' }}>▶</span>
-                    <span style={{ color:'#fff', fontSize:'11px', fontWeight:'700', letterSpacing:'0.05em' }}>VIDEO</span>
-                  </div>
-                ) : (
-                  <div style={{ position:'absolute', inset:0, background: '#f3f4f6', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'6px' }}>
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                    <span style={{ color:'#9ca3af', fontSize:'11px', fontWeight:'600' }}>Foto tidak tersedia</span>
-                  </div>
-                )
+                <div style={{ position:'absolute', inset:0, background: '#f3f4f6', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'6px' }}>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                  <span style={{ color:'#9ca3af', fontSize:'11px', fontWeight:'600' }}>Foto tidak tersedia</span>
+                </div>
               ) : (
                 <div style={{ position:'absolute', inset:0, animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite', background: '#D1D5DB' }} />
               )}
@@ -585,36 +563,22 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
                 )}
                 {/* Media Renderer */}
                 {camp.thumbUrl && !mediaErrors[camp.id] && (
-                  isVideoUrl(camp.thumbUrl) ? (
-                    <div style={{ position:'absolute', inset:0, background: '#1a1a2e', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'4px' }}>
-                      <span style={{ fontSize:'20px', color:'#fff' }}>▶</span>
-                      <span style={{ color:'#fff', fontSize:'9px', fontWeight:'700', letterSpacing:'0.05em' }}>VIDEO</span>
-                    </div>
-                  ) : (
-                    <img
-                      src={camp.thumbUrl}
-                      alt=""
-                      style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover' }}
-                      onError={() => {
-                        setMediaErrors(prev => ({ ...prev, [camp.id]: true }));
-                        handleMediaError(camp.id);
-                      }}
-                    />
-                  )
+                  <img
+                    src={camp.thumbUrl}
+                    alt=""
+                    style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover' }}
+                    onError={() => {
+                      setMediaErrors(prev => ({ ...prev, [camp.id]: true }));
+                      handleMediaError(camp.id);
+                    }}
+                  />
                 )}
                 {/* Fallback Placeholder */}
                 {camp.thumbUrl && mediaErrors[camp.id] && (
-                  camp.hasVideo ? (
-                    <div style={{ position:'absolute', inset:0, background: '#1a1a2e', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'6px' }}>
-                      <span style={{ fontSize:'24px', color:'#fff' }}>▶</span>
-                      <span style={{ color:'#fff', fontSize:'10px', fontWeight:'700', letterSpacing:'0.05em' }}>VIDEO</span>
-                    </div>
-                  ) : (
-                    <div style={{ position:'absolute', inset:0, background: '#f3f4f6', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'6px' }}>
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                      <span style={{ color:'#9ca3af', fontSize:'11px', fontWeight:'600' }}>Foto tidak tersedia</span>
-                    </div>
-                  )
+                  <div style={{ position:'absolute', inset:0, background: '#f3f4f6', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'6px' }}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                    <span style={{ color:'#9ca3af', fontSize:'11px', fontWeight:'600' }}>Foto tidak tersedia</span>
+                  </div>
                 )}
 
                 {/* Format badge — ikon berdasarkan file type (video/foto), label berdasarkan format */}
