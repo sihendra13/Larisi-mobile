@@ -472,11 +472,13 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
               {c.thumbUrl && !mediaErrors[c.id] ? (
                 isVideoUrl(c.thumbUrl) || mediaTypeFallback[c.id] ? (
                   <video
-                    src={c.thumbUrl + (isVideoUrl(c.thumbUrl) ? '' : '#t=0.001')}
+                    src={c.thumbUrl}
                     style={{ width:'100%', height:'100%', objectFit:'cover' }}
                     muted
                     playsInline
-                    preload="metadata"
+                    autoPlay
+                    loop
+                    preload="auto"
                     onError={() => {
                       setMediaErrors(prev => ({ ...prev, [c.id]: true }));
                       handleMediaError(c.id);
@@ -652,11 +654,13 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
                 {camp.thumbUrl && !mediaErrors[camp.id] && (
                   isVideoUrl(camp.thumbUrl) || mediaTypeFallback[camp.id] ? (
                     <video
-                      src={camp.thumbUrl + (isVideoUrl(camp.thumbUrl) ? '' : '#t=0.001')}
+                      src={camp.thumbUrl}
                       style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover' }}
                       muted
                       playsInline
-                      preload="metadata"
+                      autoPlay
+                      loop
+                      preload="auto"
                       onError={() => {
                         setMediaErrors(prev => ({ ...prev, [camp.id]: true }));
                         handleMediaError(camp.id);
