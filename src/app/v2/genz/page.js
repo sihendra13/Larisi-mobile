@@ -226,6 +226,14 @@ export default function GenZPage() {
         } else if (!pCached) {
           setAuthState('onboarding');
         }
+
+        // Safety fallback: if stuck on loading for 15s, force to login/onboarding
+        setTimeout(() => {
+          setAuthState(prev => {
+            if (prev === 'loading') return tok ? 'onboarding' : 'login';
+            return prev;
+          });
+        }, 15000);
       };
 
       const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;

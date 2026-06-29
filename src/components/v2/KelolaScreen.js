@@ -586,18 +586,10 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
                 {/* Media Renderer */}
                 {camp.thumbUrl && !mediaErrors[camp.id] && (
                   isVideoUrl(camp.thumbUrl) ? (
-                    <video
-                      src={camp.thumbUrl}
-                      style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover' }}
-                      muted
-                      playsInline
-                      autoPlay
-                      loop
-                      onError={() => {
-                        setMediaErrors(prev => ({ ...prev, [camp.id]: true }));
-                        handleMediaError(camp.id);
-                      }}
-                    />
+                    <div style={{ position:'absolute', inset:0, background: '#1a1a2e', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'4px' }}>
+                      <span style={{ fontSize:'20px', color:'#fff' }}>▶</span>
+                      <span style={{ color:'#fff', fontSize:'9px', fontWeight:'700', letterSpacing:'0.05em' }}>VIDEO</span>
+                    </div>
                   ) : (
                     <img
                       src={camp.thumbUrl}
