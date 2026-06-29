@@ -162,8 +162,8 @@ export function matchPost(posts, campaign) {
     const exactUrl = posts.find(p => p.post_url === campaign.post_url || p.permalink === campaign.post_url || p.platform_url === campaign.post_url);
     if (exactUrl) return exactUrl;
   }
-  if (campaign.created_at) {
-    const campTime = parseSafeDate(campaign.created_at).getTime();
+  if (campaign.scheduled_at || campaign.created_at) {
+    const campTime = parseSafeDate(campaign.scheduled_at || campaign.created_at).getTime();
     let best = null, bestDiff = Infinity;
     for (const p of posts) {
       const pTimeStr = p.posted_at || p.published_at || p.created_at || p.scheduled_at || '';
@@ -172,7 +172,8 @@ export function matchPost(posts, campaign) {
       const diff = Math.abs(campTime - t);
       if (diff < bestDiff) { bestDiff = diff; best = p; }
     }
-    if (best && bestDiff <= 120 * 60 * 1000) return best;
+    // Toleransi dinaikkan menjadi 48 jam (48 * 60 * 60 * 1000) karena perbedaan timezone atau keterlambatan auto-post
+    if (best && bestDiff <= 48 * 60 * 60 * 1000) return best;
   }
 
   // Lapis terakhir (sama seperti versi Desktop): Jika semua metode gagal (tidak ada URL/ID/Time yang cocok) 
