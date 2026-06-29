@@ -174,6 +174,13 @@ export function matchPost(posts, campaign) {
     }
     if (best && bestDiff <= 120 * 60 * 1000) return best;
   }
+
+  // Lapis terakhir (sama seperti versi Desktop): Jika semua metode gagal (tidak ada URL/ID/Time yang cocok) 
+  // tapi ini campaign yang punya post_id, asumsikan posts[0] (postingan terbaru) adalah iklan tersebut 
+  // (Best effort agar data metrics tetap muncul)
+  if (campaign.post_id && posts.length > 0) {
+    return posts[0];
+  }
   return null;
 }
 
