@@ -863,7 +863,8 @@ export default function CaptionScreen({
     try {
       // Upload media — files berisi { url: 'blob:...', type: 'photo'|'video', name }
       const allMediaUrls = [];
-      let thumbUrl = null; // URL thumbnail dari PostForMe CDN
+      let thumbUrl = null;
+      let finalThumbDataUrl = null; // URL thumbnail dari PostForMe CDN
 
       for (const file of files) {
         const blobResp = await fetch(file.url);
@@ -873,10 +874,12 @@ export default function CaptionScreen({
         // Konversi foto ke JPEG via canvas (sama seperti desktop yang selalu pakai JPEG)
         // Ini memastikan format konsisten dan media_url selalu dikembalikan PostForMe
         let uploadBlob = blob;
+        let currentJpegDataUrl = null;
         if (file.type !== 'video') {
-          const jpegDataUrl = await createThumbFromUrl(file.url);
-          if (jpegDataUrl) {
-            const arr = jpegDataUrl.split(',');
+          currentJpegDataUrl = await createThumbFromUrl(file.url);
+          if (currentJpegDataUrl) {
+            finalThumbDataUrl = currentJpegDataUrl;
+            const arr = currentJpegDataUrl.split(',');
             const bstr = atob(arr[1]);
             const u8 = new Uint8Array(bstr.length);
             for (let i = 0; i < bstr.length; i++) u8[i] = bstr.charCodeAt(i);
@@ -904,6 +907,7 @@ export default function CaptionScreen({
             // Capture frame video sebagai thumbnail JPEG — upload terpisah ke PostForMe
             const frameDataUrl = await captureVideoThumb(file.url);
             if (frameDataUrl) {
+              finalThumbDataUrl = frameDataUrl;
               const arr2 = frameDataUrl.split(',');
               const bstr2 = atob(arr2[1]);
               const u82 = new Uint8Array(bstr2.length);
@@ -918,6 +922,10 @@ export default function CaptionScreen({
                   }
                 }
               } catch {}
+            }
+            // Lapis 2: Jika frame gagal, amankan fallback PostForMe URL!
+            if (!thumbUrl) {
+              thumbUrl = mediaUrl;
             }
           } else {
             thumbUrl = mediaUrl; // Foto: gunakan URL yang sama
@@ -951,7 +959,7 @@ export default function CaptionScreen({
         const finalName = (overrideName && overrideName.trim()) ? overrideName.trim() : campName;
         const dbResp = await fetch(`${SUPABASE_URL}/rest/v1/campaigns`, {
           method: 'POST',
-          headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${accessToken || SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+          headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${accessToken || SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' },
           body: JSON.stringify({
             user_id:             effectiveUserId,
             session_id:          effectiveSessionId,
@@ -973,6 +981,22 @@ export default function CaptionScreen({
           const errTxt = await dbResp.text();
           throw new Error(`Gagal menyimpan kampanye: ${errTxt}`);
         }
+
+        // Lapis 1: Upload ke Supabase Storage
+        try {
+          const insertedData = await dbResp.json();
+          const newId = insertedData?.[0]?.id;
+          if (newId && finalThumbDataUrl) {
+            const storageUrl = await uploadThumbToStorage(newId, finalThumbDataUrl, accessToken);
+            if (storageUrl) {
+              await fetch(`${SUPABASE_URL}/rest/v1/campaigns?id=eq.${newId}`, {
+                method: 'PATCH',
+                headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${accessToken || SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ thumb_url: storageUrl }),
+              });
+            }
+          }
+        } catch(e) { console.warn('Lapis 1 Storage Upload Gagal:', e); }
       }
 
       // Toast sukses spesifik platform+format

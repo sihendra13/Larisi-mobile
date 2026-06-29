@@ -27,6 +27,47 @@ function PlatIcon({ plat }) {
   return <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2"><circle cx="12" cy="12" r="10"/></svg>;
 }
 
+
+/* ── Lapis 3: Auto-converter untuk thumbnail ── */
+function createThumbFromUrl(blobUrl) {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous'; // Important for external URLs
+    img.onload = () => {
+      try {
+        const maxW = 600;
+        const ratio = maxW / img.naturalWidth;
+        const c = document.createElement('canvas');
+        c.width  = maxW;
+        c.height = Math.round(img.naturalHeight * ratio);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        resolve(c.toDataURL('image/jpeg', 0.9));
+      } catch { resolve(null); }
+    };
+    img.onerror = () => resolve(null);
+    img.src = blobUrl;
+  });
+}
+
+async function uploadThumbToStorage(campaignId, dataUrl, accessToken) {
+  if (!campaignId || !dataUrl?.startsWith('data:image')) return null;
+  try {
+    const base64 = dataUrl.split(',')[1];
+    const binary = atob(base64);
+    const bytes  = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    const blob = new Blob([bytes], { type: 'image/jpeg' });
+    const path = `${campaignId}.jpg`;
+    const res  = await fetch(`${SUPABASE_URL}/storage/v1/object/thumbnails/${path}`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${accessToken || SUPABASE_ANON_KEY}`, 'Content-Type': 'image/jpeg', 'x-upsert': 'true' },
+      body: blob,
+    });
+    if (!res.ok) return null;
+    return `${SUPABASE_URL}/storage/v1/object/public/thumbnails/${path}`;
+  } catch { return null; }
+}
+
 /* ════════════════════════════════════════
    Main Component
    ════════════════════════════════════════ */
@@ -187,15 +228,40 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
           if (m.reach > 0) {
             setRealReach(prev => ({ ...prev, [camp.id]: m.reach }));
           }
-          // Retroactive thumbnail dari PostForMe feed
-          if (!camp.thumbUrl) {
-            const feedThumb = post.thumbnail_url || post.media_url || post.thumb_url
-              || post.media?.[0]?.url || null;
-            if (feedThumb) {
-              setCampaigns(prev => prev.map(c =>
-                c.id === camp.id ? { ...c, thumbUrl: feedThumb } : c
-              ));
+          // Lapis 3: Retroactive thumbnail dari PostForMe feed ATAU konversi CDN URL basi ke Supabase Storage
+          let currentThumbUrl = camp.thumbUrl;
+          if (!currentThumbUrl) {
+            currentThumbUrl = post.thumbnail_url || post.media_url || post.thumb_url || post.media?.[0]?.url || null;
+            if (currentThumbUrl) {
+              setCampaigns(prev => prev.map(c => c.id === camp.id ? { ...c, thumbUrl: currentThumbUrl } : c));
             }
+          }
+
+          // Lapis 3 Konversi: Jika URL-nya masih CDN eksternal (bukan Supabase Storage), download dan simpan permanen
+          if (currentThumbUrl && !currentThumbUrl.includes('/storage/v1/object/public/thumbnails/')) {
+             if (!window._convertingThumbs) window._convertingThumbs = new Set();
+             if (!window._convertingThumbs.has(camp.id)) {
+               window._convertingThumbs.add(camp.id);
+               // Lakukan secara async agar tidak mem-blok loop
+               (async () => {
+                 try {
+                   const jpegDataUrl = await createThumbFromUrl(currentThumbUrl);
+                   if (jpegDataUrl) {
+                     const permUrl = await uploadThumbToStorage(camp.id, jpegDataUrl, accessToken);
+                     if (permUrl) {
+                        // Update DB
+                        await fetch(`${SUPABASE_URL}/rest/v1/campaigns?id=eq.${camp.id}`, {
+                          method: 'PATCH',
+                          headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${accessToken || SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ thumb_url: permUrl }),
+                        });
+                        // Update UI seketika
+                        setCampaigns(prev => prev.map(c => c.id === camp.id ? { ...c, thumbUrl: permUrl } : c));
+                     }
+                   }
+                 } catch(e) {}
+               })();
+             }
           }
         }
       }
