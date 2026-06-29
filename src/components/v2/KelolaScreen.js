@@ -300,6 +300,8 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
     const posts = await fetchAnalytics(acc.id, accessToken);
     const post  = matchPost(posts, camp);
     if (post) {
+      console.log('[DEBUG KelolaScreen] matched post:', post);
+      console.log('[DEBUG KelolaScreen] extracted metrics:', extractMetrics(post, camp.platforms[0]));
       setAnalytics(extractMetrics(post, camp.platforms[0]));
 
       // Retroactive thumbnail dari PostForMe feed kalau thumb_url null
