@@ -115,6 +115,53 @@ async function sendConfirmationEmail(email: string, plan: string, expiresAt: Dat
   }
 }
 
+// ── Meta Conversions API: kirim event Subscribe ────────────────────────────────
+async function sha256Hex(input: string): Promise<string> {
+  const data = new TextEncoder().encode(input.trim().toLowerCase())
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data)
+  return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('')
+}
+
+async function sendSubscribeEvent(email: string, amount: string, plan: string, merchantOrderId: string) {
+  const pixelId = '1051039310589521'
+  const accessToken = Deno.env.get('META_CAPI_ACCESS_TOKEN')
+  if (!accessToken) {
+    console.log('[Callback] META_CAPI_ACCESS_TOKEN belum diset, skip kirim event Subscribe ke Meta')
+    return
+  }
+
+  const payload = {
+    data: [{
+      event_name: 'Subscribe',
+      event_time: Math.floor(Date.now() / 1000),
+      event_id: merchantOrderId,
+      action_source: 'website',
+      user_data: { em: [await sha256Hex(email)] },
+      custom_data: {
+        value: Number(amount),
+        currency: 'IDR',
+        content_name: plan,
+      },
+    }],
+  }
+
+  try {
+    const res = await fetch(`https://graph.facebook.com/v19.0/${pixelId}/events?access_token=${accessToken}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+    const resJson = await res.json()
+    if (res.ok) {
+      console.log('[Callback] Event Subscribe terkirim ke Meta CAPI:', JSON.stringify(resJson))
+    } else {
+      console.error('[Callback] Meta CAPI error:', JSON.stringify(resJson))
+    }
+  } catch (e) {
+    console.error('[Callback] Gagal kirim event Subscribe ke Meta:', e.message)
+  }
+}
+
 // ── Main handler ──────────────────────────────────────────────────────────────
 serve(async (req) => {
   try {
@@ -193,12 +240,13 @@ serve(async (req) => {
 
     console.log('[Callback] Subscription berhasil diupgrade:', userId, '->', plan, 'expires:', expiresAt.toISOString())
 
-    // Ambil email user lalu kirim konfirmasi (tidak blocking — gagal tidak masalah)
+    // Ambil email user lalu kirim konfirmasi + event Subscribe ke Meta (tidak blocking — gagal tidak masalah)
     try {
       const { data: authUser } = await supabase.auth.admin.getUserById(userId)
       const userEmail = authUser?.user?.email
       if (userEmail) {
         await sendConfirmationEmail(userEmail, plan, expiresAt)
+        await sendSubscribeEvent(userEmail, amount, plan, merchantOrderId)
       }
     } catch (emailErr) {
       console.error('[Callback] Gagal ambil email user:', emailErr.message)
