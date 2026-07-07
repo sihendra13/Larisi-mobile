@@ -747,6 +747,25 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
           </div>
         )}
 
+        {/* ── Toast Notification ── */}
+        {toastMsg && (
+          <div style={{
+            position: 'fixed', bottom: '100px', left: '50%', transform: 'translateX(-50%)',
+            background: '#111827', color: '#fff', padding: '12px 24px', borderRadius: '999px',
+            fontFamily: 'var(--m-font)', fontSize: '13px', fontWeight: '600',
+            boxShadow: '0 10px 25px rgba(0,0,0,0.2)', zIndex: 10000,
+            animation: 'fadeUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+          }}>
+            {toastMsg}
+            <style>{`
+              @keyframes fadeUp {
+                0% { opacity: 0; transform: translate(-50%, 20px); }
+                100% { opacity: 1; transform: translate(-50%, 0); }
+              }
+            `}</style>
+          </div>
+        )}
+
       </div>
     );
   }
@@ -1111,24 +1130,6 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
         </>
       )}
 
-      {/* ── Toast Notification ── */}
-      {toastMsg && (
-        <div style={{
-          position: 'fixed', bottom: '100px', left: '50%', transform: 'translateX(-50%)',
-          background: '#111827', color: '#fff', padding: '12px 24px', borderRadius: '999px',
-          fontFamily: 'var(--m-font)', fontSize: '13px', fontWeight: '600',
-          boxShadow: '0 10px 25px rgba(0,0,0,0.2)', zIndex: 10000,
-          animation: 'fadeUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
-        }}>
-          {toastMsg}
-          <style>{`
-            @keyframes fadeUp {
-              0% { opacity: 0; transform: translate(-50%, 20px); }
-              100% { opacity: 1; transform: translate(-50%, 0); }
-            }
-          `}</style>
-        </div>
-      )}
     </div>
   );
 }
