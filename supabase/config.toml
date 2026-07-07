@@ -1,2 +1,5 @@
 [functions.duitku-callback]
 verify_jwt = false
+
+[functions.postforme-webhook]
+verify_jwt = false

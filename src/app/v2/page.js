@@ -17,8 +17,13 @@ import ReminderModal     from '@/components/v2/ReminderModal';
 import PricingModal      from '@/components/v2/PricingModal';
 import CancelSubscriptionModal from '@/components/v2/CancelSubscriptionModal';
 import DuitkuModal       from '@/components/v2/DuitkuModal';
+import { createClient } from '@supabase/supabase-js';
 import { getProfile, getSessionId, getAccessToken, getValidAccessToken, SUPABASE_URL, SUPABASE_ANON_KEY } from '@/lib/config';
 import { handleOAuthRedirectCallback, syncSocialAccountsToSupabase, getStoredAccounts } from '@/lib/connectSocial';
+import { subscribeToPush } from '@/lib/notifications';
+
+/* Module-level singleton — dipakai khusus untuk Realtime (subscribe tabel notifications) */
+const supabaseRealtime = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 /* ── Mobile Toast Helper ── */
 function showMobileToast(message, type = 'success') {
@@ -379,6 +384,59 @@ export default function DapurV2() {
       window.removeEventListener('visibilitychange', onVisChange);
     };
   }, [userId, authState]);
+
+  /* Auto-subscribe push notification — default selalu ON, tanpa banner/toggle.
+     Browser tetap akan munculkan 1x dialog permission native (di luar kendali kode ini),
+     tapi begitu user Izinkan sekali, subscribe berjalan otomatis selamanya tanpa interaksi lagi. */
+  useEffect(() => {
+    if (!userId || !accessToken || authState !== 'app') return;
+    const flagKey = `radar_push_subscribed_${userId}`;
+    if (localStorage.getItem(flagKey) === '1') return;
+    if (typeof Notification === 'undefined') return;
+    if (Notification.permission === 'denied') return; // sudah pernah ditolak, jangan paksa lagi
+
+    subscribeToPush(userId, accessToken).then(res => {
+      if (res.success) {
+        localStorage.setItem(flagKey, '1');
+      } else {
+        console.warn('[app] Auto-subscribe push gagal:', res.error);
+      }
+    });
+  }, [userId, accessToken, authState]);
+
+  /* Realtime listener — in-app toast begitu ada row baru di table `notifications`
+     (misal: campaign berhasil/gagal tayang, dikirim oleh Edge Function postforme-webhook) */
+  useEffect(() => {
+    if (!userId || !accessToken || authState !== 'app') return;
+
+    let channel;
+    (async () => {
+      try {
+        const stored = JSON.parse(localStorage.getItem('sb-mojzmlrdihenvfhrwopd-auth-token') || 'null');
+        if (stored?.access_token && stored?.refresh_token) {
+          await supabaseRealtime.auth.setSession({
+            access_token: stored.access_token,
+            refresh_token: stored.refresh_token,
+          });
+        }
+      } catch (e) {
+        console.warn('[app] Gagal set session realtime:', e);
+      }
+
+      channel = supabaseRealtime
+        .channel('notifications-' + userId)
+        .on('postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` },
+          (payload) => {
+            const n = payload.new;
+            showMobileToast(n.title + (n.body ? ' — ' + n.body : ''), n.success ? 'success' : 'error');
+          }
+        )
+        .subscribe();
+    })();
+
+    return () => { if (channel) supabaseRealtime.removeChannel(channel); };
+  }, [userId, accessToken, authState]);
 
   /* Callback setelah login berhasil */
   const handleLoginSuccess = ({ access_token, user, profile: p }) => {

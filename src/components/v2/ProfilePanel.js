@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/lib/config';
+import { subscribeToPush } from '@/lib/notifications';
 
 const APP_VERSION = 'v2.1.0';
 
@@ -93,6 +94,22 @@ export default function ProfilePanel({
       setIsStandalone(!!check);
     }
   }, []);
+
+  /* ── Status notifikasi campaign tayang ── */
+  const [notifPermission, setNotifPermission] = useState('unsupported');
+  const [notifRetrying, setNotifRetrying] = useState(false);
+  useEffect(() => {
+    if (typeof Notification !== 'undefined') setNotifPermission(Notification.permission);
+  }, [open]);
+
+  const handleRetryNotif = async () => {
+    if (!userId || !accessToken) return;
+    setNotifRetrying(true);
+    const res = await subscribeToPush(userId, accessToken);
+    if (typeof Notification !== 'undefined') setNotifPermission(Notification.permission);
+    if (res.success) localStorage.setItem(`radar_push_subscribed_${userId}`, '1');
+    setNotifRetrying(false);
+  };
 
   /* Nominatim */
   const [kecResults, setKecResults] = useState([]);
@@ -556,6 +573,36 @@ export default function ProfilePanel({
 
         {/* ── Footer: version + logout ── */}
         <div style={{ padding: '12px', marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+
+          {/* Status notifikasi campaign tayang — read-only, tidak ada toggle
+              (browser tidak kasih cara paksa reset izin yang sudah diblokir) */}
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px',
+            padding: '11px 13px', borderRadius: '12px', background: '#F5F5F7', fontSize: '12.5px',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#374151', fontWeight: '600' }}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={notifPermission === 'granted' ? '#10B981' : '#9ca3af'} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+              </svg>
+              {notifPermission === 'granted' && 'Notifikasi campaign: Aktif'}
+              {notifPermission === 'denied' && 'Notifikasi: Diblokir browser'}
+              {notifPermission === 'default' && 'Notifikasi campaign: Belum aktif'}
+              {notifPermission === 'unsupported' && 'Notifikasi tidak didukung browser ini'}
+            </div>
+            {notifPermission === 'default' && (
+              <button onClick={handleRetryNotif} disabled={notifRetrying}
+                style={{ background: 'var(--m-brand, #791ADB)', color: '#fff', border: 'none', borderRadius: '8px', padding: '6px 10px', fontSize: '11.5px', fontWeight: '700', cursor: 'pointer', flexShrink: 0 }}>
+                {notifRetrying ? '...' : 'Aktifkan'}
+              </button>
+            )}
+          </div>
+          {notifPermission === 'denied' && (
+            <div style={{ fontSize: '11px', color: '#9ca3af', padding: '0 4px', lineHeight: '1.4' }}>
+              Untuk mengaktifkan lagi, buka Setting notifikasi di HP kamu untuk Larisi.
+            </div>
+          )}
+
           {/* Install App (Only show when not in standalone PWA mode) */}
           {!isStandalone && (
             <button onClick={onTriggerInstall}

@@ -1,4 +1,4 @@
-const CACHE = 'larisi-v4';
+const CACHE = 'larisi-v5';
 const PRECACHE = ['/logo_larisi.svg', '/icons/icon-192.png', '/icons/icon-512.png'];
 
 self.addEventListener('install', e => {
@@ -33,5 +33,35 @@ self.addEventListener('fetch', e => {
   /* Cache-first untuk assets (gambar, font, dll) */
   e.respondWith(
     caches.match(e.request).then(cached => cached || fetch(e.request))
+  );
+});
+
+/* ─── Push notification (campaign berhasil/gagal tayang) ─── */
+self.addEventListener('push', e => {
+  let data = {};
+  try { data = e.data ? e.data.json() : {}; } catch { data = { title: 'Larisi', body: e.data ? e.data.text() : '' }; }
+
+  const title = data.title || 'Larisi';
+  const options = {
+    body: data.body || '',
+    icon: '/icons/icon-192.png',
+    badge: '/icons/icon-192.png',
+    data: { url: data.url || '/' },
+    tag: 'larisi-campaign-notif',
+  };
+
+  e.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  const targetUrl = (e.notification.data && e.notification.data.url) || '/';
+
+  e.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientsArr => {
+      const existing = clientsArr.find(c => c.url.includes(self.location.origin));
+      if (existing) return existing.focus();
+      return self.clients.openWindow(targetUrl);
+    })
   );
 });
