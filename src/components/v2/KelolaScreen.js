@@ -1106,8 +1106,6 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
           </div>
         </>
       )}
-        </div>
-      )}
     </div>
   );
 }
