@@ -68,6 +68,17 @@ async function uploadThumbToStorage(campaignId, dataUrl, accessToken) {
   } catch { return null; }
 }
 
+/* ── PostForMe proxy helper ── */
+async function pfmProxy(endpoint, method, body, accessToken) {
+  const resp = await fetch(`${SUPABASE_URL}/functions/v1/postforme-proxy`, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${accessToken || SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ endpoint, method: method || 'GET', body }),
+  });
+  if (!resp.ok) { const t = await resp.text(); throw new Error('Proxy ' + resp.status + ': ' + t); }
+  return resp.json();
+}
+
 /* ════════════════════════════════════════
    Main Component
    ════════════════════════════════════════ */
@@ -92,6 +103,10 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
   const [retroFetchComplete, setRetroFetchComplete] = useState(false);
   const repairingCampaignsRef = useRef(new Set());
   const attemptedRepairsRef = useRef(new Set());
+  
+  const [showEditSchedule, setShowEditSchedule] = useState(false);
+  const [newScheduleTime, setNewScheduleTime] = useState('');
+  const [isUpdatingSchedule, setIsUpdatingSchedule] = useState(false);
 
   const isVideoUrl = (url) => {
     if (!url) return false;
@@ -356,6 +371,67 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
     setSelectedCamp(null);
   }, [archiveTarget, sessionId, accessToken]);
 
+  const handleUpdateSchedule = async () => {
+    if (!selectedCamp || !newScheduleTime) return;
+    setIsUpdatingSchedule(true);
+    try {
+      // 1. Delete old post
+      if (selectedCamp.post_id) {
+        await pfmProxy(`/v1/social-posts/${selectedCamp.post_id}`, 'DELETE', {}, accessToken).catch(() => {});
+      }
+      
+      // 2. Create new post
+      const sp = selectedCamp.platforms[0] || 'ig';
+      const placementMap = { post: 'timeline', reel: 'reels', story: 'stories' };
+      const format = selectedCamp.format || 'post';
+      
+      const payload = {
+        caption: selectedCamp.caption || '',
+        social_accounts: (() => {
+          try {
+            const accounts = JSON.parse(localStorage.getItem('radar_social_accounts') || '[]');
+            const platApiMap = { ig: 'instagram', meta: 'facebook', tiktok: 'tiktok', youtube: 'youtube' };
+            const acc = accounts.find(a => a.platform === (platApiMap[sp] || sp));
+            return acc ? [acc.id] : [];
+          } catch { return []; }
+        })(),
+        platform_configurations: { [sp]: { placement: placementMap[format] || 'timeline' } },
+        scheduled_at: new Date(newScheduleTime).toISOString()
+      };
+      
+      if (selectedCamp.thumbUrl) {
+        payload.media = [{ url: selectedCamp.thumbUrl }]; // Best effort: use thumbUrl as media
+      }
+      
+      const data = await pfmProxy('/v1/social-posts', 'POST', payload, accessToken);
+      const newPostId = data?.id || data?.post_id || data?.posts?.[0]?.id || null;
+      const newPostUrl = data?.post_url || data?.platform_url || data?.permalink || data?.posts?.[0]?.post_url || null;
+      
+      // 3. Update Supabase
+      const updates = { scheduled_at: payload.scheduled_at };
+      if (newPostId) updates.post_id = newPostId;
+      if (newPostUrl) updates.post_url = newPostUrl;
+      
+      const dbResp = await fetch(`${SUPABASE_URL}/rest/v1/campaigns?id=eq.${selectedCamp.id}`, {
+        method: 'PATCH',
+        headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${accessToken || SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates),
+      });
+      
+      if (!dbResp.ok) throw new Error('Gagal update Supabase');
+      
+      // 4. Update UI state
+      setCampaigns(prev => prev.map(c => c.id === selectedCamp.id ? { ...c, ...updates } : c));
+      setSelectedCamp(prev => ({ ...prev, ...updates }));
+      setShowEditSchedule(false);
+    } catch (e) {
+      console.error(e);
+      alert('Gagal mengubah jadwal: ' + e.message);
+    } finally {
+      setIsUpdatingSchedule(false);
+    }
+  };
+
   const handleDetailScroll = (e) => {
     const y = e.target.scrollTop;
     if (y > lastScrollY.current && y > 50) setIsFabExpanded(false);
@@ -454,6 +530,28 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
                         const pad = (n) => String(n).padStart(2, '0');
                         return `${d.getDate()} ${mName[d.getMonth()]} ${d.getFullYear()}, ${pad(d.getHours())}.${pad(d.getMinutes())}`;
                       })()}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          let localStr = '';
+                          if (c.scheduled_at) {
+                            const d = parseSafeDate(c.scheduled_at);
+                            if (!isNaN(d.getTime())) {
+                              const tzOffset = d.getTimezoneOffset() * 60000;
+                              localStr = new Date(d.getTime() - tzOffset).toISOString().slice(0, 16);
+                            }
+                          }
+                          setNewScheduleTime(localStr);
+                          setShowEditSchedule(true);
+                        }}
+                        style={{ marginLeft: '4px', background: 'rgba(121, 26, 219, 0.1)', border: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: '#791ADB', padding: '4px', borderRadius: '6px' }}
+                        title="Ubah Jadwal"
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                        </svg>
+                      </button>
                     </span>
                   ) : (
                     c.post_url
@@ -556,6 +654,95 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
           </button>
         )}
         {showSiLaris && <SiLarisScreen onBack={() => setShowSiLaris(false)} campaign={c} analytics={an} />}
+
+        {/* ── Archive Confirm Modal — sama seperti desktop deleteConfirmOverlay ── */}
+        {archiveTarget && (
+          <div
+            onClick={e => { if (e.target === e.currentTarget) setArchiveTarget(null); }}
+            style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.55)', zIndex:9999, display:'flex', alignItems:'center', justifyContent:'center', padding:'24px', backdropFilter:'blur(4px)' }}
+          >
+            <div style={{ background:'#fff', borderRadius:'20px', padding:'28px', width:'100%', maxWidth:'340px', boxShadow:'0 24px 64px rgba(0,0,0,0.2)' }}>
+              {/* Header */}
+              <div style={{ display:'flex', alignItems:'center', gap:'12px', marginBottom:'16px' }}>
+                <div style={{ width:'40px', height:'40px', borderRadius:'12px', background:'#FEF2F2', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
+                    <path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/>
+                  </svg>
+                </div>
+                <div>
+                  <div style={{ fontFamily:'var(--m-font)', fontSize:'16px', fontWeight:'700', color:'#111827' }}>Arsipkan Campaign?</div>
+                  <div style={{ fontFamily:'var(--m-font)', fontSize:'12px', color:'#6B7280', marginTop:'2px' }}>Iklan akan dipindahkan ke tab Diarsipkan</div>
+                </div>
+              </div>
+
+              {/* Campaign name */}
+              <div style={{ background:'#F9FAFB', borderRadius:'10px', padding:'12px 14px', marginBottom:'14px' }}>
+                <div style={{ fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'700', color:'#111827', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{archiveTarget.name}</div>
+                <div style={{ fontFamily:'var(--m-font)', fontSize:'11px', color:'#6B7280', marginTop:'3px' }}>{platformLabel(archiveTarget.platforms)}</div>
+              </div>
+
+              {/* Warning */}
+              <div style={{ background:'#FFFBEB', border:'1px solid #FCD34D', borderRadius:'10px', padding:'12px 14px', marginBottom:'20px', fontFamily:'var(--m-font)', fontSize:'12px', color:'#92400E', lineHeight:'1.6' }}>
+                ⚠️ <strong>Postingan di {platformLabel(archiveTarget.platforms)} TIDAK akan terhapus.</strong> Kamu perlu hapus manual di masing-masing platform.
+              </div>
+
+              {/* Buttons */}
+              <div style={{ display:'flex', gap:'10px' }}>
+                <button
+                  onClick={() => setArchiveTarget(null)}
+                  style={{ flex:1, padding:'11px', borderRadius:'12px', border:'1.5px solid #E5E7EB', background:'#fff', color:'#374151', fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'600', cursor:'pointer' }}
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={confirmArchive}
+                  style={{ flex:1, padding:'11px', borderRadius:'12px', border:'none', background:'#6B7280', color:'#fff', fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'600', cursor:'pointer' }}
+                >
+                  Arsipkan
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── Edit Schedule Modal ── */}
+        {showEditSchedule && (
+          <div
+            onClick={e => { if (e.target === e.currentTarget && !isUpdatingSchedule) setShowEditSchedule(false); }}
+            style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.55)', zIndex:9999, display:'flex', alignItems:'center', justifyContent:'center', padding:'24px', backdropFilter:'blur(4px)' }}
+          >
+            <div style={{ background:'#fff', borderRadius:'20px', padding:'28px', width:'100%', maxWidth:'340px', boxShadow:'0 24px 64px rgba(0,0,0,0.2)' }}>
+              <div style={{ fontFamily:'var(--m-font)', fontSize:'18px', fontWeight:'800', color:'#111827', marginBottom:'16px' }}>Ubah Jadwal Tayang</div>
+              <div style={{ marginBottom:'20px' }}>
+                <input 
+                  type="datetime-local" 
+                  value={newScheduleTime}
+                  onChange={e => setNewScheduleTime(e.target.value)}
+                  style={{ width:'100%', padding:'12px 14px', borderRadius:'12px', border:'1.5px solid #E5E7EB', outline:'none', fontFamily:'var(--m-font)', fontSize:'15px', color:'#111827', background:'#F9FAFB', boxSizing: 'border-box' }}
+                  disabled={isUpdatingSchedule}
+                />
+              </div>
+              <div style={{ display:'flex', gap:'10px' }}>
+                <button
+                  onClick={() => setShowEditSchedule(false)}
+                  disabled={isUpdatingSchedule}
+                  style={{ flex:1, padding:'12px', borderRadius:'12px', border:'1.5px solid #E5E7EB', background:'#fff', color:'#374151', fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'700', cursor: isUpdatingSchedule ? 'default' : 'pointer' }}
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={handleUpdateSchedule}
+                  disabled={isUpdatingSchedule || !newScheduleTime}
+                  style={{ flex:1, padding:'12px', borderRadius:'12px', border:'none', background: (isUpdatingSchedule || !newScheduleTime) ? '#D1D5DB' : '#791ADB', color:'#fff', fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'700', cursor: (isUpdatingSchedule || !newScheduleTime) ? 'default' : 'pointer', display:'flex', justifyContent:'center', alignItems:'center' }}
+                >
+                  {isUpdatingSchedule ? 'Menyimpan…' : 'Simpan'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
       </div>
     );
   }
@@ -919,55 +1106,6 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
           </div>
         </>
       )}
-
-      {/* ── Archive Confirm Modal — sama seperti desktop deleteConfirmOverlay ── */}
-      {archiveTarget && (
-        <div
-          onClick={e => { if (e.target === e.currentTarget) setArchiveTarget(null); }}
-          style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.55)', zIndex:9999, display:'flex', alignItems:'center', justifyContent:'center', padding:'24px', backdropFilter:'blur(4px)' }}
-        >
-          <div style={{ background:'#fff', borderRadius:'20px', padding:'28px', width:'100%', maxWidth:'340px', boxShadow:'0 24px 64px rgba(0,0,0,0.2)' }}>
-            {/* Header */}
-            <div style={{ display:'flex', alignItems:'center', gap:'12px', marginBottom:'16px' }}>
-              <div style={{ width:'40px', height:'40px', borderRadius:'12px', background:'#FEF2F2', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
-                  <path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/>
-                </svg>
-              </div>
-              <div>
-                <div style={{ fontFamily:'var(--m-font)', fontSize:'16px', fontWeight:'700', color:'#111827' }}>Arsipkan Campaign?</div>
-                <div style={{ fontFamily:'var(--m-font)', fontSize:'12px', color:'#6B7280', marginTop:'2px' }}>Iklan akan dipindahkan ke tab Diarsipkan</div>
-              </div>
-            </div>
-
-            {/* Campaign name */}
-            <div style={{ background:'#F9FAFB', borderRadius:'10px', padding:'12px 14px', marginBottom:'14px' }}>
-              <div style={{ fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'700', color:'#111827', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{archiveTarget.name}</div>
-              <div style={{ fontFamily:'var(--m-font)', fontSize:'11px', color:'#6B7280', marginTop:'3px' }}>{platformLabel(archiveTarget.platforms)}</div>
-            </div>
-
-            {/* Warning */}
-            <div style={{ background:'#FFFBEB', border:'1px solid #FCD34D', borderRadius:'10px', padding:'12px 14px', marginBottom:'20px', fontFamily:'var(--m-font)', fontSize:'12px', color:'#92400E', lineHeight:'1.6' }}>
-              ⚠️ <strong>Postingan di {platformLabel(archiveTarget.platforms)} TIDAK akan terhapus.</strong> Kamu perlu hapus manual di masing-masing platform.
-            </div>
-
-            {/* Buttons */}
-            <div style={{ display:'flex', gap:'10px' }}>
-              <button
-                onClick={() => setArchiveTarget(null)}
-                style={{ flex:1, padding:'11px', borderRadius:'12px', border:'1.5px solid #E5E7EB', background:'#fff', color:'#374151', fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'600', cursor:'pointer' }}
-              >
-                Batal
-              </button>
-              <button
-                onClick={confirmArchive}
-                style={{ flex:1, padding:'11px', borderRadius:'12px', border:'none', background:'#6B7280', color:'#fff', fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'600', cursor:'pointer' }}
-              >
-                Arsipkan
-              </button>
-            </div>
-          </div>
         </div>
       )}
     </div>
