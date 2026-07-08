@@ -105,9 +105,13 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
   const attemptedRepairsRef = useRef(new Set());
   
   const [showEditSchedule, setShowEditSchedule] = useState(false);
-  const [newScheduleTime, setNewScheduleTime] = useState('');
+  const [animateEditSchedule, setAnimateEditSchedule] = useState(false);
+  const [editDate, setEditDate] = useState('');
+  const [editTime, setEditTime] = useState('');
+  const [editCampaignName, setEditCampaignName] = useState('');
   const [isUpdatingSchedule, setIsUpdatingSchedule] = useState(false);
   const [toastMsg, setToastMsg] = useState('');
+
 
   const isVideoUrl = (url) => {
     if (!url) return false;
@@ -374,7 +378,8 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
   }, [archiveTarget, sessionId, accessToken]);
 
   const handleUpdateSchedule = async () => {
-    if (!selectedCamp || !newScheduleTime) return;
+    if (!selectedCamp || !editDate || !editTime || !editCampaignName.trim()) return;
+    const combinedDateTime = `${editDate}T${editTime}:00`;
     setIsUpdatingSchedule(true);
     try {
       // 1. Delete old post
@@ -398,7 +403,7 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
           } catch { return []; }
         })(),
         platform_configurations: { [sp]: { placement: placementMap[format] || 'timeline' } },
-        scheduled_at: new Date(newScheduleTime).toISOString()
+        scheduled_at: new Date(combinedDateTime).toISOString()
       };
       
       if (selectedCamp.thumbUrl) {
@@ -410,7 +415,10 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
       const newPostUrl = data?.post_url || data?.platform_url || data?.permalink || data?.posts?.[0]?.post_url || null;
       
       // 3. Update Supabase
-      const updates = { scheduled_at: payload.scheduled_at };
+      const updates = { 
+        scheduled_at: payload.scheduled_at,
+        nama_campaign: editCampaignName.trim()
+      };
       if (newPostId) updates.post_id = newPostId;
       if (newPostUrl) updates.post_url = newPostUrl;
       
@@ -423,9 +431,9 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
       if (!dbResp.ok) throw new Error('Gagal update Supabase');
       
       // 4. Update UI state
-      setCampaigns(prev => prev.map(c => c.id === selectedCamp.id ? { ...c, ...updates } : c));
-      setSelectedCamp(prev => ({ ...prev, ...updates }));
-      setShowEditSchedule(false);
+      setCampaigns(prev => prev.map(c => c.id === selectedCamp.id ? { ...c, ...updates, name: updates.nama_campaign } : c));
+      setSelectedCamp(prev => ({ ...prev, ...updates, name: updates.nama_campaign }));
+      handleCloseEditSchedule();
       setToastMsg('Jadwal berhasil diubah!');
       setTimeout(() => setToastMsg(''), 3000);
     } catch (e) {
@@ -434,6 +442,29 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
     } finally {
       setIsUpdatingSchedule(false);
     }
+  };
+
+  const handleOpenEditSchedule = () => {
+    if (selectedCamp?.scheduled_at) {
+      const d = new Date(selectedCamp.scheduled_at);
+      if (!isNaN(d)) {
+        // Format YYYY-MM-DD
+        setEditDate(d.toISOString().substring(0, 10));
+        // Format HH:MM
+        setEditTime(d.toTimeString().substring(0, 5));
+      }
+    } else {
+      setEditDate('');
+      setEditTime('');
+    }
+    setEditCampaignName(selectedCamp?.name || '');
+    setShowEditSchedule(true);
+    setTimeout(() => setAnimateEditSchedule(true), 10);
+  };
+
+  const handleCloseEditSchedule = () => {
+    setAnimateEditSchedule(false);
+    setTimeout(() => setShowEditSchedule(false), 300);
   };
 
   const handleDetailScroll = (e) => {
@@ -537,16 +568,7 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          let localStr = '';
-                          if (c.scheduled_at) {
-                            const d = parseSafeDate(c.scheduled_at);
-                            if (!isNaN(d.getTime())) {
-                              const tzOffset = d.getTimezoneOffset() * 60000;
-                              localStr = new Date(d.getTime() - tzOffset).toISOString().slice(0, 16);
-                            }
-                          }
-                          setNewScheduleTime(localStr);
-                          setShowEditSchedule(true);
+                          handleOpenEditSchedule();
                         }}
                         style={{ marginLeft: '4px', background: 'rgba(121, 26, 219, 0.1)', border: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: '#791ADB', padding: '4px', borderRadius: '6px' }}
                         title="Ubah Jadwal"
@@ -687,8 +709,12 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
               </div>
 
               {/* Warning */}
-              <div style={{ background:'#FFFBEB', border:'1px solid #FCD34D', borderRadius:'10px', padding:'12px 14px', marginBottom:'20px', fontFamily:'var(--m-font)', fontSize:'12px', color:'#92400E', lineHeight:'1.6' }}>
-                ⚠️ <strong>Postingan di {platformLabel(archiveTarget.platforms)} TIDAK akan terhapus.</strong> Kamu perlu hapus manual di masing-masing platform.
+              <div style={{ background: archiveTarget.status === 'scheduled' ? '#EFF6FF' : '#FFFBEB', border: archiveTarget.status === 'scheduled' ? '1px solid #BFDBFE' : '1px solid #FCD34D', borderRadius:'10px', padding:'12px 14px', marginBottom:'20px', fontFamily:'var(--m-font)', fontSize:'12px', color: archiveTarget.status === 'scheduled' ? '#1E40AF' : '#92400E', lineHeight:'1.6' }}>
+                {archiveTarget.status === 'scheduled' ? (
+                  <>ℹ️ <strong>Jadwal postingan akan dibatalkan otomatis.</strong> Iklan akan dipindahkan ke arsip.</>
+                ) : (
+                  <>⚠️ <strong>Postingan di {platformLabel(archiveTarget.platforms)} TIDAK akan terhapus.</strong> Kamu perlu hapus manual di masing-masing platform.</>
+                )}
               </div>
 
               {/* Buttons */}
@@ -710,41 +736,126 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
           </div>
         )}
 
-        {/* ── Edit Schedule Modal ── */}
+        {/* ── Edit Schedule Modal (Bottom Sheet) ── */}
         {showEditSchedule && (
-          <div
-            onClick={e => { if (e.target === e.currentTarget && !isUpdatingSchedule) setShowEditSchedule(false); }}
-            style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.55)', zIndex:9999, display:'flex', alignItems:'center', justifyContent:'center', padding:'24px', backdropFilter:'blur(4px)' }}
-          >
-            <div style={{ background:'#fff', borderRadius:'20px', padding:'28px', width:'100%', maxWidth:'340px', boxShadow:'0 24px 64px rgba(0,0,0,0.2)' }}>
-              <div style={{ fontFamily:'var(--m-font)', fontSize:'18px', fontWeight:'800', color:'#111827', marginBottom:'16px' }}>Ubah Jadwal Tayang</div>
-              <div style={{ marginBottom:'20px' }}>
-                <input 
-                  type="datetime-local" 
-                  value={newScheduleTime}
-                  onChange={e => setNewScheduleTime(e.target.value)}
-                  style={{ width:'100%', padding:'12px 14px', borderRadius:'12px', border:'1.5px solid #E5E7EB', outline:'none', fontFamily:'var(--m-font)', fontSize:'15px', color:'#111827', background:'#F9FAFB', boxSizing: 'border-box' }}
-                  disabled={isUpdatingSchedule}
-                />
+          <>
+            <div
+              onClick={handleCloseEditSchedule}
+              style={{
+                position: 'fixed', inset: 0, zIndex: 9998,
+                background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)',
+                opacity: animateEditSchedule ? 1 : 0, transition: 'opacity 0.3s ease-out'
+              }}
+            />
+            <div
+              style={{
+                position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 9999,
+                background: isGenZ ? '#0e0e12' : '#fff', borderRadius: '24px 24px 0 0',
+                padding: '24px 20px calc(24px + env(safe-area-inset-bottom))',
+                transform: animateEditSchedule ? 'translateY(0)' : 'translateY(100%)',
+                transition: 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1)',
+                display: 'flex', flexDirection: 'column',
+              }}
+            >
+              <div style={{ width: '40px', height: '4px', background: isGenZ ? '#374151' : '#E5E7EB', borderRadius: '2px', margin: '0 auto 20px' }} />
+              
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
+                <div>
+                  <h3 style={{ fontFamily: 'var(--m-font)', fontSize: '18px', fontWeight: '800', color: isGenZ ? '#fff' : '#111827', margin: '0 0 4px 0' }}>Ubah Jadwal Tayang</h3>
+                  <p style={{ fontFamily: 'var(--m-font)', fontSize: '13px', color: isGenZ ? '#9CA3AF' : '#6B7280', margin: 0 }}>Pilih waktu postingan ini akan ditayangkan</p>
+                </div>
+                <button onClick={handleCloseEditSchedule} style={{ width: '32px', height: '32px', borderRadius: '50%', background: isGenZ ? '#1e1e24' : '#F3F4F6', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={isGenZ ? '#fff' : '#111827'} strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
               </div>
-              <div style={{ display:'flex', gap:'10px' }}>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '28px' }}>
+                <div>
+                  <label style={{ display: 'block', fontFamily: 'var(--m-font)', fontSize: '12px', fontWeight: '700', color: isGenZ ? '#9CA3AF' : '#6B7280', marginBottom: '8px', letterSpacing: '0.05em' }}>TANGGAL</label>
+                  <div style={{ position: 'relative' }}>
+                    <div style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={isGenZ ? '#9CA3AF' : '#6B7280'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                    </div>
+                    <input 
+                      type="date"
+                      value={editDate}
+                      onChange={(e) => setEditDate(e.target.value)}
+                      disabled={isUpdatingSchedule}
+                      style={{
+                        width: '100%', padding: '14px 14px 14px 40px', boxSizing: 'border-box',
+                        borderRadius: '12px', border: isGenZ ? '1px solid #374151' : '1px solid #E5E7EB',
+                        background: isGenZ ? '#1e1e24' : '#fff', color: isGenZ ? '#fff' : '#111827',
+                        fontFamily: 'var(--m-font)', fontSize: '15px', fontWeight: '600', outline: 'none'
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontFamily: 'var(--m-font)', fontSize: '12px', fontWeight: '700', color: isGenZ ? '#9CA3AF' : '#6B7280', marginBottom: '8px', letterSpacing: '0.05em' }}>WAKTU</label>
+                  <div style={{ position: 'relative' }}>
+                    <div style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={isGenZ ? '#9CA3AF' : '#6B7280'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    </div>
+                    <input 
+                      type="time"
+                      value={editTime}
+                      onChange={(e) => setEditTime(e.target.value)}
+                      disabled={isUpdatingSchedule}
+                      style={{
+                        width: '100%', padding: '14px 14px 14px 40px', boxSizing: 'border-box',
+                        borderRadius: '12px', border: isGenZ ? '1px solid #374151' : '1px solid #E5E7EB',
+                        background: isGenZ ? '#1e1e24' : '#fff', color: isGenZ ? '#fff' : '#111827',
+                        fontFamily: 'var(--m-font)', fontSize: '15px', fontWeight: '600', outline: 'none'
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontFamily: 'var(--m-font)', fontSize: '12px', fontWeight: '700', color: isGenZ ? '#9CA3AF' : '#6B7280', marginBottom: '8px', letterSpacing: '0.05em' }}>NAMA IKLAN</label>
+                  <input 
+                    type="text"
+                    value={editCampaignName}
+                    onChange={(e) => setEditCampaignName(e.target.value)}
+                    disabled={isUpdatingSchedule}
+                    style={{
+                      width: '100%', padding: '14px', boxSizing: 'border-box',
+                      borderRadius: '12px', border: isGenZ ? '1px solid #374151' : '1px solid #E5E7EB',
+                      background: isGenZ ? '#1e1e24' : '#fff', color: isGenZ ? '#fff' : '#111827',
+                      fontFamily: 'var(--m-font)', fontSize: '15px', fontWeight: '500', outline: 'none'
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '12px' }}>
                 <button
-                  onClick={() => setShowEditSchedule(false)}
+                  onClick={handleCloseEditSchedule}
                   disabled={isUpdatingSchedule}
-                  style={{ flex:1, padding:'12px', borderRadius:'12px', border:'1.5px solid #E5E7EB', background:'#fff', color:'#374151', fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'700', cursor: isUpdatingSchedule ? 'default' : 'pointer' }}
+                  style={{
+                    flex: 1, padding: '14px', borderRadius: '12px', border: isGenZ ? '1px solid #374151' : '1px solid #E5E7EB',
+                    background: isGenZ ? '#1e1e24' : '#fff', color: isGenZ ? '#fff' : '#374151',
+                    fontFamily: 'var(--m-font)', fontSize: '14px', fontWeight: '700', cursor: 'pointer'
+                  }}
                 >
                   Batal
                 </button>
                 <button
                   onClick={handleUpdateSchedule}
-                  disabled={isUpdatingSchedule || !newScheduleTime}
-                  style={{ flex:1, padding:'12px', borderRadius:'12px', border:'none', background: (isUpdatingSchedule || !newScheduleTime) ? '#D1D5DB' : '#791ADB', color:'#fff', fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'700', cursor: (isUpdatingSchedule || !newScheduleTime) ? 'default' : 'pointer', display:'flex', justifyContent:'center', alignItems:'center' }}
+                  disabled={isUpdatingSchedule || !editDate || !editTime || !editCampaignName.trim()}
+                  style={{
+                    flex: 1, padding: '14px', borderRadius: '12px', border: 'none',
+                    background: (isUpdatingSchedule || !editDate || !editTime || !editCampaignName.trim()) ? (isGenZ ? '#374151' : '#D1D5DB') : '#791ADB',
+                    color: '#fff', fontFamily: 'var(--m-font)', fontSize: '14px', fontWeight: '700', 
+                    cursor: (isUpdatingSchedule || !editDate || !editTime || !editCampaignName.trim()) ? 'not-allowed' : 'pointer'
+                  }}
                 >
-                  {isUpdatingSchedule ? 'Menyimpan…' : 'Simpan'}
+                  {isUpdatingSchedule ? 'Menyimpan...' : 'Simpan'}
                 </button>
               </div>
             </div>
-          </div>
+          </>
         )}
 
         {/* ── Toast Notification ── */}
