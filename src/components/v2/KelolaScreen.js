@@ -770,45 +770,77 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '28px' }}>
-                <div>
-                  <label style={{ display: 'block', fontFamily: 'var(--m-font)', fontSize: '12px', fontWeight: '700', color: isGenZ ? '#9CA3AF' : '#6B7280', marginBottom: '8px', letterSpacing: '0.05em' }}>TANGGAL</label>
-                  <div style={{ position: 'relative' }}>
-                    <div style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={isGenZ ? '#9CA3AF' : '#6B7280'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                    </div>
-                    <input 
+                {/* Input Tanggal */}
+                <div style={{marginBottom:'16px'}}>
+                  <label style={{fontFamily:'var(--m-font)', fontSize:'12px', fontWeight:'700', color: isGenZ ? '#9CA3AF' : 'var(--m-ink-sub)', display:'block', marginBottom:'8px', textTransform:'uppercase', letterSpacing:'0.5px'}}>Tanggal</label>
+                  <div style={{position:'relative'}}>
+                    <input
                       type="date"
                       value={editDate}
                       onChange={(e) => setEditDate(e.target.value)}
                       disabled={isUpdatingSchedule}
+                      className="premium-datetime-input"
                       style={{
-                        width: '100%', padding: '14px 14px 14px 40px', boxSizing: 'border-box',
-                        borderRadius: '12px', border: isGenZ ? '1px solid #374151' : '1px solid #E5E7EB',
-                        background: isGenZ ? '#1e1e24' : '#fff', color: isGenZ ? '#fff' : '#111827',
-                        fontFamily: 'var(--m-font)', fontSize: '15px', fontWeight: '600', outline: 'none'
+                        width:'100%', 
+                        padding:'12px 14px', 
+                        borderRadius:'12px', 
+                        border: isGenZ ? '1.5px solid #374151' : '1.5px solid #E4E4EB', 
+                        fontFamily:'var(--m-font)', 
+                        fontSize:'16px', 
+                        fontWeight:'600', 
+                        color: isGenZ ? '#fff' : 'var(--m-ink)', 
+                        outline:'none', 
+                        background: isGenZ ? '#1e1e24' : '#F9F9FA', 
+                        boxSizing:'border-box',
+                        textAlign:'left',
+                        WebkitAppearance:'none',
+                        appearance:'none'
                       }}
                     />
+                    <div style={{position:'absolute', left:'14px', top:'50%', transform:'translateY(-50%)', display:'flex', alignItems:'center', pointerEvents:'none', color: isGenZ ? '#9CA3AF' : 'var(--m-ink-sub)'}}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                        <line x1="16" y1="2" x2="16" y2="6"/>
+                        <line x1="8" y1="2" x2="8" y2="6"/>
+                        <line x1="3" y1="10" x2="21" y2="10"/>
+                      </svg>
+                    </div>
                   </div>
                 </div>
 
-                <div>
-                  <label style={{ display: 'block', fontFamily: 'var(--m-font)', fontSize: '12px', fontWeight: '700', color: isGenZ ? '#9CA3AF' : '#6B7280', marginBottom: '8px', letterSpacing: '0.05em' }}>WAKTU</label>
-                  <div style={{ position: 'relative' }}>
-                    <div style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={isGenZ ? '#9CA3AF' : '#6B7280'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                    </div>
-                    <input 
+                {/* Input Waktu */}
+                <div style={{marginBottom:'20px'}}>
+                  <label style={{fontFamily:'var(--m-font)', fontSize:'12px', fontWeight:'700', color: isGenZ ? '#9CA3AF' : 'var(--m-ink-sub)', display:'block', marginBottom:'8px', textTransform:'uppercase', letterSpacing:'0.5px'}}>Waktu</label>
+                  <div style={{position:'relative'}}>
+                    <input
                       type="time"
                       value={editTime}
                       onChange={(e) => setEditTime(e.target.value)}
                       disabled={isUpdatingSchedule}
+                      className="premium-datetime-input"
                       style={{
-                        width: '100%', padding: '14px 14px 14px 40px', boxSizing: 'border-box',
-                        borderRadius: '12px', border: isGenZ ? '1px solid #374151' : '1px solid #E5E7EB',
-                        background: isGenZ ? '#1e1e24' : '#fff', color: isGenZ ? '#fff' : '#111827',
-                        fontFamily: 'var(--m-font)', fontSize: '15px', fontWeight: '600', outline: 'none'
+                        width:'100%', 
+                        padding:'12px 14px', 
+                        borderRadius:'12px', 
+                        border: isGenZ ? '1.5px solid #374151' : '1.5px solid #E4E4EB', 
+                        fontFamily:'var(--m-font)', 
+                        fontSize:'16px', 
+                        fontWeight:'600', 
+                        color: isGenZ ? '#fff' : 'var(--m-ink)', 
+                        outline:'none', 
+                        background: isGenZ ? '#1e1e24' : '#F9F9FA', 
+                        boxSizing:'border-box',
+                        textAlign:'left',
+                        WebkitAppearance:'none',
+                        appearance:'none'
                       }}
                     />
+                    <div style={{position:'absolute', left:'14px', top:'50%', transform:'translateY(-50%)', display:'flex', alignItems:'center', pointerEvents:'none', color: isGenZ ? '#9CA3AF' : 'var(--m-ink-sub)'}}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="10"/>
+                        <polyline points="12 6 12 12 16 14"/>
+                      </svg>
+                    </div>
                   </div>
                 </div>
 
@@ -1241,6 +1273,24 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
         </>
       )}
 
+      <style>{`
+        /* Sembunyikan chevron bawaan browser agar bersih dan seragam di Android & iOS */
+        .premium-datetime-input::-webkit-calendar-picker-indicator {
+          display: none !important;
+          opacity: 0 !important;
+          width: 0px !important;
+          height: 0px !important;
+          padding: 0 !important;
+          margin: 0 !important;
+          -webkit-appearance: none !important;
+        }
+        /* Paksa teks rata kiri di iOS Safari dan geser agar tidak menumpuk dengan ikon */
+        .premium-datetime-input::-webkit-date-and-time-value {
+          text-align: left !important;
+          margin-left: 28px !important;
+          min-height: 1.2em;
+        }
+      `}</style>
     </div>
   );
 }
