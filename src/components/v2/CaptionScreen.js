@@ -1941,7 +1941,7 @@ export default function CaptionScreen({
                   className="premium-datetime-input"
                   style={{
                     width:'100%', 
-                    padding:'12px 14px', 
+                    padding:'12px 14px 12px 40px', 
                     borderRadius:'12px', 
                     border:'1.5px solid #E4E4EB', 
                     fontFamily:'var(--m-font)', 
@@ -1978,7 +1978,7 @@ export default function CaptionScreen({
                   className="premium-datetime-input"
                   style={{
                     width:'100%', 
-                    padding:'12px 14px', 
+                    padding:'12px 14px 12px 40px', 
                     borderRadius:'12px', 
                     border:'1.5px solid #E4E4EB', 
                     fontFamily:'var(--m-font)', 
@@ -2036,10 +2036,11 @@ export default function CaptionScreen({
           margin: 0 !important;
           -webkit-appearance: none !important;
         }
-        /* Paksa teks rata kiri di iOS Safari dan geser agar tidak menumpuk dengan ikon */
+        /* Paksa teks rata kiri di iOS Safari dan Android Chrome */
         .premium-datetime-input::-webkit-date-and-time-value {
           text-align: left !important;
-          margin-left: 28px !important;
+          margin: 0 !important;
+          padding: 0 !important;
           min-height: 1.2em;
         }
       `}</style>
