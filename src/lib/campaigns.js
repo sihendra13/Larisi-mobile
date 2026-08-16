@@ -78,6 +78,59 @@ export async function fetchCampaigns(sessionId, accessToken) {
   } catch { return []; }
 }
 
+/**
+ * Versi paginated dari fetchCampaigns — dipakai KelolaScreen untuk "Muat Lebih Banyak"
+ * supaya campaign lama tidak kegeser keluar dari daftar saat user sudah punya banyak campaign.
+ * Query session_id (anon legacy) cuma dijalankan di halaman pertama (offset 0) karena volumenya
+ * biasanya kecil dan bukan sumber utama untuk user yang sudah login.
+ */
+export async function fetchCampaignsPage(sessionId, accessToken, offset = 0, limit = 20) {
+  const sid = sessionId || (typeof window !== 'undefined' ? localStorage.getItem('radar_session_id') : null);
+  if (!sid && !accessToken) return { rows: [], hasMore: false };
+
+  try {
+    let allRows = [];
+
+    if (sid && offset === 0) {
+      try {
+        const resp = await fetch(
+          `${SUPABASE_URL}/rest/v1/campaigns?session_id=eq.${sid}&order=created_at.desc&limit=${limit}`,
+          { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` } }
+        );
+        if (resp.ok) allRows = allRows.concat(await resp.json());
+      } catch (e) {}
+    }
+
+    let hasMore = false;
+    if (accessToken) {
+      let uid = null;
+      try { uid = JSON.parse(atob(accessToken.split('.')[1]))?.sub || null; } catch {}
+      if (uid) {
+        try {
+          const resp2 = await fetch(
+            `${SUPABASE_URL}/rest/v1/campaigns?user_id=eq.${uid}&order=created_at.desc&limit=${limit}&offset=${offset}`,
+            { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${accessToken}` } }
+          );
+          if (resp2.ok) {
+            const rows2 = await resp2.json();
+            hasMore = rows2.length === limit;
+            allRows = allRows.concat(rows2);
+          }
+        } catch (e) {}
+      }
+    }
+
+    const unique = [];
+    const seen = new Set();
+    for (const r of allRows) {
+      if (!seen.has(r.id)) { seen.add(r.id); unique.push(r); }
+    }
+    unique.sort((a, b) => parseSafeDate(b.created_at).getTime() - parseSafeDate(a.created_at).getTime());
+
+    return { rows: unique, hasMore };
+  } catch { return { rows: [], hasMore: false }; }
+}
+
 export async function archiveCampaign(campaignId, sessionId, accessToken) {
   try {
     await fetch(

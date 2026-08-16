@@ -4,7 +4,41 @@ import SiLarisScreen from './SiLarisScreen';
 import MobileHeader from '@/components/layout/MobileHeader';
 import { SUPABASE_URL, SUPABASE_ANON_KEY, fmtViews } from '@/lib/config';
 
-import { parseSafeDate, fmtDate, platformLabel, fetchCampaigns, archiveCampaign, fetchAnalytics, extractMetrics, matchPost } from '@/lib/campaigns';
+import { parseSafeDate, fmtDate, platformLabel, fetchCampaignsPage, archiveCampaign, fetchAnalytics, extractMetrics, matchPost } from '@/lib/campaigns';
+
+const PAGE_SIZE = 20;
+
+/* Map row Supabase -> shape yang dipakai UI. Dipakai baik untuk load awal maupun "Muat Lebih Banyak". */
+function mapCampaignRow(r) {
+  const platMap = { instagram: 'ig', facebook: 'meta' };
+  return {
+    id:               r.id,
+    name:             r.nama_campaign || 'Campaign',
+    status:           (() => {
+                        let s = r.status === 'active' ? 'running' : (r.status || 'running');
+                        if (s === 'scheduled' && r.scheduled_at) {
+                          const d = parseSafeDate(r.scheduled_at);
+                          if (!isNaN(d.getTime()) && d.getTime() <= Date.now()) {
+                            s = 'running';
+                          }
+                        }
+                        return s;
+                      })(),
+    platforms:        (r.platforms || []).map(p => platMap[p] || p),
+    format:           r.format || 'post',
+    thumbUrl:         r.thumb_url || null,
+    hasVideo:         r.has_video || false,
+    thumbColor:       '#791ADB',
+    reachTarget:      r.estimated_reach_max || 10000,
+    created_at:       r.created_at || null,
+    scheduled_at:     r.scheduled_at || null,
+    post_id:          r.post_id || null,
+    post_url:         r.post_url || null,
+    platform_post_id: r.platform_post_id || null,
+    budget:           r.budget_idr || 0,
+    caption:          r.caption || '',
+  };
+}
 
 /* ─── Platform icon ─── */
 function PlatIcon({ plat }) {
@@ -101,6 +135,9 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
   const [mediaErrors, setMediaErrors] = useState({});
   const [mediaTypeFallback, setMediaTypeFallback] = useState({});
   const [retroFetchComplete, setRetroFetchComplete] = useState(false);
+  const [hasMore,     setHasMore]     = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [pageOffset,  setPageOffset]  = useState(0);
   const repairingCampaignsRef = useRef(new Set());
   const attemptedRepairsRef = useRef(new Set());
   
@@ -188,110 +225,108 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
     setTimeout(() => setShowPlatformSheet(false), 300);
   };
 
-  /* ── Load campaigns on mount, lalu fetch real reach dari PostForMe ── */
-  useEffect(() => {
-    if (!accessToken) { setLoading(false); return; }
-    fetchCampaigns(sessionId, accessToken).then(async rows => {
-      const platMap = { instagram: 'ig', facebook: 'meta' };
-      const mapped = rows.map(r => ({
-        id:               r.id,
-        name:             r.nama_campaign || 'Campaign',
-        status:           (() => {
-                            let s = r.status === 'active' ? 'running' : (r.status || 'running');
-                            if (s === 'scheduled' && r.scheduled_at) {
-                              const d = parseSafeDate(r.scheduled_at);
-                              if (!isNaN(d.getTime()) && d.getTime() <= Date.now()) {
-                                s = 'running';
-                              }
-                            }
-                            return s;
-                          })(),
-        platforms:        (r.platforms || []).map(p => platMap[p] || p),
-        format:           r.format || 'post',
-        thumbUrl:         r.thumb_url || null,
-        hasVideo:         r.has_video || false,
-        thumbColor:       '#791ADB',
-        reachTarget:      r.estimated_reach_max || 10000,
-        created_at:       r.created_at || null,
-        scheduled_at:     r.scheduled_at || null,
-        post_id:          r.post_id || null,
-        post_url:         r.post_url || null,
-        platform_post_id: r.platform_post_id || null,
-        budget:           r.budget_idr || 0,
-        caption:          r.caption || '',
-      }));
-      setCampaigns(mapped);
-      setLoading(false);
+  /* Fetch real reach + retroactive thumbnail repair untuk satu batch campaign yang baru dimuat
+     (dipakai baik untuk load awal maupun "Muat Lebih Banyak") */
+  const enrichCampaigns = useCallback(async (mapped) => {
+    const accounts = (() => {
+      try { return JSON.parse(localStorage.getItem('radar_social_accounts') || '[]'); } catch { return []; }
+    })();
+    const platApiMap = { ig:'instagram', meta:'facebook', tiktok:'tiktok', youtube:'youtube' };
+    const feedCache = {}; // accountId → posts[]
 
-      // Fetch real reach dari PostForMe per akun — sama seperti desktop _loadAnalyticsForCard
-      // Cache per social account ID agar tidak fetch berkali-kali untuk akun yang sama
-      const accounts = (() => {
-        try { return JSON.parse(localStorage.getItem('radar_social_accounts') || '[]'); } catch { return []; }
-      })();
-      const platApiMap = { ig:'instagram', meta:'facebook', tiktok:'tiktok', youtube:'youtube' };
-      const feedCache = {}; // accountId → posts[]
+    for (const camp of mapped) {
+      if (camp.status === 'paused') continue;
+      const sp  = platApiMap[camp.platforms[0]] || camp.platforms[0];
+      const acc = accounts.find(a => a.platform === sp);
+      if (!acc?.id) continue;
 
-      for (const camp of mapped) {
-        if (camp.status === 'paused') continue;
-        const sp  = platApiMap[camp.platforms[0]] || camp.platforms[0];
-        const acc = accounts.find(a => a.platform === sp);
-        if (!acc?.id) continue;
-
-        if (!feedCache[acc.id]) {
-          try {
-            feedCache[acc.id] = await fetchAnalytics(acc.id, accessToken);
-          } catch { feedCache[acc.id] = []; }
+      if (!feedCache[acc.id]) {
+        try {
+          feedCache[acc.id] = await fetchAnalytics(acc.id, accessToken);
+        } catch { feedCache[acc.id] = []; }
+      }
+      const posts = feedCache[acc.id] || [];
+      const post  = matchPost(posts, camp);
+      if (post) {
+        const m = extractMetrics(post, camp.platforms[0]);
+        if (m.reach > 0) {
+          setRealReach(prev => ({ ...prev, [camp.id]: m.reach }));
         }
-        const posts = feedCache[acc.id] || [];
-        const post  = matchPost(posts, camp);
-        if (post) {
-          const m = extractMetrics(post, camp.platforms[0]);
-          if (m.reach > 0) {
-            setRealReach(prev => ({ ...prev, [camp.id]: m.reach }));
+        // Lapis 3: Retroactive thumbnail dari PostForMe feed ATAU konversi CDN URL basi ke Supabase Storage
+        let currentThumbUrl = camp.thumbUrl;
+        if (!currentThumbUrl) {
+          currentThumbUrl = post.thumbnail_url || post.media_url || post.thumb_url || post.media?.[0]?.url || null;
+          if (currentThumbUrl) {
+            setCampaigns(prev => prev.map(c => c.id === camp.id ? { ...c, thumbUrl: currentThumbUrl } : c));
           }
-          // Lapis 3: Retroactive thumbnail dari PostForMe feed ATAU konversi CDN URL basi ke Supabase Storage
-          let currentThumbUrl = camp.thumbUrl;
-          if (!currentThumbUrl) {
-            currentThumbUrl = post.thumbnail_url || post.media_url || post.thumb_url || post.media?.[0]?.url || null;
-            if (currentThumbUrl) {
-              setCampaigns(prev => prev.map(c => c.id === camp.id ? { ...c, thumbUrl: currentThumbUrl } : c));
-            }
-          }
+        }
 
-          // Lapis 3 Konversi: Jika URL-nya masih CDN eksternal (bukan Supabase Storage), download dan simpan permanen
-          if (currentThumbUrl && !currentThumbUrl.includes('/storage/v1/object/public/thumbnails/')) {
-             if (!window._convertingThumbs) window._convertingThumbs = new Set();
-             if (!window._convertingThumbs.has(camp.id)) {
-               window._convertingThumbs.add(camp.id);
-               // Lakukan secara async agar tidak mem-blok loop
-               (async () => {
-                 try {
-                   const jpegDataUrl = await createThumbFromUrl(currentThumbUrl);
-                   if (jpegDataUrl) {
-                     const permUrl = await uploadThumbToStorage(camp.id, jpegDataUrl, accessToken);
-                     if (permUrl) {
-                        // Update DB
-                        await fetch(`${SUPABASE_URL}/rest/v1/campaigns?id=eq.${camp.id}`, {
-                          method: 'PATCH',
-                          headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${accessToken || SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ thumb_url: permUrl }),
-                        });
-                        // Update UI seketika
-                        setCampaigns(prev => prev.map(c => c.id === camp.id ? { ...c, thumbUrl: permUrl } : c));
-                     }
+        // Lapis 3 Konversi: Jika URL-nya masih CDN eksternal (bukan Supabase Storage), download dan simpan permanen
+        if (currentThumbUrl && !currentThumbUrl.includes('/storage/v1/object/public/thumbnails/')) {
+           if (!window._convertingThumbs) window._convertingThumbs = new Set();
+           if (!window._convertingThumbs.has(camp.id)) {
+             window._convertingThumbs.add(camp.id);
+             // Lakukan secara async agar tidak mem-blok loop
+             (async () => {
+               try {
+                 const jpegDataUrl = await createThumbFromUrl(currentThumbUrl);
+                 if (jpegDataUrl) {
+                   const permUrl = await uploadThumbToStorage(camp.id, jpegDataUrl, accessToken);
+                   if (permUrl) {
+                      // Update DB
+                      await fetch(`${SUPABASE_URL}/rest/v1/campaigns?id=eq.${camp.id}`, {
+                        method: 'PATCH',
+                        headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${accessToken || SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ thumb_url: permUrl }),
+                      });
+                      // Update UI seketika
+                      setCampaigns(prev => prev.map(c => c.id === camp.id ? { ...c, thumbUrl: permUrl } : c));
                    }
-                 } catch(e) {}
-               })();
-             }
-          }
+                 }
+               } catch(e) {}
+             })();
+           }
         }
       }
+    }
+  }, [accessToken]);
+
+  /* ── Load campaigns on mount (halaman pertama), lalu fetch real reach dari PostForMe ── */
+  useEffect(() => {
+    if (!accessToken) { setLoading(false); return; }
+    fetchCampaignsPage(sessionId, accessToken, 0, PAGE_SIZE).then(async ({ rows, hasMore: more }) => {
+      const mapped = rows.map(mapCampaignRow);
+      setCampaigns(mapped);
+      setLoading(false);
+      setHasMore(more);
+      setPageOffset(mapped.length);
+
+      await enrichCampaigns(mapped);
       setRetroFetchComplete(true);
     }).catch(() => {
       setLoading(false);
       setRetroFetchComplete(true);
     });
-  }, [sessionId, accessToken]);
+  }, [sessionId, accessToken, enrichCampaigns]);
+
+  /* ── Muat Lebih Banyak — halaman berikutnya, di-append ke daftar yang sudah ada ── */
+  const handleLoadMore = useCallback(async () => {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    try {
+      const { rows, hasMore: more } = await fetchCampaignsPage(sessionId, accessToken, pageOffset, PAGE_SIZE);
+      const mapped = rows.map(mapCampaignRow);
+      setCampaigns(prev => {
+        const existingIds = new Set(prev.map(c => c.id));
+        return [...prev, ...mapped.filter(c => !existingIds.has(c.id))];
+      });
+      setHasMore(more);
+      setPageOffset(prev => prev + mapped.length);
+      await enrichCampaigns(mapped);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [sessionId, accessToken, pageOffset, hasMore, loadingMore, enrichCampaigns]);
 
   /* ── Filter tab ── */
   const filtered = campaigns.filter(c => {
@@ -1105,6 +1140,26 @@ export default function KelolaScreen({ sessionId, accessToken, profile, onAvatar
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Muat Lebih Banyak — campaign lama tidak lagi kegeser keluar dari daftar */}
+        {!loading && hasMore && (
+          <div style={{ display:'flex', justifyContent:'center', paddingBottom:'24px' }}>
+            <button
+              onClick={handleLoadMore}
+              disabled={loadingMore}
+              style={{
+                padding:'12px 24px', borderRadius:'999px',
+                background: isGenZ ? '#1e1e24' : '#F5F5F7',
+                color: isGenZ ? '#fff' : 'var(--m-ink)',
+                border: isGenZ ? '1px solid #2d2d39' : 'none',
+                fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'700',
+                cursor: loadingMore ? 'default' : 'pointer', opacity: loadingMore ? 0.6 : 1,
+              }}
+            >
+              {loadingMore ? 'Memuat…' : 'Muat Lebih Banyak'}
+            </button>
           </div>
         )}
       </main>
