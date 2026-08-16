@@ -31,13 +31,17 @@ serve(async (req: Request) => {
   if (!platform) return json({ error: "platform required" }, 400);
 
   try {
+    // permissions default PostForMe cuma "posts" (boleh publish) — TIDAK termasuk
+    // "feeds" (baca data feed/metrics). Tanpa ini, akun yang connect via app kita
+    // tidak akan pernah dapat data insight (views/likes/comments selalu 0),
+    // meski publish-nya tetap jalan normal.
     const resp = await fetch(`${PFM_BASE}/v1/social-accounts/auth-url`, {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${POSTFORME_API_KEY}`,
         "Content-Type":  "application/json",
       },
-      body: JSON.stringify({ platform, redirect_uri, external_id }),
+      body: JSON.stringify({ platform, redirect_uri, external_id, permissions: ["posts", "feeds"] }),
     });
 
     const data = await resp.json();
