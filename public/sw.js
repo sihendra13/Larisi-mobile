@@ -1,4 +1,4 @@
-const CACHE = 'larisi-v5';
+const CACHE = 'larisi-v6';
 const PRECACHE = ['/logo_larisi.svg', '/icons/icon-192.png', '/icons/icon-512.png'];
 
 self.addEventListener('install', e => {
@@ -25,14 +25,24 @@ self.addEventListener('fetch', e => {
   /* Network-first untuk HTML — pastikan selalu dapat JS terbaru */
   if (e.request.mode === 'navigate' || e.request.destination === 'document') {
     e.respondWith(
-      fetch(e.request).catch(() => caches.match(e.request))
+      fetch(e.request).catch(() =>
+        // Fallback ke cache — kalau tetap tidak ada (cache kosong / load pertama
+        // offline), jangan biarkan respondWith() dapat undefined (penyebab
+        // "network error response" di FetchEvent).
+        caches.match(e.request).then(cached => cached || new Response('', { status: 503, statusText: 'Offline' }))
+      )
     );
     return;
   }
 
   /* Cache-first untuk assets (gambar, font, dll) */
   e.respondWith(
-    caches.match(e.request).then(cached => cached || fetch(e.request))
+    caches.match(e.request).then(cached => {
+      if (cached) return cached;
+      // Fetch gagal (network error) DAN tidak ada di cache — jangan biarkan
+      // respondWith() dapat undefined (itu yang bikin "network error response").
+      return fetch(e.request).catch(() => new Response('', { status: 503, statusText: 'Offline' }));
+    })
   );
 });
 
