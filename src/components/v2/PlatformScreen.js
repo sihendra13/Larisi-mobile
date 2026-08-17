@@ -149,6 +149,15 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext, onS
   const [accounts,       setAccounts]       = useState(() => getStoredAccounts());
   const [socialBusy,     setSocialBusy]     = useState('');
   const [pendingTool,    setPendingTool]    = useState(null);
+  // Banner one-time: ajak user refresh koneksi akun supaya dapat izin baca data performa (feeds)
+  const [showReconnectBanner, setShowReconnectBanner] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return !localStorage.getItem('radar_reconnect_banner_dismissed');
+  });
+  const dismissReconnectBanner = () => {
+    localStorage.setItem('radar_reconnect_banner_dismissed', '1');
+    setShowReconnectBanner(false);
+  };
   const fileInputRef = useRef(null);
   const cameraInputRef = useRef(null);
   const [showMediaSheet, setShowMediaSheet] = useState(false);
@@ -630,6 +639,41 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext, onS
             </p>
           </div>
 
+          {/* ── Banner: ajak refresh koneksi akun (one-time, dismissible) ── */}
+          {showReconnectBanner && accounts.length > 0 && (
+            <div style={{marginBottom:'16px',padding:'14px',background:'#F5F0FF',borderRadius:'14px',border:'1.5px solid #E4D4FF',display:'flex',alignItems:'flex-start',gap:'10px'}}>
+              <div style={{width:'32px',height:'32px',borderRadius:'50%',background:'#EBDDFF',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--m-brand,#791ADB)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="23 4 23 10 17 10"/>
+                  <polyline points="1 20 1 14 7 14"/>
+                  <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                </svg>
+              </div>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontFamily:'var(--m-font)',fontSize:'13px',fontWeight:'700',color:'var(--m-ink)',marginBottom:'4px'}}>
+                  Perbarui koneksi akun sosial media
+                </div>
+                <div style={{fontFamily:'var(--m-font)',fontSize:'12px',color:'var(--m-ink-sub)',lineHeight:'1.5',marginBottom:'10px'}}>
+                  Supaya bisa lihat data performa lengkap (views, likes, komentar) di Kelola Iklan.
+                </div>
+                <button
+                  onClick={() => { dismissReconnectBanner(); openManage(); }}
+                  style={{padding:'8px 14px',borderRadius:'8px',background:'var(--m-brand,#791ADB)',color:'#fff',border:'none',fontFamily:'var(--m-font)',fontSize:'12px',fontWeight:'700',cursor:'pointer'}}
+                >
+                  Perbarui Sekarang
+                </button>
+              </div>
+              <button
+                onClick={dismissReconnectBanner}
+                style={{flexShrink:0,width:'24px',height:'24px',borderRadius:'50%',background:'none',border:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',padding:0}}
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--m-ink-sub)" strokeWidth="2.5" strokeLinecap="round">
+                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            </div>
+          )}
+
           {/* ── Card: Posting ke Platform ── */}
           <div style={{marginBottom:'12px',padding:'16px',background:'#fff',borderRadius:'16px',border:'1.5px solid #EBEBF0'}}>
             <div style={{fontFamily:'var(--m-font)',fontSize:'15px',fontWeight:'700',color:'var(--m-ink)',marginBottom:'14px'}}>
@@ -831,11 +875,23 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext, onS
                         {acc?.username ? `@${acc.username}` : 'Terhubung'}
                       </div>
                     </div>
-                    <button
-                      onClick={() => openDisconnectConfirm(p.id)}
-                      style={{flexShrink:0,padding:'7px 14px',borderRadius:'8px',border:'1.5px solid #EF4444',background:'transparent',cursor:'pointer',fontFamily:'var(--m-font)',fontSize:'12px',fontWeight:'700',color:'#EF4444'}}>
-                      Putuskan
-                    </button>
+                    <div style={{display:'flex',alignItems:'center',gap:'6px',flexShrink:0}}>
+                      <button
+                        onClick={() => handleConnect(p.id)}
+                        title="Perbarui izin akun"
+                        style={{width:'32px',height:'32px',borderRadius:'8px',border:'1.5px solid #EBEBF0',background:'#F9F9FB',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--m-ink-sub)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="23 4 23 10 17 10"/>
+                          <polyline points="1 20 1 14 7 14"/>
+                          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                        </svg>
+                      </button>
+                      <button
+                        onClick={() => openDisconnectConfirm(p.id)}
+                        style={{padding:'7px 14px',borderRadius:'8px',border:'1.5px solid #EF4444',background:'transparent',cursor:'pointer',fontFamily:'var(--m-font)',fontSize:'12px',fontWeight:'700',color:'#EF4444'}}>
+                        Putuskan
+                      </button>
+                    </div>
                   </div>
                 );
               })}
