@@ -311,8 +311,8 @@ export default function PlatformScreen({ platform, activePlatforms, setActivePla
     const isConn = accounts.some(a => a.platform === pid);
     if (!isConn) { openWarn(pid); return; }
     
-    // Toggle platform
-    if (activePlatforms) {
+    // Toggle platform (Multi-select)
+    if (activePlatforms && setActivePlatforms) {
       if (activePlatforms.includes(pid)) {
         if (activePlatforms.length > 1) {
           setActivePlatforms(activePlatforms.filter(p => p !== pid));
@@ -320,10 +320,12 @@ export default function PlatformScreen({ platform, activePlatforms, setActivePla
       } else {
         setActivePlatforms([...activePlatforms, pid]);
       }
+      onSelectPlatform(pid);
+    } else {
+      // Single-select
+      onSelectPlatform(pid);
+      if (onNext) onNext();
     }
-    
-    // Set active tab for preview
-    onSelectPlatform(pid);
   };
 
   const handleConnect = (pid) => {
@@ -819,6 +821,45 @@ export default function PlatformScreen({ platform, activePlatforms, setActivePla
               })}
             </div>
           </div>
+          
+          {/* Lanjut Button untuk mode Multi-select */}
+          {activePlatforms && activePlatforms.length > 0 && onNext && (
+            <div style={{
+              position: 'fixed',
+              bottom: '80px', /* di atas navbar */
+              left: '16px',
+              right: '16px',
+              zIndex: 90
+            }}>
+              <button
+                onClick={onNext}
+                style={{
+                  width: '100%',
+                  padding: '16px',
+                  borderRadius: '16px',
+                  background: '#111827',
+                  color: '#fff',
+                  border: 'none',
+                  fontSize: '15px',
+                  fontWeight: '700',
+                  fontFamily: 'var(--m-font)',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px'
+                }}
+              >
+                Lanjut
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                  <polyline points="12 5 19 12 12 19"></polyline>
+                </svg>
+              </button>
+            </div>
+          )}
+          
         </main>
       )}
 
