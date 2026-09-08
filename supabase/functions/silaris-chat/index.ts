@@ -17,7 +17,7 @@ const CORS_HEADERS = {
   "Access-Control-Allow-Headers": "Authorization, Content-Type",
 };
 
-const GEMINI_MODEL = "gemini-2.0-flash";
+const GEMINI_MODEL = "gemini-3.6-flash";
 const GEMINI_URL   = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
 
 serve(async (req: Request) => {
@@ -118,7 +118,7 @@ serve(async (req: Request) => {
       body: JSON.stringify({
         model:       GEMINI_MODEL,
         messages:    chatMessages,
-        max_tokens:  1000,
+        max_tokens:  3000,
         temperature: 0.3,
       }),
     });

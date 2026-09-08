@@ -388,6 +388,7 @@ export default function CaptionScreen({
   const [campName,        setCampName]        = useState('');
   const [scheduledTime,   setScheduledTime]   = useState(null); // string ISO or null
   const [showScheduleSheet, setShowScheduleSheet] = useState(false);
+  const [isManualCaption, setIsManualCaption] = useState(false);
   const [schedDate,       setSchedDate]       = useState('');
   const [schedTime,       setSchedTime]       = useState('');
 
@@ -1412,10 +1413,11 @@ export default function CaptionScreen({
             <textarea
               value={caption}
               onChange={e => setCaption(e.target.value)}
+              readOnly={!isManualCaption}
               style={{
                 width: '100%', height: '140px', padding: '12px', borderRadius: '12px',
-                background: isGenZ ? '#141418' : '#F5F5F7',
-                border: isGenZ ? '1.5px solid #2d2d39' : '1.5px solid #E4E4EB',
+                background: isManualCaption ? '#ffffff' : (isGenZ ? '#141418' : '#f9fafb'),
+                border: isManualCaption ? '1.5px solid var(--m-brand)' : (isGenZ ? '1.5px solid #2d2d39' : '1.5px solid transparent'),
                 color: isGenZ ? '#fff' : 'var(--m-ink)',
                 fontFamily: 'var(--m-font)', fontSize: '13px', lineHeight: '1.5',
                 outline: 'none', resize: 'none'
