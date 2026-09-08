@@ -17,8 +17,8 @@ const CORS_HEADERS = {
   "Access-Control-Allow-Headers": "Authorization, Content-Type",
 };
 
-const GROQ_MODEL = "llama-3.3-70b-versatile";
-const GROQ_URL   = "https://api.groq.com/openai/v1/chat/completions";
+const GEMINI_MODEL = "gemini-2.0-flash";
+const GEMINI_URL   = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
 
 serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
@@ -32,10 +32,10 @@ serve(async (req: Request) => {
     });
   }
 
-  const GROQ_API_KEY = Deno.env.get("GROQ_API_KEY");
-  if (!GROQ_API_KEY) {
-    console.error("[silaris-chat] GROQ_API_KEY tidak ditemukan di secrets");
-    return new Response(JSON.stringify({ error: "GROQ_API_KEY not set" }), {
+  const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
+  if (!GEMINI_API_KEY) {
+    console.error("[silaris-chat] GEMINI_API_KEY tidak ditemukan di secrets");
+    return new Response(JSON.stringify({ error: "GEMINI_API_KEY not set" }), {
       status: 500,
       headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
     });
@@ -102,21 +102,21 @@ serve(async (req: Request) => {
   }
 
   console.log("[silaris-chat] Sending to Groq:", {
-    model:        GROQ_MODEL,
+    model:        GEMINI_MODEL,
     msgCount:     chatMessages.length,
     autoInsight,
     hasCampaign:  !!campaignData,
   });
 
   try {
-    const groqResp = await fetch(GROQ_URL, {
+    const groqResp = await fetch(GEMINI_URL, {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${GROQ_API_KEY}`,
+        "Authorization": `Bearer ${GEMINI_API_KEY}`,
         "Content-Type":  "application/json",
       },
       body: JSON.stringify({
-        model:       GROQ_MODEL,
+        model:       GEMINI_MODEL,
         messages:    chatMessages,
         max_tokens:  1000,
         temperature: 0.3,

@@ -306,18 +306,18 @@ function buildSystemPrompt(profile, persona, platform, format, locName, locFull,
   const area = targetArea || 'sekitar';
   const u    = usp || 'kualitas terbaik';
   const hookInstructions = [
-    /* 0 — Pertanyaan langsung */
-    `Gunakan PERTANYAAN LANGSUNG ke audiens sebagai hook.\n` +
-    `Contoh baris hook: "Warga ${area}, belum cobain ${biz} di ${loc}? Sayang banget kalau dilewatkan!"`,
-    /* 1 — Pernyataan bold USP */
-    `Mulai dengan PERNYATAAN BOLD tentang USP — sebut keunggulan dulu, baru nama bisnis dan lokasi.\n` +
-    `Contoh baris hook: "${u} — itulah yang bikin ${biz} di ${loc} jadi pilihan warga ${area}."`,
-    /* 2 — Cerita/situasi relatable */
-    `Mulai dengan CERITA SINGKAT atau situasi yang relate — bayangkan kondisi audiens sebelum tahu bisnis ini.\n` +
-    `Contoh baris hook: "Lagi cari yang beda dari biasanya, ${area}? ${biz} di ${loc} jawabannya."`,
-    /* 3 — Social proof */
-    `Mulai dengan SOCIAL PROOF atau fakta menarik — sebut pelanggan setia, reaksi nyata, atau keunikan bisnis.\n` +
-    `Contoh baris hook: "Sudah ribuan orang buktikan — ${biz} di ${loc} memang beda. Warga ${area}, kapan giliranmu?"`,
+    /* 0 — Relatable Pain Point */
+    `Gunakan HOOK yang langsung menyentuh MASALAH atau KEBUTUHAN audiens secara natural.\n` +
+    `Contoh: "Sering bingung cari ${category || 'tempat'} yang beneran ${u} di daerah sini?"`,
+    /* 1 — Local Secret / Hidden Gem */
+    `Gunakan pendekatan seolah memberi tahu RAHASIA LOKAL atau hidden gem.\n` +
+    `Contoh: "Banyak yang rela mampir ke ${biz} cuma buat ngebuktiin ${u} yang jarang ada ini."`,
+    /* 2 — Storytelling Pengalaman */
+    `Mulai dengan CERITA PENGALAMAN singkat yang kasual seolah direkomendasikan teman.\n` +
+    `Contoh: "Awalnya iseng nyobain karena dekat, eh ternyata ${biz} punya ${u} yang bikin balik lagi."`,
+    /* 3 — Pernyataan Bold (Tanpa sapaan kaku) */
+    `Mulai dengan PERNYATAAN BOLD yang menggugah rasa penasaran tanpa bahasa formal.\n` +
+    `Contoh: "Kalau kamu sering lewat daerah sini, pasti udah nggak asing lagi sama ${u} dari ${biz}."`,
   ];
   const hookStyle = hookInstructions[n];
 
@@ -349,18 +349,18 @@ function buildSystemPrompt(profile, persona, platform, format, locName, locFull,
     hookStyle,
     '',
     'ATURAN WAJIB:',
-    '- Bahasa Indonesia natural, tidak kaku, tidak terkesan iklan murahan',
+    '- Bahasa Indonesia natural, tidak kaku, tidak terkesan iklan brosur',
     '- Sesuaikan gaya bahasa dengan persona — foodie/anak muda = santai & seru, profesional = informatif & hangat',
     positioningLine,
-    '- USP harus jadi kekuatan utama caption, bukan sekadar disebut',
-    `- KRITIS — Lokasi bisnis (${bizLocDisplay || bizLoc || 'tidak diketahui'}) dan area target iklan (${targetArea || 'sekitar lokasi'}) adalah DUA HAL BERBEDA.`,
-    `- DILARANG KERAS: menulis seolah bisnis berada di area target. Bisnis SELALU di lokasi aslinya (${bizLocDisplay || bizLoc || 'lokasi bisnis'}).`,
-    `- Yang benar: ajak audiens di area target (${targetArea || 'sekitar'}) untuk datang/memesan ke ${bizName || 'bisnis ini'} di ${bizLocDisplay || bizLoc || 'lokasi kami'}.`,
-    `- Contoh hook yang SALAH: "Ada tempat makan baru di ${targetArea || 'area target'}!" — ini SALAH karena bisnis tidak ada di sana.`,
-    '- Struktur: hook menarik → nilai/cerita → CTA',
+    '- DILARANG KERAS menggunakan kata kaku seperti: "Rasakan sensasinya", "Nikmati kelezatan", "Solusi tepat", "Hadir untuk Anda", "Tunggu apa lagi".',
+    '- Gunakan prinsip "Show, Don\'t Tell". Jangan cuma bilang produknya bagus, deskripsikan efek/suasananya secara kasual.',
+    '- USP harus dirajut ke dalam cerita, bukan sekadar disebut.',
+    `- Lokasi bisnis (${bizLocDisplay || bizLoc || 'tidak diketahui'}) jangan ditaruh di awal kalimat. Jadikan lokasi sebagai pelengkap informasi di akhir caption (sebelum CTA).`,
+    '- Struktur: hook organik → cerita/solusi relevan → lokasi & info kontak → CTA santai',
+    '- Gunakan spasi/enter antar paragraf agar caption enak dibaca (jangan wall of text).',
     '- Akhiri dengan 3–5 hashtag (mix populer + lokal + niche, termasuk hashtag area target)',
     '- JANGAN mengarang fakta bisnis yang tidak ada di data',
-    '- JANGAN gunakan simbol markdown (**bold**, *italic*, _underline_) — Instagram tidak render ini, tulis plain text saja',
+    '- JANGAN gunakan simbol markdown (**bold**, *italic*, _underline_) — tulis plain text saja',
     '- Output HANYA caption, tanpa penjelasan atau label tambahan',
   ].filter(l => l !== null && l !== undefined).join('\n');
 }
