@@ -748,6 +748,8 @@ export default function DapurV2() {
         {screen === 'caption' && (
           <CaptionScreen
             platform={platform}
+            setPlatform={setPlatform}
+            activePlatforms={activePlatforms}
             format={format}
             files={files}
             locName={locName}
