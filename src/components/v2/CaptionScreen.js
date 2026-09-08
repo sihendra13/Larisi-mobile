@@ -1269,6 +1269,36 @@ export default function CaptionScreen({
           <span style={{fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'600', color: isGenZ ? '#9ca3af' : 'var(--m-ink-sub)'}}>2/2</span>
         </div>
         <ProgressBar step={2} total={2} isGenZ={isGenZ} />
+        
+        {/* Tab Multi-Platform (Hanya muncul jika activePlatforms > 1) */}
+        {activePlatforms && activePlatforms.length > 1 && (
+          <div style={{
+            display: 'flex', gap: '8px', padding: '12px 16px 8px', overflowX: 'auto',
+            scrollbarWidth: 'none', background: isGenZ ? '#0e0e12' : '#fff',
+            borderBottom: isGenZ ? '1px solid #1e1e24' : '1px solid #E4E4EB'
+          }}>
+            {activePlatforms.map(pid => {
+              const isActive = pid === platform;
+              const platName = pid === 'youtube' ? 'YouTube' : pid === 'tiktok' ? 'TikTok' : pid.charAt(0).toUpperCase() + pid.slice(1);
+              return (
+                <button
+                  key={pid}
+                  onClick={() => setPlatform && setPlatform(pid)}
+                  style={{
+                    padding: '6px 12px', borderRadius: '20px', border: isActive ? '1px solid var(--m-brand)' : '1px solid #E4E4EB',
+                    background: isActive ? 'var(--m-brand)' : 'transparent',
+                    color: isActive ? '#fff' : 'var(--m-ink-sub)',
+                    fontSize: '13px', fontWeight: '700', fontFamily: 'var(--m-font)',
+                    cursor: 'pointer', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '6px'
+                  }}
+                >
+                  {PLATFORM_ICONS_SM[pid]}
+                  {platName}
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* ── Scrollable content ── */}
