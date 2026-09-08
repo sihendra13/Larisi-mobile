@@ -143,7 +143,7 @@ function SoftIcon({ platform, size = 44 }) {
   );
 }
 
-export default function PlatformScreen({ platform, onSelectPlatform, onNext, onStartStoryMaker, profile, accessToken, userId, onAvatarClick, isGenZ }) {
+export default function PlatformScreen({ platform, activePlatforms, setActivePlatforms, onSelectPlatform, onNext, onStartStoryMaker, profile, accessToken, userId, onAvatarClick, isGenZ }) {
   const [showManage,     setShowManage]     = useState(false);
   const [animateManage,  setAnimateManage]  = useState(false);
   const [accounts,       setAccounts]       = useState(() => getStoredAccounts());
