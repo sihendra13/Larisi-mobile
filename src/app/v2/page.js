@@ -86,8 +86,7 @@ export default function DapurV2() {
       e.preventDefault();
       window.__pwaInstallPrompt = e;
       setInstallPrompt(e);
-      const dismissed = localStorage.getItem('larisi_install_dismissed');
-      if (!dismissed) setShowInstallBar(true);
+      // Removed immediate setShowInstallBar(true) so it doesn't pop up on load
     };
     window.addEventListener('beforeinstallprompt', handler);
     return () => window.removeEventListener('beforeinstallprompt', handler);
@@ -293,17 +292,24 @@ export default function DapurV2() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  /* ── Effect: Tampilkan Modal Install PWA saat pertama kali masuk app (Khusus iOS) ── */
+  /* ── Effect: Tampilkan PWA Banner/Modal setelah user berhasil masuk (Android & iOS) ── */
   useEffect(() => {
     if (authState === 'app') {
       const isIOS = /iPad|iPhone|iPod/.test(window.navigator.userAgent) && !window.MSStream;
       const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
       const dismissed = localStorage.getItem('larisi_install_dismissed');
       
-      // Khusus iOS: Tampilkan modal panduan karena Safari tidak mendukung install banner otomatis
-      if (isIOS && !isStandalone && !dismissed) {
-        const timer = setTimeout(() => setShowInstallModal(true), 2500);
-        return () => clearTimeout(timer);
+      if (!isStandalone && !dismissed) {
+        if (isIOS) {
+          // Khusus iOS: Tampilkan modal panduan karena Safari tidak mendukung install banner otomatis
+          const timer = setTimeout(() => setShowInstallModal(true), 2500);
+          return () => clearTimeout(timer);
+        } else {
+          // Android: Tampilkan banner native bar jika prompt tersedia
+          // Menggunakan setTimeout untuk memberi jeda sedikit setelah berhasil login
+          const timer = setTimeout(() => setShowInstallBar(true), 2500);
+          return () => clearTimeout(timer);
+        }
       }
     }
   }, [authState]);
