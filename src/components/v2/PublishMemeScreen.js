@@ -303,7 +303,10 @@ export default function PublishMemeScreen({
               user_id:             effectiveUserId,
               session_id:          effectiveSessionId,
               nama_campaign:       finalName || caption.slice(0, 60),
-              platforms:           activePlatforms && activePlatforms.length > 0 ? activePlatforms : [sp],
+              // Loop ini submit satu post PER platform (bukan 1 combined post) —
+              // jadi tiap row campaign cuma boleh nyimpen platform yang beneran
+              // di-post di iterasi ini, bukan seluruh activePlatforms.
+              platforms:           [sp],
               format:              'post',
               status:              scheduledAt ? 'scheduled' : 'active',
               scheduled_at:        scheduledAt || null,

@@ -853,8 +853,16 @@ export default function CaptionScreen({
     const platName   = platLabels[sp]     || sp;
     const fmtName    = (sp === 'tiktok' || sp === 'youtube') ? '' : (fmtLabels[format] || '');
 
-    if (!acc?.id) {
-      showToast(`⚠ Akun ${platName} belum terhubung. Hubungkan di Platform.`, 'error');
+    // Semua platform yang dicentang user (multi-select dari PlatformScreen) —
+    // fallback ke platform tunggal (sp) kalau activePlatforms belum di-set
+    // (mis. dipanggil dari flow lama / PublishMemeScreen).
+    const selectedPlats  = (activePlatforms && activePlatforms.length > 0) ? activePlatforms : [sp];
+    const matchedAccounts = selectedPlats.map(p => ({ plat: p, acc: accounts.find(a => a.platform === p) }));
+    const missingAccounts = matchedAccounts.filter(m => !m.acc?.id);
+
+    if (missingAccounts.length) {
+      const names = missingAccounts.map(m => platLabels[m.plat] || m.plat).join(', ');
+      showToast(`⚠ Akun ${names} belum terhubung. Hubungkan di Platform.`, 'error');
       return;
     }
 
@@ -935,10 +943,22 @@ export default function CaptionScreen({
       }
 
       const placementMap = { post: 'timeline', reel: 'reels', story: 'stories' };
+      const platformConfigurations = {};
+      matchedAccounts.forEach(({ plat }) => {
+        if (plat === 'youtube') {
+          platformConfigurations.youtube = {
+            title: caption ? caption.split('\n')[0].slice(0, 100) : 'Video',
+            privacy_status: 'public',
+            made_for_kids: false,
+          };
+        } else {
+          platformConfigurations[plat] = { placement: placementMap[format] || 'timeline' };
+        }
+      });
       const payload = {
         caption,
-        social_accounts: [acc.id],
-        platform_configurations: { [sp]: { placement: placementMap[format] || 'timeline' } },
+        social_accounts: matchedAccounts.map(m => m.acc.id),
+        platform_configurations: platformConfigurations,
       };
       if (allMediaUrls.length) payload.media = allMediaUrls.map(u => ({ url: u }));
       if (scheduledAt) payload.scheduled_at = scheduledAt;
@@ -1403,9 +1423,28 @@ export default function CaptionScreen({
                 Caption {platLabel}
               </span>
             </div>
-            <span style={{fontFamily:'var(--m-font)', fontSize:'11px', fontWeight:'700', color:'var(--m-brand)', background:'var(--m-brand-soft)', padding:'3px 8px', borderRadius:'6px', flexShrink:0}}>
-              AI · ID
-            </span>
+            <div style={{display:'flex', alignItems:'center', gap:'8px', flexShrink:0}}>
+              <label style={{
+                display:'flex', alignItems:'center', gap:'5px', cursor:'pointer',
+                fontFamily:'var(--m-font)', fontSize:'11px', fontWeight:'700',
+                color: isGenZ ? '#9ca3af' : 'var(--m-ink-sub)',
+              }}>
+                <input
+                  type="checkbox"
+                  checked={isManualCaption}
+                  onChange={e => {
+                    const manual = e.target.checked;
+                    setIsManualCaption(manual);
+                    if (!manual) handleGenerate();
+                  }}
+                  style={{ width:'14px', height:'14px', accentColor:'var(--m-brand)', cursor:'pointer' }}
+                />
+                Tulis Manual
+              </label>
+              <span style={{fontFamily:'var(--m-font)', fontSize:'11px', fontWeight:'700', color:'var(--m-brand)', background:'var(--m-brand-soft)', padding:'3px 8px', borderRadius:'6px'}}>
+                AI · ID
+              </span>
+            </div>
           </div>
 
           {/* Caption display area */}
