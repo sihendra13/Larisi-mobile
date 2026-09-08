@@ -422,7 +422,7 @@ async function launchRadar() {
   }
 
   // ── Buka modal konfirmasi (P1) ──
-  openLaunchConfirmModal(campName, activeChannel, activeFormat);
+  openLaunchConfirmModal(campName, (typeof activeChannels !== 'undefined' ? activeChannels : [activeChannel]), activeFormat);
 }
 
 /* ─────────────────────────────────────────
@@ -787,9 +787,17 @@ async function _doLaunch(campNameOverride) {
               }
             }
           }
+        } else {
+          // Publish gagal (no_accounts/platform_not_connected/invalid_account_id/dll) —
+          // publishViaPostForMe resolve dengan {success:false}, bukan reject, jadi harus
+          // ditangani di sini juga supaya user tau, bukan cuma diam (post_id tetap NULL).
+          var errMsg = (result && result.error) ? result.error : 'unknown_error';
+          console.warn('[launch] Publish gagal, post_id tidak didapat:', errMsg);
+          showTopToast('⚠ Publish ke ' + (activeChannel || 'platform') + ' gagal (' + errMsg + '). Cek koneksi akun sosial mediamu.', 'error');
         }
       }).catch(function(e) {
         console.warn('[launch] publishViaBuffer error:', e);
+        showTopToast('⚠ Publish gagal: ' + (e && e.message ? e.message : 'terjadi kesalahan') + '.', 'error');
       });
     }
   });

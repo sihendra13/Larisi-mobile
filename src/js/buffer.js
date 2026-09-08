@@ -1392,6 +1392,11 @@ async function publishViaPostForMe(canvas, campaignData) {
       }
     }
 
+    var tiktokAccounts = filtered.filter(function(a){ return a.platform === 'tiktok'; });
+    if (tiktokAccounts.length) {
+      platformConfigs.tiktok = { placement: placement };
+    }
+
     var ytAccounts = filtered.filter(function(a){
       return a.platform === 'youtube';
     });

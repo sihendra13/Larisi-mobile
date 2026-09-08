@@ -128,7 +128,9 @@ var PLAT_LABEL_MAP = {
 var platformOrder = ['ig-story','ig-feed','tiktok','youtube','meta'];
 
 /* ─── Channel / Format state (untuk AI Editor cycler) ──────── */
-var activeChannel = 'instagram';  // instagram | meta | tiktok | youtube
+var activeChannel = 'instagram';
+var activeChannels = ['instagram'];
+var isManualCaption = false;  // instagram | meta | tiktok | youtube
 var activeFormat  = 'reel';       // post | reel | story
 var channelOrder  = ['instagram', 'meta', 'tiktok', 'youtube'];
 var channelIdx    = 0;

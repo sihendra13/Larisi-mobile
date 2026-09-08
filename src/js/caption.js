@@ -238,6 +238,8 @@ function generateCaption(cycle) {
 // ── AI Caption Generator ──────────────────────────────────────────────────────
 var _aiCallCount = 0; /* Counter naik setiap generateCaptionAI() dipanggil — untuk rotasi hook style */
 async function generateCaptionAI() {
+  if (typeof isManualCaption !== 'undefined' && isManualCaption) return;
+
   if (!currentPersona) return;
   _aiCallCount++;
 
@@ -485,4 +487,23 @@ function getDialek() {
   if (regionFromProfile) return REGION_DIALEK[regionFromProfile] || REGION_DIALEK['default'];
 
   return REGION_DIALEK['default'];
+}
+
+
+function toggleManualCaption(cb) {
+  isManualCaption = cb.checked;
+  var ta = document.getElementById('captionArea');
+  if (isManualCaption) {
+    ta.removeAttribute('readonly');
+    ta.style.background = '#ffffff';
+    ta.style.border = '1.5px solid #791ADB';
+    if (ta.value === 'Tunggu sebentar, AI akan menuliskan pesan untukmu. Kamu bebas mengeditnya kembali agar lebih sesuai.') {
+      ta.value = '';
+    }
+    ta.focus();
+  } else {
+    ta.style.border = '1.5px solid transparent';
+    ta.style.background = '#f9fafb';
+    generateCaptionAI();
+  }
 }

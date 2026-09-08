@@ -426,9 +426,12 @@ async function saveCampaign(campaignData) {
    SELECT semua campaign milik session ini
    Return: array of campaign objects
    ───────────────────────────────────────── */
-async function getCampaigns() {
+async function getCampaigns(offset) {
   var client = getSupabaseClient();
   if (!client) return [];
+
+  offset = offset || 0;
+  var PAGE_SIZE = 20;
 
   try {
     var result = await client
@@ -436,14 +439,18 @@ async function getCampaigns() {
       .select('*')
       .eq('session_id', window.radarSessionId)
       .order('created_at', { ascending: false })
-      .limit(10);
+      .range(offset, offset + PAGE_SIZE - 1);
 
     if (result.error) throw result.error;
 
-    return result.data || [];
+    var rows = result.data || [];
+    // Dipakai monitor.js untuk tampilkan/sembunyikan tombol "Muat Lebih Banyak"
+    window.CAMPAIGNS_HAS_MORE = rows.length === PAGE_SIZE;
+    return rows;
 
   } catch (err) {
     console.error('[supabase] getCampaigns error:', err.message);
+    window.CAMPAIGNS_HAS_MORE = false;
     return [];
   }
 }

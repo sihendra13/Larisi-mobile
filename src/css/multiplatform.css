@@ -1,0 +1,46 @@
+/* ── Multi-Platform Checkboxes ── */
+.channel-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+  background: var(--surface);
+  transition: all 0.2s;
+  color: var(--near-black);
+}
+.channel-check:hover {
+  background: #f3f4f6;
+}
+.channel-check:has(input:checked) {
+  background: #791ADB15;
+  border-color: #791ADB;
+  color: #791ADB;
+}
+.channel-check input {
+  display: none;
+}
+
+/* ── Live Preview Tabs ── */
+.preview-tab {
+  padding: 4px 10px;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--secondary);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.2s;
+  text-transform: uppercase;
+}
+.preview-tab.active {
+  background: #791ADB;
+  color: #fff;
+  border-color: #791ADB;
+}

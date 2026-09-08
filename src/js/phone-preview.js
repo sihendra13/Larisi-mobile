@@ -386,3 +386,8 @@ function toggleChannel(el) {
   el.classList.toggle('active');
   updateReach();
 }
+
+
+document.addEventListener('DOMContentLoaded', function() {
+  _updateLivePreviewTabs();
+});

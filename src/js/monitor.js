@@ -3,6 +3,8 @@
 
 /* ─── Campaign Data ─── */
 var CAMPAIGNS = [];
+var _campaignPageOffset = 0; // dipakai untuk "Muat Lebih Banyak" — halaman berikutnya dari getCampaigns()
+var _campaignLoadingMore = false;
 
 /* ─── State ─── */
 var activeCampaignId = null;
@@ -472,8 +474,10 @@ async function loadCampaignsFromSupabase() {
       });
     });
 
+    _campaignPageOffset = rows.length;
     window.CAMPAIGNS_LOADED = true;
     renderCampaigns();
+    renderLoadMoreButton();
     startReachCounters();
     startPostUrlPolling();
     startAnalyticsAutoRefresh();
@@ -482,6 +486,95 @@ async function loadCampaignsFromSupabase() {
     console.warn('[monitor] loadCampaignsFromSupabase error:', e);
   }
 }
+
+/* ─── Muat Lebih Banyak — halaman berikutnya, di-append ke CAMPAIGNS yang sudah ada ─── */
+function renderLoadMoreButton() {
+  var list = document.getElementById('campaign-list');
+  if (!list || !list.parentNode) return;
+  var wrap = document.getElementById('campaign-load-more');
+  if (!wrap) {
+    wrap = document.createElement('div');
+    wrap.id = 'campaign-load-more';
+    wrap.style.cssText = 'display:flex;justify-content:center;padding:16px 0;';
+    list.parentNode.insertBefore(wrap, list.nextSibling);
+  }
+  if (!window.CAMPAIGNS_HAS_MORE) {
+    wrap.innerHTML = '';
+    return;
+  }
+  wrap.innerHTML =
+    '<button id="campaign-load-more-btn" onclick="loadMoreCampaigns()" style="' +
+    'padding:12px 24px;border-radius:999px;background:#F5F5F7;color:#1a1a2e;' +
+    'border:none;font-family:var(--font,sans-serif);font-size:13px;font-weight:700;cursor:pointer;">' +
+    (_campaignLoadingMore ? 'Memuat…' : 'Muat Lebih Banyak') +
+    '</button>';
+}
+
+async function loadMoreCampaigns() {
+  if (_campaignLoadingMore || !window.CAMPAIGNS_HAS_MORE) return;
+  if (typeof getCampaigns !== 'function') return;
+
+  _campaignLoadingMore = true;
+  renderLoadMoreButton();
+
+  try {
+    var rows = await getCampaigns(_campaignPageOffset);
+    if (rows && rows.length) {
+      var platMap = { ig: 'ig', tiktok: 'tiktok', meta: 'meta', youtube: 'youtube',
+                      instagram: 'ig', facebook: 'meta' };
+      rows.forEach(function(row) {
+        var exists = CAMPAIGNS.some(function(c) { return c.supabase_id === row.id; });
+        if (exists) return;
+
+        var platforms = (row.platforms || []).map(function(p) { return platMap[p] || p; });
+        if (!platforms.length) platforms = ['ig'];
+        var platLabel = platforms.map(function(p) { return p.toUpperCase(); }).join(', ');
+        var dateStr   = row.created_at
+          ? new Date(row.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+          : '';
+
+        CAMPAIGNS.push({
+          id:             row.id,
+          supabase_id:    row.id,
+          post_id:        row.post_id          || null,
+          post_url:       row.post_url         || null,
+          platform_post_id: row.platform_post_id || null,
+          format:         row.format           || 'post',
+          name:        row.nama_campaign || 'Campaign',
+          status:      row.status === 'active' ? 'running' : (row.status || 'running'),
+          platforms:   platforms,
+          reach:       row.estimated_reach_min || 0,
+          reachTarget: row.estimated_reach_max || 10000,
+          budget:      row.budget_idr || 0,
+          budgetUsed:  0,
+          sparkData:   [0, 0, 0, 0, 0, 0],
+          thumbColor:  '#791ADB',
+          thumbUrl:    row.thumb_url || localStorage.getItem('radar_thumb_' + row.id) || null,
+          launchTime:  dateStr,
+          created_at:  row.created_at || null,
+          aiOpening:
+            'Campaign <strong>' + (row.nama_campaign || 'Campaign') + '</strong>\n\n' +
+            'Lokasi: <strong>' + (row.kecamatan || '—') + '</strong> · Radius ' + (row.radius_km || 1) + ' km\n' +
+            'Kategori: <strong>' + (row.kategori || '—') + '</strong>\n' +
+            'Platform: <strong>' + platLabel + '</strong>\n' +
+            'Estimasi reach: <strong>' + formatReach(row.estimated_reach_min || 0) + ' – ' + formatReach(row.estimated_reach_max || 0) + '</strong>\n' +
+            (dateStr ? 'Diluncurkan: ' + dateStr + '\n' : '') +
+            '\nAda yang ingin dianalisis dari campaign ini?',
+          aiChips:         ['Lihat performa', 'Optimalkan targeting', 'Bagikan ke tim'],
+          aiChipResponses: {}
+        });
+      });
+      _campaignPageOffset += rows.length;
+      renderCampaigns();
+    }
+  } catch(e) {
+    console.warn('[monitor] loadMoreCampaigns error:', e);
+  } finally {
+    _campaignLoadingMore = false;
+    renderLoadMoreButton();
+  }
+}
+window.loadMoreCampaigns = loadMoreCampaigns;
 
 /* ─── Auto-refresh engagement metrics setiap 5 menit ─── */
 function startAnalyticsAutoRefresh() {
@@ -888,8 +981,18 @@ function buildCampaignCard(c) {
     }
   }
   var avatarUrl = matchedAcc ? (matchedAcc.avatar_url || '') : '';
-  var username  = matchedAcc ? (matchedAcc.username || '') : '';
-  var usernameDisplay = username ? ('@' + username) : (platLabels[c.platforms[0]] || 'Social');
+  
+  var usernames = [];
+  c.platforms.forEach(function(plat) {
+    var m = null;
+    for (var j = 0; j < storedAccounts.length; j++) {
+      if (storedAccounts[j].platform === (platApiMap[plat] || plat)) { m = storedAccounts[j]; break; }
+    }
+    if (m && m.username) usernames.push('@' + m.username);
+    else usernames.push(platLabels[plat] || 'Social');
+  });
+  var uniqueUsernames = usernames.filter(function(v, idx, a) { return a.indexOf(v) === idx; });
+  var usernameDisplay = uniqueUsernames.join(', ');
 
   var timeDisplay = c.launchTime || '';
   if (c.created_at) {
@@ -921,8 +1024,19 @@ function buildCampaignCard(c) {
     +   'this.parentElement.appendChild(fb);">'
     : '<div style="' + avatarFallbackStyle + '">' + initials + '</div>';
 
-  var platSvgContent = (PLAT_SVG[c.platforms[0]] || '')
-    .replace(/^<svg[^>]*>/, '').replace(/<\/svg>$/, '');
+  var platformBadgesHTML = '<div style="position:absolute;bottom:-4px;right:-4px;display:flex;flex-direction:row-reverse;align-items:center;">';
+  for (var k = 0; k < c.platforms.length; k++) {
+    var p = c.platforms[k];
+    var pColor = platColors[p] || '#791ADB';
+    var pSvg = (PLAT_SVG[p] || '').replace(/^<svg[^>]*>/, '').replace(/<\/svg>$/, '');
+    var zIndex = 10 - k;
+    platformBadgesHTML += '<div style="width:16px;height:16px;border-radius:50%;background:white;border:1.5px solid white;'
+      + 'display:flex;align-items:center;justify-content:center;box-sizing:border-box;padding:2px;'
+      + 'box-shadow:0 1px 2px rgba(0,0,0,0.1);margin-left:-4px;z-index:' + zIndex + ';">'
+      + '<svg viewBox="0 0 24 24" fill="' + pColor + '" width="10" height="10">'
+      + pSvg + '</svg></div>';
+  }
+  platformBadgesHTML += '</div>';
 
   var fmt = c.format || 'post';
   var platName = platLabels[c.platforms[0]] || 'Platform';
@@ -982,14 +1096,7 @@ function buildCampaignCard(c) {
     + '<div style="position:relative;width:40px;height:40px;flex-shrink:0;">'
     +   '<div style="width:40px;height:40px;border-radius:50%;overflow:hidden;'
     +     'border:1.5px solid ' + primaryColor + '40;">' + avatarHTML + '</div>'
-    +   '<div style="position:absolute;bottom:0;right:0;width:16px;height:16px;'
-    +     'border-radius:50%;background:white;border:1.5px solid #e5e7eb;'
-    +     'display:flex;align-items:center;justify-content:center;'
-    +     'box-sizing:border-box;padding:2px;">'
-    +     '<svg viewBox="0 0 24 24" fill="' + primaryColor + '" width="10" height="10">'
-    +       platSvgContent
-    +     '</svg>'
-    +   '</div>'
+    +   platformBadgesHTML
     + '</div>'
 
     // Info — nama + username + timestamp
