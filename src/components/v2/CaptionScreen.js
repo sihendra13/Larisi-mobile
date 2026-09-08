@@ -1732,9 +1732,9 @@ export default function CaptionScreen({
         const platColors = { instagram:'#E1306C', facebook:'#1877F2', tiktok:'#010101', youtube:'#FF0000' };
         const fmtLabels  = { post:'Post', reel:'Reel', story:'Story' };
         const sp       = { ig:'instagram', tiktok:'tiktok', meta:'facebook', youtube:'youtube' }[platform] || platform;
-        const platName = platLabels[sp] || sp;
-        const platColor= platColors[sp] || 'var(--m-brand)';
         const fmtName  = (sp === 'tiktok' || sp === 'youtube') ? '' : (fmtLabels[format] || format || '');
+        const selectedPlats = (activePlatforms && activePlatforms.length > 0) ? activePlatforms : [sp];
+
         return (
           <div style={{position:'fixed', inset:0, zIndex:2000, background:'rgba(0,0,0,0.5)', display:'flex', alignItems:'flex-end', justifyContent:'center'}}>
             <div style={{background:'#fff', borderRadius:'24px 24px 0 0', padding:'24px 20px', width:'100%', maxWidth:'480px', paddingBottom:'calc(24px + env(safe-area-inset-bottom))'}}>
@@ -1746,10 +1746,16 @@ export default function CaptionScreen({
 
               {/* Platform + Format chips */}
               <div style={{display:'flex', alignItems:'center', gap:'8px', marginBottom:'20px', flexWrap:'wrap'}}>
-                <div style={{background:`${platColor}15`, border:`1.5px solid ${platColor}40`, borderRadius:'999px', padding:'6px 14px', display:'flex', alignItems:'center', gap:'6px'}}>
-                  {PLATFORM_ICONS[sp]}
-                  <span style={{fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'700', color:platColor}}>{platName}</span>
-                </div>
+                {selectedPlats.map(p => {
+                  const pColor = platColors[p] || 'var(--m-brand)';
+                  const pName = platLabels[p] || p;
+                  return (
+                    <div key={p} style={{background:`${pColor}15`, border:`1.5px solid ${pColor}40`, borderRadius:'999px', padding:'6px 14px', display:'flex', alignItems:'center', gap:'6px'}}>
+                      {PLATFORM_ICONS[p]}
+                      <span style={{fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'700', color:pColor}}>{pName}</span>
+                    </div>
+                  );
+                })}
                 {fmtName && (
                   <div style={{background:'#F3F4F6', border:'1.5px solid #E4E4EB', borderRadius:'999px', padding:'6px 14px', display:'flex', alignItems:'center', gap:'4px'}}>
                     <span style={{fontFamily:'var(--m-font)', fontSize:'13px', fontWeight:'700', color:'var(--m-ink)'}}>{fmtName}</span>
