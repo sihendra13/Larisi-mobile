@@ -303,7 +303,7 @@ export default function PublishMemeScreen({
               user_id:             effectiveUserId,
               session_id:          effectiveSessionId,
               nama_campaign:       finalName || caption.slice(0, 60),
-              platforms:           [sp],
+              platforms:           activePlatforms && activePlatforms.length > 0 ? activePlatforms : [sp],
               format:              'post',
               status:              scheduledAt ? 'scheduled' : 'active',
               scheduled_at:        scheduledAt || null,

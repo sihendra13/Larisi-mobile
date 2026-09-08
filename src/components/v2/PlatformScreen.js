@@ -310,8 +310,20 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext, onS
   const handleSelectPlatform = (pid) => {
     const isConn = accounts.some(a => a.platform === pid);
     if (!isConn) { openWarn(pid); return; }
+    
+    // Toggle platform
+    if (activePlatforms) {
+      if (activePlatforms.includes(pid)) {
+        if (activePlatforms.length > 1) {
+          setActivePlatforms(activePlatforms.filter(p => p !== pid));
+        }
+      } else {
+        setActivePlatforms([...activePlatforms, pid]);
+      }
+    }
+    
+    // Set active tab for preview
     onSelectPlatform(pid);
-    onNext();
   };
 
   const handleConnect = (pid) => {
@@ -690,8 +702,8 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext, onS
                       display:'flex', flexDirection:'column', alignItems:'center',
                       gap:'8px', padding:'14px 6px',
                       borderRadius:'12px', cursor:'pointer',
-                      background:'#FAFAFA',
-                      border:'1.5px solid #EBEBF0',
+                      background: (activePlatforms && activePlatforms.includes(p.id)) ? '#f3e8ff' : '#FAFAFA',
+                      border: (activePlatforms && activePlatforms.includes(p.id)) ? '1.5px solid var(--m-brand)' : '1.5px solid #EBEBF0',
                       transition:'all .15s', position:'relative',
                     }}
                   >
@@ -879,7 +891,7 @@ export default function PlatformScreen({ platform, onSelectPlatform, onNext, onS
                       <button
                         onClick={() => handleConnect(p.id)}
                         title="Perbarui izin akun"
-                        style={{width:'32px',height:'32px',borderRadius:'8px',border:'1.5px solid #EBEBF0',background:'#F9F9FB',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                        style={{width:'32px',height:'32px',borderRadius:'8px',border: (activePlatforms && activePlatforms.includes(p.id)) ? '1.5px solid var(--m-brand)' : '1.5px solid #EBEBF0',background:'#F9F9FB',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--m-ink-sub)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <polyline points="23 4 23 10 17 10"/>
                           <polyline points="1 20 1 14 7 14"/>

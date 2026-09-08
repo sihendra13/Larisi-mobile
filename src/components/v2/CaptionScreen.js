@@ -371,7 +371,7 @@ const MAX_CHAR = { instagram:2200, facebook:63206, tiktok:2200, youtube:5000 };
 
 
 export default function CaptionScreen({
-  platform, setPlatform, format, setFormat, files,
+  platform, setPlatform, activePlatforms, format, setFormat, files,
   locName, setLocName, locFull, setLocFull, locPop, setLocPop, radius, setRadius, localOn, setLocalOn, travelerOn, setTravelerOn,
   persona, profile,
   caption, setCaption,
@@ -965,7 +965,7 @@ export default function CaptionScreen({
             user_id:             effectiveUserId,
             session_id:          effectiveSessionId,
             nama_campaign:       finalName || caption.slice(0, 60),
-            platforms:           [sp],
+            platforms:           activePlatforms && activePlatforms.length > 0 ? activePlatforms : [sp],
             format:              format || 'post',
             status:              scheduledAt ? 'scheduled' : 'active',
             scheduled_at:        scheduledAt || null,

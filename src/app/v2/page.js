@@ -52,6 +52,7 @@ export default function DapurV2() {
 
   /* ── Shared state (dioper antar screen) ── */
   const [platform,   setPlatform]   = useState('instagram');
+  const [activePlatforms, setActivePlatforms] = useState(['instagram']);
   const [format,     setFormat]     = useState('reel');
   const [locName,    setLocName]    = useState('');
   const [locFull,    setLocFull]    = useState('');
@@ -701,6 +702,8 @@ export default function DapurV2() {
         {screen === 'platform' && (
           <PlatformScreen
             platform={platform}
+            activePlatforms={activePlatforms}
+            setActivePlatforms={setActivePlatforms}
             onSelectPlatform={setPlatform}
             onNext={() => goTo('audiens')}
             profile={profile}
